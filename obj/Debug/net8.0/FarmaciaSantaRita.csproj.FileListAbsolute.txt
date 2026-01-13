@@ -192,3 +192,5 @@ C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\obj\Debug\net8.0
 C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\obj\Debug\net8.0\FarmaciaSantaRita.pdb
 C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\obj\Debug\net8.0\FarmaciaSantaRita.genruntimeconfig.cache
 C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\obj\Debug\net8.0\ref\FarmaciaSantaRita.dll
+C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\obj\Debug\net8.0\FarmaciaSantaRita.sourcelink.json
+C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

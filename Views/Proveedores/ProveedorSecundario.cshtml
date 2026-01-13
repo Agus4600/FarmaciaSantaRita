@@ -1,0 +1,957 @@
+﻿@{
+    var currentIdProveedor = ViewData["IdProveedor"] ?? Context.Request.Query["idProveedor"].ToString() ?? "0";
+    var currentVista = ViewData["vista"] ?? Context.Request.Query["vistaOrigen"].ToString() ?? "";
+    var nombreProveedorActual = Model?.NombreProveedor ?? ViewData["NombreProveedor"];
+    var idProveedorActual = Model?.IdProveedor ?? ViewData["IdProveedor"];
+    var idProveedor = ViewData["IdProveedor"];
+    var nombreProveedor = ViewData["NombreProveedor"] as string;
+    var origen = Context.Request.Query["vistaOrigen"];
+    ViewData["Title"] = nombreProveedor; // Establece el título de la página
+    var vista = ViewData["vista"] as string;
+}
+
+<style>
+
+    /* 🔹 Cuadro blanco principal */
+    .card-principal {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        transition: width 0.3s ease;
+        position: relative;
+        border-radius: 16px;
+    }
+
+    .bloque-principal {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: center;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        max-height: 480px;
+        overflow: visible;
+    }
+
+
+    /* 🔹 La fila que contiene las dos columnas - Eliminamos las propiedades de estiramiento */
+    .card-principal > .row {
+        flex-grow: 1;
+    }
+
+
+    /* ---------------------------------------------------- */
+    /* AJUSTE DE POSICIÓN Y ALTURA FORZADA DEL PANEL IZQUIERDO */
+    /* ---------------------------------------------------- */
+
+    /* ⭐ CONTENEDOR COLUMNA IZQUIERDA: ALTURA FIJA Y POSICIÓN ⭐ */
+    .row > .col-md-2 {
+        /* Sube la columna para alinear el logo con el título */
+        margin-top: -115px; /* AJUSTE DE POSICIÓN */
+        /* ⭐ CLAVE: ALTURA FIJA - AJUSTAR ESTE VALOR (420px es una estimación visual) ⭐ */
+        height: 420px;
+        /* Mantenemos la agrupación de contenido */
+        display: flex;
+        top: 0;
+        z-index: 10;
+        position: sticky;
+        flex-direction: column;
+        justify-content: flex-start; /* Mantiene los botones agrupados arriba */
+        align-items: center !important; /* Centra horizontalmente */
+        padding-top: 50px; /* Ajuste visual desde arriba */
+    }
+
+
+    /* 🔹 Panel izquierdo - Botones */
+    .col-md-2 button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-weight: 600;
+        min-width: 140px;
+        width: 100%;
+        max-width: 180px;
+        margin-bottom: 10px;
+        text-align: center;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .col-md-2 a.btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-weight: 600; /* ⭐ CLAVE: Mismo grosor de fuente */
+        height: 40px; /* ⭐ CLAVE: Misma altura (asumida para el ejemplo) */
+        min-width: 140px;
+        width: 100%;
+        max-width: 180px;
+        display: flex;
+        margin-bottom: 10px;
+        text-align: center;
+        justify-content: center;
+        align-items: center;
+        text-decoration: none;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+
+    /* 🔹 Contenedor del logo */
+    #logoContainer {
+        min-width: 140px;
+        width: 100%;
+        max-width: 180px;
+        height: 200px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: transparent;
+        border-radius: 8px;
+        border: none;
+        padding: 5px;
+    }
+
+
+    /* 🔹 Imagen del logo dentro del contenedor */
+    #farmaciaLogo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+
+    /* 🔹 Groupbox */
+    .groupbox {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border: 1px solid #0d6efd;
+        border-radius: 8px;
+        padding: 8px 14px 10px 14px;
+        background-color: #fff;
+        min-width: 180px;
+        transition: all 0.2s ease;
+    }
+
+        .groupbox legend {
+            font-size: 15px;
+            font-weight: 600;
+            color: #0d6efd;
+            width: auto;
+            padding: 0 6px;
+        }
+
+    .campo {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+        .campo label {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+
+        /* 🔹 Campos responsivos */
+        .campo input {
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            text-align: right;
+            box-sizing: border-box;
+            min-width: 100px;
+            transition: all 0.2s ease;
+        }
+
+
+    /* 🔹 Campo FECHA responsivo */
+    #fecha {
+        width: 100%;
+        min-width: 120px;
+        max-width: 180px;
+        text-align: center;
+    }
+
+
+    /* 🔹 Campo IMPORTE FINAL ajustado */
+    #importeFinal {
+        width: 100%;
+        min-width: 130px;
+        max-width: 160px;
+        text-align: right;
+    }
+
+    .campos-centrados {
+        display: flex;
+        justify-content: flex-start;
+        align-items: flex-end;
+        width: 100%;
+        gap: 25px;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+
+    /* AJUSTE PARA LA TABLA ÚNICA EXTENDIDA */
+    .contenedor-tablas-botones {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: stretch;
+        width: 100%;
+        max-width: 1100px;
+        margin: 0 auto;
+        gap: 35px;
+        flex-wrap: nowrap;
+        height: 220px;
+    }
+
+    /* 🔹 Tablas */
+    .table-wrapper {
+        text-align: center;
+        /* ⭐ ANCHO COMBINADO (715px) */
+        flex: 0 0 715px;
+        max-width: 715px;
+        display: flex;
+        flex-direction: column;
+        /* ⭐ CLAVE 1: ALINEA TODO EL CONTENIDO A LA IZQUIERDA */
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+
+    .table-responsive {
+        /* ⭐ CLAVE 2: LA TABLA OCUPA TODO EL ANCHO DEL CONTENEDOR (715px) */
+        max-width: 100%;
+        width: 100%;
+        height: 180px; /* Altura que obliga al scroll */
+        overflow-y: auto; /* Permite el scroll vertical */
+        overflow-x: hidden;
+        /* ⭐ CLAVE 3: ELIMINA EL CENTRADO, PEGÁNDOLA AL BORDE IZQUIERDO */
+        margin: 0;
+        border: 1px solid #dee2e6;
+    }
+
+    .table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 340px;
+        table-layout: fixed;
+    }
+
+        .table td,
+        .table th {
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+            padding: 4px 8px;
+            border: 1px solid #dee2e6;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+            /* Definición de anchos de columna para 4 columnas */
+            .table th:nth-child(1), .table td:nth-child(1) {
+                width: 35%;
+            }
+
+            .table th:nth-child(2), .table td:nth-child(2) {
+                width: 30%;
+            }
+
+            .table th:nth-child(3), .table td:nth-child(3) {
+                width: 25%;
+            }
+
+            .table th:nth-child(4), .table td:nth-child(4) {
+                width: 10%;
+            }
+
+    .tabla-encabezado {
+        font-size: 17px;
+        font-weight: 600;
+        color: #0d6efd;
+        /* ⭐ CLAVE 4: Alinea el texto a la izquierda */
+        text-align: center;
+        margin-bottom: 6px;
+        border-bottom: 2px solid #0d6efd33;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding-bottom: 2px;
+        width: 100%; /* Asegura que la línea azul ocupe los 715px */
+    }
+
+
+    /* 🔹 Fila seleccionada */
+    .fila-seleccionada {
+        background-color: #cce5ff !important;
+    }
+
+
+    /* 🔹 Botones lado derecho */
+    .botones-laterales {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 10px;
+        height: 100%;
+    }
+
+        .botones-laterales button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 140px;
+            height: 40px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+            .botones-laterales button:hover {
+                background-color: #0056b3;
+                transform: translateY(-2px);
+            }
+
+
+    /* 🔹 Campos con error */
+    .is-invalid {
+        border-color: red !important;
+        box-shadow: 0 0 5px red !important;
+    }
+
+
+    /* 🔹 Groupbox con error */
+    .groupbox.is-invalid {
+        border-color: red !important;
+        box-shadow: 0 0 6px red !important;
+    }
+
+
+
+    /* 🔹 Responsivo */
+    @@media (max-width: 900px) {
+        .bloque-principal {
+            width: 100%;
+        }
+
+        .campos-centrados {
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+
+    @@media (max-width: 1100px) {
+        .contenedor-tablas-botones {
+            flex-wrap: wrap;
+            align-items: center;
+            height: auto;
+            justify-content: center;
+        }
+
+        .table-wrapper {
+            flex: 1 1 100%;
+            max-width: 715px;
+            /* Centrar en pantallas pequeñas */
+            align-items: center;
+        }
+
+        .table-responsive {
+            max-width: 100%;
+            /* Centrar en pantallas pequeñas */
+            margin: 0 auto;
+        }
+
+        .botones-laterales {
+            flex-direction: row;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+            .botones-laterales button {
+                width: auto;
+                min-width: 120px;
+            }
+
+                .botones-laterales button:hover {
+                    background-color: #0056b3 !important;
+                    transform: translateY(-3px) !important;
+                    box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important;
+                }
+    }
+
+
+    /* Congelar encabezados de todas las tablas con scroll */
+    .tabla-congelada thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #0d6efd;
+        color: white;
+    }
+
+    /* EFECTO PREMIUM PANEL IZQUIERDO */
+    .col-md-2 button:hover,
+    .col-md-2 a.btn:hover {
+        background-color: #0056b3 !important;
+        transform: translateY(-3px) !important; /* Salto hacia arriba */
+        box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important; /* Sombra de profundidad */
+        color: white !important;
+    }
+
+    .col-md-2 button:active,
+    .col-md-2 a.btn:active,
+    .botones-laterales button:active {
+        transform: translateY(0) !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        transition: all 0.1s ease;
+    }
+</style>
+
+<div class="container mt-5">
+    <div class="card shadow-lg p-4 card-principal">
+        <h2 class="text-center mb-4 fw-bold text-primary" translate="no">@nombreProveedor</h2>
+
+        <div class="row">
+            <div class="col-md-2 d-flex flex-column align-items-start">
+                <div id="logoContainer">
+                    <img src="/images/file_0000000079e461fd8636559665695d530001.png" alt="Logo Droguería Suiza" id="farmaciaLogo" />
+                </div>
+                @{
+                    var idProv = (ViewData["IdProveedor"] ?? Context.Request.Query["idProveedor"].FirstOrDefault() ?? "0").ToString();
+
+                    // Mantenemos tu detección dinámica
+                    var vistaActual = ViewData["vista"]?.ToString() ?? "";
+                    if (string.IsNullOrEmpty(vistaActual))
+                        vistaActual = Context.Request.Query["vistaOrigen"].FirstOrDefault() ?? "";
+
+                    if (string.IsNullOrEmpty(vistaActual))
+                    {
+                        var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+                        vistaActual = action == "Drogueria" ? "Drogueria" :
+                        action == "ProveedorSecundario" ? "ProveedorSecundario" : "ProveedorSecundario";
+                    }
+                }
+
+                <a href="/Actualizar/ActualizarCuenta?idProveedor=@idProv&vista=@vistaActual"
+                   class="btn btn-primary" style="background-color:#007bff; border:none;" translate="no">Cuenta</a>
+
+                <a href="/Proveedores/IngresarProveedor?idProveedorSeleccionado=@idProv&vista=@vistaActual"
+                   class="btn">Boletas</a>
+
+                <a href="/CuentaCliente/Index?idProveedor=@idProv&vistaOrigen=@vistaActual"
+                   class="btn">Cuentas de Clientes</a>
+
+                <a asp-action="Inasistencia"
+                   asp-controller="Proveedores"
+                   asp-route-origen="@vistaActual"
+                   asp-route-idProveedor="@idProv"
+                   class="btn btn-primary">
+                    Inasistencia
+                </a>
+
+                <a href="/Vacaciones?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary">Vacaciones</a>
+
+                <a href="/Proveedores/Index" class="btn btn-primary" style="background-color:#007bff; border:none;" translate="no">Volver</a>
+            </div>
+
+            <div class="col-md-10 d-flex justify-content-center">
+                <div class="bloque-principal">
+                    <div class="campos-centrados">
+                        <div class="campo">
+                            <label for="fecha">Fecha</label>
+                            <input translate="no" type="date" id="fecha" class="form-control shadow-sm campo" placeholder="dd/mm/aaaa" />
+                        </div>
+
+                        <div class="campo">
+                            <label for="importeFinal">Importe Final</label>
+                            <input translate="no" type="text" id="importeFinal" class="form-control shadow-sm campo" placeholder="10.000.000" maxlength="20" />
+                        </div>
+
+                        <fieldset class="groupbox" id="fieldsetTransfer">
+                            <legend translate="no">Transfer</legend>
+                            <div class="d-flex">
+                                <div class="form-check me-3">
+                                    <input translate="no" class="form-check-input" type="radio" name="transfer" id="transferSi" value="Sí">
+                                    <label class="form-check-label" for="transferSi">Sí</label>
+                                </div>
+                                <div class="form-check">
+                                    <input translate="no" class="form-check-input" type="radio" name="transfer" id="transferNo" value="No">
+                                    <label class="form-check-label" for="transferNo">No</label>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+
+                    <div class="contenedor-tablas-botones mt-3">
+                        <div class="table-wrapper">
+                            <div class="tabla-encabezado">REGISTRO</div>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover align-middle tabla-congelada" id="tablaRegistro">
+                                    <thead class="table-primary">
+                                        <tr>
+                                            <th translate="no">Fecha</th>
+                                            <th translate="no">Importe. F</th>
+                                            <th translate="no">Transfer</th>
+                                            <th>✓</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+
+                        <div class="botones-laterales">
+                            <button translate="no" id="btnAgregar">Agregar</button>
+                            <button id="btnGuardarl" class="btn btn-primary" translate="no">Guardar</button>
+                            <button translate="no" id="btnAbrir">Abrir</button>
+                            <input type="file" id="inputAbrirExcel" style="display:none" accept=".xlsx,.xls" />
+                            <input type="file" id="fileInputOculto" style="display:none;" />
+                            <button translate="no" id="btnNuevoInforme">Nuevo Informe</button>
+                            <button translate="no" id="btnEliminar">Eliminar Fila</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+    <script>
+        // ----------------------------------------------------
+        // 1. CONSTANTES GLOBALES
+        // ----------------------------------------------------
+        const idProveedor = @((ViewData["IdProveedor"] ?? 0));
+        const nombreProveedorServer = @Html.Raw(Json.Serialize(ViewData["NombreProveedor"] ?? "Proveedor"));
+        const idUsuario = parseInt('@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0")', 10);
+        const CATEGORIA_FIJA = nombreProveedorServer;
+        const TABLA_REGISTRO = { id: "tablaRegistro", hoja: "Registro", titulo: nombreProveedorServer };
+
+
+        // ----------------------------------------------------
+        // 2. FUNCIONES DE AYUDA
+        // ----------------------------------------------------
+
+        function limpiarImporte(importe) {
+            return parseInt((importe || "").toString().replace(/\./g, ""), 10) || 0;
+        }
+
+        function formatoFechaInputAmostrar(dateValue) {
+            if (!dateValue) return new Date().toLocaleDateString();
+            const parts = dateValue.split("-");
+            return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateValue;
+        }
+
+        function crearFilasVacias(idTabla, cantidad = 5) {
+            const tbody = document.querySelector(`#${idTabla} tbody`);
+            if (!tbody) return;
+            tbody.innerHTML = "";
+            for (let i = 0; i < cantidad; i++) {
+                const fila = document.createElement("tr");
+                fila.innerHTML = `
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td class="text-center"><input type="checkbox" class="fila-check"></td>
+                `;
+                tbody.appendChild(fila);
+            }
+        }
+
+
+        // ----------------------------------------------------
+        // 3. INICIALIZACIÓN Y FORMATO
+        // ----------------------------------------------------
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const inputImporte = document.getElementById("importeFinal");
+            if (inputImporte) {
+                // Formato de puntos para el importe
+                inputImporte.addEventListener("input", function () {
+                    let valor = this.value.replace(/\D/g, "").substring(0, 8);
+                    if (valor) valor = valor.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                    this.value = valor;
+                });
+                // Previene pegar texto no numérico
+                inputImporte.addEventListener("paste", function (e) {
+                    const texto = (e.clipboardData || window.clipboardData).getData("text");
+                    if (!/^\d+$/.test(texto)) e.preventDefault();
+                });
+            }
+            // Crea las filas vacías iniciales
+            crearFilasVacias("tablaRegistro");
+        });
+
+        // Manejo de la selección de filas
+        document.addEventListener("change", function (e) {
+            if (e.target.classList?.contains("fila-check"))
+                e.target.closest("tr").classList.toggle("fila-seleccionada", e.target.checked);
+
+            // Remueve la alerta de error al seleccionar un radio button
+            if (e.target.name === "transfer") document.getElementById("fieldsetTransfer")?.classList.remove('is-invalid');
+        });
+
+
+               // ----------------------------------------------------
+        // 4. BOTÓN AGREGAR (Guardado y Actualización de UI)
+        // ----------------------------------------------------
+
+        document.getElementById("btnAgregar").addEventListener("click", function () {
+            const fechaInput = document.getElementById("fecha");
+            const importeInput = document.getElementById("importeFinal");
+            const transferSeleccionado = document.querySelector('input[name="transfer"]:checked');
+            const fieldsetTransfer = document.getElementById("fieldsetTransfer");
+
+            // VALIDACIÓN PREVENTIVA DE ID DE USUARIO (USANDO EL NUEVO IDUsuario)
+            if (idUsuario <= 0) {
+                alert("❌ Error de Sesión. Por favor, recarga la página o vuelve a iniciar sesión para guardar datos.");
+                return;
+            }
+            // FIN VALIDACIÓN PREVENTIVA
+
+            let camposCompletos = true;
+            document.querySelectorAll('.campo input').forEach(c => c.classList.remove('is-invalid'));
+            fieldsetTransfer?.classList.remove('is-invalid');
+
+            // Validación de campos
+            if (!fechaInput.value.trim()) { fechaInput.classList.add('is-invalid'); camposCompletos = false; }
+            if (!importeInput.value.trim()) { importeInput.classList.add('is-invalid'); camposCompletos = false; }
+            if (!transferSeleccionado) { fieldsetTransfer.classList.add('is-invalid'); camposCompletos = false; }
+
+            if (!camposCompletos) return;
+
+            const idTabla = "tablaRegistro";
+            const tbody = document.querySelector(`#${idTabla} tbody`);
+
+            const fechaRaw = fechaInput.value.trim();
+            const importeRaw = importeInput.value.trim();
+            const fechaMostrar = formatoFechaInputAmostrar(fechaRaw);
+            const transferValor = transferSeleccionado.value;
+            const importeFormateado = "$ " + limpiarImporte(importeRaw).toLocaleString("es-AR");
+
+            // CATEGORÍA FIJA es el nombre del proveedor tal cual (ej: "AgustiN")
+            const categoriaValor = CATEGORIA_FIJA;
+
+            // Creación de la fila en la tabla (AÑADIDA ANTES DE GUARDAR)
+            const fila = document.createElement("tr");
+            fila.innerHTML = `
+                <td title="${fechaMostrar}">${fechaMostrar}</td>
+                <td title="${importeFormateado}">${importeFormateado}</td>
+                <td title="${transferValor}">${transferValor}</td>
+                <td class="text-center"><input type="checkbox" class="fila-check"></td>
+            `;
+            tbody.prepend(fila);
+
+            // Llamada AJAX para guardar en el servidor
+            fetch("/Boleta/GuardarBoleta", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    Idusuario: idUsuario,
+                    Idproveedor: idProveedor,
+                    Fecha: fechaRaw,
+                    ImporteFinal: limpiarImporte(importeRaw),
+                    Transfer: transferValor,
+                    Categoria: categoriaValor,
+                    Detalle: ""
+                })
+            })
+            .then(async response => {
+                const resp = await response.json();
+                if (!response.ok || !resp?.exito) {
+                    const mensaje = resp?.mensaje || `Error HTTP ${response.status} - No se pudo procesar la solicitud.`;
+                    alert("⚠️ Error al guardar la boleta: " + mensaje);
+                    fila.remove(); // Elimina la fila si falla el guardado
+                    return;
+                }
+                // Éxito:
+                fila.setAttribute("data-boleta-id", resp.idBoleta);
+
+                // Limpiar campos de entrada
+                fechaInput.value = "";
+                importeInput.value = "";
+                document.querySelectorAll('input[name="transfer"]').forEach(r => r.checked = false);
+            })
+            .catch(err => {
+                console.error("Error de conexión:", err);
+                alert("❌ Error de red o conexión. La boleta no se guardó. Revisa la consola para más detalles.");
+                fila.remove(); // Elimina la fila si falla la conexión
+            });
+        });
+
+
+        // ----------------------------------------------------
+        // 5. BOTÓN ELIMINAR
+        // ----------------------------------------------------
+
+        document.getElementById("btnEliminar").addEventListener("click", async function () {
+            const checks = document.querySelectorAll("#tablaRegistro tbody .fila-check:checked");
+            if (checks.length === 0) return alert("Selecciona al menos una fila.");
+
+            const deletePromises = [];
+
+            for (const chk of checks) {
+                const tr = chk.closest("tr");
+                const boletaId = tr?.getAttribute("data-boleta-id");
+
+                if (boletaId) {
+                    // Si tiene ID, intenta eliminar en el servidor
+                    const p = fetch(`/Boleta/EliminarBoleta?id=${encodeURIComponent(boletaId)}`, { method: "DELETE" })
+                        .then(r => r.json())
+                        .then(resp => {
+                            if (resp?.success) tr.remove();
+                            else alert("Error al eliminar la boleta con ID: " + boletaId);
+                        })
+                        .catch(err => {
+                            console.error("Error en DELETE:", err);
+                            alert("Error de conexión al eliminar la boleta.");
+                        });
+                    deletePromises.push(p);
+                } else {
+                    // Si no tiene ID (fila vacía o recién agregada), solo la elimina del DOM
+                    tr.remove();
+                }
+            }
+            // Espera a que todas las eliminaciones asíncronas terminen
+            if (deletePromises.length) await Promise.all(deletePromises);
+
+            // Recargar filas vacías si quedan menos de 5
+            const filasActuales = document.querySelectorAll("#tablaRegistro tbody tr").length;
+            if (filasActuales < 5) crearFilasVacias("tablaRegistro", 5 - filasActuales);
+        });
+
+
+        // ----------------------------------------------------
+        // 6. BOTÓN ABRIR EXCEL
+        // ----------------------------------------------------
+
+        let workbookCargado = null;
+
+        document.getElementById("btnAbrir").addEventListener("click", () =>
+            document.getElementById("inputAbrirExcel").click()
+        );
+
+        document.getElementById("inputAbrirExcel").addEventListener("change", async function (evt) {
+            const archivo = evt.target.files[0];
+            if (!archivo) return;
+
+            // ⭐ Validación de nombre de archivo (específico del proveedor)
+            const nombreProveedor = nombreProveedorServer?.trim() || "";
+            if (!archivo.name.startsWith(nombreProveedor)) {
+                alert("⚠️ Este archivo no pertenece al proveedor: " + nombreProveedor +
+                      "\nSolo puedes abrir archivos generados que pertenezcan a este proveedor.");
+                this.value = "";
+                return;
+            }
+
+            try {
+                const buffer = await archivo.arrayBuffer();
+                workbookCargado = new ExcelJS.Workbook();
+                await workbookCargado.xlsx.load(buffer);
+
+                crearFilasVacias("tablaRegistro");
+
+                workbookCargado.eachSheet(sheet => {
+                    // Solo procesamos la hoja 'Registro'
+                    if ((sheet.name || "").toLowerCase() !== TABLA_REGISTRO.hoja.toLowerCase()) return;
+
+                    const tbody = document.querySelector(`#${TABLA_REGISTRO.id} tbody`);
+                    tbody.innerHTML = "";
+
+                    sheet.eachRow({ includeEmpty: true }, (row, index) => {
+
+                        // Ignorar título y encabezados (Asumimos Fila 1 = Título, Fila 2 = Encabezados)
+                        if (index <= 2) return;
+
+                        const valores = (row.values || []).slice(1);
+                        // Los valores del Excel corresponden a [Fecha, Importe, Transfer]
+                        const [fecha = "", importe = "", transfer = ""] = valores.map(v => (v || "").toString().trim());
+
+                        // Si la fila está completamente vacía → ignorarla
+                        if (!fecha && !importe && !transfer) return;
+
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${fecha}</td>
+                            <td>${importe}</td>
+                            <td>${transfer}</td>
+                            <td class="text-center"><input type="checkbox" class="fila-check"></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                });
+
+                alert("Archivo Excel cargado correctamente.");
+
+            } catch (e) {
+                console.error("Error al cargar el archivo Excel:", e);
+                alert("Hubo un error al procesar el archivo Excel. Asegúrate de que sea un formato válido.");
+            } finally {
+                this.value = "";
+            }
+        });
+
+
+        // ----------------------------------------------------
+        // 7. BOTÓN GUARDAR EXCEL (Guardarl)
+        // ----------------------------------------------------
+
+        document.getElementById("btnGuardarl").addEventListener("click", async function () {
+            await generarYDescargarExcel([TABLA_REGISTRO]);
+        });
+
+        // ----------------------------------------------------
+        // 8. BOTÓN NUEVO INFORME
+        // ----------------------------------------------------
+
+        document.getElementById("btnNuevoInforme").addEventListener("click", async function () {
+            // Guarda el informe actual
+            await generarYDescargarExcel([TABLA_REGISTRO]);
+
+            // Limpia la UI después de guardar el informe
+            crearFilasVacias("tablaRegistro");
+            document.getElementById("fecha").value = "";
+            document.getElementById("importeFinal").value = "";
+            document.querySelectorAll('input[name="transfer"]').forEach(r => r.checked = false);
+        });
+
+
+        // ----------------------------------------------------
+        // 9. FUNCIÓN CENTRAL DE GENERACIÓN DE EXCEL (Reutilizable)
+        // ----------------------------------------------------
+
+        async function generarYDescargarExcel(tablasArray) {
+            const workbook = new ExcelJS.Workbook();
+
+            for (const t of tablasArray) {
+
+                const ws = workbook.addWorksheet(t.hoja);
+
+                // --- Columnas (Para definir ancho) ---
+                ws.columns = [
+                    { header: "Fecha", key: "fecha", width: 20 },
+                    { header: "Importe", key: "importe", width: 20 },
+                    { header: "Transfer", key: "transfer", width: 15 }
+                    // No hay columna de Categoría, solo se usa en el backend
+                ];
+
+                // --- 1. TÍTULO ---
+                ws.mergeCells("A1:C1");
+                ws.getCell("A1").value = `Tabla: ${t.titulo}`;
+                ws.getCell("A1").alignment = { horizontal: "center", vertical: "middle" };
+                ws.getCell("A1").font = { bold: true, color: { argb: "FF000000" }, size: 14 };
+                ws.getCell("A1").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "f5f5dc" } };
+                ws.getRow(1).height = 25;
+                ["A1", "B1", "C1"].forEach(c => {
+                    ws.getCell(c).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                });
+
+                // --- 2. ENCABEZADOS ---
+                const headerRow = ws.addRow(["FECHA", "IMPORTE", "TRANSFER"]);
+                headerRow.eachCell(cell => {
+                    cell.font = { bold: true, color: { argb: "FF000000" } };
+                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "ffc080" } };
+                    cell.alignment = { horizontal: "center", vertical: "middle" };
+                    cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                });
+
+                // --- 3. FILAS DE DATOS ---
+                const tbody = document.querySelector(`#${t.id} tbody`);
+                let conteoSI = 0;
+                let conteoNO = 0;
+
+                if (tbody) {
+                    [...tbody.querySelectorAll("tr")].forEach((tr, i) => {
+                        const fecha = tr.children[0]?.innerText.trim();
+                        const importe = tr.children[1]?.innerText.trim();
+                        const transfer = (tr.children[2]?.innerText || "").trim();
+                        if (!fecha && !importe && !transfer) return; // Ignorar filas completamente vacías
+
+                        if (transfer.toUpperCase() === "SÍ" || transfer.toUpperCase() === "SI") conteoSI++;
+                        if (transfer.toUpperCase() === "NO") conteoNO++;
+
+                        const row = ws.addRow([fecha, importe, transfer]);
+                        const color = i % 2 === 0 ? "ddeeff" : "ccffff";
+
+                        row.eachCell(cell => {
+                            cell.alignment = { horizontal: "center", vertical: "middle" };
+                            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
+                            cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                        });
+                    });
+                }
+
+                // --- 4. RESUMEN ---
+                ws.mergeCells("E2:G2");
+                ws.getCell("E2").value = "Resumen Transfer";
+                ws.getCell("E2").alignment = { horizontal: "center", vertical: "middle" };
+                ws.getCell("E2").font = { bold: true, color: { argb: "FFFFFFFF" } };
+                ws.getCell("E2").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "33cc99" } };
+
+                ["E2", "F2", "G2"].forEach(c => {
+                    ws.getCell(c).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                });
+
+                ws.mergeCells("E3:F3");
+                ws.getCell("E3").value = "Con Transfer (SI):";
+                ws.getCell("G3").value = conteoSI;
+
+                ws.mergeCells("E4:F4");
+                ws.getCell("E4").value = "Sin Transfer (NO):";
+                ws.getCell("G4").value = conteoNO;
+
+                ["E3", "F3", "G3", "E4", "F4", "G4"].forEach(c => {
+                    const cell = ws.getCell(c);
+                    cell.alignment = { horizontal: "center", vertical: "middle" };
+                    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "33cc99" } };
+                    cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                });
+
+                ws.getColumn("E").width = 10;
+                ws.getColumn("F").width = 10;
+                ws.getColumn("G").width = 8;
+            }
+
+            // --- NOMBRE DE ARCHIVO CON FORMATO ---
+            const fecha = new Date();
+            const dd = String(fecha.getDate()).padStart(2, "0");
+            const mm = String(fecha.getMonth() + 1).padStart(2, "0");
+            const yyyy = fecha.getFullYear();
+            const hh = String(fecha.getHours()).padStart(2, "0");
+            const min = String(fecha.getMinutes()).padStart(2, "0");
+
+            const separadorHora = "꞉"; // símbolo permitido parecido a ":"
+
+            const nombreArchivo = `${nombreProveedorServer} ${dd}-${mm}-${yyyy} ${hh}${separadorHora}${min}.xlsx`;
+
+            // --- DESCARGA ---
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            });
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = nombreArchivo;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+}

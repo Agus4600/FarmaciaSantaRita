@@ -1,0 +1,265 @@
+﻿@model IEnumerable<FarmaciaSantaRita.Models.Proveedor>
+@{
+    ViewData["Title"] = "RESTAURAR PROVEEDORES";
+}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+    /* --- CABECERA UNIFICADA (Buscador flexible + Botones fijos) --- */
+    .header-restaurar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        max-width: 920px;
+        margin: 0 auto 15px auto;
+    }
+
+    /* --- BUSCADOR DINÁMICO --- */
+    .input-group-custom {
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: white;
+        flex-grow: 1; /* Se alarga para empujar los botones a la derecha */
+        height: 40px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        display: flex;
+    }
+
+        .input-group-custom .form-control {
+            border: none;
+            box-shadow: none;
+            padding-left: 15px;
+            font-size: 0.95rem;
+            color: #495057;
+            height: 100%;
+        }
+
+        .input-group-custom .seccion-adorno {
+            background-color: transparent !important;
+            border: none;
+            border-left: 1px solid #ced4da !important;
+            color: #0d6efd !important;
+            font-weight: 500;
+            padding: 0 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+    /* --- GRUPO DE BOTONES --- */
+    .grupo-botones-top {
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-accion {
+        background-color: #007bff;
+        color: white !important;
+        border: none;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        width: 175px; /* Ancho fijo igual a la vista principal */
+        height: 38px;
+        line-height: 38px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transition: all 0.2s ease;
+        text-decoration: none !important;
+        display: block;
+        text-align: center;
+        cursor: pointer;
+    }
+
+        .btn-accion:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+    /* --- TABLA (Estilo idéntico a tus imágenes) --- */
+    .tabla-container {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background-color: white;
+        overflow: hidden;
+        width: 100%;
+        max-width: 920px;
+        margin: 0 auto;
+    }
+
+    #tablaRestaurar {
+        table-layout: fixed;
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        #tablaRestaurar th {
+            background-color: #007bff !important;
+            color: white !important;
+            font-weight: 600;
+            text-align: center;
+            height: 38px !important;
+        }
+
+        #tablaRestaurar td {
+            vertical-align: middle;
+            text-align: center;
+            padding: 0 8px !important;
+            font-size: 15px;
+            border: 1px solid #dee2e6;
+            height: 38px !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+    .notranslate {
+        unicode-bidi: isolate;
+    }
+</style>
+
+<div class="container mt-4" style="max-width: 980px;">
+    <div class="card shadow-lg p-4" style="border-radius: 15px;">
+
+        <div class="text-center mb-4">
+            <img src="~/images/file_0000000079e461fd8636559665695d53.png" alt="Logo" style="width: 100%; max-height: 180px; object-fit: contain;">
+        </div>
+
+        <div class="d-flex justify-content-center">
+            <div style="width:100%; max-width:920px;">
+
+                <div class="text-center mb-3" style="font-weight:600; color:#0d6efd; border-bottom:2px solid #e9ecef; text-transform:uppercase;">
+                    PAPELERA DE PROVEEDORES
+                </div>
+
+                <div class="header-restaurar">
+                    <div class="input-group input-group-custom">
+                        <input type="text" class="form-control" id="buscarRestaurar" placeholder="Buscar proveedor..." autocomplete="off" />
+                        <div class="seccion-adorno"><i class="bi bi-search"></i><span>Buscar</span></div>
+                    </div>
+
+                    <div class="grupo-botones-top">
+                        @Html.AntiForgeryToken()
+                        <button id="btnRestaurarAccion" class="btn-accion">Restaurar</button>
+                        <button id="btnEliminarPermanente" class="btn-accion">Eliminar</button>
+                        <a asp-action="Index" class="btn-accion">Volver</a>
+                    </div>
+                </div>
+
+                <div class="tabla-container">
+                    <table class="table mb-0" id="tablaRestaurar">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%;">Nombre</th>
+                                <th style="width: 20%;">Teléfono</th>
+                                <th style="width: 35%;">Correo</th>
+                                <th style="width: 15%;">Seleccionar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaRestaurar"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const eliminadosFull = @Html.Raw(Json.Serialize(Model));
+        const cuerpo = document.getElementById("cuerpoTablaRestaurar");
+        const inputBusqueda = document.getElementById("buscarRestaurar");
+
+        function renderizarTabla(filtro = "") {
+            const query = filtro.toLowerCase();
+            const filtrados = eliminadosFull ? eliminadosFull.filter(p =>
+                (p.nombreProveedor || "").toLowerCase().includes(query)
+            ) : [];
+
+            let htmlContent = "";
+            filtrados.forEach(p => {
+                htmlContent += `<tr>
+                    <td class="notranslate" translate="no">${p.nombreProveedor}</td>
+                    <td>${p.telefonoProveedor || ''}</td>
+                    <td>${p.correoProveedor || ''}</td>
+                    <td><input type="checkbox" class="form-check-input seleccionarFila" value="${p.idproveedor}" onclick="resaltarFila(this)" /></td>
+                </tr>`;
+            });
+
+            for (let i = 0; i < Math.max(0, 5 - filtrados.length); i++) {
+                htmlContent += `<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>`;
+            }
+            cuerpo.innerHTML = htmlContent;
+        }
+
+        function resaltarFila(checkbox) {
+            checkbox.closest("tr").classList.toggle("table-primary", checkbox.checked);
+        }
+
+        function mostrarAlertaAtencion(mensaje) {
+            Swal.fire({
+                title: '¡Atención!',
+                text: mensaje,
+                icon: 'warning',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
+            });
+        }
+
+                // --- RESTAURAR CON TEXTO EN NEGRITA ---
+        document.getElementById("btnRestaurarAccion").addEventListener("click", function () {
+            const seleccionados = document.querySelectorAll(".seleccionarFila:checked");
+            if (seleccionados.length === 0) {
+                return mostrarAlertaAtencion("Selecciona al menos un proveedor para restaurar.");
+            }
+
+            const ids = Array.from(seleccionados).map(chk => parseInt(chk.value));
+
+            Swal.fire({
+                title: 'Confirmación de Restauración',
+                // Aquí envolvemos el número y el texto en <b>
+                html: `¿Está seguro de que desea restaurar <b>${seleccionados.length} proveedor(es)</b> seleccionado(s)?`,
+                showCancelButton: true,
+                confirmButtonColor: '#007bff',
+                cancelButtonColor: '#007bff',
+                confirmButtonText: 'Sí, restaurar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    ejecutarFetch('/Proveedores/RestaurarSeleccionados', ids);
+                }
+            });
+        });
+
+        // --- ELIMINAR CON TEXTO EN NEGRITA ---
+        document.getElementById("btnEliminarPermanente").addEventListener("click", function () {
+            const seleccionados = document.querySelectorAll(".seleccionarFila:checked");
+            if (seleccionados.length === 0) {
+                return mostrarAlertaAtencion("Selecciona al menos un proveedor para eliminar.");
+            }
+
+            const ids = Array.from(seleccionados).map(chk => parseInt(chk.value));
+
+            Swal.fire({
+                title: 'Confirmación de Eliminación',
+                // Aquí también resaltamos ambos: número y palabra
+                html: `¿Está seguro de eliminar permanentemente <b>${seleccionados.length} proveedor(es)</b> seleccionados?<br>`,
+                showCancelButton: true,
+                confirmButtonColor: '#007bff',
+                cancelButtonColor: '#007bff',
+                confirmButtonText: 'Sí, eliminar permanentemente',
+                cancelButtonText: 'Cancelar',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    ejecutarFetch('/Proveedores/EliminarPermanente', ids);
+                }
+            });
+        });
+
+        inputBusqueda.addEventListener("keyup", () => renderizarTabla(inputBusqueda.value));
+        renderizarTabla();
+    </script>
+}

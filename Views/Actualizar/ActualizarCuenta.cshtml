@@ -1,0 +1,521 @@
+﻿@model FarmaciaSantaRita.Models.Usuario
+@{
+    var currentIdProveedor = ViewData["IdProveedor"] ?? Context.Request.Query["idProveedor"].ToString() ?? "0";
+    var currentVista = ViewData["vista"] ?? Context.Request.Query["vistaOrigen"].ToString() ?? "";
+    var nombreUsuario = Model?.NombreUsuario ?? "Cuenta";
+    var idProveedor = ViewData["IdProveedor"] ?? 0;
+    var nombreProveedor = ViewData["NombreProveedor"] as string ?? "General";
+    ViewData["Title"] = nombreUsuario;
+    ViewBag.IdProveedor = ViewData["IdProveedor"];
+    var vista = ViewData["vista"]?.ToString();
+}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<style>
+    .card-principal {
+        width: 1200px !important;
+        max-width: none;
+        margin: 0 auto;
+        transition: width 0.3s ease;
+        position: relative;
+        border-radius: 16px;
+    }
+
+    .bloque-principal {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: space-between;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 20px;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        overflow: visible;
+    }
+
+    .row > .col-md-2 {
+        margin-top: -115px;
+        height: 420px;
+        display: flex;
+        top: 0;
+        z-index: 10;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center !important;
+        padding-top: 50px;
+    }
+    /* ESTILO EXACTO COMO DROGUERÍA SUIZA */
+    /* Contenedor del logo */
+    #logoContainer {
+        min-width: 140px;
+        width: 100%;
+        max-width: 180px;
+        height: 200px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: transparent;
+        border-radius: 8px;
+        border: none;
+        padding: 5px;
+    }
+
+    #farmaciaLogo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+    /* Botones del menú izquierdo */
+    .col-md-2 button,
+    .col-md-2 a.btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-weight: 600;
+        min-width: 140px;
+        width: 100%;
+        max-width: 180px;
+        margin-bottom: 10px;
+        text-align: center;
+        transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        ;
+        text-decoration: none;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 40px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        white-space: nowrap;
+    }
+
+        .col-md-2 button:hover,
+        .col-md-2 a.btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-3px); /* ← Se "levanta" 3px */
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2); /* ← Sombra más fuerte y grande */
+        }
+    /* Botones de abajo (GUARDAR CAMBIOS y CUENTAS DE EMPLEADOS) */
+    .btn-igual {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        margin: 0 5px;
+        white-space: nowrap;
+        text-decoration: none;
+        outline: none !important;
+    }
+
+        .btn-igual:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            color: white;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+        }
+
+    .campos-cuenta {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+        max-width: 900px;
+        margin-top: 10px;
+        padding: 0 10px;
+    }
+
+    .tres-columnas {
+        display: flex;
+        gap: 10px;
+        flex-grow: 1;
+        flex-shrink: 1;
+    }
+
+    .grupo-campo {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        flex-grow: 1;
+        flex-basis: 0;
+    }
+
+        .grupo-campo label {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .grupo-campo input,
+        .grupo-campo select,
+        .grupo-campo .input-group {
+            width: 100%;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+            .grupo-campo input.form-control,
+            .grupo-campo select.form-control {
+                padding: 6px 8px;
+                border: 1px solid #ccc;
+                width: 100%;
+            }
+
+                .grupo-campo select.form-control:disabled {
+                    background-color: #e9ecef;
+                    opacity: 0.7;
+                }
+
+    .password-wrapper {
+        display: flex;
+        border: 1px solid #ced4da;
+        border-radius: 10px;
+        overflow: hidden;
+        background: white;
+        height: 38px; /* ← Mismo alto que los otros inputs */
+        width: 100%;
+    }
+
+        .password-wrapper .form-control {
+            border: none !important;
+            border-radius: 10px 0 0 10px;
+            height: 100%;
+            padding: 6px 8px;
+            flex: 1;
+        }
+
+    .btn-toggle-view {
+        background: #f8f9fa;
+        border: none;
+        border-left: 1px solid #ced4da;
+        padding: 0 12px;
+        color: #6c757d;
+        cursor: pointer;
+        height: 100%;
+        border-radius: 0 10px 10px 0;
+    }
+    /* OUTER GLOW ROJO PARA CAMPOS INVÁLIDOS */
+    .form-control.invalid-glow,
+    .password-wrapper.invalid-glow {
+        border-color: #ff0000 !important;
+        box-shadow: 0 0 15px 4px rgba(255, 0, 0, 0.8) !important;
+        animation: pulse-glow 1.5s infinite alternate;
+    }
+    @@keyframes pulse-glow {
+        from
+
+    {
+        box-shadow: 0 0 10px 2px rgba(255, 0, 0, 0.6);
+    }
+
+    to {
+        box-shadow: 0 0 20px 8px rgba(255, 0, 0, 0.9);
+    }
+
+    }
+</style>
+
+<div class="container mt-5">
+    <div class="card shadow-lg p-4 card-principal">
+        <h2 class="text-center mb-4 fw-bold text-primary" translate="no">CUENTA DE USUARIO: @nombreUsuario</h2>
+        <div class="row">
+            <div class="col-md-2 d-flex flex-column align-items-start">
+                <div id="logoContainer">
+                    <img src="/images/file_0000000079e461fd8636559665695d530001.png" alt="Logo Farmacia Santa Rita" id="farmaciaLogo" />
+                </div>
+                @{
+                    // Tu lógica existente se mantiene igual...
+                    var idProv = (ViewData["IdProveedor"] ?? Context.Request.Query["idProveedor"].FirstOrDefault() ?? "0").ToString();
+                    var nombreProv = ViewData["NombreProveedor"]?.ToString() ?? Context.Request.Query["nombreMostrar"].ToString() ?? "Proveedor";
+
+                    string vistaActual = "";
+                    var actionName = ViewContext.RouteData.Values["action"]?.ToString();
+
+                    if (actionName == "VistaDrogueriaSuiza" || actionName == "Drogueria")
+                    {
+                        vistaActual = "Drogueria";
+                    }
+                    else if (actionName == "ProveedorSecundario")
+                    {
+                        vistaActual = "ProveedorSecundario";
+                    }
+                    else
+                    {
+                        // Leemos de la URL para no perder el rastro
+                        vistaActual = !string.IsNullOrEmpty(Context.Request.Query["vista"])
+                        ? Context.Request.Query["vista"].ToString()
+                        : !string.IsNullOrEmpty(Context.Request.Query["vistaOrigen"])
+                        ? Context.Request.Query["vistaOrigen"].ToString()
+                        : "ProveedorSecundario";
+                    }
+                }
+
+                <a href="/Actualizar/ActualizarCuenta?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary" translate="no">Cuenta</a>
+
+                <a href="/Proveedores/IngresarProveedor?idProveedorSeleccionado=@idProv&vista=@vistaActual" class="btn btn-primary" translate="no">Boletas</a>
+
+                <a href="/CuentaCliente/Index?idProveedor=@idProv&vistaOrigen=@vistaActual&nombreMostrar=@nombreProv" class="btn btn-primary" translate="no">Cuentas de Clientes</a>
+
+                <a asp-action="Inasistencia"
+                   asp-controller="Proveedores"
+                   asp-route-origen="@vistaActual"
+                   asp-route-idProveedor="@idProv"
+                   class="btn btn-primary" translate="no">Inasistencia</a>
+
+                <a href="/Vacaciones?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary">Vacaciones</a>
+
+                <a href="/Proveedores/Index" class="btn btn-primary" translate="no">Volver</a>
+            </div>
+            <div class="col-md-10 d-flex justify-content-center">
+                <div class="bloque-principal">
+                    <form asp-action="ActualizarCuenta" id="formCuenta" asp-controller="Actualizar" method="post" class="campos-cuenta" novalidate>
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="idProveedor" value="@ViewData["IdProveedor"]" />
+                        <input type="hidden" name="vista" value="@ViewData["vista"]" />
+                        <input type="hidden" asp-for="Idusuario" />
+                        <input type="hidden" asp-for="Rol" />
+
+                        <div class="tres-columnas">
+                            <div class="grupo-campo">
+                                <label asp-for="Nombre">Nombre</label>
+                                <input asp-for="Nombre" class="form-control" id="Nombre" />
+                            </div>
+                            <div class="grupo-campo">
+                                <label asp-for="Apellido">Apellido</label>
+                                <input asp-for="Apellido" class="form-control" id="Apellido" />
+                            </div>
+                            <div class="grupo-campo">
+                                <label asp-for="NombreUsuario">Nombre de Usuario</label>
+                                <input asp-for="NombreUsuario" class="form-control" id="NombreUsuario" />
+                            </div>
+                        </div>
+
+                        <div class="tres-columnas">
+                            <div class="grupo-campo">
+                                <label asp-for="Telefono">Teléfono</label>
+                                <input asp-for="Telefono" class="form-control" type="tel" id="Telefono" />
+                            </div>
+                            <div class="grupo-campo">
+                                <label asp-for="CorreoUsuario">Correo</label>
+                                <input asp-for="CorreoUsuario" class="form-control" type="email" id="CorreoUsuario" />
+                            </div>
+                            <div class="grupo-campo">
+                                <label asp-for="Dni">DNI</label>
+                                <input asp-for="Dni" class="form-control" id="Dni" />
+                            </div>
+                        </div>
+
+                        <div class="tres-columnas">
+                            <div class="grupo-campo">
+                                <label asp-for="FechaNacimiento">Fecha de Nacimiento</label>
+                                <input asp-for="FechaNacimiento" class="form-control" id="FechaNacimiento" type="date" />
+                            </div>
+                            <div class="grupo-campo">
+                                <label>Contraseña Actual</label>
+                                <div class="password-wrapper" id="wrapperContrasenaActual">
+                                    <input type="password" id="contrasenaActual" class="form-control" value="@ViewBag.ContraseñaActualDesencriptada" readonly />
+                                    <button type="button" class="btn-toggle-view"><i class="bi bi-eye"></i></button>
+                                </div>
+                            </div>
+                            <div class="grupo-campo">
+                                <label>Nueva Contraseña</label>
+                                <div class="password-wrapper" id="wrapperNuevaContrasena">
+                                    <input type="password" asp-for="NuevaContraseña" id="nuevaContraseña"
+                                           class="form-control" placeholder="Escribe tu nueva contraseña"
+                                           autocomplete="new-password" value="" />
+                                    <button type="button" class="btn-toggle-view"><i class="bi bi-eye"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <div class="grupo-campo">
+                                    <label asp-for="Rol">Rol</label>
+                                    <select asp-for="Rol" class="form-control" disabled>
+                                        <option value="Empleado/a">Empleado/a</option>
+                                        <option value="Jefe/a">Jefe/a</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="grupo-campo">
+                                    <label asp-for="Direccion">Dirección</label>
+                                    <input asp-for="Direccion" id="DireccionInput" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-center w-100 mt-4">
+                            <button type="button" id="btnGuardarCambios" class="btn-igual" style="width: 180px;">GUARDAR CAMBIOS</button>
+                            <a href="@Url.Action("Gestionar", "CuentaEmpleado", new { idProveedor = ViewData["IdProveedor"], vista = ViewData["vista"] })"
+                               class="btn-igual @(Model.Rol == "Empleado/a" ? "disabled" : "")"
+                               style="width: 220px; @(Model.Rol == "Empleado/a" ? "pointer-events: none; opacity: 0.6;" : "")">
+                                CUENTAS DE EMPLEADOS
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Usamos un pequeño delay para ganarle al autocompletado del navegador
+            setTimeout(function() {
+                const inputNuevaPass = document.getElementById('nuevaContraseña');
+                if (inputNuevaPass) {
+                    inputNuevaPass.value = "";
+                }
+            }, 10);
+        });
+        // Toggle passwords (Ojo/Visibilidad)
+        document.querySelectorAll('.btn-toggle-view').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const input = this.previousElementSibling;
+                const icon = this.querySelector('i');
+                if (input.type === "password") {
+                    input.type = "text";
+                    icon.classList.replace('bi-eye', 'bi-eye-slash');
+                } else {
+                    input.type = "password";
+                    icon.classList.replace('bi-eye-slash', 'bi-eye');
+                }
+            });
+        });
+        // Notificación de éxito desde el servidor
+                @if (TempData["ResultadoActualizacion"]?.ToString() == "Exito")
+        {
+                <text>
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Cuenta Actualizada!',
+                    text: 'Los cambios se aplicaron con éxito.',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff',
+                    showConfirmButton: true
+                });
+                </text>
+        }
+        // Lógica del botón Guardar
+        document.getElementById('btnGuardarCambios').addEventListener('click', function() {
+            const form = document.getElementById('formCuenta');
+            const campos = {
+                nombre: document.getElementById('Nombre'),
+                apellido: document.getElementById('Apellido'),
+                usuario: document.getElementById('NombreUsuario'),
+                correo: document.getElementById('CorreoUsuario'),
+                dni: document.getElementById('Dni'),
+                direccion: document.getElementById('DireccionInput'),
+                nuevaPass: document.getElementById('nuevaContraseña'),
+                wrapNuevaPass: document.getElementById('wrapperNuevaContrasena')
+            };
+            // Resetear glows (resplandor rojo)
+            Object.values(campos).forEach(c => {
+                if(c) c.classList.remove('invalid-glow');
+            });
+            let errores = [];
+            const regexLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+            const regexMail = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            // Validaciones
+            if (!regexLetras.test(campos.nombre.value)) { errores.push("El <b>Nombre</b> solo debe contener letras."); campos.nombre.classList.add('invalid-glow'); }
+            if (!regexLetras.test(campos.apellido.value)) { errores.push("El <b>Apellido</b> solo debe contener letras."); campos.apellido.classList.add('invalid-glow'); }
+            if (campos.usuario.value.includes(" ")) { errores.push("El <b>Nombre de Usuario</b> no puede tener espacios."); campos.usuario.classList.add('invalid-glow'); }
+            if (!regexMail.test(campos.correo.value) || !campos.correo.value.endsWith(".com")) { errores.push("El <b>Correo</b> debe ser válido (con @@ y terminar en .com)."); campos.correo.classList.add('invalid-glow'); }
+            if (!/^\d{7,8}$/.test(campos.dni.value)) { errores.push("El <b>DNI</b> debe tener entre 7 y 8 números."); campos.dni.classList.add('invalid-glow'); }
+            // Dirección con coma y localidad
+            const dirVal = campos.direccion.value;
+            if (!dirVal.includes(",") || dirVal.split(",")[1].trim().length < 2) {
+                errores.push("La <b>Dirección</b> debe incluir una coma para especificar la dirección, (ej: 25 de mayo 52, Rio Seco).");
+                campos.direccion.classList.add('invalid-glow');
+            }
+            // Nueva pass no igual a la actual
+            const passActual = document.getElementById('contrasenaActual').value;
+            if (campos.nuevaPass.value !== "" && campos.nuevaPass.value === passActual) {
+                errores.push("La <b>Nueva Contraseña</b> no puede ser igual a la anterior.");
+                campos.wrapNuevaPass.classList.add('invalid-glow');
+            }
+                    if (errores.length > 0) {
+            Swal.fire({
+                title: 'Campos inválidos',
+                html: `<ul style="text-align:left">${errores.map(e => `<li>${e}</li>`).join('')}</ul>`,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff',
+                showConfirmButton: true
+            });
+            return;
+        }
+            // NUEVO: SweetAlert cuando no hay cambios
+            const valoresOriginales = {
+                nombre: "@(Model?.Nombre?.Trim() ?? "")",
+                apellido: "@(Model?.Apellido?.Trim() ?? "")",
+                usuario: "@(Model?.NombreUsuario?.Trim() ?? "")",
+                correo: "@(Model?.CorreoUsuario?.Trim() ?? "")",
+                dni: "@(Model?.Dni?.Trim() ?? "")",
+                direccion: "@(Model?.Direccion?.Trim() ?? "")",
+                fechaNacimiento: "@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")"
+            };
+            const hayCambios = (
+                campos.nombre.value.trim() !== valoresOriginales.nombre ||
+                campos.apellido.value.trim() !== valoresOriginales.apellido ||
+                campos.usuario.value.trim() !== valoresOriginales.usuario ||
+                campos.correo.value.trim() !== valoresOriginales.correo ||
+                campos.dni.value.trim() !== valoresOriginales.dni ||
+                campos.direccion.value.trim() !== valoresOriginales.direccion ||
+                document.getElementById('FechaNacimiento').value !== valoresOriginales.fechaNacimiento ||
+                campos.nuevaPass.value.trim() !== ""
+            );
+            if (!hayCambios) {
+                Swal.fire({
+                    title: 'Sin cambios',
+                    text: 'No se detectaron cambios en los datos.',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+                });
+                return;
+            }
+            // Confirmación de guardado (igual que antes)
+            Swal.fire({
+                title: 'Confirmar cambios',
+                text: "¿Quieres guardar los cambios?",
+                showCancelButton: true,
+                confirmButtonColor: '#007bff',
+                cancelButtonColor: '#007bff',
+                confirmButtonText: 'Sí, guardar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) form.submit();
+            });
+        });
+
+        // NUEVO: Quitar el outer glow rojo al escribir en cualquier campo
+        document.querySelectorAll('.form-control, .password-wrapper').forEach(elemento => {
+            elemento.addEventListener('input', function() {
+                this.classList.remove('invalid-glow');
+                // Si es un input dentro de password-wrapper, quitar glow del wrapper también
+                if (this.closest('.password-wrapper')) {
+                    this.closest('.password-wrapper').classList.remove('invalid-glow');
+                }
+            });
+        });
+    </script>
+}

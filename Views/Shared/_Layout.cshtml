@@ -1,0 +1,170 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FarmaciaSantaRita</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/FarmaciaSantaRita.styles.css" asp-append-version="true" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Mantenemos para videos de fondo */
+            background-color: transparent !important;
+            background: transparent !important;
+        }
+
+        #video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: -1;
+            background: transparent;
+        }
+
+        .main-wrapper {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh; /* Cambiado de height fijo a min-height */
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 50px 15px; /* Padding lateral seguro en móviles */
+            overflow-y: auto; /* Scroll vertical SIEMPRE disponible */
+            overflow-x: hidden;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            box-sizing: border-box;
+            background: transparent;
+            opacity: 1 !important;
+            transition: opacity 1s ease;
+        }
+
+            .main-wrapper::-webkit-scrollbar {
+                display: none;
+            }
+
+        /* Contenedor universal para centrar contenido en todas las vistas */
+        main {
+            width: 100%;
+            max-width: 1400px; /* Máximo razonable en pantallas grandes */
+            padding: 0 15px;
+            margin: 0 auto; /* Centrado horizontal */
+        }
+
+        /* Ajustes responsivos para pantallas pequeñas */
+        @@media (max-width: 768px) {
+            .main-wrapper
+
+        {
+            padding-top: 30px;
+            padding-bottom: 30px;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        main {
+            padding: 0 10px;
+        }
+
+        /* Evita que los cards se vean demasiado anchos en móviles */
+        .card {
+            margin: 0 auto;
+            max-width: 100%;
+        }
+
+        }
+
+        @@media (max-width: 576px) {
+            .main-wrapper
+
+        {
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+
+        }
+    </style>
+</head>
+<body>
+    <!-- VIDEO DE INTRO -->
+    <div id="intro-overlay" style="position: fixed; inset: 0; z-index: 9999; background: transparent;">
+        <video id="introVideo"
+               autoplay
+               muted
+               playsinline
+               style="width: 100%; height: 100%; object-fit: cover;">
+            <source src="/videos/4f5a796c-6a3d-456d-a391-2e438383841a.mp4" type="video/mp4">
+            Tu navegador no soporta video.
+        </video>
+    </div>
+
+    <!-- VIDEO DE FONDO CONTINUO -->
+    <video autoplay muted loop playsinline id="video-background" preload="auto">
+        <source src="/videos/fondo-optimizado.mp4" type="video/mp4">
+        <source src="~/videos/fondo-optimizado.mp4" type="video/mp4">
+    </video>
+
+    <div id="content-wrapper" class="main-wrapper">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- SCRIPT PARA CONTROLAR LA INTRO -->
+    <script>
+        const introOverlay = document.getElementById('intro-overlay');
+        const mainWrapper = document.getElementById('content-wrapper');
+        const introVideo = document.getElementById('introVideo');
+
+        // Solo reproducir intro la primera vez en esta sesión
+        if (!sessionStorage.getItem('introShownThisSession')) {
+            // Intro visible, contenido oculto (ya lo está desde CSS)
+            introOverlay.style.display = 'block';
+
+            introVideo.addEventListener('ended', function() {
+                introOverlay.style.opacity = '0';
+                introOverlay.style.transition = 'opacity 1s ease';
+                setTimeout(() => {
+                    introOverlay.style.display = 'none';
+                    mainWrapper.style.opacity = '1 !important';
+                }, 1000);
+                sessionStorage.setItem('introShownThisSession', 'true');
+            });
+
+            // Fallback
+            setTimeout(() => {
+                if (introOverlay.style.display !== 'none') {
+                    introOverlay.style.opacity = '0';
+                    introOverlay.style.transition = 'opacity 1s ease';
+                    setTimeout(() => {
+                        introOverlay.style.display = 'none';
+                        mainWrapper.style.opacity = '1 !important';
+                    }, 1000);
+                    sessionStorage.setItem('introShownThisSession', 'true');
+                }
+            }, 12000);
+        } else {
+            // No hay intro → ocultar intro y mostrar contenido inmediatamente
+            introOverlay.style.display = 'none';
+            mainWrapper.style.opacity = '1 !important';
+        }
+    </script>
+</body>
+</html>

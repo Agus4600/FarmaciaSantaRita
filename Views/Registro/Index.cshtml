@@ -1,0 +1,320 @@
+﻿@model FarmaciaSantaRita.Models.Usuario
+@{
+    ViewData["Title"] = "Registro de Usuario";
+}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+    /* CENTRADO PERFECTO Y SIN SCROLL */
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #f4f7f6;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .main-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        width: 100%;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    .card-custom {
+        width: 95%;
+        max-width: 900px;
+        background-color: white;
+        border-radius: 25px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        padding: 30px 40px;
+        max-height: 95vh;
+        overflow-y: auto;
+        box-sizing: border-box;
+    }
+
+    .logo-container {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .logo-img {
+        max-height: 140px;
+        width: auto;
+        object-fit: contain;
+    }
+
+    .custom-groupbox {
+        border: 2px solid #007bff;
+        border-radius: 15px;
+        padding: 12px 20px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+        .custom-groupbox legend {
+            float: none;
+            width: auto;
+            padding: 0 15px;
+            margin: 0 auto;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #007bff;
+            background-color: white;
+            text-align: center;
+        }
+
+    .form-label {
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-bottom: 3px;
+        color: #333;
+    }
+
+    .form-control-custom {
+        border-radius: 10px;
+        border: 1px solid #ced4da;
+        padding: 7px 12px;
+        font-size: 0.9rem;
+        width: 100%;
+        transition: all 0.2s ease;
+    }
+
+    /* RESPLANDOR ROJO EN CAMPOS INVÁLIDOS (incluido Dirección personalizada) */
+    #registroForm.show-errors .form-control-custom:invalid,
+    #registroForm.show-errors #Direccion.invalid-comma {
+        border-color: #ff0000 !important;
+        box-shadow: 0 0 10px 2px rgba(255, 0, 0, 0.7) !important;
+    }
+
+    .password-wrapper {
+        display: flex;
+        border: 1px solid #ced4da;
+        border-radius: 10px;
+        overflow: hidden;
+        background: white;
+    }
+
+    #registroForm.show-errors .password-wrapper:has(input:invalid) {
+        border-color: #ff0000 !important;
+        box-shadow: 0 0 10px 2px rgba(255, 0, 0, 0.7) !important;
+    }
+
+    .password-wrapper input {
+        border: none !important;
+        flex-grow: 1;
+        padding: 7px 12px;
+    }
+
+    .btn-toggle-view {
+        background: #f8f9fa;
+        border: none;
+        border-left: 1px solid #ced4da;
+        padding: 0 12px;
+        color: #6c757d;
+        cursor: pointer;
+    }
+
+    /* RESPLANDOR ROJO PARA EL GRUPO DE ROL */
+    .custom-groupbox.rol-group {
+        transition: all 0.3s ease;
+    }
+
+    #registroForm.show-errors .custom-groupbox.rol-group:has(input:required:not(:checked)) {
+        border-color: #ff0000 !important;
+        box-shadow: 0 0 10px 2px rgba(255, 0, 0, 0.7) !important;
+    }
+
+    .btn-action-custom {
+        background-color: #007bff;
+        color: white !important;
+        border-radius: 12px;
+        padding: 10px;
+        font-weight: bold;
+        border: none;
+        width: 100%;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none !important;
+        transition: background-color 0.2s, transform 0.1s;
+        min-width: 180px;
+    }
+
+        .btn-action-custom:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+    .buttons-row {
+        margin-top: 30px;
+    }
+</style>
+
+<div class="main-wrapper">
+    <div class="card-custom">
+        <div class="logo-container">
+            <img src="~/images/file_0000000079e461fd8636559665695d53.png" alt="Logo Farmacia Santa Rita" class="logo-img">
+        </div>
+
+        <form asp-action="Index" method="post" id="registroForm" autocomplete="off" novalidate>
+            <fieldset class="custom-groupbox">
+                <legend>Datos Personales</legend>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Nombre</label>
+                        <input asp-for="Nombre" class="form-control-custom" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Apellido</label>
+                        <input asp-for="Apellido" class="form-control-custom" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">DNI</label>
+                        <input asp-for="Dni" class="form-control-custom" maxlength="10" required onkeypress="return soloNumeros(event)" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Teléfono</label>
+                        <input asp-for="Telefono" class="form-control-custom" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Dirección</label>
+                        <input asp-for="Direccion" id="Direccion" class="form-control-custom" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Nacimiento</label>
+                        <input asp-for="FechaNacimiento" type="date" class="form-control-custom" required />
+                    </div>
+                    <div class="col-md-5">
+                        <div class="custom-groupbox m-0" style="padding: 10px 20px; border-width: 1px;">
+                            <legend style="font-size: 0.9rem !important; padding: 0 10px;">Rol</legend>
+                            <div class="d-flex justify-content-around align-items-center">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="Rol" value="Empleado/a" id="rolEmpleado" checked />
+                                    <label class="form-check-label" for="rolEmpleado">Empleado/a</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="Rol" value="Jefe/a" id="rolJefe" />
+                                    <label class="form-check-label" for="rolJefe">Jefe/a</label>
+                                </div>
+                            </div>
+                            <span asp-validation-for="Rol" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="custom-groupbox">
+                <legend>Cuenta y Seguridad</legend>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Usuario</label>
+                        <input asp-for="NombreUsuario" class="form-control-custom" required autocomplete="off" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Correo Electrónico</label>
+                        <input asp-for="CorreoUsuario" type="email" class="form-control-custom" required autocomplete="off" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Contraseña</label>
+                        <div class="password-wrapper">
+                            <input id="passInput" asp-for="ContraseñaPlana" type="password" class="form-control-custom" required autocomplete="new-password" />
+                            <button type="button" class="btn-toggle-view" onclick="togglePass()">
+                                <i id="passIcon" class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <div class="row justify-content-center buttons-row">
+                <div class="col-md-6 d-flex gap-4">
+                    <button type="button" onclick="validarYEnviar()" class="btn-action-custom">Crear Cuenta</button>
+                    <a asp-controller="Login" asp-action="Index" class="btn-action-custom">Volver</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // SweetAlert de éxito si viene del registro exitoso
+    @if (TempData["ResultadoActualizacion"]?.ToString() == "Exito")
+    {
+            <text>
+            Swal.fire({
+                title: '¡Éxito!',
+                text: 'Cuenta creada exitosamente! El usuario ha sido registrado correctamente.',
+                icon: 'success',
+                confirmButtonColor: '#007bff',
+                confirmButtonText: 'Entendido'
+            });
+            </text>
+    }
+
+    function soloNumeros(e) {
+        let key = e.keyCode || e.which;
+        if (key < 48 || key > 57) return false;
+    }
+    function togglePass() {
+        const input = document.getElementById('passInput');
+        const icon = document.getElementById('passIcon');
+        if (input.type === "password") {
+            input.type = "text";
+            icon.className = "bi bi-eye-slash";
+        } else {
+            input.type = "password";
+            icon.className = "bi bi-eye";
+        }
+    }
+    function validarDireccion() {
+        const direccionInput = document.getElementById('Direccion');
+        const tieneComa = direccionInput.value.trim().includes(',');
+        if (!tieneComa) {
+            direccionInput.classList.add('invalid-comma');
+        } else {
+            direccionInput.classList.remove('invalid-comma');
+        }
+        return tieneComa;
+    }
+    function validarYEnviar() {
+        const form = document.getElementById('registroForm');
+        const direccionValida = validarDireccion();
+        if (!form.checkValidity() || !direccionValida) {
+            form.classList.add('show-errors');
+            let mensaje = 'Por favor, rellena todos los campos marcados en rojo correctamente.';
+            if (form.checkValidity() && !direccionValida) {
+                mensaje = 'La dirección debe incluir una coma para separar la calle de la localidad (ej: "25 de mayo 52, Río Seco").';
+            }
+            Swal.fire({
+                title: 'Campos Incompletos o Incorrectos',
+                text: mensaje,
+                confirmButtonColor: '#007bff',
+                confirmButtonText: 'Entendido'
+            });
+        } else {
+            form.classList.remove('show-errors');
+            Swal.fire({
+                title: '¿Confirmar Registro?',
+                text: "Los datos se guardarán en el sistema.",
+                showCancelButton: true,
+                confirmButtonColor: '#007bff',
+                cancelButtonColor: '#007bff',
+                confirmButtonText: 'Sí, crear cuenta',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        }
+    }
+    document.getElementById('Direccion').addEventListener('input', validarDireccion);
+</script>

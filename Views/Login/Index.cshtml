@@ -1,0 +1,180 @@
+﻿@{
+    ViewData["Title"] = "Iniciar Sesión";
+}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+    /* Estilo base de los botones */
+    .btn-login-custom {
+        background-color: #007bff;
+        color: white !important;
+        border: none;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transition: all 0.2s ease;
+        text-decoration: none !important;
+        cursor: pointer;
+        padding: 0 15px;
+    }
+
+        .btn-login-custom:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+    .form-control-custom {
+        border-radius: 8px;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .input-group-text-custom {
+        border-top-right-radius: 8px !important;
+        border-bottom-right-radius: 8px !important;
+        background-color: white;
+    }
+
+    /* ⭐ CLASE PARA EL RESPLANDOR EXTERIOR (Outer Glow) ⭐ */
+    .field-error-glow {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 12px rgba(220, 53, 69, 0.5) !important;
+    }
+</style>
+
+<div class="container mt-5" style="max-width: 420px; min-height: 550px;">
+    <div class="card shadow-lg p-4 h-100 d-flex flex-column justify-content-center" style="border-radius: 15px;">
+
+        <div class="text-center mb-4">
+            <img src="~/images/file_0000000079e461fd8636559665695d53.png"
+                 alt="Farmacia Santa Rita"
+                 style="width: 100%; height: auto; max-height: 180px; object-fit: contain;">
+        </div>
+
+        <form id="loginForm" asp-action="Index" method="post" autocomplete="off">
+            <div class="mb-3">
+                <label class="form-label" style="font-weight: 600;">Usuario</label>
+                <input type="text" name="nombreUsuario" id="userInput"
+                       class="form-control form-control-custom"
+                       autocomplete="off" spellcheck="false" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" style="font-weight: 600;">Contraseña</label>
+                <div class="input-group">
+                    <input type="password" name="contraseña" id="passwordInput"
+                           class="form-control form-control-custom"
+                           style="border-top-left-radius: 8px; border-bottom-left-radius: 8px;"
+                           autocomplete="new-password" />
+                    <button type="button" class="btn btn-outline-secondary input-group-text-custom" id="togglePassword" tabindex="-1">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <div class="d-flex gap-2 mb-2">
+                    <button type="submit" class="btn-login-custom w-100">Iniciar sesión</button>
+                    <a asp-controller="Registro" asp-action="Index" class="btn-login-custom w-100">Crear cuenta</a>
+                </div>
+
+                <div class="d-flex justify-content-center mt-2">
+                    <a asp-controller="Recordar" asp-action="Index" id="recordarCuentaBtn"
+                       class="btn-login-custom w-100" style="display:none;" translate="no">
+                        Recordar cuenta
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('passwordInput');
+    const userInput = document.getElementById('userInput');
+    const icon = togglePassword.querySelector('i');
+    const recordarBtn = document.getElementById('recordarCuentaBtn');
+    const form = document.getElementById('loginForm');
+
+    // 1. Ver/Ocultar contraseña
+    togglePassword.addEventListener('click', function () {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        icon.classList.toggle('bi-eye');
+        icon.classList.toggle('bi-eye-slash');
+    });
+
+    // 2. Función para aplicar el resplandor de error
+    function aplicarGlowError() {
+        userInput.classList.add('field-error-glow');
+        passwordInput.classList.add('field-error-glow');
+    }
+
+    // 3. Limpiar error al escribir
+    [userInput, passwordInput].forEach(el => {
+        el.addEventListener('input', () => {
+            el.classList.remove('field-error-glow');
+        });
+    });
+
+    // 4. Validación de campos vacíos
+    form.addEventListener('submit', function(e) {
+        if (!userInput.value.trim() || !passwordInput.value.trim()) {
+            e.preventDefault();
+            aplicarGlowError();
+            Swal.fire({
+                title: '¡Atención!',
+                html: 'Pulsa <b>Recordar Cuenta</b> si no recuerdas tu usuario o contrase\u00f1a',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
+            });
+            recordarBtn.style.display = 'flex';
+        }
+    });
+
+    // 5. Manejo de errores desde el Servidor
+    document.addEventListener('DOMContentLoaded', function() {
+        @if (ViewBag.Error != null)
+        {
+                <text>
+                aplicarGlowError();
+                Swal.fire({
+                    title: 'Error de Acceso',
+                    text: 'Usuario o contrase\u00f1a incorrectos',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+                });
+                recordarBtn.style.display = 'flex';
+                </text>
+        }
+
+                @if (ViewBag.ShowDisabledModal != null && ViewBag.ShowDisabledModal == true)
+    {
+            <text>
+            aplicarGlowError();
+            Swal.fire({
+                title: 'Acceso Denegado',
+                html: `
+                    <p style="font-size: 1.2rem; color:red; font-weight: 700; margin-bottom: 15px;">
+                        Cuenta Desactivada
+                    </p>
+                    <p style="font-size: 1rem; color: #495057; line-height: 1.5;">
+                        Tu cuenta fue desactivada o eliminada,<br>
+                        habla con tu jefe/a
+                    </p>
+                `,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff',
+                width: '420px'
+            });
+            </text>
+    }
+    });
+</script>

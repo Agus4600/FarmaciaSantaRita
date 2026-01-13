@@ -1,0 +1,8 @@
+﻿Compilación iniciada a las 10:11...
+1>------ Operación Compilar iniciada: Proyecto: FarmaciaSantaRita, configuración: Debug Any CPU ------
+1>Omitiendo analizadores para acelerar la compilación. Puede ejecutar los comandos "Build" o "Rebuild" para ejecutar los analizadores.
+1>C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\Models\FarmaciabdContext.cs(35,10,35,380): warning CS1030: #advertencia: 'To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.'
+1>FarmaciaSantaRita -> C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\bin\Debug\net8.0\FarmaciaSantaRita.dll
+1>Compilación del proyecto "FarmaciaSantaRita.csproj" terminada.
+========== Compilación: 1 correcto, 0 erróneo, 0 actualizado, 0 omitido ==========
+========== Compilar completado a las 10:11 y tardó 02,031 segundos ==========

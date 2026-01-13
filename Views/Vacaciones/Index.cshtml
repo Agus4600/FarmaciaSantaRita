@@ -1,0 +1,970 @@
+﻿@model IEnumerable<FarmaciaSantaRita.Models.Vacacion>
+@using System.Security.Claims
+
+@{
+    ViewData["Title"] = "Vacaciones de Empleados";
+    var idProv = (ViewData["IdProveedor"] ?? Context.Request.Query["idProveedor"].FirstOrDefault() ?? "0").ToString();
+    string rolUsuario = User.FindFirstValue(ClaimTypes.Role);
+    bool esJefe = rolUsuario == "Jefe/a";
+    string claseVisualDisabled = esJefe ? "" : "contenedor-deshabilitado";
+    string disabledAttr = esJefe ? "" : "disabled=\"disabled\"";
+    string vistaActual = Context.Request.Query["vista"].ToString()
+                         ?? Context.Request.Query["vistaOrigen"].ToString()
+                         ?? Context.Request.Query["origen"].ToString()
+                         ?? ViewData["vista"]?.ToString()
+                         ?? "ProveedorSecundario";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+    /* Tus estilos existentes (los mismos de Inasistencias) */
+    .contenedor-deshabilitado {
+        pointer-events: none;
+        opacity: 0.6;
+        filter: grayscale(40%);
+    }
+
+    .card-principal {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        transition: width 0.3s ease;
+        position: relative;
+        border-radius: 16px;
+    }
+
+    .bloque-principal {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: flex-start;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 65px 20px 20px 20px;
+        width: 100%;
+        max-width: 1100px;
+        margin: 0 auto;
+        max-height: 480px;
+        overflow: visible;
+        position: relative;
+    }
+
+    .row > .col-md-2 {
+        margin-top: -115px;
+        height: 420px;
+        display: flex;
+        top: 0;
+        z-index: 10;
+        position: sticky;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center !important;
+        padding-top: 50px;
+    }
+
+    .col-md-2 a.btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-weight: 600;
+        height: 40px;
+        min-width: 140px;
+        width: 100%;
+        max-width: 180px;
+        display: flex;
+        margin-bottom: 10px;
+        text-align: center;
+        justify-content: center;
+        align-items: center;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+        .col-md-2 a.btn:hover {
+            background-color: #0056b3 !important;
+            transform: translateY(-3px) !important;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important;
+        }
+
+    #logoContainer {
+        min-width: 140px;
+        width: 100%;
+        max-width: 180px;
+        height: 200px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: transparent;
+        border-radius: 8px;
+        border: none;
+        padding: 5px;
+    }
+
+    #farmaciaLogo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .groupbox-filtro {
+        border: 1px solid #0d6efd;
+        border-radius: 8px;
+        padding: 8px 14px 10px 14px;
+        background-color: #f7f9fc;
+        position: absolute;
+        top: 20px;
+        right: 20px; /* Mantiene el margen derecho */
+        left: 580px; /* ← Extiende hacia la izquierda hasta cerca de los campos */
+        z-index: 1000;
+        width: auto; /* Se ajusta entre left y right */
+        max-width: none;
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+        height: auto; /* Permite que se estire */
+        min-height: 200px; /* Altura mínima para que se vea bien */
+    }
+
+        .groupbox-filtro legend {
+            font-size: 15px;
+            font-weight: 600;
+            color: #0d6efd;
+            width: auto;
+            padding: 0 6px;
+            margin-left: 5px;
+        }
+
+    .campos-centrados {
+        display: flex;
+        justify-content: flex-start;
+        align-items: flex-end;
+        width: 100%;
+        gap: 15px;
+        margin-bottom: 25px !important;
+        flex-wrap: wrap;
+    }
+
+    .campo {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+        .campo label {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .campo input, .campo select {
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            width: 100%;
+            height: 38px;
+            text-align: center;
+        }
+
+        .campo select {
+            text-align-last: center;
+        }
+
+    .contenedor-tablas-botones {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: stretch;
+        width: 100%;
+        max-width: 1100px;
+        margin: 0;
+        gap: 35px;
+        flex-wrap: nowrap;
+        height: auto;
+    }
+
+    .table-wrapper {
+        flex: 0 0 740px;
+        max-width: 740px;
+    }
+
+    .table-responsive {
+        height: 180px;
+        max-height: 180px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        border: 1px solid #dee2e6;
+    }
+
+    .table {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+        .table th, .table td {
+            text-align: center;
+            vertical-align: middle;
+            padding: 4px 8px;
+            border: 1px solid #dee2e6;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+    #tablaVacaciones th:nth-child(1), #tablaVacaciones td:nth-child(1) {
+        width: 25%;
+    }
+    /* Empleado */
+    #tablaVacaciones th:nth-child(2), #tablaVacaciones td:nth-child(2) {
+        width: 15%;
+    }
+    /* Días */
+    #tablaVacaciones th:nth-child(3), #tablaVacaciones td:nth-child(3) {
+        width: 20%;
+    }
+    /* Inicio */
+    #tablaVacaciones th:nth-child(4), #tablaVacaciones td:nth-child(4) {
+        width: 20%;
+    }
+    /* Fin */
+    #tablaVacaciones th:nth-child(5), #tablaVacaciones td:nth-child(5) {
+        width: 15%;
+    }
+    /* Días Favor */
+    #tablaVacaciones th:nth-child(6), #tablaVacaciones td:nth-child(6) {
+        width: 5%;
+    }
+
+    #tablaVacaciones td, #tablaVacaciones th {
+        height: 32px; /* ← Reducida a 32px → filas más cortas y elegantes */
+        padding: 2px 8px;
+    }
+
+    /* Checkbox */
+    .tabla-encabezado {
+        font-size: 17px;
+        font-weight: 600;
+        color: #0d6efd;
+        text-align: center;
+        margin-bottom: 6px;
+        border-bottom: 2px solid #0d6efd33;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding-bottom: 2px;
+        width: 100%;
+    }
+
+    .botones-laterales {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 180px;
+        width: 170px;
+        margin-top: 40px;
+    }
+
+        .botones-laterales button {
+            margin-bottom: 0 !important;
+        }
+
+        /* Botones laterales con estilo original (azul, hover salto, ancho completo) */
+        .botones-laterales button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-weight: 600;
+            height: 38px;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+            .botones-laterales button:hover {
+                background-color: #0056b3 !important;
+                transform: translateY(-3px) !important;
+                box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important;
+            }
+
+            .botones-laterales button:active {
+                transform: translateY(0);
+            }
+
+        .botones-laterales .btn-success {
+            background-color: #28a745;
+        }
+
+            .botones-laterales .btn-success:hover {
+                background-color: #218838 !important;
+            }
+
+        .botones-laterales .btn-danger {
+            background-color: #dc3545;
+        }
+
+            .botones-laterales .btn-danger:hover {
+                background-color: #c82333 !important;
+            }
+
+    .tabla-congelada thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #0d6efd;
+        color: white;
+    }
+
+    /* Legend del groupbox alineada a la derecha */
+    .groupbox-filtro legend {
+        font-size: 15px;
+        font-weight: 600;
+        color: #0d6efd;
+        width: auto;
+        padding: 0 6px;
+        margin-left: auto; /* ← Empuja la leyenda a la derecha */
+        margin-right: 10px; /* Espacio desde el borde derecho */
+    }
+
+    /* Botón Buscar dentro del groupbox con estilo idéntico a los botones principales */
+    #btnBuscarFiltro {
+        background-color: #007bff !important;
+        color: white !important;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-weight: 600;
+        height: 38px;
+        min-width: 100px;
+        transition: all 0.3s ease;
+    }
+
+        #btnBuscarFiltro:hover {
+            background-color: #0056b3 !important;
+            transform: translateY(-3px) !important;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important;
+        }
+
+        #btnBuscarFiltro:active {
+            transform: translateY(0);
+        }
+
+    /* Reemplaza tu #empleadoSelect actual por este */
+    #empleadoSelect {
+        width: 100% !important;
+        height: 38px !important; /* Altura fija obligatoria */
+        padding: 6px 30px 6px 8px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background-color: white;
+        text-align-last: center;
+        box-sizing: border-box;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23333' d='M1.5 0L6 4.5L10.5 0L12 1.5L6 7.5L0 1.5L1.5 0Z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 12px;
+    }
+
+        /* Agrega esto para limpiar las opciones internas */
+        #empleadoSelect option {
+            background-color: white;
+            color: #333;
+            padding: 8px;
+            text-align: center;
+        }
+
+    select.form-control {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23333' d='M1.5 0L6 4.5L10.5 0L12 1.5L6 7.5L0 1.5L1.5 0Z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 12px;
+    }
+
+        /* 2. El select en sí: ocupa 100% del contenedor y no se expande */
+        .campos-centrados > .campo:first-child #empleadoSelect {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+    .campos-centrados > .campo:first-child {
+        flex: 0 0 250px;
+        min-width: 250px;
+        max-width: 250px;
+    }
+
+    /* Quitar outline y borde por defecto en TODOS los botones */
+    button {
+        outline: none !important;
+    }
+
+</style>
+
+<div class="container-fluid d-flex justify-content-center align-items-center"; padding: 0;">
+    <div class="card shadow-lg p-4 card-principal">
+        <h2 class="text-center mb-4 fw-bold text-primary">VACACIONES DE EMPLEADOS</h2>
+        <div class="row">
+            <!-- Panel izquierdo -->
+            <div class="col-md-2 d-flex flex-column align-items-start">
+                <div id="logoContainer">
+                    <img src="/images/file_0000000079e461fd8636559665695d530001.png" alt="Logo" id="farmaciaLogo" />
+                </div>
+                @* Cuenta *@
+                <a href="/Actualizar/ActualizarCuenta?idProveedor=@idProv&vista=@vistaActual"
+                   class="btn btn-primary">Cuenta</a>
+
+                @* Boletas - AQUÍ ESTABA EL ERROR: Usamos idProveedorSeleccionado y vista *@
+                <a href="/Proveedores/IngresarProveedor?idProveedorSeleccionado=@idProv&vista=@vistaActual"
+                   class="btn btn-primary">Boletas</a>
+
+                @* Cuentas de Clientes *@
+                <a href="/CuentaCliente/Index?idProveedor=@idProv&vistaOrigen=@vistaActual"
+                   class="btn btn-primary">Cuentas de Clientes</a>
+
+                @* Inasistencia *@
+                <a href="/Proveedores/Inasistencia?origen=@vistaActual&idProveedor=@idProv"
+                   class="btn btn-primary">Inasistencia</a>
+
+                @* Vacaciones (Activo) *@
+                <a href="/Vacaciones/Index?idProveedor=@idProv&vista=@vistaActual"
+                   class="btn btn-primary">Vacaciones</a>
+
+                @* Volver al Index de Proveedores (usa la lista de origen) *@
+                <a href="/Proveedores/Index?vista=@vistaActual" class="btn btn-primary">Volver</a>
+            </div>
+
+            <div class="col-md-10 d-flex justify-content-start">
+                <div class="bloque-principal">
+                    @if (TempData["MensajeExito"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["MensajeExito"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <!-- Groupbox de filtros -->
+                    <div class="groupbox-filtro @claseVisualDisabled">
+                        <legend>Filtros</legend>
+                        <div class="filtro-busqueda">
+                            <div class="campo daterange-container">
+                                <label for="btnAbrirCalendario">Rango de Fechas</label>
+                                <button type="button" id="btnAbrirCalendario" class="btn btn-outline-primary shadow-sm" style="height: 38px; width: 100%;">
+                                    dd/mm/yyyy - dd/mm/yyyy
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Fila de Buscar Empleado + Botón Buscar (al lado derecho) -->
+                        <div class="filtro-busqueda" style="margin-top: 15px; display: flex; align-items: end; gap: 10px;">
+                            <div class="campo" style="flex: 1;">
+                                <label for="buscarEmpleadoInput">Buscar Empleado</label>
+                                <input type="text" id="buscarEmpleadoInput" class="form-control shadow-sm" placeholder="Escriba aquí..." style="text-align: left;" />
+                            </div>
+                            <div class="campo" style="align-self: end;">
+                                <button id="btnBuscarFiltro">Buscar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CAMPOS PARA AGREGAR VACACIÓN (arriba de la tabla) -->
+                    <!-- CAMPOS PARA AGREGAR VACACIÓN (dos filas) -->
+                    <!-- CAMPOS PARA AGREGAR VACACIÓN (dos filas, alineados perfectamente) -->
+                    <!-- CAMPOS PARA AGREGAR VACACIÓN (dos filas, alineados perfectamente) -->
+                    <div class="@claseVisualDisabled">
+                        <!-- Fila 1: Empleado y Días -->
+                        <div class="campos-centrados" style="margin-bottom: 10px !important;">
+                            <div class="campo" style="flex: 0 0 250px;">
+                                <label for="empleadoSelect">Empleado</label>
+                                <select id="empleadoSelect" class="form-control shadow-sm">
+                                    <option value="">Seleccione Empleado</option>
+                                    @if (ViewBag.Empleados != null)
+                                    {
+                                        foreach (var empleado in ViewBag.Empleados)
+                                        {
+                                            <option value="@empleado.Idusuario">@empleado.NombreCompleto</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="campo" style="flex: 0 0 150px; max-width: 150px;">
+                                <label for="diasInput">Días Solicitados</label>
+                                <input type="number" id="diasInput" class="form-control shadow-sm" min="1" max="60" value="15" />
+                            </div>
+                        </div>
+                        <!-- Fila 2: Fecha Inicio y Fecha Fin -->
+                        <div class="campos-centrados" style="margin-top: 15px; margin-bottom: 10px !important;">
+                            <div class="campo" style="flex: 0 0 200px; max-width: 200px;">
+                                <label for="fechaInicioInput">Fecha Inicio</label>
+                                <input type="date" id="fechaInicioInput" class="form-control shadow-sm" />
+                            </div>
+                            <div class="campo" style="flex: 0 0 200px; max-width: 200px;">
+                                <label for="fechaFinInput">Fecha Fin</label>
+                                <input type="date" id="fechaFinInput" class="form-control shadow-sm" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla y botones -->
+                    <div class="contenedor-tablas-botones mt-3">
+                        <div class="table-wrapper">
+                            <div class="tabla-encabezado">REGISTROS DE VACACIONES</div>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover align-middle tabla-congelada" id="tablaVacaciones">
+                                    <thead class="table-primary">
+                                        <tr>
+                                            <th>Empleado</th>
+                                            <th>Días</th>
+                                            <th>Inicio</th>
+                                            <th>Fin</th>
+                                            <th>Días Favor</th>
+                                            <th><input type="checkbox" id="checkAll" class="form-check-input" /></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var v in Model)
+                                        {
+
+                                            <tr data-vacacion-id="@v.IdVacaciones">
+                                                <td>@(v.NombreEmpleadoRegistrado ?? "Sin nombre")</td>
+                                                <td class="text-center">@v.DiasVacaciones</td>
+                                                <td class="text-center">@v.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                                <td class="text-center">@v.FechaFin.ToString("dd/MM/yyyy")</td>
+                                                <td class="text-center">
+                                                    @Math.Abs(v.DiasFavor)
+                                                </td>
+                                                <td><input type="checkbox" class="form-check-input fila-check" /></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="botones-laterales @claseVisualDisabled">
+                            <button id="btnAgregar">Agregar</button>
+                            <button id="btnGuardar">Guardar</button>
+                            <button id="btnNuevoRegistro">Nuevo Registro</button>
+                            <button id="btnEliminar">Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <!-- jQuery PRIMERO (OBLIGATORIO para DateRangePicker) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Moment.js -->
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/locale/es.js"></script>
+
+    <!-- DateRangePicker -->
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+    <!-- SweetAlert y ExcelJS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+    <script>
+        // === CONFIGURACIÓN DEL CALENDARIO (RANGO DE FECHAS) ===
+        $('#btnAbrirCalendario').daterangepicker({
+            autoUpdateInput: false,
+            locale: {
+                format: 'DD/MM/YYYY',
+                applyLabel: 'Aplicar',
+                cancelLabel: 'Limpiar',
+                daysOfWeek: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'],
+                monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+            }
+        });
+        // Al seleccionar las fechas
+        $('#btnAbrirCalendario').on('apply.daterangepicker', function(ev, picker) {
+            $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+        });
+        // Al cancelar/limpiar
+        $('#btnAbrirCalendario').on('cancel.daterangepicker', function(ev, picker) {
+            $(this).text('dd/mm/yyyy - dd/mm/yyyy');
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+            const TABLA_ID = "tablaVacaciones";
+            const MIN_FILAS_VISIBLE = 5;
+            // === MANTENER 5 FILAS VISIBLES ===
+            function agregarFilasVacias() {
+                const tbody = document.querySelector(`#${TABLA_ID} tbody`);
+                if (!tbody) return;
+                const filasVacias = tbody.querySelectorAll('tr:not([data-vacacion-id])');
+                filasVacias.forEach(f => f.remove());
+                const filasConDatos = tbody.querySelectorAll(`tr[data-vacacion-id]`).length;
+                const filasNecesarias = MIN_FILAS_VISIBLE - filasConDatos;
+                if (filasNecesarias > 0) {
+                    for (let i = 0; i < filasNecesarias; i++) {
+                        const filaVacia = document.createElement('tr');
+                        filaVacia.innerHTML = `
+                            <td>&nbsp;</td>
+                            <td class="text-center">&nbsp;</td>
+                            <td class="text-center">&nbsp;</td>
+                            <td class="text-center">&nbsp;</td>
+                            <td class="text-center">&nbsp;</td>
+                            <td><input type="checkbox" class="form-check-input fila-check" disabled /></td>
+                        `;
+                        tbody.appendChild(filaVacia);
+                    }
+                }
+            }
+            // Ejecutar al cargar
+            agregarFilasVacias();
+
+
+
+
+               document.getElementById('btnBuscarFiltro').addEventListener('click', async function () {
+            const nombre = document.getElementById('buscarEmpleadoInput').value.trim();
+            const rangoBtn = document.getElementById('btnAbrirCalendario');
+            const rangoTexto = rangoBtn.textContent.trim();
+
+            let fechaDesde = '';
+            let fechaHasta = '';
+            if (rangoTexto !== 'dd/mm/yyyy - dd/mm/yyyy') {
+                const [desde, hasta] = rangoTexto.split(' - ');
+                fechaDesde = desde.split('/').reverse().join('-');
+                fechaHasta = hasta.split('/').reverse().join('-');
+            }
+
+            // === DETECTAR SI REALMENTE HAY UN FILTRO ACTIVO ===
+            const hayNombre = nombre !== '';
+            const hayRango = fechaDesde !== '' && fechaHasta !== '';
+            const hayAlgunFiltro = hayNombre || hayRango;
+
+            try {
+                let url = '/Vacaciones/BuscarVacaciones?';
+                if (nombre) url += `nombreEmpleado=${encodeURIComponent(nombre)}&`;
+                if (fechaDesde) url += `fechaDesde=${encodeURIComponent(fechaDesde)}&`;
+                if (fechaHasta) url += `fechaHasta=${encodeURIComponent(fechaHasta)}`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                const tbody = document.querySelector('#tablaVacaciones tbody');
+                tbody.innerHTML = '';
+                data.forEach(v => {
+                    const fila = document.createElement('tr');
+                    fila.setAttribute('data-vacacion-id', v.idVacaciones);
+                    fila.innerHTML = `
+                        <td>${v.nombreEmpleado || ''}</td>
+                        <td class="text-center">${v.diasVacaciones}</td>
+                        <td class="text-center">${v.fechaInicio}</td>
+                        <td class="text-center">${v.fechaFin}</td>
+                        <td class="text-center">${v.diasFavor}</td>
+                        <td><input type="checkbox" class="form-check-input fila-check" /></td>
+                    `;
+                    tbody.appendChild(fila);
+                });
+                agregarFilasVacias();
+
+                // === MOSTRAR MENSAJE SOLO SI HUBO FILTRO ACTIVO ===
+                if (hayAlgunFiltro) {
+                    if (data.length > 0) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Búsqueda exitosa',
+                            text: `Se encontraron ${data.length} registro${data.length === 1 ? '' : 's'}.`,
+                            timer: 2500,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Sin resultados',
+                            text: 'No se encontraron vacaciones con esos filtros.',
+                            confirmButtonText: 'Entendido',
+                            confirmButtonColor: '#007bff'
+                        });
+                    }
+                }
+                // Si no hay filtro activo → no muestra nada
+            } catch (err) {
+                console.error(err);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'No se pudo realizar la búsqueda.',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+                });
+            }
+        });
+
+
+
+
+
+            // === BOTÓN AGREGAR (Versión Corregida) ===
+                    document.getElementById('btnAgregar').addEventListener('click', async function () {
+            const elEmpleado = document.getElementById('empleadoSelect');
+            const elDias = document.getElementById('diasInput');
+            const elInicio = document.getElementById('fechaInicioInput');
+            const elFin = document.getElementById('fechaFinInput');
+            const empleadoId = elEmpleado.value;
+            const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.text.trim() || '';
+            const diasVal = parseInt(elDias.value) || 0;
+            const inicioVal = elInicio.value;
+            const finVal = elFin.value;
+
+            if (!empleadoId || !inicioVal || !finVal) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Debe seleccionar un empleado y las fechas de inicio/fin',
+                    icon: 'error',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+                });
+                return;
+            }
+            if (new Date(finVal) < new Date(inicioVal)) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'La fecha fin no puede ser anterior al inicio',
+                    icon: 'error',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+                });
+                return;
+            }
+
+            const datos = {
+                Idusuario: parseInt(empleadoId),
+                DiasVacaciones: diasVal,
+                FechaInicio: inicioVal,
+                FechaFin: finVal,
+                NombreEmpleadoFrontend: empleadoNombre
+            };
+
+            try {
+                const response = await fetch('/Vacaciones/ApiCreate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    const tbody = document.querySelector(`#tablaVacaciones tbody`);
+                    const dReales = (new Date(finVal) - new Date(inicioVal)) / (1000 * 60 * 60 * 24) + 1;
+                    const dFavor = Math.abs(diasVal - dReales);
+                    const nuevaFila = `
+                        <tr data-vacacion-id="${result.id}">
+                            <td>${empleadoNombre}</td>
+                            <td class="text-center">${diasVal}</td>
+                            <td class="text-center">${inicioVal.split('-').reverse().join('/')}</td>
+                            <td class="text-center">${finVal.split('-').reverse().join('/')}</td>
+                            <td class="text-center">${dFavor}</td>
+                            <td><input type="checkbox" class="form-check-input fila-check" /></td>
+                        </tr>`;
+                    tbody.insertAdjacentHTML('afterbegin', nuevaFila);
+                    // Limpiar campos
+                    elEmpleado.value = '';
+                    elInicio.value = '';
+                    elFin.value = '';
+                    elDias.value = '15';
+                    // === SIN MENSAJE DE ÉXITO ===
+                    // Registro guardado silenciosamente
+                    if (typeof agregarFilasVacias === 'function') agregarFilasVacias();
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: result.message || 'Error al guardar',
+                        icon: 'error',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
+                    });
+                }
+            } catch (err) {
+                console.error("Error en Fetch:", err);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'No se pudo conectar con el servidor',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+                });
+            }
+        });
+
+
+
+            // === BOTÓN NUEVO REGISTRO (limpia todo) ===
+            document.getElementById('btnNuevoRegistro').addEventListener('click', function () {
+                const tbody = document.querySelector(`#${TABLA_ID} tbody`);
+                tbody.innerHTML = '';
+                agregarFilasVacias();
+                        Swal.fire({
+            icon: 'success',
+            title: 'Tabla limpiada',
+            text: 'Puede comenzar un nuevo registro.',
+            timer: 2500,
+            showConfirmButton: false
+        });
+            
+            // === BOTÓN ELIMINAR MÚLTIPLE ===
+            document.getElementById('btnEliminar').addEventListener('click', async function () {
+                const checkboxes = document.querySelectorAll(`#${TABLA_ID} .fila-check:checked`);
+                if (checkboxes.length === 0) {
+                    Swal.fire({
+                        title: 'Atención',
+                        text: 'Debe seleccionar al menos un registro para eliminar.',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
+                    });
+                    return;
+                }
+                const result = await Swal.fire({
+                    title: 'Confirmar eliminación',
+                    text: `Se eliminarán ${checkboxes.length} registro(s) de vacaciones.`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#007bff',
+                    cancelButtonColor: '#007bff'
+                });
+                if (!result.isConfirmed) return;
+                let eliminados = 0;
+                for (const chk of checkboxes) {
+                    const tr = chk.closest('tr');
+                    const id = tr.getAttribute('data-vacacion-id');
+                    if (id && parseInt(id) > 0) {
+                        try {
+                            const resp = await fetch(`/Vacaciones/EliminarVacacion?id=${id}`, { method: 'DELETE' });
+                            const data = await resp.json();
+                            if (data.success) {
+                                tr.remove();
+                                eliminados++;
+                            }
+                        } catch (err) {
+                            console.error(err);
+                        }
+                    } else {
+                        tr.remove();
+                        eliminados++;
+                    }
+                }
+                agregarFilasVacias();
+                Swal.fire({
+                    title: '¡Eliminado!',
+                    text: `${eliminados} registro(s) eliminados correctamente.`,
+                    icon: 'success',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+                });
+            });
+            // === BOTÓN GUARDAR → EXPORTAR A EXCEL ===
+            document.getElementById('btnGuardar').addEventListener('click', async function () {
+                const filas = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id]:not([data-vacacion-id='0'])`);
+                if (filas.length === 0) {
+                    Swal.fire({
+                        title: 'Sin datos',
+                        text: 'No hay registros para exportar.',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
+                    });
+                    return;
+                }
+                const datos = [];
+                filas.forEach(f => {
+                    const celdas = f.querySelectorAll('td');
+                    datos.push([
+                        celdas[0].innerText.trim(), // Empleado
+                        celdas[1].innerText.trim(), // Días
+                        celdas[2].innerText.trim(), // Inicio
+                        celdas[3].innerText.trim(), // Fin
+                        celdas[4].innerText.trim() // Días Favor
+                    ]);
+                });
+                const now = new Date();
+                const datePart = now.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
+                const timePart = now.getHours().toString().padStart(2, '0') + '∶' + now.getMinutes().toString().padStart(2, '0');
+                const fileName = `Registro Vacaciones ${datePart} ${timePart}.xlsx`;
+                const workbook = new ExcelJS.Workbook();
+                const sheet = workbook.addWorksheet('VACACIONES');
+                // Título
+                sheet.addRow(['REGISTRO DE VACACIONES']);
+                sheet.mergeCells('A1:E1');
+                const titleCell = sheet.getCell('A1');
+                titleCell.font = { size: 14, bold: true };
+                titleCell.alignment = { horizontal: 'center' };
+                // Encabezados
+                const headers = ['EMPLEADO', 'DÍAS', 'INICIO', 'FIN', 'DÍAS FAVOR'];
+                sheet.addRow(headers);
+                const headerRow = sheet.lastRow;
+                headerRow.eachCell(cell => {
+                    cell.font = { bold: true, color: { argb: 'FF000000' } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC080' } };
+                    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+                });
+                // Datos
+                datos.forEach((row, i) => {
+                    sheet.addRow(row);
+                    const dataRow = sheet.lastRow;
+                    dataRow.eachCell(cell => {
+                        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: i % 2 === 0 ? 'FFDDEEFF' : 'FFCCFFFF' }
+                        };
+                        cell.border = {
+                            top: { style: 'thin' },
+                            left: { style: 'thin' },
+                            bottom: { style: 'thin' },
+                            right: { style: 'thin' }
+                        };
+                    });
+                });
+                // Anchos de columnas
+                sheet.columns = [
+                    { width: 25 }, { width: 10 }, { width: 15 }, { width: 15 }, { width: 12 }
+                ];
+                // Descarga
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = fileName;
+                link.click();
+            });
+            // === SELECCIÓN DE FILAS Y CHECK ALL ===
+            document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function (e) {
+                const fila = e.target.closest('tr');
+                if (!fila || !fila.hasAttribute('data-vacacion-id')) return;
+                const checkbox = fila.querySelector('.fila-check');
+                if (checkbox) {
+                    if (e.target !== checkbox) checkbox.checked = !checkbox.checked;
+                    fila.classList.toggle('fila-seleccionada', checkbox.checked);
+                }
+                const checkAll = document.getElementById('checkAll');
+                const totalFilas = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id]`).length;
+                const marcadas = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id] .fila-check:checked`).length;
+                checkAll.checked = marcadas > 0 && marcadas === totalFilas;
+            });
+            document.getElementById('checkAll').addEventListener('change', function () {
+                const checked = this.checked;
+                document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id] .fila-check`).forEach(chk => {
+                    chk.checked = checked;
+                    chk.closest('tr').classList.toggle('fila-seleccionada', checked);
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,1032 @@
+﻿@model List<FarmaciaSantaRita.Models.Usuario>
+
+@{
+    ViewData["Title"] = "Gestión de Cuentas de Empleados";
+    var idProveedor = ViewData["IdProveedor"] ?? 0;
+    var idProv = (ViewData["IdProveedor"] ?? Context.Request.Query["idProveedor"].FirstOrDefault() ?? "0").ToString();
+    var nombreProveedor = ViewData["NombreProveedor"] as string ?? ViewData["Title"];
+    var vista = ViewData["vista"] as string;
+    string vistaActual = ViewData["vista"]?.ToString()
+                         ?? Context.Request.Query["vista"].ToString()
+                         ?? Context.Request.Query["vistaOrigen"].ToString()
+                         ?? Context.Request.Query["origen"].ToString()
+                         ?? "ProveedorSecundario";
+}
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+
+
+<style>
+
+    /* 🔹 Cuadro blanco principal */
+
+    .card-principal {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        transition: width 0.3s ease;
+        position: relative;
+    }
+
+
+
+    /* 🔹 Contenedor interior (campos + tablas) */
+
+    .bloque-principal {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: center;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        max-height: 480px;
+        overflow: visible;
+        border-radius: 16px;
+    }
+
+
+
+    /* 🔹 La fila que contiene las dos columnas */
+
+    .card-principal > .row {
+        flex-grow: 1;
+    }
+
+
+
+    /* ---------------------------------------------------- */
+
+    /* AJUSTE DE POSICIÓN Y ALTURA FORZADA DEL PANEL IZQUIERDO */
+
+    /* ---------------------------------------------------- */
+
+
+
+    /* ⭐ CONTENEDOR COLUMNA IZQUIERDA: ALTURA FIJA Y POSICIÓN ⭐ */
+
+    .row > .col-md-2 {
+        margin-top: -115px;
+        height: 420px;
+        display: flex;
+        top: 0;
+        z-index: 10;
+        position: sticky;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center !important;
+        padding-top: 50px;
+    }
+
+
+
+    /* 🔹 Panel izquierdo - Botones */
+
+    .col-md-2 button, .col-md-2 a.btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-weight: 600;
+        min-width: 140px;
+        width: 100%;
+        max-width: 180px;
+        margin-bottom: 10px;
+        text-align: center;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        text-decoration: none;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 40px;
+    }
+
+
+
+        /* ⭐ CAMBIO INTEGRADO: Efecto Hover para botones del panel izquierdo ⭐ */
+
+        .col-md-2 button:hover, .col-md-2 a.btn:hover {
+            background-color: #0056b3 !important;
+            transform: translateY(-3px) !important; /* Salto hacia arriba */
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important; /* Sombra profunda */
+            color: white !important;
+            transition: all 0.3s ease;
+        }
+
+
+
+    /* 🔹 Contenedor del logo */
+
+    #logoContainer {
+        min-width: 140px;
+        width: 100%;
+        max-width: 180px;
+        height: 200px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: transparent;
+        border-radius: 8px;
+        border: none;
+        padding: 5px;
+    }
+
+
+
+    /* 🔹 Imagen del logo dentro del contenedor */
+
+    #farmaciaLogo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+
+
+
+
+    /* ---------------------------------------------------- */
+
+    /* ESTILOS DE GESTIÓN SUPERIOR (BUSCADOR Y BOTONES) */
+
+    /* ---------------------------------------------------- */
+
+
+
+    .encabezado-gestion {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        max-width: 950px; /* Ancho ajustado para la tabla */
+
+        margin-bottom: 25px;
+        gap: 15px;
+        flex-wrap: nowrap;
+    }
+
+
+
+    /* ⭐ Buscador (Nuevo estilo input-group) ⭐ */
+
+    .buscador-input-group {
+        flex-grow: 0;
+        width: 350px;
+        max-width: 350px;
+    }
+
+
+
+    /* ⭐ Estilo del botón de búsqueda (MODIFICADO) ⭐ */
+
+    .btn-buscar-empleado {
+        background-color: transparent;
+        color: #007bff; /* Mantiene el color azul fijo */
+
+        border-color: #ced4da;
+        font-weight: 600;
+        transition: none; /* Quitamos transiciones para evitar efectos al pasar el cursor */
+
+        cursor: default; /* Cambia el cursor a default para que no parezca pulsable */
+
+        pointer-events: none; /* ⭐ NUEVO: Hace que no sea pulsable ⭐ */
+
+        z-index: 10;
+    }
+
+
+
+        .btn-buscar-empleado i {
+            margin-right: 6px;
+        }
+
+
+
+    /* ⭐ ESTILO UNIFORME para los botones de gestión (Eliminar/Restaurar/Volver) ⭐ */
+
+    .botones-gestion {
+        display: flex;
+        gap: 10px;
+        flex-wrap: nowrap;
+    }
+
+
+
+        .botones-gestion button, .botones-gestion a {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-weight: 600;
+            text-align: center;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            min-width: 150px;
+        }
+
+
+
+            /* ⭐ CAMBIO INTEGRADO: Efecto Hover para botones de gestión superior ⭐ */
+
+            .botones-gestion button:hover, .botones-gestion a:hover {
+                background-color: #0056b3 !important;
+                transform: translateY(-3px) !important;
+                box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important;
+                color: white !important;
+                transition: all 0.3s ease;
+            }
+
+
+
+
+
+    /* ---------------------------------------------------- */
+
+    /* ESTILOS DE TABLA (Ajustados para 6 columnas) */
+
+    /* ---------------------------------------------------- */
+
+
+
+    .contenedor-tablas-botones {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        width: 100%;
+        max-width: 950px; /* Ancho ajustado */
+
+        margin: 0 auto;
+        gap: 20px;
+        height: auto;
+    }
+
+
+
+    .table-wrapper {
+        text-align: center;
+        width: 100%; /* Ocupa el 100% del contenedor */
+
+        max-width: 950px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+
+
+
+    .table-responsive {
+        max-width: 100%;
+        width: 100%;
+        height: 220px;
+        overflow-y: auto;
+        overflow-x: auto; /* Permitimos scroll horizontal */
+
+        margin: 0;
+        border: 1px solid #dee2e6;
+    }
+
+
+
+    .table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 850px; /* Ancho mínimo para las 6 columnas */
+
+        table-layout: fixed;
+    }
+
+
+
+        .table td,
+        .table th {
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+            padding: 4px 8px;
+            border: 1px solid #dee2e6;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+
+
+            /* 💡 ASIGNACIÓN DE ANCHOS PARA LAS 6 COLUMNAS SOLICITADAS (ORDEN CORREGIDO) */
+
+            .table th:nth-child(1), .table td:nth-child(1) {
+                width: 17%; /* Nombre */
+            }
+
+
+
+            .table th:nth-child(2), .table td:nth-child(2) {
+                width: 17%; /* Apellido */
+            }
+
+
+
+            .table th:nth-child(3), .table td:nth-child(3) {
+                width: 17%; /* F.Nacimiento */
+            }
+
+
+
+            .table th:nth-child(4), .table td:nth-child(4) {
+                width: 17%; /* Teléfono */
+            }
+
+
+
+            .table th:nth-child(5), .table td:nth-child(5) {
+                width: 27%; /* Dirección */
+            }
+
+
+
+            .table th:nth-child(6), .table td:nth-child(6) {
+                width: 5%; /* Checkbox (Última columna) */
+            }
+
+
+
+
+
+    .tabla-encabezado {
+        font-size: 17px;
+        font-weight: 600;
+        color: #0d6efd;
+        text-align: center;
+        margin-bottom: 6px;
+        border-bottom: 2px solid #0d6efd33;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding-bottom: 2px;
+        width: 100%;
+    }
+
+
+
+    /* ⭐ ESTILO PARA LA FILA SELECCIONADA POR CHECKBOX ⭐ */
+
+    .fila-seleccionada {
+        background-color: #cce5ff !important; /* Rosa suave */
+    }
+
+
+
+    .tabla-congelada thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #0d6efd;
+        color: white;
+    }
+
+
+
+    /* **NUEVO CSS:** Estilos para el indicador de carga */
+
+    .loading-spinner {
+        margin-left: 10px;
+    }
+
+
+
+    /* ---------------------------------------------------- */
+
+    /* **ESTILOS DE MENSAJES TEMPORALES** */
+
+    /* ---------------------------------------------------- */
+
+
+
+    /* Base para el mensaje */
+
+    #mensajeNotificacion {
+        padding: 10px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-align: center;
+        width: 100%;
+        max-width: 950px;
+        opacity: 0;
+        transition: opacity 0.5s ease-out, background-color 0.3s, color 0.3s, border-color 0.3s;
+        display: none;
+    }
+
+
+
+        /* 🔴 ESTILO PARA ERROR */
+
+        #mensajeNotificacion.error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+
+
+
+        /* 🟢 ESTILO PARA ÉXITO (Success) */
+
+        #mensajeNotificacion.success {
+            color: #0c6114; /* Verde oscuro */
+
+            background-color: #d4edda; /* Fondo verde claro */
+
+            border: 1px solid #c3e6cb;
+        }
+
+
+
+    /* 🔹 Responsivo - Ajuste de salto de línea en móvil */
+
+    @@media (max-width: 1100px) {
+
+        .encabezado-gestion {
+            flex-direction: column;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+
+
+        .buscador-input-group {
+            width: 100%;
+            max-width: 450px;
+        }
+
+
+
+        .botones-gestion {
+            justify-content: center;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+
+
+        .contenedor-tablas-botones {
+            max-width: 100%;
+        }
+
+
+
+        .table-wrapper {
+            max-width: 100%;
+        }
+    }
+
+
+
+    .botones-gestion button:focus,
+    .botones-gestion a:focus {
+        outline: 3px solid #66afe9 !important; /* Contorno azul */
+        outline-offset: 2px;
+    }
+
+
+    .col-md-2 button:active,
+    .col-md-2 a.btn:active,
+    .botones-gestion button:active,
+    .botones-gestion a:active {
+        transform: translateY(0) !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        transition: all 0.1s ease;
+    }
+</style>
+
+
+
+
+
+<div class="container mt-5">
+
+    <div class="card shadow-lg p-4 card-principal">
+
+        <h2 class="text-center mb-4 fw-bold text-primary" translate="no">PAPELERA DE RECICLAJE</h2>
+
+
+
+        <div class="row">
+
+            <div class="col-md-2 d-flex flex-column align-items-start">
+
+                <div id="logoContainer">
+
+                    <img src="/images/file_0000000079e461fd8636559665695d530001.png" alt="Logo Farmacia Santa Rita" id="farmaciaLogo" />
+
+                </div>
+
+
+
+                <a href="/Actualizar/ActualizarCuenta?idProveedor=@idProv&vista=@vistaActual"
+                   class="btn btn-primary" translate="no">Cuenta</a>
+
+                <a asp-action="IngresarProveedor"
+                   asp-controller="Proveedores"
+                   asp-route-idProveedorSeleccionado="@idProv"
+                   asp-route-vista="@vistaActual"
+                   class="btn btn-primary">Boletas</a>
+
+                <a href="/CuentaCliente/Index?idProveedor=@idProv&vistaOrigen=@vistaActual"
+                   class="btn btn-primary">Cuentas de Clientes</a>
+
+                <a asp-action="Inasistencia"
+                   asp-controller="Proveedores"
+                   asp-route-origen="@vistaActual"
+                   asp-route-idProveedor="@idProv"
+                   class="btn btn-primary">
+                    Inasistencia
+                </a>
+
+                <a href="/Vacaciones?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary">Vacaciones</a>
+
+                <a href="/Proveedores/Index" class="btn btn-primary" translate="no">Volver</a>
+
+            </div>
+
+
+
+            <div class="col-md-10 d-flex justify-content-center">
+
+                <div class="bloque-principal">
+
+
+
+                    <div class="encabezado-gestion">
+
+
+
+                        <div class="input-group buscador-input-group">
+
+                            <input type="text" class="form-control" id="buscador" placeholder="Buscar empleado" />
+
+                            @* El botón tiene el ID 'btnBuscar' para poder usar su evento 'input' en JavaScript, pero se anula el click. *@
+
+                            <button class="btn btn-outline-secondary btn-buscar-empleado" type="button" id="btnBuscar">
+
+                                <i class="bi bi-search"></i> Buscar
+
+                            </button>
+
+                        </div>
+
+
+
+                        <div class="botones-gestion">
+
+                            <button id="btnEliminarCuentas" translate="no">
+
+                                Eliminar Cuenta
+
+                                <span id="loadingSpinner" class="spinner-border spinner-border-sm loading-spinner" role="status" aria-hidden="true" style="display: none;"></span>
+
+                            </button>
+
+                            <button id="btnRestaurarCuentas" translate="no">
+                                Restaurar Cuenta
+                            </button>
+
+                            <a asp-action="Gestionar"
+                               asp-controller="CuentaEmpleado"
+                               asp-route-idProveedor="@idProveedor"
+                               asp-route-vista="@vista"
+                               class="btn btn-primary" translate="no">Volver a Gestion</a>
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="contenedor-tablas-botones mt-3">
+
+
+
+                        @* ⭐ LUGAR DONDE APARECE EL MENSAJE DE NOTIFICACIÓN ⭐ *@
+
+                        <div id="mensajeNotificacion"></div>
+
+
+
+                        @* TABLA PRINCIPAL: REGISTRO DE EMPLEADOS *@
+
+                        <div class="table-wrapper">
+
+                            <div class="tabla-encabezado">Cuentas Inactivas</div>
+
+                            <div class="table-responsive">
+
+                                <table class="table table-bordered table-hover align-middle tabla-congelada" id="tablaRegistro">
+
+                                    <thead class="table-primary">
+
+                                        <tr>
+
+                                            <th translate="no">Nombre</th>
+
+                                            <th translate="no">Apellido </th>
+
+                                            <th translate="no">F.Nacimiento </th>
+
+                                            <th translate="no">Teléfono </th>
+
+                                            <th translate="no">Dirección</th>
+
+                                            <th style="text-align: center;"><input type="checkbox" id="selectAllCheckbox" /></th> @* ⬅️ Checkbox para Seleccionar Todo *@
+                                        </tr>
+
+                                    </thead>
+
+                                    <tbody id="tablaCuerpo">
+
+                                        @if (Model != null && Model.Any())
+
+                                        {
+
+                                            @foreach (var empleado in Model)
+
+                                            {
+
+                                                <tr data-id="@empleado.Idusuario" class="empleado-fila">
+
+                                                    <td class="col-nombre">@empleado.Nombre</td>
+
+                                                    <td class="col-apellido">@empleado.Apellido</td>
+
+                                                    <td>@(empleado.FechaNacimiento.ToString("dd/MM/yyyy"))</td>
+
+                                                    <td>@empleado.Telefono</td>
+
+                                                    <td>@empleado.Direccion</td>
+
+                                                    <td>
+
+                                                        @* ⬅️ Columna de Checkbox al final *@
+
+                                                        <input type="checkbox" class="select-empleado" value="@empleado.Idusuario" />
+
+                                                    </td>
+
+                                                </tr>
+
+                                            }
+
+                                        }
+
+                                        else
+
+                                        {
+
+                                            <tr>
+
+                                                <td colspan="6" class="text-center text-muted">No hay cuentas de empleados registradas</td>
+
+                                            </tr>
+
+                                        }
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> @* ⭐ IMPORTANTE: Añadir SweetAlert2 (si no está ya globalmente) ⭐ *@
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Elementos de la tabla y botones
+            const tablaRegistro = document.getElementById("tablaRegistro");
+            const tablaCuerpo = document.getElementById("tablaCuerpo");
+            const buscadorInput = document.getElementById("buscador");
+            const btnEliminarCuentas = document.getElementById("btnEliminarCuentas");
+            const btnRestaurarCuentas = document.getElementById("btnRestaurarCuentas");
+
+            // ⭐ NUEVO: Checkbox de "Seleccionar Todo"
+            const selectAllCheckbox = document.getElementById("selectAllCheckbox");
+
+            // Variables de Razor (mantenidas)
+            const idProveedor = @Html.Raw(ViewData["IdProveedor"] ?? 0);
+            const vista = "@(ViewData["vista"] as string ?? "")";
+
+            // Elemento de Spinner de Carga
+            const loadingSpinner = document.getElementById("loadingSpinner");
+
+            // La función de mensajes simple `mostrarAdvertencia` ya no es necesaria
+            // porque usaremos los modales de SweetAlert2 (Swal.fire).
+
+            // ----------------------------------------------------
+            // ⭐ LÓGICA DE SELECCIÓN GENERAL (Seleccionar Todo)
+            // ----------------------------------------------------
+
+            function actualizarSelectAllState() {
+                if (!selectAllCheckbox) return;
+
+                // Solo consideramos las filas visibles para decidir si el "Select All" debe estar marcado
+                const visibleRows = Array.from(tablaCuerpo.querySelectorAll('.empleado-fila'))
+                                       .filter(row => row.style.display !== 'none');
+
+                const totalCheckboxes = visibleRows.length;
+                if (totalCheckboxes === 0) {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = false;
+                    return;
+                }
+
+                const checkedCheckboxes = visibleRows.filter(row => row.querySelector('.select-empleado:checked'));
+
+                if (checkedCheckboxes.length === totalCheckboxes) {
+                    selectAllCheckbox.checked = true;
+                    selectAllCheckbox.indeterminate = false;
+                } else if (checkedCheckboxes.length > 0) {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = true;
+                } else {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = false;
+                }
+            }
+
+            // Evento para el checkbox de cabecera
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function () {
+                    const isChecked = this.checked;
+                    // Solo iteramos sobre las filas visibles
+                    const visibleRows = Array.from(tablaCuerpo.querySelectorAll('.empleado-fila'))
+                                            .filter(row => row.style.display !== 'none');
+
+                    visibleRows.forEach(row => {
+                        const cb = row.querySelector('.select-empleado');
+                        if (cb) {
+                            cb.checked = isChecked;
+                            row.classList.toggle('fila-seleccionada', isChecked);
+                        }
+                    });
+                });
+            }
+
+            // Filtrado (actualiza el estado de SelectAll al filtrar)
+            function filtrarTabla() {
+                const termino = buscadorInput.value.trim().toLowerCase();
+                const filas = tablaCuerpo.querySelectorAll('.empleado-fila');
+
+                filas.forEach(fila => {
+                    const nombre = fila.querySelector('.col-nombre').textContent.trim().toLowerCase();
+                    const apellido = fila.querySelector('.col-apellido').textContent.trim().toLowerCase();
+                    const nombreCompleto = `${nombre} ${apellido}`;
+
+                    const debeMostrar =
+                        termino === "" ||
+                        nombre.includes(termino) ||
+                        apellido.includes(termino) ||
+                        nombreCompleto.includes(termino);
+
+                    fila.style.display = debeMostrar ? '' : 'none';
+                });
+
+                actualizarSelectAllState();
+            }
+
+            if (buscadorInput) {
+                buscadorInput.addEventListener('input', filtrarTabla);
+            }
+
+            // Marcar fila al seleccionar checkbox individual (actualiza el estado de SelectAll)
+            if (tablaRegistro) {
+                tablaRegistro.addEventListener('change', function (e) {
+                    if (e.target.classList.contains('select-empleado')) {
+                        const fila = e.target.closest('.empleado-fila');
+                        fila.classList.toggle('fila-seleccionada', e.target.checked);
+                        actualizarSelectAllState();
+                    }
+                });
+            }
+
+            // Función común para eliminar filas de la tabla (y actualizar tabla vacía)
+            function eliminarFilas(idsAfectados) {
+                idsAfectados.forEach(id => {
+                    const fila = document.querySelector(`.empleado-fila[data-id="${id}"]`);
+                    if (fila) fila.remove();
+                });
+
+                if (tablaCuerpo.querySelectorAll('.empleado-fila').length === 0) {
+                    tablaCuerpo.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No hay cuentas de empleados registradas</td></tr>`;
+                }
+            }
+
+
+            // =========================================================
+            // ⭐ LÓGICA DE ELIMINAR CUENTAS PERMANENTEMENTE (CON SWEETALERT2)
+            // =========================================================
+            if (btnEliminarCuentas) {
+                btnEliminarCuentas.addEventListener('click', async function () {
+                    const checkboxesSeleccionados =
+                        Array.from(document.querySelectorAll('.select-empleado:checked'));
+                    const idsAEliminar = checkboxesSeleccionados.map(cb => parseInt(cb.value));
+
+                    if (idsAEliminar.length === 0) {
+                        await Swal.fire({
+                            title: '¡Atención!',
+                            text: 'Selecciona al menos una cuenta de empleado para eliminar permanentemente.',
+                            confirmButtonText: 'Entendido',
+                            confirmButtonColor: '#007bff'
+                        });
+                        return;
+                    }
+
+                    // 1. Modal de Confirmación
+                    const resultadoConfirmacion = await Swal.fire({
+                        title: 'Eliminación PERMANENTE',
+                        html: `¿Está seguro de eliminar permanentemente ${idsAEliminar.length} cuenta(s) seleccionada(s)?<br>`,
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, Eliminar Permanentemente',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#007bff',
+                        cancelButtonColor: '#007bff'
+                    });
+
+                    if (!resultadoConfirmacion.isConfirmed) {
+                        return;
+                    }
+
+                    // 2. Proceso de Eliminación AJAX
+                    btnEliminarCuentas.disabled = true;
+                    if (loadingSpinner) loadingSpinner.style.display = 'inline-block';
+
+                    const data = { idsUsuarios: idsAEliminar };
+
+                    try {
+                        const response = await fetch('/RestCuentaEmpleado/EliminarPermanentementeCuentas', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(data)
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok && result.success) {
+                            // Éxito
+                            eliminarFilas(idsAEliminar);
+                            actualizarSelectAllState();
+
+                            await Swal.fire({
+                                icon: 'success',
+                                title: '¡Eliminación Exitosa!',
+                                html: result.message || 'La(s) cuenta(s) han sido eliminada(s) permanentemente.',
+                                confirmButtonText: 'Entendido',
+                                confirmButtonColor: '#007bff'
+                            });
+
+                        } else {
+                            // Error
+                            await Swal.fire({
+                                icon: 'error',
+                                title: 'Error al Eliminar',
+                                text: result.message || 'Ocurrió un error desconocido al intentar la eliminación permanente.',
+                                confirmButtonText: 'Entendido',
+                                confirmButtonColor: '#007bff'
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error al realizar la solicitud de eliminación:', error);
+                        await Swal.fire({
+                            title: 'Error de Conexión',
+                            text: 'No se pudo completar la solicitud. Verifique su conexión de red.',
+                            confirmButtonText: 'Entendido',
+                            confirmButtonColor: '#007bff'
+                        });
+                    } finally {
+                        btnEliminarCuentas.disabled = false;
+                        if (loadingSpinner) loadingSpinner.style.display = 'none';
+                        btnEliminarCuentas.blur();
+                    }
+                });
+            }
+
+            // =========================================================
+            // ⭐ LÓGICA DE RESTAURAR CUENTAS (CON SWEETALERT2)
+            // =========================================================
+            if (btnRestaurarCuentas) {
+                btnRestaurarCuentas.addEventListener('click', async function () {
+                    const checkboxesSeleccionados =
+                        Array.from(document.querySelectorAll('.select-empleado:checked'));
+                    const idsARestaurar = checkboxesSeleccionados.map(cb => parseInt(cb.value));
+
+                    if (idsARestaurar.length === 0) {
+                        await Swal.fire({
+                            title: '¡Atención!',
+                            text: 'Selecciona al menos una cuenta para restaurar.',
+                            confirmButtonText: 'Entendido',
+                            confirmButtonColor: '#007bff'
+                        });
+                        return;
+                    }
+
+                    // 1. Modal de Confirmación
+                    const resultadoConfirmacion = await Swal.fire({
+                        title: 'Restauración',
+                        html: `¿Está seguro de que desea restaurar ${idsARestaurar.length} cuenta(s) seleccionada(s)?<br>`,
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, Restaurar',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#007bff',
+                        cancelButtonColor: '#007bff'
+                    });
+
+                    if (!resultadoConfirmacion.isConfirmed) {
+                        return;
+                    }
+
+                    // 2. Proceso de Restauración AJAX
+                    btnRestaurarCuentas.disabled = true;
+                    // Opcional: Mostrar spinner si tienes uno en este botón
+
+                    const data = { idsUsuarios: idsARestaurar };
+
+                    try {
+                        const response = await fetch('/RestCuentaEmpleado/RestaurarCuentas', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(data)
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok && result.success) {
+                            // Éxito
+                            eliminarFilas(idsARestaurar); // Las quitamos de esta tabla (Papelera)
+                            actualizarSelectAllState();
+
+                            await Swal.fire({
+                                icon: 'success',
+                                title: '¡Cuentas Restauradas!',
+                                text: result.message || 'La(s) cuenta(s) han sido restaurada(s)',
+                                confirmButtonText: 'Entendido',
+                                confirmButtonColor: '#007bff'
+                            });
+
+                        } else {
+                            // Error
+                            await Swal.fire({
+                                title: 'Error al Restaurar',
+                                text: result.message || 'Ocurrió un error desconocido al intentar restaurar las cuentas.',
+                                confirmButtonText: 'Entendido',
+                                confirmButtonColor: '#007bff'
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error al realizar la restauración:', error);
+                        await Swal.fire({
+                            title: 'Error de Conexión',
+                            text: 'No se pudo completar la solicitud. Verifique su conexión de red.',
+                            confirmButtonText: 'Entendido',
+                            confirmButtonColor: '#007bff'
+                        });
+                    } finally {
+                        btnRestaurarCuentas.disabled = false;
+                        btnRestaurarCuentas.blur();
+                    }
+                });
+            }
+
+            // Inicializar el estado de Select All al cargar la página
+            actualizarSelectAllState();
+
+        });
+    </script>
+}

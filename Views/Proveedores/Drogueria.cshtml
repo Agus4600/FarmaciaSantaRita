@@ -1,0 +1,987 @@
+﻿@{
+    var currentIdProveedor = ViewData["IdProveedor"] ?? Context.Request.Query["idProveedor"].ToString() ?? "0";
+    var currentVista = ViewData["vista"] ?? Context.Request.Query["vistaOrigen"].ToString() ?? "";
+    var idProveedor = ViewData["IdProveedor"];
+    var nombreProveedor = ViewData["NombreProveedor"] as string;
+    ViewData["Title"] = nombreProveedor; // Establece el título de la página
+
+    var nombreUsuario = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+    ViewData["NombreUsuario"] = nombreUsuario;
+    var vista = ViewData["vista"] as string;
+    var origen = Context.Request.Query["vistaOrigen"];
+}
+
+
+
+<style>
+    /* ---------------------------------------------------- */
+    /* ESTILOS DE VISTA NORMAL (SIN CAMBIOS GRANDES)        */
+    /* ---------------------------------------------------- */
+
+    /* 🔹 Cuadro blanco principal */
+    .card-principal {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        transition: width 0.3s ease;
+        position: relative;
+        border-radius: 16px;
+    }
+
+    /* 🔹 Contenedor interior (campos + tablas) */
+    .bloque-principal {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: center;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        max-height: 480px;
+        overflow: visible;
+    }
+
+    /* 🔹 La fila que contiene las dos columnas - Eliminamos las propiedades de estiramiento */
+    .card-principal > .row {
+        flex-grow: 1;
+    }
+
+    .row > .col-md-2 {
+        margin-top: -115px;
+        height: 420px;
+        display: flex;
+        top: 0;
+        z-index: 10;
+        position: sticky;
+        flex-direction: column;
+        justify-content: flex-start; /* Mantiene los botones agrupados arriba */
+        align-items: center !important; /* Centra horizontalmente */
+        padding-top: 50px; /* Ajuste visual desde arriba */
+    }
+
+    .col-md-2 button, .col-md-2 a.btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-weight: 600;
+        min-width: 140px;
+        width: 100%;
+        max-width: 180px;
+        margin-bottom: 10px;
+        text-align: center;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        text-decoration: none;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 40px;
+    }
+
+
+    /* 🔹 Contenedor del logo */
+    #logoContainer {
+        min-width: 140px;
+        width: 100%;
+        max-width: 180px;
+        height: 200px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: transparent;
+        border-radius: 8px;
+        border: none;
+        padding: 5px;
+    }
+
+    /* 🔹 Imagen del logo dentro del contenedor */
+    #farmaciaLogo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    /* ... (El resto de estilos de Groupbox, Campos, Tablas y Responsivo) ... */
+
+    /* 🔹 Groupbox */
+    .groupbox {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border: 1px solid #0d6efd;
+        border-radius: 8px;
+        padding: 8px 14px 10px 14px;
+        background-color: #fff;
+        min-width: 180px;
+        transition: all 0.2s ease;
+    }
+
+        .groupbox legend {
+            font-size: 15px;
+            font-weight: 600;
+            color: #0d6efd;
+            width: auto;
+            padding: 0 6px;
+        }
+
+    .campo {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+        .campo label {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        /* 🔹 Campos responsivos */
+        .campo input {
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            text-align: right;
+            box-sizing: border-box;
+            min-width: 100px;
+            transition: all 0.2s ease;
+        }
+
+    /* 🔹 Campo FECHA responsivo */
+    #fecha {
+        width: 100%;
+        min-width: 120px;
+        max-width: 180px;
+        text-align: center;
+    }
+
+    /* 🔹 Campo IMPORTE FINAL ajustado */
+    #importeFinal {
+        width: 100%;
+        min-width: 130px;
+        max-width: 160px;
+        text-align: right;
+    }
+
+    .campos-centrados {
+        display: flex;
+        justify-content: flex-start;
+        align-items: flex-end;
+        width: 100%;
+        gap: 25px;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+
+    /* 🔹 Contenedor largo: tablas + botones */
+    .contenedor-tablas-botones {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: stretch;
+        width: 100%;
+        max-width: 1100px;
+        margin: 0 auto;
+        gap: 35px;
+        flex-wrap: nowrap;
+        height: 220px;
+    }
+
+    /* 🔹 Tablas */
+    .table-wrapper {
+        text-align: center;
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+
+    .table-responsive {
+        max-width: 360px;
+        height: 180px; /* Altura que obliga al scroll */
+        overflow-y: auto; /* Permite el scroll vertical */
+        overflow-x: hidden;
+        margin: 0 auto;
+        border: 1px solid #dee2e6;
+    }
+
+    .table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 340px;
+        table-layout: fixed;
+    }
+
+        .table td,
+        .table th {
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+            padding: 4px 8px;
+            border: 1px solid #dee2e6;
+            overflow: hidden;
+            overflow: visible;
+            text-overflow: unset;
+            text-overflow: ellipsis;
+        }
+
+            .table th:nth-child(1), .table td:nth-child(1) {
+                width: 35%;
+            }
+
+            .table th:nth-child(2), .table td:nth-child(2) {
+                width: 30%;
+            }
+
+            .table th:nth-child(3), .table td:nth-child(3) {
+                width: 25%;
+            }
+
+            .table th:nth-child(4), .table td:nth-child(4) {
+                width: 10%;
+            }
+
+    .tabla-encabezado {
+        font-size: 17px;
+        font-weight: 600;
+        color: #0d6efd;
+        text-align: center;
+        margin-bottom: 6px;
+        border-bottom: 2px solid #0d6efd33;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* 🔹 Fila seleccionada */
+    .fila-seleccionada {
+        background-color: #cce5ff !important;
+    }
+
+    /* 🔹 Botones lado derecho */
+    .botones-laterales {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 10px;
+        height: 100%;
+    }
+
+        .botones-laterales button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 140px;
+            height: 40px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+            .botones-laterales button:hover {
+                background-color: #0056b3;
+                transform: translateY(-2px);
+            }
+
+    /* 🔹 Campos con error */
+    .is-invalid {
+        border-color: red !important;
+        box-shadow: 0 0 5px red !important;
+    }
+
+    /* 🔹 Groupbox con error */
+    .groupbox.is-invalid {
+        border-color: red !important;
+        box-shadow: 0 0 6px red !important;
+    }
+
+
+    /* 🔹 Responsivo */
+    @@media (max-width: 900px) {
+        .bloque-principal {
+            width: 100%;
+        }
+
+        .campos-centrados {
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+
+    @@media (max-width: 1100px) {
+        .contenedor-tablas-botones {
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .botones-laterales {
+            flex-direction: row;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+            .botones-laterales button {
+                width: auto;
+                min-width: 120px;
+            }
+    }
+
+    /* Congelar encabezados de todas las tablas con scroll */
+    .tabla-congelada thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #0d6efd;
+        color: white;
+    }
+
+    .col-md-2 button:hover, .col-md-2 a.btn:hover {
+        background-color: #0056b3 !important; /* Azul oscuro */
+        color: white !important;
+        transform: translateY(-3px) !important; /* Aquí es donde "salta" hacia arriba */
+        box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important; /* La sombra que da profundidad */
+        transition: all 0.3s ease; /* Para que el movimiento sea fluido */
+    }
+
+</style>
+
+<div class="container mt-5">
+    <div class="card shadow-lg p-4 card-principal">
+        <h2 class="text-center mb-4 fw-bold text-primary" translate="no">@nombreProveedor</h2>
+
+        <div class="row">
+            <div class="col-md-2 d-flex flex-column align-items-start">
+                <div id="logoContainer">
+                    <img src="/images/file_0000000079e461fd8636559665695d530001.png" alt="Logo Droguería Suiza" id="farmaciaLogo" />
+                </div>
+                @{
+                    // Mantenemos tu lógica de detección que ya es buena
+                    var idProv = (ViewData["IdProveedor"] ?? Context.Request.Query["idProveedor"].FirstOrDefault() ?? "0").ToString();
+                    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+                    // Esta variable es la que asegura que el rastro sea "Drogueria"
+                    var vistaActual = action == "Drogueria" || action == "VistaDrogueriaSuiza" ? "Drogueria" :
+                    action == "ProveedorSecundario" ? "ProveedorSecundario" :
+                    (ViewData["vista"]?.ToString() ??
+                    Context.Request.Query["vistaOrigen"].FirstOrDefault() ?? "Drogueria");
+                }
+
+                <a href="/Actualizar/ActualizarCuenta?idProveedor=@idProv&vista=@vistaActual"
+                   class="btn" style="border:none;" translate="no">Cuenta</a>
+
+                <a href="/Proveedores/IngresarProveedor?idProveedorSeleccionado=@idProv&vista=@vistaActual"
+                   class="btn" style="border:none;" translate="no">Boletas</a>
+
+                <a href="/CuentaCliente/Index?idProveedor=@idProv&vistaOrigen=@vistaActual"
+                   class="btn" translate="no">Cuentas de Clientes</a>
+
+                <a asp-action="Inasistencia"
+                   asp-controller="Proveedores"
+                   asp-route-origen="@vistaActual"
+                   asp-route-idProveedor="@idProv"
+                   class="btn btn-primary">
+                    Inasistencia
+                </a>
+
+                <a href="/Vacaciones?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary">Vacaciones</a>
+
+                <a href="/Proveedores/Index" class="btn btn-primary" style="background-color:#007bff; border:none;" translate="no">Volver</a>
+            </div>
+
+            <div class="col-md-10 d-flex justify-content-center">
+                <div class="bloque-principal">
+                    <div class="campos-centrados">
+                        <div class="campo">
+                            <label for="fecha">Fecha</label>
+                            <input translate="no" type="date" id="fecha" class="form-control shadow-sm campo" placeholder="dd/mm/aaaa" />
+                        </div>
+
+                        <div class="campo">
+                            <label for="importeFinal">Importe Final</label>
+                            <input translate="no" type="text" id="importeFinal" class="form-control shadow-sm campo" placeholder="10.000.000" maxlength="20" />
+                        </div>
+
+                        <fieldset class="groupbox" id="fieldsetTransfer">
+                            <legend translate="no">Transfer</legend>
+                            <div class="d-flex">
+                                <div class="form-check me-3">
+                                    <input translate="no" class="form-check-input" type="radio" name="transfer" id="transferSi" value="Sí">
+                                    <label class="form-check-label" for="transferSi">Sí</label>
+                                </div>
+                                <div class="form-check">
+                                    <input translate="no" class="form-check-input" type="radio" name="transfer" id="transferNo" value="No">
+                                    <label class="form-check-label" for="transferNo">No</label>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="groupbox" id="fieldsetCategoria">
+                            <legend translate="no">Categoría</legend>
+                            <div class="d-flex">
+                                <div class="form-check me-3">
+                                    <input translate="no" class="form-check-input" type="radio" name="categoria" id="catPerfumeria" value="Perfumería">
+                                    <label class="form-check-label" for="catPerfumeria">Perfumería</label>
+                                </div>
+                                <div class="form-check">
+                                    <input translate="no" class="form-check-input" type="radio" name="categoria" id="catMedicamento" value="Medicamento">
+                                    <label class="form-check-label" for="catMedicamento">Medicamento</label>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+
+                    <div class="contenedor-tablas-botones mt-3">
+                        <div class="table-wrapper">
+                            <div class="tabla-encabezado">PERFUMERÍA</div>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover align-middle tabla-congelada" id="tablaPerfumeria">
+                                    <thead class="table-primary">
+                                        <tr>
+                                            <th translate="no">Fecha</th>
+                                            <th translate="no">Importe. F</th>
+                                            <th translate="no">Transfer</th>
+                                            <th>✓</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <div class="tabla-encabezado">MEDICAMENTOS</div>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover align-middle tabla-congelada" id="tablaMedicamentos">
+                                    <thead class="table-primary">
+                                        <tr>
+                                            <th translate="no">Fecha</th>
+                                            <th translate="no">Importe. F</th>
+                                            <th translate="no">Transfer</th>
+                                            <th>✓</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="botones-laterales">
+                            <button translate="no" id="btnAgregar">Agregar</button>
+                            <button id="btnGuardarl" class="btn btn-primary" translate="no">Guardar</button>
+                            <button translate="no" id="btnAbrir">Abrir</button>
+                            <input type="file" id="inputAbrirExcel" style="display:none" accept=".xlsx,.xls" />
+                            <input type="file" id="fileInputOculto" style="display:none;" />
+                            <button translate="no" id="btnNuevoInforme">Nuevo Informe</button>
+                            <button translate="no" id="btnEliminar">Eliminar Fila</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+    <script>
+        const idProveedor = @((ViewData["IdProveedor"] ?? 1));
+        const nombreProveedorServer = @Html.Raw(Json.Serialize(ViewData["NombreProveedor"] ?? "Proveedor"));
+        const idUsuario = parseInt('@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0")', 10);
+
+
+        function limpiarImporte(importe) {
+            return parseInt((importe || "").toString().replace(/\./g, ""), 10) || 0;
+        }
+
+        function formatoFechaInputAmostrar(dateValue) {
+            if (!dateValue) return new Date().toLocaleDateString();
+            const parts = dateValue.split("-");
+            return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateValue;
+        }
+
+        function crearFilasVacias(idTabla, cantidad = 5) {
+            const tbody = document.querySelector(`#${idTabla} tbody`);
+            if (!tbody) return;
+            tbody.innerHTML = "";
+            for (let i = 0; i < cantidad; i++) {
+                const fila = document.createElement("tr");
+                fila.innerHTML = `
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td class="text-center"><input type="checkbox" class="fila-check"></td>
+                `;
+                tbody.appendChild(fila);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const inputImporte = document.getElementById("importeFinal");
+            if (inputImporte) {
+                inputImporte.addEventListener("input", function () {
+                    let valor = this.value.replace(/\D/g, "").substring(0, 8);
+                    if (valor) valor = valor.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                    this.value = valor;
+                });
+                inputImporte.addEventListener("paste", function (e) {
+                    const texto = (e.clipboardData || window.clipboardData).getData("text");
+                    if (!/^\d+$/.test(texto)) e.preventDefault();
+                });
+            }
+            crearFilasVacias("tablaPerfumeria");
+            crearFilasVacias("tablaMedicamentos");
+        });
+
+            document.getElementById("btnAgregar").addEventListener("click", function () {
+        const fechaInput = document.getElementById("fecha");
+        const importeInput = document.getElementById("importeFinal");
+        const transferSeleccionado = document.querySelector('input[name="transfer"]:checked');
+        const categoriaSeleccionada = document.querySelector('input[name="categoria"]:checked');
+        const fieldsetTransfer = document.getElementById("fieldsetTransfer");
+        const fieldsetCategoria = document.getElementById("fieldsetCategoria");
+
+        // VALIDACIÓN PREVENTIVA DE ID DE USUARIO... (Se mantiene)
+
+        if (idUsuario <= 0) {
+            alert("❌ Error de Sesión. Por favor, recarga la página o vuelve a iniciar sesión para guardar datos.");
+            return;
+        }
+
+        let camposCompletos = true;
+        document.querySelectorAll('.campo input').forEach(c => c.classList.remove('is-invalid'));
+        fieldsetTransfer?.classList.remove('is-invalid');
+        fieldsetCategoria?.classList.remove('is-invalid');
+
+        if (!fechaInput.value.trim()) { fechaInput.classList.add('is-invalid'); camposCompletos = false; }
+        if (!importeInput.value.trim()) { importeInput.classList.add('is-invalid'); camposCompletos = false; }
+        if (!transferSeleccionado) { fieldsetTransfer.classList.add('is-invalid'); camposCompletos = false; }
+        if (!categoriaSeleccionada) { fieldsetCategoria.classList.add('is-invalid'); camposCompletos = false; }
+        if (!camposCompletos) return;
+
+        // ... (El resto del código se mantiene igual) ...
+
+        const idTabla = categoriaSeleccionada.id === "catMedicamento" ? "tablaMedicamentos" : "tablaPerfumeria";
+        const tbody = document.querySelector(`#${idTabla} tbody`);
+
+        const fechaRaw = fechaInput.value.trim();
+        const importeRaw = importeInput.value.trim();
+        const fechaMostrar = formatoFechaInputAmostrar(fechaRaw);
+        const transferValor = transferSeleccionado.value;
+        const importeFormateado = "$ " + limpiarImporte(importeRaw).toLocaleString("es-AR");
+
+        const categoriaValor = categoriaSeleccionada.value;
+
+        // ⭐ LÍNEA CORREGIDA: Usa categoriaValor en lugar de categoriaBase
+        const categoriaValorFinal = `${nombreProveedorServer} - ${categoriaValor}`;
+
+        // Crear la fila visualmente... (Se mantiene)
+        const fila = document.createElement("tr");
+        fila.innerHTML = `
+            <td title="${fechaMostrar}">${fechaMostrar}</td>
+            <td title="${importeFormateado}">${importeFormateado}</td>
+            <td title="${transferValor}">${transferValor}</td>
+            <td class="text-center"><input type="checkbox" class="fila-check"></td>
+        `;
+        tbody.prepend(fila);
+
+        // Guardar vía AJAX... (Se mantiene)
+        fetch("/Boleta/GuardarBoleta", {
+            // ... (Tu objeto fetch) ...
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                Idusuario: idUsuario,
+                Idproveedor: idProveedor,
+                Fecha: fechaRaw,
+                ImporteFinal: limpiarImporte(importeRaw),
+                Transfer: transferValor,
+                Categoria: categoriaValorFinal, // Usa el valor combinado
+                Detalle: "",
+                NombreProveedor: nombreProveedorServer,
+            })
+        })
+            .then(async response => {
+                const resp = await response.json();
+                if (!response.ok || !resp?.exito) {
+                    const mensaje = resp?.mensaje || `Error HTTP ${response.status} - No se pudo procesar la solicitud.`;
+                    alert("⚠️ Error al guardar la boleta: " + mensaje);
+                    fila.remove();
+                    return;
+                }
+                fila.setAttribute("data-boleta-id", resp.idBoleta);
+                fechaInput.value = "";
+                importeInput.value = "";
+                document.querySelectorAll('input[name="transfer"], input[name="categoria"]').forEach(r => r.checked = false);
+            })
+            .catch(err => {
+                console.error("Error de conexión:", err);
+                alert("❌ Error de red o conexión. La boleta no se guardó. Revisa la consola para más detalles.");
+                fila.remove();
+            });
+        });
+
+        document.addEventListener("change", function (e) {
+            if (e.target.classList?.contains("fila-check"))
+                e.target.closest("tr").classList.toggle("fila-seleccionada", e.target.checked);
+            if (e.target.name === "transfer") document.getElementById("fieldsetTransfer")?.classList.remove('is-invalid');
+            if (e.target.name === "categoria") document.getElementById("fieldsetCategoria")?.classList.remove('is-invalid');
+        });
+
+        document.getElementById("btnEliminar").addEventListener("click", async function () {
+            const checks = document.querySelectorAll("#tablaPerfumeria tbody .fila-check:checked, #tablaMedicamentos tbody .fila-check:checked");
+            if (checks.length === 0) return alert("Selecciona al menos una fila.");
+            const deletePromises = [];
+            for (const chk of checks) {
+                const tr = chk.closest("tr");
+                const boletaId = tr?.getAttribute("data-boleta-id");
+                if (boletaId) {
+                    const p = fetch(`/Boleta/EliminarBoleta?id=${encodeURIComponent(boletaId)}`, { method: "DELETE" })
+                        .then(r => r.json())
+                        .then(resp => { if (resp?.success) tr.remove(); });
+                    deletePromises.push(p);
+                } else tr.remove();
+            }
+            if (deletePromises.length) await Promise.all(deletePromises);
+        });
+
+        const mapCategoriaTabla = { "perfumeria": "tablaPerfumeria", "medicamentos": "tablaMedicamentos" };
+        let workbookCargado = null;
+
+
+
+
+        document.getElementById("btnAbrir").addEventListener("click", () =>
+            document.getElementById("inputAbrirExcel").click()
+        );
+
+        document.getElementById("inputAbrirExcel").addEventListener("change", async function (evt) {
+            const archivo = evt.target.files[0];
+            if (!archivo) return;
+
+            // ⭐ VALIDACIÓN: El archivo debe comenzar con el nombre del proveedor
+            const nombreProveedor = nombreProveedorServer?.trim() || "";
+
+            if (!archivo.name.startsWith(nombreProveedor)) {
+                alert("⚠️ Este archivo no pertenece al proveedor: " + nombreProveedor +
+                      "\nSolo puedes abrir archivos generados que pertenezcan a este proveedor.");
+                this.value = ""; // resetea la selección
+                return;
+            }
+
+            // -----------------------------
+            // CONTINÚA TU CÓDIGO ORIGINAL
+            // -----------------------------
+
+            try {
+                const buffer = await archivo.arrayBuffer();
+                workbookCargado = new ExcelJS.Workbook();
+                await workbookCargado.xlsx.load(buffer);
+
+                crearFilasVacias("tablaPerfumeria");
+                crearFilasVacias("tablaMedicamentos");
+
+                workbookCargado.eachSheet(sheet => {
+                    const idTabla = mapCategoriaTabla[(sheet.name || "").toLowerCase()];
+                    if (!idTabla) return;
+
+                    const tbody = document.querySelector(`#${idTabla} tbody`);
+                    tbody.innerHTML = "";
+
+                    // Incluir filas vacías y filtrar manualmente
+                    sheet.eachRow({ includeEmpty: true }, (row, index) => {
+
+                        // Ignorar título y encabezados
+                        if (index <= 2) return;
+
+                        const valores = (row.values || []).slice(1);
+                        const [fecha = "", importe = "", transfer = ""] = valores.map(v => (v || "").toString().trim());
+
+                        // Si la fila está completamente vacía → ignorarla
+                        if (!fecha && !importe && !transfer) return;
+
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${fecha}</td>
+                            <td>${importe}</td>
+                            <td>${transfer}</td>
+                            <td class="text-center"><input type="checkbox" class="fila-check"></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                });
+
+                alert("Archivo Excel cargado correctamente.");
+
+            } catch (e) {
+                console.error("Error al cargar el archivo Excel:", e);
+                alert("Hubo un error al procesar el archivo Excel. Asegúrate de que sea un formato válido.");
+            } finally {
+                // Limpiar el input file
+                this.value = "";
+            }
+        });
+
+
+        document.getElementById("btnGuardarl").addEventListener("click", async function () {
+
+            const tablas = [
+                { id: "tablaPerfumeria", hoja: "Perfumeria", titulo: "PERFUMERÍA" },
+                { id: "tablaMedicamentos", hoja: "Medicamentos", titulo: "MEDICAMENTOS" }
+            ];
+
+            const workbook = new ExcelJS.Workbook();
+
+            for (const t of tablas) {
+
+                const ws = workbook.addWorksheet(t.hoja);
+
+                // --- Columnas ---
+                ws.columns = [
+                    { header: "Fecha", key: "fecha", width: 20 },
+                    { header: "Importe", key: "importe", width: 20 },
+                    { header: "Transfer", key: "transfer", width: 15 }
+                ];
+
+                // --- 1. TÍTULO ---
+                ws.mergeCells("A1:C1");
+                ws.getCell("A1").value = `Tabla: ${t.titulo}`;
+                ws.getCell("A1").alignment = { horizontal: "center", vertical: "middle" };
+                ws.getCell("A1").font = { bold: true, color: { argb: "FF000000" }, size: 14 };
+                ws.getCell("A1").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "f5f5dc" } };
+                ws.getRow(1).height = 25;
+                ["A1", "B1", "C1"].forEach(c => {
+                    ws.getCell(c).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                });
+
+                // --- 2. ENCABEZADOS ---
+                const headerRow = ws.addRow(["FECHA", "IMPORTE", "TRANSFER"]);
+                headerRow.eachCell(cell => {
+                    cell.font = { bold: true, color: { argb: "FF000000" } };
+                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "ffc080" } };
+                    cell.alignment = { horizontal: "center", vertical: "middle" };
+                    cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                });
+
+                // --- 3. FILAS DE DATOS ---
+                const tbody = document.querySelector(`#${t.id} tbody`);
+                let conteoSI = 0;
+                let conteoNO = 0;
+
+                if (tbody) {
+                    [...tbody.querySelectorAll("tr")].forEach((tr, i) => {
+                        const fecha = tr.children[0]?.innerText.trim();
+                        const importe = tr.children[1]?.innerText.trim();
+                        const transfer = (tr.children[2]?.innerText || "").trim();
+                        if (!fecha && !importe && !transfer) return;
+
+                        if (transfer.toUpperCase() === "SÍ" || transfer.toUpperCase() === "SI") conteoSI++;
+                        if (transfer.toUpperCase() === "NO") conteoNO++;
+
+                        const row = ws.addRow([fecha, importe, transfer]);
+                        const color = i % 2 === 0 ? "ddeeff" : "ccffff";
+
+                        row.eachCell(cell => {
+                            cell.alignment = { horizontal: "center", vertical: "middle" };
+                            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
+                            cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                        });
+                    });
+                }
+
+                // --- 4. RESUMEN ---
+                ws.mergeCells("E2:G2");
+                ws.getCell("E2").value = "Resumen Transfer";
+                ws.getCell("E2").alignment = { horizontal: "center", vertical: "middle" };
+                ws.getCell("E2").font = { bold: true, color: { argb: "FFFFFFFF" } };
+                ws.getCell("E2").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "33cc99" } };
+
+                ["E2", "F2", "G2"].forEach(c => {
+                    ws.getCell(c).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                });
+
+                ws.mergeCells("E3:F3");
+                ws.getCell("E3").value = "Con Transfer (SI):";
+                ws.getCell("G3").value = conteoSI;
+
+                ws.mergeCells("E4:F4");
+                ws.getCell("E4").value = "Sin Transfer (NO):";
+                ws.getCell("G4").value = conteoNO;
+
+                ["E3", "F3", "G3", "E4", "F4", "G4"].forEach(c => {
+                    const cell = ws.getCell(c);
+                    cell.alignment = { horizontal: "center", vertical: "middle" };
+                    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "33cc99" } };
+                    cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                });
+
+                ws.getColumn("E").width = 10;
+                ws.getColumn("F").width = 10;
+                ws.getColumn("G").width = 8;
+            }
+
+            // --- NOMBRE DE ARCHIVO CON FORMATO ---
+            const fecha = new Date();
+            const dd = String(fecha.getDate()).padStart(2, "0");
+            const mm = String(fecha.getMonth() + 1).padStart(2, "0");
+            const yyyy = fecha.getFullYear();
+            const hh = String(fecha.getHours()).padStart(2, "0");
+            const min = String(fecha.getMinutes()).padStart(2, "0");
+
+            const separadorHora = "꞉";  // símbolo permitido parecido a ":"
+
+            const nombreArchivo = `${nombreProveedorServer} ${dd}-${mm}-${yyyy} ${hh}${separadorHora}${min}.xlsx`;
+
+            // --- DESCARGA ---
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            });
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = nombreArchivo;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+
+
+        /* ============================================================
+            BOTÓN NUEVO INFORME – MISMO ESTILO Y MISMO NOMBRE DE ARCHIVO
+           ============================================================ */
+        document.getElementById("btnNuevoInforme").addEventListener("click", async function () {
+
+            const tablas = [
+                { id: "tablaPerfumeria", hoja: "Perfumeria", titulo: "PERFUMERÍA" },
+                { id: "tablaMedicamentos", hoja: "Medicamentos", titulo: "MEDICAMENTOS" }
+            ];
+
+            const workbook = new ExcelJS.Workbook();
+
+            for (const t of tablas) {
+                const ws = workbook.addWorksheet(t.hoja);
+
+                ws.columns = [
+                    { header: "Fecha", key: "fecha", width: 20 },
+                    { header: "Importe", key: "importe", width: 20 },
+                    { header: "Transfer", key: "transfer", width: 15 }
+                ];
+
+                // --- Título ---
+                ws.mergeCells("A1:C1");
+                ws.getCell("A1").value = `Tabla: ${t.titulo}`;
+                ws.getCell("A1").alignment = { horizontal: "center", vertical: "middle" };
+                ws.getCell("A1").font = { bold: true, color: { argb: "FF000000" }, size: 14 };
+                ws.getCell("A1").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "f5f5dc" } };
+                ws.getRow(1).height = 25;
+                ["A1", "B1", "C1"].forEach(c => {
+                    ws.getCell(c).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                });
+
+                // Encabezados
+                const headerRow = ws.addRow(["FECHA", "IMPORTE", "TRANSFER"]);
+                headerRow.eachCell(cell => {
+                    cell.font = { bold: true, color: { argb: "FF000000" } };
+                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "ffc080" } };
+                    cell.alignment = { horizontal: "center", vertical: "middle" };
+                    cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                });
+
+                // Datos + conteo
+                const tbody = document.querySelector(`#${t.id} tbody`);
+                let conteoSI = 0;
+                let conteoNO = 0;
+
+                if (tbody) {
+                    [...tbody.querySelectorAll("tr")].forEach((tr, i) => {
+                        const fecha = tr.children[0]?.innerText.trim();
+                        const importe = tr.children[1]?.innerText.trim();
+                        const transfer = (tr.children[2]?.innerText || "").trim();
+                        if (!fecha && !importe && !transfer) return;
+
+                        if (transfer.toUpperCase() === "SÍ" || transfer.toUpperCase() === "SI") conteoSI++;
+                        if (transfer.toUpperCase() === "NO") conteoNO++;
+
+                        const row = ws.addRow([fecha, importe, transfer]);
+                        const color = i % 2 === 0 ? "ddeeff" : "ccffff";
+
+                        row.eachCell(cell => {
+                            cell.alignment = { horizontal: "center", vertical: "middle" };
+                            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
+                            cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                        });
+                    });
+                }
+
+                // Resumen
+                ws.mergeCells("E2:G2");
+                ws.getCell("E2").value = "Resumen Transfer";
+                ws.getCell("E2").alignment = { horizontal: "center", vertical: "middle" };
+                ws.getCell("E2").font = { bold: true, color: { argb: "FFFFFFFF" } };
+                ws.getCell("E2").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "33cc99" } };
+                ["E2", "F2", "G2"].forEach(c => {
+                    ws.getCell(c).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                });
+
+                ws.mergeCells("E3:F3");
+                ws.getCell("E3").value = "Con Transfer (SI):";
+                ws.getCell("G3").value = conteoSI;
+
+                ws.mergeCells("E4:F4");
+                ws.getCell("E4").value = "Sin Transfer (NO):";
+                ws.getCell("G4").value = conteoNO;
+
+                ["E3", "F3", "G3", "E4", "F4", "G4"].forEach(c => {
+                    const cell = ws.getCell(c);
+                    cell.alignment = { horizontal: "center", vertical: "middle" };
+                    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "33cc99" } };
+                    cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                });
+
+                ws.getColumn("E").width = 10;
+                ws.getColumn("F").width = 10;
+                ws.getColumn("G").width = 8;
+            }
+
+            // --- MISMO NOMBRE DE ARCHIVO ---
+            const fecha = new Date();
+            const dd = String(fecha.getDate()).padStart(2, "0");
+            const mm = String(fecha.getMonth() + 1).padStart(2, "0");
+            const yyyy = fecha.getFullYear();
+            const hh = String(fecha.getHours()).padStart(2, "0");
+            const min = String(fecha.getMinutes()).padStart(2, "0");
+            const separadorHora = "꞉";
+
+            const nombreArchivo = `${nombreProveedorServer} ${dd}-${mm}-${yyyy} ${hh}${separadorHora}${min}.xlsx`;
+
+            // --- DESCARGA ---
+            const buf = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = nombreArchivo;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            crearFilasVacias("tablaPerfumeria");
+            crearFilasVacias("tablaMedicamentos");
+
+            document.getElementById("fecha").value = "";
+            document.getElementById("importeFinal").value = "";
+            document.querySelectorAll('input[name="transfer"], input[name="categoria"]').forEach(r => r.checked = false);
+        });
+    </script>
+}
+

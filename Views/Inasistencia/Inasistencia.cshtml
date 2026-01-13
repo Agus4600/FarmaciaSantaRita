@@ -1,0 +1,1704 @@
+﻿@using Microsoft.AspNetCore.Http
+@using System.Security.Claims
+
+@{
+	ViewData["Title"] = "Registro de Inasistencias";
+	var nombreProveedor = ViewData["NombreProveedor"] as string ?? "General";
+	string rolUsuario = User.FindFirstValue(ClaimTypes.Role);
+	bool esJefe = rolUsuario == "Jefe/a";
+	string claseVisualDisabled = esJefe ? "" : "contenedor-deshabilitado";
+	string disabledAttr = esJefe ? "" : "disabled=\"disabled\"";
+	var vista = ViewData["vista"] as string;
+	var origen = Context.Request.Query["vistaOrigen"];
+	var idProveedor = Context.Request.Query["idProveedor"];
+	var idProv = (ViewData["IdProveedor"] ?? Context.Request.Query["idProveedor"].FirstOrDefault() ?? "0").ToString();
+	string vistaActual = Context.Request.Query["origen"].ToString()
+						 ?? Context.Request.Query["vista"].ToString()
+						 ?? Context.Request.Query["vistaOrigen"].ToString()
+						 ?? "ProveedorSecundario";
+}
+
+<style>
+	.contenedor-deshabilitado {
+		pointer-events: none; /* Impide clics e interacciones */
+		opacity: 0.6; /* Atenúa visualmente el bloque */
+		filter: grayscale(40%); /* Opcional: añade un ligero efecto de escala de grises */
+	}
+
+
+	/* 🔹 Campos con error */
+	.is-invalid {
+		border-color: red !important;
+		box-shadow: 0 0 5px red !important;
+	}
+
+
+
+	.col-md-2 button:focus,
+	.botones-laterales button:focus,
+	#btnBuscarFiltro:focus {
+		/* 1. Eliminar el contorno negro del navegador */
+		outline: none !important;
+	}
+
+
+	/* 🔹 Cuadro blanco principal */
+	.card-principal {
+		width: 100%;
+		max-width: 1200px;
+		margin: 0 auto;
+		transition: width 0.3s ease;
+		position: relative;
+		border-radius: 16px;
+	}
+
+	/* 🔹 Contenedor interior (campos + tablas) */
+	.bloque-principal {
+		display: flex;
+		flex-direction: column;
+		flex-wrap: nowrap;
+		align-items: flex-start;
+		background: #fff;
+		border-radius: 12px;
+		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+		/* ⭐ CAMBIO CLAVE: Aumentamos el padding-top a 180px para liberar espacio del filtro. ⭐ */
+		padding: 65px 20px 20px 20px;
+		width: 100%;
+		max-width: 1100px;
+		margin: 0 auto;
+		max-height: 480px;
+		overflow: visible;
+		position: relative;
+	}
+
+	/* ⭐ CAMBIO CLAVE: Quitamos el margin-top negativo y lo fijamos a 0 ⭐ */
+	#formInasistencia {
+		margin-top: 0;
+	}
+
+	/* 🔹 La fila que contiene las dos columnas - Eliminamos las propiedades de estiramiento */
+	.card-principal > .row {
+		flex-grow: 1;
+	}
+
+	/* ---------------------------------------------------- */
+	/* ESTILO Y POSICIÓN DEL PANEL IZQUIERDO (BOTONES BASE) */
+	/* ---------------------------------------------------- */
+
+	/* ⭐ CONTENEDOR COLUMNA IZQUIERDA: ALTURA FIJA Y POSICIÓN ⭐ */
+	.row > .col-md-2 {
+		/* Sube la columna para alinear el logo con el título */
+		margin-top: -115px; /* AJUSTE DE POSICIÓN */
+		height: 420px;
+		/* Mantenemos la agrupación de contenido */
+		display: flex;
+		top: 0;
+		z-index: 10;
+		position: sticky;
+		flex-direction: column;
+		justify-content: flex-start; /* Mantiene los botones agrupados arriba */
+		align-items: center !important; /* Centra horizontalmente */
+		padding-top: 50px; /* Ajuste visual desde arriba */
+	}
+
+	/* 🔹 Panel izquierdo - Botones BASE (Incluye botones de la derecha ahora) */
+	.col-md-2 button,
+	.botones-laterales button,
+	#btnBuscarFiltro { /* <-- AGREGAMOS #btnBuscarFiltro AQUÍ */
+		background-color: #007bff;
+		color: white;
+		border: none;
+		border-radius: 8px;
+		padding: 8px 12px;
+		font-weight: 600;
+		min-width: 140px;
+		width: 100%;
+		max-width: 180px;
+		margin-bottom: 10px;
+		text-align: center;
+		transition: background-color 0.3s ease, transform 0.2s ease;
+	}
+
+
+		/* Hover/Active para efectos visuales */
+		.col-md-2 button:hover,
+		.botones-laterales button:hover,
+		#btnBuscarFiltro:hover { /* <-- AGREGAMOS #btnBuscarFiltro AQUÍ PARA EL HOVER */
+			background-color: #0056b3 !important;
+			transform: translateY(-3px) !important; /* Cambiado de -2px a -3px */
+			box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important; /* Agregamos la sombra */
+			transition: all 0.3s ease;
+		}
+
+		.col-md-2 button:active,
+		.botones-laterales button:active,
+		#btnBuscarFiltro:active { /* <-- AGREGAMOS #btnBuscarFiltro AQUÍ PARA EL ACTIVE */
+			transform: translateY(0);
+			box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Sombra pequeña al presionar */
+		}
+
+	.col-md-2 a.btn {
+		background-color: #007bff;
+		color: white;
+		border: none;
+		border-radius: 8px;
+		padding: 8px 12px;
+		font-weight: 600;
+		height: 40px;
+		min-width: 140px;
+		width: 100%;
+		max-width: 180px;
+		display: flex;
+		margin-bottom: 10px;
+		text-align: center;
+		justify-content: center;
+		align-items: center;
+		text-decoration: none;
+		transition: background-color 0.3s ease, transform 0.2s ease;
+	}
+
+		.col-md-2 a.btn:hover {
+			background-color: #0056b3 !important; /* Azul oscuro */
+			color: white !important;
+			transform: translateY(-3px) !important; /* Aquí es donde "salta" hacia arriba */
+			box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important; /* La sombra que da profundidad */
+			transition: all 0.3s ease; /* Para que el movimiento sea fluido */
+		}
+
+		.col-md-2 a.btn:active {
+			transform: translateY(0);
+		}
+
+
+	/* 🔹 Contenedor del logo */
+	#logoContainer {
+		min-width: 140px;
+		width: 100%;
+		max-width: 180px;
+		height: 200px;
+		margin-bottom: 10px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		background-color: transparent;
+		border-radius: 8px;
+		border: none;
+		padding: 5px;
+	}
+
+	/* 🔹 Imagen del logo dentro del contenedor */
+	#farmaciaLogo {
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+	}
+
+	/* 🔹 Groupbox */
+	.groupbox {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		border: 1px solid #0d6efd;
+		border-radius: 8px;
+		padding: 8px 14px 10px 14px;
+		background-color: #fff;
+		min-width: 180px;
+		transition: all 0.2s ease;
+	}
+
+		.groupbox legend {
+			font-size: 15px;
+			font-weight: 600;
+			color: #0d6efd;
+			width: auto;
+			padding: 0 6px;
+		}
+
+		.groupbox-filtro legend {
+			font-size: 15px;
+			font-weight: 600;
+			color: #0d6efd;
+			width: auto;
+			padding: 0 6px;
+			margin-left: 5px; /* Mueve la leyenda ligeramente a la derecha */
+		}
+	/* ---------------------------------------------------- */
+
+
+	.campo {
+		display: flex;
+		flex-direction: column;
+		/* CLAVE: Alineamos los elementos del campo a la izquierda por defecto */
+		align-items: flex-start;
+	}
+
+		.campo label {
+			font-weight: 600;
+			margin-bottom: 5px;
+		}
+
+		/* 🔹 Campos responsivos (Alineación Central - SOLO para inputs/selects en la fila superior que deben estar centrados) */
+		.campo input {
+			padding: 6px 8px;
+			border-radius: 6px;
+			border: 1px solid #ccc;
+			text-align: center;
+			box-sizing: border-box;
+			min-width: 100px;
+			transition: all 0.2s ease;
+		}
+
+
+		/* 🔹 Select y Textarea (Ajuste de ancho para consistencia) */
+		.campo select, .campo textarea {
+			padding: 6px 8px;
+			border-radius: 6px;
+			border: 1px solid #ccc;
+			box-sizing: border-box;
+			min-width: 100px;
+			width: 100%;
+			transition: all 0.2s ease;
+			/* El textarea no debe estar centrado, por eso solo se aplica a select */
+			text-align: center;
+		}
+
+	/* Sobrescribir el text-align para los inputs de Fecha, Empleado, Turno para que sigan centrados */
+	.campos-centrados > .campo:nth-child(1) input,
+	.campos-centrados > .campo:nth-child(3) select {
+		text-align: center !important;
+	}
+
+	.campos-centrados > .campo:nth-child(2) input,
+	.campos-centrados > .campo:nth-child(2) select { /* ⭐ AÑADIDO: Para que el nuevo select tenga texto alineado a la izquierda */
+		text-align: left !important;
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* ⭐ AJUSTE DE ANCHOS BASADO EN POSICIÓN (CAMPOS DE REGISTRO) ⭐ */
+	/* ------------------------------------------------------------------ */
+
+	/* ⭐ Ajuste de Altura para alineación vertical (Se usa en select/textarea) ⭐ */
+	.campos-centrados .campo select,
+	.campos-centrados .campo textarea {
+		height: 38px;
+	}
+
+	/* --- Fila 1: Fecha (120px) / Empleado (239px) / Turno (120px) --- */
+
+	/* 🔹 Primer campo (Fecha): 120px - MANTENEMOS */
+	.campos-centrados > .campo:nth-child(1) {
+		flex: 0 0 120px;
+		min-width: 120px;
+		max-width: 120px;
+	}
+
+		.campos-centrados > .campo:nth-child(1) #fechaInput {
+			width: 100%;
+		}
+
+
+	/* 🔹 Segundo campo (Empleado): 239px - MANTENEMOS */
+	.campos-centrados > .campo:nth-child(2) {
+		flex: 0 0 239px;
+		min-width: 239px;
+		max-width: 239px;
+	}
+
+		.campos-centrados > .campo:nth-child(2) #empleadoSelect { /* ⭐ CAMBIADO: A #empleadoSelect */
+			width: 100%;
+		}
+
+	/* 🔹 TERCER campo (Turno): 120px - MANTENEMOS */
+	.campos-centrados > .campo:nth-child(3) {
+		flex: 0 0 120px;
+		min-width: 120px;
+		max-width: 120px;
+	}
+
+	/* --- Fila 2: Motivo (100% del ancho) --- */
+
+	/* 🔹 CUARTO campo (Motivo): OCUPA TODO EL ANCHO Y SALTA DE LÍNEA */
+	.campos-centrados > .campo:nth-child(4) {
+		/* CLAVE: Ocupa todo el ancho (100%) y fuerza el salto de línea */
+		flex: 1 1 100%;
+		min-width: 100%;
+		max-width: 100%;
+		/* CLAVE: Aseguramos que los elementos internos (Label y Textarea) se alineen a la izquierda */
+		align-items: flex-start;
+	}
+
+		/* Ajuste para que el textarea de Motivo concuerde con el ancho de la fila superior */
+		.campos-centrados > .campo:nth-child(4) textarea {
+			/* CLAVE: Ancho calculado (120 + 15 + 239 + 15 + 120) = 509px */
+			width: 509px;
+			max-width: 509px;
+			text-align: left; /* Alineación del texto a la izquierda en el campo de texto largo */
+			height: 38px;
+		}
+
+
+	/* ⭐ CLAVE: Alineación de los campos con el inicio de la tabla (flex-start) ⭐ */
+	.campos-centrados {
+		display: flex;
+		justify-content: flex-start;
+		align-items: flex-end;
+		width: 100%;
+		/* ⭐ CAMBIO CLAVE: Reducir el gap a 15px (o 16px) para compactar los campos ⭐ */
+		gap: 15px;
+		/* CLAVE: Aumentamos el margen inferior para separar Motivo de la tabla */
+		margin-bottom: 25px !important;
+		flex-wrap: wrap; /* CLAVE: Permite que Motivo salte a una nueva línea */
+		/* CLAVE: Aseguramos que el contenedor de campos se alinee a la izquierda del bloque-principal */
+		margin-left: 0;
+	}
+
+	/* ⭐ ELIMINAMOS REGLAS DE FILAS ANTERIORES YA QUE AHORA SOLO HAY UNA FILA ⭐ */
+	#formInasistencia > .campos-centrados:first-child {
+		margin-bottom: 0;
+	}
+
+	#formInasistencia > .campos-centrados:last-child {
+		margin-bottom: 0 !important;
+	}
+
+
+	/* AJUSTE PARA LA TABLA ÚNICA EXTENDIDA */
+	.contenedor-tablas-botones {
+		display: flex;
+		flex-direction: row;
+		/* Mantenemos a la izquierda para que los elementos se peguen a la izquierda (Alineación con los campos) */
+		justify-content: flex-start;
+		align-items: stretch; /* Estira el contenedor de botones a la altura de 220px */
+		width: 100%;
+		max-width: 1100px;
+		margin: 0; /* Eliminamos el margin auto para alinear a la izquierda */
+		gap: 35px;
+		flex-wrap: nowrap;
+		height: 220px; /* Altura de referencia */
+	}
+
+	/* 🔹 Tablas */
+	.table-wrapper {
+		text-align: center;
+		/* ANCHO TOTAL DISPONIBLE para la tabla (Aprox. 740px) */
+		flex: 0 0 740px;
+		max-width: 740px;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: flex-start;
+	}
+
+	.table-responsive {
+		max-width: 100%;
+		width: 100%;
+		height: 180px;
+		overflow-y: auto;
+		overflow-x: hidden; /* Oculta el scroll horizontal */
+		margin: 0;
+		border: 1px solid #dee2e6;
+	}
+
+	.table {
+		border-collapse: collapse;
+		/* ⭐ CAMBIO CLAVE: Volver a FIXED para que la tabla ocupe el 100% del contenedor ⭐ */
+		table-layout: fixed;
+		width: 100%; /* ⭐ CLAVE: Asegura que la tabla ocupe todo el ancho del table-responsive (740px) ⭐ */
+		max-width: 100%;
+	}
+
+	#tablaInasistencias th,
+	#tablaInasistencias td {
+		/* Eliminamos 'white-space: nowrap' si queremos que el texto largo de Motivo se corte con ellipsis */
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		overflow: hidden;
+	}
+
+
+	.table td,
+	.table th {
+		text-align: center;
+		vertical-align: middle;
+		padding: 4px 8px;
+		border: 1px solid #dee2e6;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		height: 30px;
+	}
+
+
+		/* ⭐ CAMBIO CLAVE: Establecer anchos fijos que sumen 100% (o cerca) ⭐ */
+		.table th:nth-child(1), .table td:nth-child(1) {
+			width: 15%; /* Fecha */
+		}
+
+		.table th:nth-child(2), .table td:nth-child(2) {
+			width: 25%; /* Empleado */
+		}
+
+		.table th:nth-child(3), .table td:nth-child(3) {
+			width: 15%; /* Turno */
+		}
+
+		.table th:nth-child(4), .table td:nth-child(4) {
+			width: 35%; /* Motivo */
+		}
+
+
+		/* ⭐ Columna Checkbox: Mantenemos un ancho mínimo y padding 0 ⭐ */
+		.table th:nth-child(5), .table td:nth-child(5) {
+			width: 10%; /* Checkbox (15+25+15+35+10 = 100%) */
+			padding: 0;
+		}
+
+
+	/* ---------------------------------------------------- */
+	.tabla-encabezado {
+		font-size: 17px;
+		font-weight: 600;
+		color: #0d6efd;
+		text-align: center;
+		margin-bottom: 6px;
+		border-bottom: 2px solid #0d6efd33;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		padding-bottom: 2px;
+		width: 100%;
+	}
+
+
+
+	/* 🔹 Fila seleccionada (Se mantiene el mismo estilo de Boletas) */
+	.fila-seleccionada {
+		background-color: #cce5ff !important;
+	}
+
+
+
+	/* 🔹 Botones lado derecho - ALINEACIÓN VERTICAL */
+	.botones-laterales {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 0;
+		height: 180px;
+		/* AJUSTE 2: Reducción del ancho para evitar colisión */
+		width: 170px;
+		margin-top: 40px;
+		padding: 0;
+	}
+
+
+		/* También necesitamos remover el margin-bottom que se hereda del estilo base */
+		.botones-laterales button {
+			margin-bottom: 0 !important;
+		}
+
+
+
+	/* 🔹 Campos con error */
+	.is-invalid {
+		border-color: red !important;
+		box-shadow: 0 0 5px red !important;
+	}
+
+
+
+	/* 🔹 Groupbox con error */
+	.groupbox.is-invalid {
+		border-color: red !important;
+		box-shadow: 0 0 6px red !important;
+	}
+
+
+	/* Congelar encabezados de todas las tablas con scroll */
+	.tabla-congelada thead th {
+		position: sticky;
+		top: 0;
+		z-index: 10;
+		background-color: #0d6efd;
+		color: white;
+	}
+
+
+
+	/* 🔹 Responsivo */
+	@@media (max-width: 900px) {
+		.bloque-principal {
+			width: 100%;
+		}
+
+		.campos-centrados {
+			flex-direction: column;
+			align-items: center;
+		}
+	}
+
+
+	/* ------------------------------------------------------------------ */
+
+	/* CLAVE: Ajuste Responsivo para alinear el bloque principal a la izquierda */
+
+	/* ------------------------------------------------------------------ */
+	.col-md-10 {
+		display: flex;
+		/* Alineamos el bloque principal hacia la izquierda de la columna */
+		justify-content: flex-start !important;
+	}
+
+
+	@@media (max-width: 1100px) {
+		.contenedor-tablas-botones {
+			flex-wrap: wrap;
+			align-items: center;
+			height: auto;
+			justify-content: center;
+		}
+
+		.table-wrapper {
+			flex: 1 1 100%;
+			max-width: 740px; /* Ajustado */
+			align-items: center;
+		}
+
+		.table-responsive {
+			display: block; /* Debe ser block para ocupar el 100% de table-wrapper */
+			max-width: 100%;
+			overflow-x: auto;
+			overflow-y: auto;
+			height: 180px;
+			border: 1px solid #dee2e6;
+		}
+			/* ⭐ Clave para Responsive: En modo flex-wrap, forzamos la tabla a autoajustar si es necesario (scroll horizontal) ⭐ */
+			.table-responsive .table {
+				/* Si hay overflow-x, el fixed width hará que el scroll funcione correctamente */
+			}
+		/* 🔹 Botones lado derecho */
+		.botones-laterales {
+			display: flex;
+			flex-direction: row; /* Vuelven a fila en modo responsivo */
+			justify-content: center;
+			align-items: center;
+			gap: 10px;
+			height: auto;
+			padding-top: 10px;
+			margin-top: 0;
+		}
+
+
+			.botones-laterales button {
+				width: 140px;
+				margin-bottom: 0;
+			}
+
+		#btnAgregar {
+			order: -1;
+		}
+		/* Revertimos los anchos ampliados a los anchos responsivos originales */
+		/* Las propiedades aquí abajo son para la vista ancha, se mueven a la sección principal de .filtro-busqueda */
+	}
+
+	.daterange-container {
+		position: relative;
+	}
+
+		.daterange-container .daterangepicker {
+			top: 100% !important;
+			z-index: 1050 !important;
+			margin-top: 5px;
+			left: auto !important;
+			right: 0 !important;
+			width: 550px !important;
+		}
+
+	/* ---------------------------------------------------- */
+	/* ⭐ ESTILOS DE FILTROS AGRUPADOS (Flexbox ajustado) ⭐ */
+	/* ---------------------------------------------------- */
+	.filtro-busqueda {
+		/* Sobreescribe los estilos anteriores para que los elementos se vean compactos y alineados */
+		display: flex;
+		justify-content: flex-start;
+		align-items: flex-end;
+		width: 100%;
+		/* Aquí mantenemos 15px, que es el gap original */
+		gap: 15px;
+		margin-bottom: 0; /* Eliminar el margen inferior */
+		flex-wrap: wrap;
+	}
+
+		.filtro-busqueda .campo select#buscarTurnoSelect {
+			/* Se asegura la altura de 38px en el HTML */
+			width: 100%;
+		}
+
+		.filtro-busqueda .campo input {
+			text-align: left; /* Ajuste para el input de Empleado */
+			padding: 6px 8px;
+			border-radius: 6px;
+			border: 1px solid #ccc;
+			box-sizing: border-box;
+			width: 100%;
+		}
+
+	/* ⭐ ANCHOS PARA LA DISTRIBUCIÓN EN 2 FILAS DE FILTROS ⭐ */
+
+	.groupbox-filtro {
+		border: 1px solid #0d6efd;
+		border-radius: 8px;
+		padding: 8px 12px 10px 12px; /* Padding reducido */
+		background-color: #f7f9fc;
+		position: absolute;
+		top: 20px;
+		right: 20px;
+		/* ⭐ REDUCCIÓN DEL LADO IZQUIERDO: ancho máximo más pequeño y centrado relativo */
+		max-width: 420px; /* Antes 650px → ahora más compacto */
+		width: auto;
+		left: auto; /* Permite que se ajuste */
+		z-index: 1000;
+		box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+	}
+
+
+
+
+	/* Rango de Fechas y Turno (Fila 1) */
+	.groupbox-filtro .filtro-busqueda:first-child .campo:nth-child(2) { /* Rango de Fechas */
+		flex: 0 0 110px; 
+		min-width: 110px;
+		max-width: 110px;
+	}
+
+	.groupbox-filtro .filtro-busqueda:last-child .campo:nth-child(1) { /* Buscar Empleado */
+		flex: 1 1 220px; /* Antes 245px */
+		min-width: 190px;
+		max-width: 220px;
+	}
+
+	/* Turno se mantiene pequeño */
+	.groupbox-filtro .filtro-busqueda:first-child .campo:nth-child(1) {
+		flex: 1 1 110px;
+		min-width: 110px;
+		max-width: 130px;
+	}
+
+	/* Botón Buscar un poco más pequeño */
+	.groupbox-filtro .filtro-busqueda:last-child .campo:nth-child(2) {
+		flex: 0 0 90px;
+		min-width: 90px;
+	}
+
+	/* Asegurar que el input de Empleado y el botón Buscar usen el 100% de su contenedor */
+	.groupbox-filtro .filtro-busqueda .campo input,
+	.groupbox-filtro .filtro-busqueda .campo button,
+	.groupbox-filtro .filtro-busqueda .campo select {
+		width: 100%;
+	}
+	/* ---------------------------------------------------- */
+
+
+	@@media (max-width: 1100px) {
+		/* Ajuste para que el filtro se vea bien en responsivo */
+		.filtro-busqueda {
+			justify-content: center; /* Centrar elementos cuando hay poco espacio */
+			gap: 15px;
+		}
+		/* En modo responsivo, limitamos el ancho máximo de los campos para evitar estiramiento excesivo */
+		.groupbox-filtro .filtro-busqueda .campo {
+			max-width: 300px;
+			min-width: 140px;
+		}
+		/* Sobrescribimos el ancho en móvil si es necesario */
+		.filtro-busqueda .daterange-container button#btnAbrirCalendario {
+			min-width: 280px !important;
+		}
+
+		.filtro-busqueda .campo button#btnBuscarFiltro {
+			/* Hereda de .col-md-2 button, pero anulamos el margin-bottom para la alineación */
+			margin-bottom: 0 !important;
+			/* Ajustamos para que se alinee con la parte inferior de los inputs/botones de filtro */
+			align-self: flex-end;
+		}
+	}
+
+	#btnAbrirCalendario {
+		width: 180px !important; /* Cambia este número para ajustar el ancho (ej. 160px, 150px) */
+		min-width: 180px !important;
+		max-width: 180px !important;
+		padding: 6px 10px !important; /* Padding ajustado para que el texto quepa bien */
+		font-size: 13px !important; /* Texto un poco más pequeño para que no se corte */
+		white-space: nowrap; /* Evita salto de línea */
+		overflow: hidden;
+		text-overflow: ellipsis; /* Pone "..." si el texto es muy largo */
+		text-align: center;
+	}
+</style>
+
+<div class="container-fluid d-flex justify-content-center align-items-center" ; padding: 0;">
+	<div class="card shadow-lg p-4 card-principal">
+		<h2 class="text-center mb-4 fw-bold text-primary" translate="no">REGISTRO DE INASISTENCIAS</h2>
+
+		<div class="row">
+			<div class="col-md-2 d-flex flex-column align-items-start">
+				<div id="logoContainer">
+					<img src="/images/file_0000000079e461fd8636559665695d530001.png" alt="Logo" id="farmaciaLogo" />
+				</div>
+
+				<a href="/Actualizar/ActualizarCuenta?idProveedor=@idProv&vista=@vistaActual"
+				   class="btn btn-primary" style=" border:none;" translate="no">Cuenta</a>
+
+				<a asp-action="IngresarProveedor"
+				   asp-controller="Proveedores"
+				   asp-route-idProveedorSeleccionado="@idProv"
+				   asp-route-vista="@vistaActual"
+				   class="btn btn-primary" style="border:none;">Boletas</a>
+
+				<a href="/CuentaCliente/Index?idProveedor=@idProv&vistaOrigen=@vistaActual"
+				   class="btn btn-primary" style="border:none;">Cuentas de Clientes</a>
+
+				<a asp-action="Inasistencia"
+				   asp-controller="Proveedores"
+				   asp-route-origen="@vistaActual"
+				   asp-route-idProveedor="@idProv"
+				   class="btn btn-primary">
+					Inasistencia
+				</a>
+
+				<a href="/Vacaciones?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary">Vacaciones</a>
+
+				<a href="/Proveedores/Index" class="btn btn-primary" style="border:none;" translate="no">Volver</a>
+			</div>
+
+			<div class="col-md-10 d-flex justify-content-start">
+				<div class="bloque-principal">
+
+					<div class="@claseVisualDisabled">
+						<form id="formInasistencia">
+							<input type="hidden" id="empleadoIdOculto" value="5" @disabledAttr />
+
+							<div class="campos-centrados">
+								<div class="campo">
+									<label for="fechaInput">Fecha</label>
+									<input translate="no" type="date" id="fechaInput" class="form-control shadow-sm" placeholder="dd/mm/aaaa" @disabledAttr />
+								</div>
+								
+								<div class="campo">
+									<label for="empleadoSelect">Empleado</label>
+									<select id="empleadoSelect" class="form-control shadow-sm" translate="no">
+										<option value="">Seleccione Empleado</option>
+										@if (ViewBag.Empleados != null)
+										{
+											foreach (var empleado in ViewBag.Empleados)
+											{
+												<option value="@empleado.Idusuario" translate="no">@empleado.NombreCompleto</option>
+											}
+										}
+									</select>
+									<input type="hidden" id="empleadoInput" name="empleadoInput" />
+								</div>
+								
+
+								<div class="campo">
+									<label for="turnoSelect">Turno</label>
+									<select id="turnoSelect" class="form-control shadow-sm" @disabledAttr>
+										<option value="">Seleccione</option>
+										<option value="Mañana">Mañana</option>
+										<option value="Tarde">Tarde</option>
+										<option value="Completo">Completo</option>
+									</select>
+								</div>
+
+								<div class="campo">
+									<label for="motivoInput">Motivo</label>
+									<textarea id="motivoInput" class="form-control shadow-sm" rows="1" maxlength="100" placeholder="Motivo de inasistencia" @disabledAttr></textarea>
+								</div>
+							</div>
+						</form>
+					</div>
+
+					<div class="groupbox-filtro @claseVisualDisabled">
+						<legend>Filtros</legend>
+						<div class="filtro-busqueda">
+							<div class="campo">
+								<label for="buscarTurnoSelect">Turno</label>
+								<select id="buscarTurnoSelect" class="form-control shadow-sm" style="height: 38px; min-width: 140px;" @disabledAttr>
+									<option value="">Seleccione</option>
+									<option value="Mañana">Mañana</option>
+									<option value="Tarde">Tarde</option>
+									<option value="Completo">Completo</option>
+								</select>
+							</div>
+
+							<div class="campo daterange-container" style="position: relative;">
+								<label for="btnAbrirCalendario">Rango de Fechas</label>
+
+								<button translate="no" type="button" id="btnAbrirCalendario" class="btn btn-outline-primary shadow-sm" style="text-align: center; height: 38px; width: 100%;" @disabledAttr>
+									dd/mm/yyyy - dd/mm/yyyy
+								</button>
+
+								
+								<input type="hidden" id="fechaDesdeOculto" @disabledAttr />
+								<input type="hidden" id="fechaHastaOculto" @disabledAttr />
+							</div>
+						</div>
+
+						<div class="filtro-busqueda" style="margin-top: 15px;">
+							<div class="campo">
+								<label for="buscarEmpleadoInput">Buscar Empleado</label>
+								<input translate="no" type="text" id="buscarEmpleadoInput" class="form-control shadow-sm" placeholder="Escriba aquí..." style="text-align: left;" @disabledAttr />
+							</div>
+
+							<div class="campo d-flex flex-column justify-content-end">
+								<button translate="no" id="btnBuscarFiltro"
+										style="height: 38px; margin-bottom: 0; min-width: 100px;" @disabledAttr>
+									Buscar
+								</button>
+							</div>
+						</div>
+					</div>
+
+					<div class="contenedor-tablas-botones mt-3">
+						<div class="table-wrapper">
+							<div class="tabla-encabezado">REGISTROS DE INASISTENCIAS</div> <div class="table-responsive" id="tableResponsive">
+								<table class="table table-bordered table-hover align-middle tabla-congelada" id="tablaInasistencias">
+									<thead class="table-primary">
+										<tr>
+											<th translate="no">Fecha</th>
+											<th translate="no">Empleado</th>
+											<th translate="no">Turno</th>
+											<th translate="no">Motivo</th>
+											<th><input type="checkbox" id="checkAll" class="form-check-input" @disabledAttr /></th>
+										</tr>
+									</thead>
+									<tbody>
+									</tbody>
+								</table>
+							</div>
+						</div>
+
+
+						<div class="botones-laterales @claseVisualDisabled">
+							<button translate="no" id="btnAgregar" @disabledAttr>Agregar</button>
+
+							<button translate="no" id="btnGuardar" @disabledAttr>Guardar</button>
+
+							<button translate="no" id="btnModificar" @disabledAttr>Nuevo Registro</button>
+
+							<button translate="no" id="btnEliminarFila" @disabledAttr>Eliminar</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/locale/es.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+	<script>
+		// ----------------------------------------------------
+		// 1. CONSTANTES GLOBALES Y FUNCIONES DE TABLA
+		// ----------------------------------------------------
+		const idUsuarioActual = @(Context.Session.GetInt32("IDUsuario") ?? 1);
+
+		// ⭐ AL INICIO ya NO cargamos desde ViewBag, pero lo dejamos como respaldo por si falla la API
+		let registrosInasistenciaIniciales =
+			@Html.Raw(Json.Serialize(ViewBag.Inasistencias ?? new List<object>()));
+
+		const MIN_FILAS_VISIBLE = 5;
+		const TABLA_ID = "tablaInasistencias";
+
+		// ----------------------------------------------------
+		// ⭐ NUEVA FUNCIÓN: CARGA REAL DESDE LA BASE DE DATOS
+		// ----------------------------------------------------
+		async function refrescarTablaDesdeDb() {
+			try {
+				const response = await fetch(`/Inasistencia/GetDbInfo?idProveedor=@idProveedor`);
+				const data = await response.json();
+
+				if (Array.isArray(data)) {
+					registrosInasistenciaIniciales = data; // Reemplaza ViewBag
+					llenarTablaInasistencias(data);
+				} else {
+					console.error("Formato inesperado recibido del servidor:", data);
+				}
+			} catch (err) {
+				console.error("Error al refrescar la tabla desde el servidor:", err);
+				// Si falla, mostramos datos del ViewBag por seguridad
+				llenarTablaInasistencias(registrosInasistenciaIniciales);
+			}
+		}
+
+		function crearFilasVacias(cantidad) {
+			const tbody = document.querySelector(`#${TABLA_ID} tbody`);
+			if (!tbody) return;
+
+			const fragment = document.createDocumentFragment();
+
+			for (let i = 0; i < cantidad; i++) {
+				const fila = document.createElement("tr");
+				fila.setAttribute("data-inasistencia-id", "0");
+
+				fila.innerHTML = `
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td><input type="checkbox" class="form-check-input fila-check" disabled /></td>
+				`;
+				fragment.appendChild(fila);
+			}
+			tbody.appendChild(fragment);
+		}
+
+		function llenarTablaInasistencias(registros) {
+			const tbody = document.querySelector(`#${TABLA_ID} tbody`);
+			if (!tbody) return;
+			tbody.innerHTML = "";
+
+			registros.forEach(item => {
+				const idRegistro = item.idInasistencia || "0";
+				const fechaInasistencia = item.fecha || '';
+				const fechaDisplay = fechaInasistencia ? fechaInasistencia.split('-').reverse().join('/') : '';
+
+				const nombreEmpleado = item.nombreEmpleado || '';
+				const turno = item.turno || '';
+				const motivo = item.motivo || '';
+
+				if (!fechaInasistencia && !nombreEmpleado && !turno && !motivo) return;
+
+				const fila = document.createElement("tr");
+				fila.setAttribute("data-inasistencia-id", idRegistro);
+
+				fila.innerHTML = `
+					<td title="${fechaDisplay}">${fechaDisplay}</td>
+					<td title="${nombreEmpleado}">${nombreEmpleado}</td>
+					<td title="${turno}">${turno}</td>
+					<td title="${motivo}">${motivo}</td>
+					<td><input type="checkbox" class="form-check-input fila-check" data-id="${idRegistro}" /></td>
+				`;
+				tbody.appendChild(fila);
+			});
+
+			ajustarFilasVacias();
+		}
+
+		function ajustarFilasVacias() {
+			const filas = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-inasistencia-id]:not([data-inasistencia-id='0'])`);
+			const filasVacias = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-inasistencia-id='0']`);
+
+			filasVacias.forEach(row => row.remove());
+
+			if (filas.length < MIN_FILAS_VISIBLE) {
+				crearFilasVacias(MIN_FILAS_VISIBLE - filas.length);
+			}
+		}
+
+		//---------------------------------------------------------------------
+		// 1. Guardar filas de tabla en localStorage
+		//---------------------------------------------------------------------
+		function guardarTablaLocal() {
+			let datos = [];
+
+			document.querySelectorAll(`#${TABLA_ID} tbody tr`).forEach(tr => {
+				const id = tr.getAttribute('data-inasistencia-id') || "0";
+				const tds = tr.querySelectorAll("td");
+				if (!tds.length) return;
+
+				const fecha = tds[0].innerText.trim();
+				const empleado = tds[1].innerText.trim();
+				const turno = tds[2].innerText.trim();
+				const motivo = tds[3].innerText.trim();
+
+				if (!fecha && !empleado && !turno && !motivo) return;
+
+				datos.push({ id, fecha, empleado, turno, motivo });
+			});
+
+			localStorage.setItem("inasistencias_guardadas", JSON.stringify(datos));
+		}
+
+		//---------------------------------------------------------------------
+		// 2. Cargar la tabla desde localStorage
+		//---------------------------------------------------------------------
+		function cargarTablaLocal() {
+			let datos = JSON.parse(localStorage.getItem("inasistencias_guardadas") || "[]");
+			if (!Array.isArray(datos) || datos.length === 0) return;
+
+			let tbody = document.querySelector(`#${TABLA_ID} tbody`);
+			if (!tbody) return;
+
+			const existeFilaServidor = tbody.querySelector("tr[data-inasistencia-id]:not([data-inasistencia-id='0'])");
+
+			if (!existeFilaServidor) {
+				tbody.innerHTML = "";
+				datos.forEach(d => {
+					tbody.insertAdjacentHTML("beforeend", `
+						<tr data-inasistencia-id="${d.id}">
+							<td>${d.fecha}</td>
+							<td>${d.empleado}</td>
+							<td>${d.turno}</td>
+							<td>${d.motivo}</td>
+							<td><input type="checkbox" class="form-check-input fila-check" data-id="${d.id}"></td>
+						</tr>
+					`);
+				});
+			} else {
+				datos.forEach(d => {
+					if (tbody.querySelector(`tr[data-inasistencia-id='${d.id}']`)) return;
+
+					tbody.insertAdjacentHTML("beforeend", `
+						<tr data-inasistencia-id="${d.id}">
+							<td>${d.fecha}</td>
+							<td>${d.empleado}</td>
+							<td>${d.turno}</td>
+							<td>${d.motivo}</td>
+							<td><input type="checkbox" class="form-check-input fila-check" data-id="${d.id}"></td>
+						</tr>
+					`);
+				});
+			}
+
+			ajustarFilasVacias();
+		}
+
+		// ----------------------------------------------------
+		// ⭐ LIMPIEZA VISUAL PARA "NUEVO REGISTRO"
+		// ----------------------------------------------------
+		function limpiarTablaVisualmente() {
+			const tbody = document.querySelector(`#${TABLA_ID} tbody`);
+			if (!tbody) return;
+
+			document.querySelectorAll(`#${TABLA_ID} tbody tr`).forEach(f => f.remove());
+
+			localStorage.removeItem("inasistencias_guardadas");
+			registrosInasistenciaIniciales = [];
+
+			crearFilasVacias(MIN_FILAS_VISIBLE);
+
+			// MENSAJE ELIMINADO: alert("La tabla ha sido limpiada. Puede comenzar un nuevo registro.");
+		}
+		// ----------------------------------------------------
+		// 2 LÓGICA DE BOTONES
+		// ----------------------------------------------------
+
+				document.getElementById("btnAgregar").addEventListener("click", async function () {
+
+			// 1. OBTENER ELEMENTOS Y VALORES
+			const fechaInput = document.getElementById("fechaInput");
+			const empleadoSelect = document.getElementById("empleadoSelect"); // ⭐ CAMBIO CLAVE: Obtener el SELECT
+			const turnoSelect = document.getElementById("turnoSelect");
+			const motivoInput = document.getElementById("motivoInput");
+			const tbody = document.querySelector("#tablaInasistencias tbody");
+
+			const fechaValue = fechaInput.value;
+
+			const empleadoId = parseInt(empleadoSelect.value) || 0; // El ID del empleado es el VALUE
+			const empleadoNombre = empleadoSelect.options[empleadoSelect.selectedIndex].text.trim(); // El Nombre es el TEXTO de la opción
+
+
+			const turno = turnoSelect.value;
+			const motivo = motivoInput.value.trim();
+
+			// 2. LÓGICA DE VALIDACIÓN VISUAL (ERROR FEEDBACK) Y BLOQUEO DE ENVÍO
+			let camposCompletos = true;
+
+			// Limpieza de errores previos
+			[fechaInput, empleadoSelect, turnoSelect, motivoInput].forEach(input => { // Ajustado para empleadoSelect
+				input.classList.remove('is-invalid');
+			});
+
+			// Verificación de campos y aplicación de error
+			if (!fechaValue) {
+				fechaInput.classList.add('is-invalid');
+				camposCompletos = false;
+			}
+			// ⭐ VALIDACIÓN EMPLEADO: Ahora se valida si el ID es válido (> 0)
+			if (empleadoId <= 0) {
+				empleadoSelect.classList.add('is-invalid');
+				camposCompletos = false;
+			}
+			if (!turno) {
+				turnoSelect.classList.add('is-invalid');
+				camposCompletos = false;
+			}
+			if (!motivo) {
+				motivoInput.classList.add('is-invalid');
+				camposCompletos = false;
+			}
+
+			// ⭐ BLOQUEO CLAVE: Si los campos no están completos, MUESTRA ALERTA Y DETIENE LA EJECUCIÓN
+			if (!camposCompletos) {
+				Swal.fire({
+					title: 'Campos Incompletos',
+					text: 'Debe completar todos los campos (Fecha, Empleado, Turno y Motivo) antes de agregar la inasistencia.',
+					confirmButtonText: 'Entendido',
+					confirmButtonColor: '#007bff'
+				});
+				return; // <--- ESTO DETIENE LA FUNCIÓN Y EVITA QUE SE AGREGUE LA FILA O SE LLAME A LA BD
+			}
+			// Si la ejecución llega aquí, los campos están completos.
+
+			const idUsuarioAutenticado = @(Context.Session.GetInt32("IDUsuario") ?? 1);
+
+			const datosRegistro = {
+				IdUsuario: idUsuarioAutenticado,
+				IdEmpleado: empleadoId, // ⭐ USAMOS EL ID OBTENIDO DEL SELECT
+				NombreEmpleado: empleadoNombre, // ⭐ USAMOS EL NOMBRE OBTENIDO DEL SELECT
+				Turno: turno,
+				Motivo: motivo,
+				Fecha: fechaValue
+			};
+
+			const partesFecha = fechaValue.split('-');
+			const fechaFormateada = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;
+
+			// Añadir fila temporal de inmediato (color amarillo para indicar guardado pendiente)
+			const filaTemporalId = `temp-${Date.now()}`;
+			const filaTemporalHTML = `
+				<tr data-inasistencia-id="${filaTemporalId}" class="table-warning">
+					<td title="${fechaFormateada}">${fechaFormateada}</td>
+					<td title="${empleadoNombre}">${empleadoNombre}</td>
+					<td title="${turno}">${turno}</td>
+					<td title="${motivo}">${motivo}</td>
+					<td><input type="checkbox" class="form-check-input fila-check" data-id="${filaTemporalId}" disabled /></td>
+				</tr>
+			`;
+			tbody.insertAdjacentHTML("afterbegin", filaTemporalHTML);
+
+			// Limpiar formulario y ajustar filas vacías
+			document.getElementById("formInasistencia").reset();
+			// document.getElementById("empleadoIdOculto").value = empleadoId; // Ya no es necesario
+			ajustarFilasVacias();
+
+			try {
+				const response = await fetch('/Inasistencia/RegistrarInasistencia', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(datosRegistro)
+				});
+
+				const data = await response.json();
+				const filaTemporal = document.querySelector(`tr[data-inasistencia-id='${filaTemporalId}']`);
+
+				if (data.exito) {
+					if (filaTemporal) {
+						// Actualizar la fila temporal con el ID real de la base de datos
+						filaTemporal.setAttribute("data-inasistencia-id", data.idInasistencia);
+						filaTemporal.classList.remove('table-warning');
+						filaTemporal.querySelector('.fila-check').removeAttribute('disabled');
+						filaTemporal.querySelector('.fila-check').setAttribute('data-id', data.idInasistencia); // Asegurar que el checkbox tenga el ID de DB
+
+						// Actualizamos los registros iniciales para futuras búsquedas o recargas
+						registrosInasistenciaIniciales.unshift({
+							IdInasistencia: data.idInasistencia,
+							Fecha: fechaValue, // YYYY-MM-DD
+							NombreEmpleado: empleadoNombre,
+							Turno: turno,
+							Motivo: motivo
+						});
+					}
+				} else {
+					// Muestra el mensaje de error del servidor
+					console.error("Error del Servidor:", data.mensaje); // Error a consola
+
+					// Si falla la persistencia, dejamos la fila temporal en la tabla
+					if (filaTemporal) {
+						filaTemporal.classList.remove('table-warning'); // Quitar color de "pendiente"
+						filaTemporal.querySelector('.fila-check').removeAttribute('disabled'); // Permitir selección
+						filaTemporal.querySelector('.fila-check').setAttribute('data-id', "0"); // Usar ID 0 para forzar el tratamiento local
+						filaTemporal.setAttribute("data-inasistencia-id", "0");
+					}
+
+					// Notificación de error de SweetAlert
+					Swal.fire({
+						title: 'Registro No Guardado',
+						text: 'El registro no se guardó, intente Guardar/Eliminar más tarde. Error:' + data.mensaje,
+						confirmButtonText: 'Entendido',
+						confirmButtonColor: '#007bff'
+					});
+				}
+			} catch (error) {
+				console.error("Error de conexión con el servidor: ", error); // Error a consola
+
+				// Si falla la conexión, dejamos la fila temporal
+				const filaTemporal = document.querySelector(`tr[data-inasistencia-id='${filaTemporalId}']`);
+				if (filaTemporal) {
+					filaTemporal.classList.remove('table-warning');
+					filaTemporal.querySelector('.fila-check').removeAttribute('disabled');
+					filaTemporal.querySelector('.fila-check').setAttribute('data-id', "0");
+					filaTemporal.setAttribute("data-inasistencia-id", "0");
+				}
+
+				// Notificación de error de SweetAlert
+				Swal.fire({
+					title: 'Error de Conexión',
+					text: 'No se pudo conectar con el servidor. El registro se ha mantenido en la tabla localmente (ID 0). Intente Guardar/Eliminar más tarde.',
+					confirmButtonText: 'Entendido',
+					confirmButtonColor: '#007bff'
+				});
+			}
+			guardarTablaLocal(); // Guarda el estado actual (con la fila temporal/persisitda)
+		});
+
+
+		// 🎯 BOTÓN ELIMINAR (Lógica completa y corregida)
+				document.getElementById("btnEliminarFila").addEventListener("click", async function() {
+			const checkboxesSeleccionados = document.querySelectorAll(`#${TABLA_ID} .fila-check:checked`);
+
+			if (!checkboxesSeleccionados || checkboxesSeleccionados.length === 0) {
+				alert("Debe seleccionar un registro de inasistencia para eliminar."); // Validación MANTENIDA
+				return;
+			}
+
+			// Preparar listas
+			const idsParaEliminarEnDB = [];
+			const filasLocalesAEliminar = [];
+
+			checkboxesSeleccionados.forEach(chk => {
+				// Obtenemos el ID de la fila
+				const tr = chk.closest("tr");
+				const dataId = chk.getAttribute('data-id') ?? tr?.getAttribute('data-inasistencia-id') ?? "0";
+
+				// Determinamos si el ID es un número real de DB
+				const idEsValidoDB = !isNaN(parseInt(dataId)) && parseInt(dataId) > 0;
+
+				if (idEsValidoDB) {
+					idsParaEliminarEnDB.push(String(dataId));
+				} else {
+					// Filas locales
+					filasLocalesAEliminar.push(tr);
+				}
+			});
+
+			// 1. Eliminar filas locales del DOM
+			if (filasLocalesAEliminar.length > 0) {
+				filasLocalesAEliminar.forEach(tr => {
+					if (tr) tr.remove();
+				});
+				ajustarFilasVacias();
+			}
+
+			// 2. Eliminar en DB (si hay IDs válidos)
+			if (idsParaEliminarEnDB.length > 0) {
+
+				// ⭐ CONFIGURACIÓN DEL MODAL DE CONFIRMACIÓN (ANTES DE ELIMINAR)
+				const resultadoConfirmacion = await Swal.fire({
+					title: 'Confirmación de Eliminación',
+					html: `¿Está seguro de que desea eliminar <b>${idsParaEliminarEnDB.length} registro(s)</b>?`,
+					showCancelButton: true,
+					confirmButtonColor: '#007bff',
+					cancelButtonColor: '#007bff',
+					confirmButtonText: 'Si, Eliminar',
+					cancelButtonText: 'Cancelar'
+				});
+
+				// Verificamos si el usuario confirmó
+				if (resultadoConfirmacion.isConfirmed) {
+
+					// Si el usuario confirma, procedemos con la eliminación en la DB
+					const resultados = await Promise.allSettled(idsParaEliminarEnDB.map(id =>
+						fetch(`/Inasistencia/EliminarInasistencia?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+							.then(r => r.json())
+					));
+
+					let exitosos = 0;
+					let errores = [];
+
+					for (let i = 0; i < resultados.length; i++) {
+						const res = resultados[i];
+						const id = idsParaEliminarEnDB[i];
+
+						if (res.status === 'fulfilled' && res.value && res.value.success) {
+							const fila = document.querySelector(`#${TABLA_ID} tr[data-inasistencia-id='${id}']`);
+							if (fila) fila.remove();
+
+							registrosInasistenciaIniciales = registrosInasistenciaIniciales.filter(r => String(r.IdInasistencia) !== String(id));
+							exitosos++;
+						} else {
+							let msg = (res.status === 'fulfilled' && res.value && res.value.mensaje) ? res.value.mensaje : (res.reason ? res.reason.message : 'Error desconocido de red/servidor');
+							errores.push({ id, msg });
+						}
+					}
+
+					// Registro de resultados en consola (mantenemos la lógica anterior)
+					if (exitosos > 0) console.log(`[ELIMINAR] ${exitosos} registro(s) eliminados de la DB correctamente.`);
+					if (errores.length > 0) console.error(`[ELIMINAR] Error(es) de DB: ${errores.map(e => `ID ${e.id}: ${e.msg}`).join(' / ')}`);
+
+					// ⭐ OPCIONAL: Mostrar un mensaje de resultado final (de éxito o error) centrado
+					if (exitosos > 0) {
+						// ⭐ CAMBIO CLAVE: Agregamos confirmButtonColor para cambiar el color del botón "OK"
+						Swal.fire({
+							title: '¡Eliminado!',
+							text: 'Los registros seleccionados han sido eliminados.',
+							icon: 'success',
+							confirmButtonText: 'Entendido',
+							confirmButtonColor: '#007bff' // Color azul del botón OK, para que coincida con tus otros botones.
+						});
+					} else if (errores.length > 0) {
+						 Swal.fire('Error de Eliminación', 'Algunos registros no pudieron ser eliminados', 'error');
+					}
+
+				} else {
+					 // El usuario canceló la eliminación en la DB.
+					 console.log("[ELIMINAR] Operación de eliminación cancelada por el usuario.");
+				}
+			}
+
+			// 3. Ajustes finales y guardado local
+			ajustarFilasVacias();
+			guardarTablaLocal();
+		});
+
+
+
+
+		// 🎯 Lógica para alternar la selección de filas
+		document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function(e) {
+			const fila = e.target.closest('tr');
+			// Excluir filas vacías (ID '0') de la selección
+			if (!fila || fila.getAttribute('data-inasistencia-id') === '0') return;
+
+			const checkbox = fila.querySelector('.fila-check');
+
+			if (checkbox) {
+				// 1. Si el click no fue directamente en el checkbox, alternamos su estado
+				if (e.target.tagName !== 'INPUT' || e.target.type !== 'checkbox') {
+					checkbox.checked = !checkbox.checked;
+				}
+
+				// 2. Aplicar/remover estilo de selección y gestionar la selección múltiple
+				if (checkbox.checked) {
+					fila.classList.add('fila-seleccionada');
+				} else {
+					// 3. ⭐ CAMBIO CRÍTICO (A): Al desmarcar, quitamos el estilo
+					fila.classList.remove('fila-seleccionada');
+				}
+			}
+
+			// 4. ⭐ CAMBIO CRÍTICO (B): Sincronizar el Checkbox Maestro con la selección múltiple.
+			const checkAll = document.getElementById('checkAll');
+			if (checkAll) {
+				const filasConDatos = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-inasistencia-id]:not([data-inasistencia-id='0'])`);
+				const checksMarcados = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-inasistencia-id]:not([data-inasistencia-id='0']) .fila-check:checked`);
+
+				// Marcar el maestro si el número de marcados es igual al número total de filas con datos.
+				checkAll.checked = (checksMarcados.length > 0 && checksMarcados.length === filasConDatos.length);
+			}
+		});
+
+
+		// ----------------------------------------------------
+		// ⭐ LÓGICA DE CHECKBOX MAESTRO
+		// ----------------------------------------------------
+		function configurarCheckAll() {
+			// Asumiendo que el Checkbox Maestro tiene el ID 'checkAll' y se encuentra en el <thead>
+			const checkAll = document.getElementById('checkAll');
+			if (!checkAll) return;
+
+			checkAll.addEventListener('change', function() {
+				const isChecked = this.checked;
+
+				// Seleccionar solo los checkboxes de las filas con DATOS (id != '0')
+				const checkboxesFila = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-inasistencia-id]:not([data-inasistencia-id='0']) .fila-check`);
+
+				checkboxesFila.forEach(checkbox => {
+					checkbox.checked = isChecked;
+
+					const fila = checkbox.closest('tr');
+					if (fila) {
+						if (isChecked) {
+							fila.classList.add('fila-seleccionada');
+						} else {
+							fila.classList.remove('fila-seleccionada');
+						}
+					}
+				});
+			});
+		}
+
+
+				// ----------------------------------------------------
+		// 3. INICIALIZACIÓN DEL DOM Y LÓGICA DE EVENTOS (Única ejecución)
+		// ----------------------------------------------------
+		document.addEventListener("DOMContentLoaded", function () {
+			// 1. Prioridad: Cargar datos del servidor
+			if (registrosInasistenciaIniciales.length > 0) {
+				llenarTablaInasistencias(registrosInasistenciaIniciales);
+			} else {
+				crearFilasVacias(MIN_FILAS_VISIBLE);
+			}
+			refrescarTablaDesdeDb();   // <-- AHORA SE CARGA DESDE EL CONTROLADOR REAL
+			cargarTablaLocal();        // <-- Merge con localStorage
+			// Llamar a la configuración del Checkbox Maestro al inicio
+			configurarCheckAll();
+
+			const btnNuevoRegistro = document.getElementById("btnModificar");
+			if (btnNuevoRegistro) {
+				btnNuevoRegistro.addEventListener("click", function () {
+					limpiarTablaVisualmente();
+					Swal.fire({
+						icon: 'success',
+						title: 'Tabla limpiada',
+						text: 'Puede comenzar un nuevo registro.',
+						timer: 2500,
+						showConfirmButton: false
+					});
+				});
+			}
+
+			// Establece la fecha de registro en el día actual por defecto
+			const fechaInput = document.getElementById('fechaInput');
+			if (fechaInput) {
+				fechaInput.valueAsDate = new Date();
+			}
+
+			// === DATE RANGE PICKER DIRECTO EN EL BOTÓN (FUNCIONA PERFECTO) ===
+			$('#btnAbrirCalendario').daterangepicker({
+				autoUpdateInput: false,
+				locale: {
+					format: 'DD/MM/YYYY',
+					separator: ' - ',
+					applyLabel: 'Aplicar',
+					cancelLabel: 'Borrar',
+					fromLabel: 'Desde',
+					toLabel: 'Hasta',
+					customRangeLabel: 'Personalizado',
+					weekLabel: 'S',
+					daysOfWeek: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'],
+					monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+					firstDay: 1
+				},
+				
+				opens: 'left'
+			});
+
+			// Al aplicar las fechas
+			$('#btnAbrirCalendario').on('apply.daterangepicker', function(ev, picker) {
+				$(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+				$('#fechaDesdeOculto').val(picker.startDate.format('YYYY-MM-DD'));
+				$('#fechaHastaOculto').val(picker.endDate.format('YYYY-MM-DD'));
+			});
+
+			// Al cancelar/limpiar
+			$('#btnAbrirCalendario').on('cancel.daterangepicker', function() {
+				$(this).text('dd/mm/yyyy - dd/mm/yyyy');
+				$('#fechaDesdeOculto').val('');
+				$('#fechaHastaOculto').val('');
+			});
+
+			// Valor inicial por defecto
+					// Sin valor inicial por defecto → muestra solo el placeholder
+		$('#btnAbrirCalendario').text('dd/mm/yyyy - dd/mm/yyyy');
+		$('#fechaDesdeOculto').val('');
+		$('#fechaHastaOculto').val('');
+		});
+
+		function quitarAcentos(str) {
+			if (!str) return "";
+			return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+		}
+
+
+
+				document.getElementById("btnBuscarFiltro").addEventListener("click", async function () {
+			const fechaDesde = document.getElementById('fechaDesdeOculto').value.trim();
+			const fechaHasta = document.getElementById('fechaHastaOculto').value.trim();
+			const textoEmpleado = document.getElementById('buscarEmpleadoInput').value.trim();
+			const turnoFiltro = document.getElementById('buscarTurnoSelect').value.trim();
+
+			// Validación de fechas
+			if (fechaDesde && fechaHasta && new Date(fechaDesde) > new Date(fechaHasta)) {
+				Swal.fire('Error', "La fecha 'Desde' no puede ser posterior a la fecha 'Hasta'.", 'error');
+				return;
+			}
+
+			// === DETECTAR SI REALMENTE HAY UN FILTRO ACTIVO ===
+			const hayFecha = fechaDesde !== '' && fechaHasta !== '';
+			const hayEmpleado = textoEmpleado !== '';
+			const hayTurno = turnoFiltro !== '';
+
+			const hayAlgunFiltro = hayFecha || hayEmpleado || hayTurno;
+
+			try {
+				let url = '/Inasistencia/BuscarInasistencias?';
+				const params = [];
+				if (fechaDesde) params.push(`fechaDesde=${encodeURIComponent(fechaDesde)}`);
+				if (fechaHasta) params.push(`fechaHasta=${encodeURIComponent(fechaHasta)}`);
+				if (textoEmpleado) params.push(`nombreEmpleado=${encodeURIComponent(quitarAcentos(textoEmpleado.toLowerCase()))}`);
+				if (turnoFiltro) params.push(`turno=${encodeURIComponent(turnoFiltro)}`);
+				url += params.join('&');
+
+				const response = await fetch(url);
+				if (!response.ok) throw new Error('Error en la búsqueda');
+				const registros = await response.json();
+
+				// Filtro adicional en cliente para acentos
+				const filtradosFinal = registros.filter(r => {
+					const nombreCompleto = quitarAcentos((r.nombreEmpleado || "").toLowerCase());
+					return !textoEmpleado || nombreCompleto.includes(quitarAcentos(textoEmpleado.toLowerCase()));
+				});
+
+				llenarTablaInasistencias(filtradosFinal);
+
+				// === MOSTRAR MENSAJE SOLO SI REALMENTE HUBO UN FILTRO ===
+				if (hayAlgunFiltro) {
+					const total = filtradosFinal.length;
+					const mensaje = total === 0
+						? 'No se encontraron registros con los filtros aplicados.'
+						: `Se encontraron ${total} registro${total === 1 ? '' : 's'}.`;
+
+					Swal.fire({
+						icon: total > 0 ? 'success' : null,
+						title: total > 0 ? 'Búsqueda exitosa' : 'Sin resultados',
+						text: mensaje,
+						timer: 2500,
+						showConfirmButton: false
+					});
+				}
+				// Si no hay ningún filtro activo → no muestra mensaje (solo actualiza la tabla)
+			} catch (error) {
+				console.error(error);
+				Swal.fire('Error', 'Ocurrió un problema al buscar los registros.', 'error');
+				llenarTablaInasistencias([]);
+				crearFilasVacias(MIN_FILAS_VISIBLE);
+			}
+		});
+
+
+		// BOTON GUARDAR//
+		document.getElementById("btnGuardar").addEventListener("click", async () => {
+			// 1. Obtención de fecha/hora y fileName
+			const now = new Date();
+			const datePart = now.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
+			const hours = now.getHours().toString().padStart(2, '0');
+			const minutes = now.getMinutes().toString().padStart(2, '0');
+			const timePart = `${hours}∶${minutes}`;
+			// Usamos la extensión .xlsx
+			const fileName = `Registro Inasistencia  ${datePart}  ${timePart}.xlsx`;
+
+			// 2. Preparar los datos de la tabla
+			const datosTabla = [];
+			const filasDatos = document.querySelectorAll("#tablaInasistencias tbody tr[data-inasistencia-id]:not([data-inasistencia-id='0'])");
+
+			if (filasDatos.length === 0) {
+				alert("No hay registros para exportar. La tabla está vacía."); // Validación MANTENIDA
+				return;
+			}
+
+			filasDatos.forEach(fila => {
+				const celdas = fila.querySelectorAll("td");
+				if (celdas.length >= 4) {
+					// Empujar solo las 4 celdas de datos (Fecha, Empleado, Turno, Motivo)
+					datosTabla.push(Array.from(celdas).slice(0, 4).map(td => td.innerText.trim()));
+				}
+			});
+
+			// 3. Crear el Workbook y la Worksheet
+			const workbook = new ExcelJS.Workbook();
+			const worksheet = workbook.addWorksheet('REGISTRO DE INASISTENCIAS');
+
+
+			// 4. APLICACIÓN DE FORMATO Y ESTILOS AVANZADOS
+
+			// Título (Fila 1)
+				const headers = ["FECHA", "EMPLEADO", "TURNO", "MOTIVO"];
+		const titulo = 'REGISTRO DE INASISTENCIAS';
+
+		// Definición de estilo de borde
+		const thinBorder = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+
+
+		// 4.1. TÍTULO (Fila 1: A1 a D1)
+
+		// 1. Insertar el título en la primera fila
+		worksheet.addRow([titulo]);
+
+		// 2. Fusionar celdas A1 a D1 para el título
+		worksheet.mergeCells('A1:D1');
+
+		// 3. Obtener la celda fusionada (A1) y reafirmar el valor
+		const titleCell = worksheet.getCell('A1');
+		titleCell.value = titulo;
+
+		// 4. Aplicar estilos al título
+		titleCell.font = { size: 14, bold: true, color: { argb: 'FF000000' } };
+		titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+		titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5DC' } };
+
+		// Aplicar bordes al título (Solo A1 necesita borde después de la fusión)
+		titleCell.border = thinBorder;
+
+
+		// 4.2. ENCABEZADOS (Fila 2: A2 a D2)
+		const headerRow = worksheet.addRow(headers);
+
+		// Aplicar estilos a los encabezados
+		headerRow.eachCell((cell, colNumber) => {
+			cell.font = { size: 11, bold: true, color: { argb: 'FF000000' } };
+			cell.alignment = { vertical: 'middle', horizontal: 'center' };
+			cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC080' } };
+			cell.border = thinBorder;
+		});
+
+		// 5. Añadir los datos de las filas (Ahora inician en la Fila 3: A3:D3)
+		datosTabla.forEach((rowData, index) => { // Añadir 'index' para la alternancia
+			const row = worksheet.addRow(rowData);
+
+			// ⭐ FONDO DE FILAS: Alternancia
+			const colorFondo = index % 2 === 0 ? 'FFDDEEFF' : 'FFCCFFFF'; // ddeeff y ccffff
+
+			// Aplicar formato, centrado y bordes
+			row.eachCell((cell, colIndex) => {
+				 // Aplicar formato de fecha (solo a la primera columna)
+				 if (colIndex === 1) {
+					 cell.numFmt = 'DD/MM/YYYY';
+				 }
+
+				 cell.alignment = { vertical: 'middle', horizontal: 'center' };
+				 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colorFondo } }; // ⭐ FONDO ALTERNANTE
+				 cell.border = thinBorder; // ⭐ BORDER: thin
+			});
+		});
+
+		// 6. AJUSTAR ANCHO DE COLUMNAS
+		worksheet.columns = [
+			{ key: 'fecha', width: 15 },
+			{ key: 'empleado', width: 25 },
+			{ key: 'turno', width: 15 },
+			{ key: 'motivo', width: 20 }
+		];
+
+			// 7. DESCARGA
+			// ExcelJS usa 'writeBuffer' que devuelve un ArrayBuffer de forma asíncrona
+			try {
+				const buffer = await workbook.xlsx.writeBuffer();
+				const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+				// Simular la descarga
+				const link = document.createElement("a");
+				link.href = URL.createObjectURL(blob);
+				link.download = fileName;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+
+				// MENSAJE ELIMINADO: alert(`Archivo "${fileName}" generado correctamente.`);
+				console.log(`[EXCEL] Archivo "${fileName}" generado y descargado correctamente.`);
+
+			} catch (error) {
+				console.error("Error al generar o descargar el archivo Excel:", error); // Error a consola
+				// MENSAJE ELIMINADO: alert("Ocurrió un error al generar el archivo. Por favor, revise la consola.");
+			}
+		});
+	</script>
+}

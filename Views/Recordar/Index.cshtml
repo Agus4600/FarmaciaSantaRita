@@ -1,0 +1,140 @@
+﻿@model IEnumerable<FarmaciaSantaRita.Models.Proveedor>
+
+@{
+    ViewData["Title"] = "RECORDAR CUENTA";
+}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+    .btn-custom {
+        background-color: #007bff;
+        color: white !important;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 10px 20px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none !important;
+    }
+
+        .btn-custom:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+    /* Estilo para el botón Buscar integrado (gris claro como en la imagen) */
+    .btn-search-integrated {
+        background-color: #f8f9fa;
+        border: 1px solid #ced4da;
+        border-left: none;
+        color: #007bff;
+        font-weight: 600;
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+        padding: 0 20px;
+        transition: all 0.2s;
+    }
+
+        .btn-search-integrated:hover {
+            background-color: #e9ecef;
+        }
+
+    .result-box {
+        background-color: #f8f9fa;
+        border-left: 5px solid #007bff;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .form-control-custom {
+        border-radius: 8px 0 0 8px !important; /* Bordes izquierdos redondeados */
+        border: 1px solid #ced4da;
+    }
+</style>
+
+<div class="main-wrapper">
+    <div class="card card-custom p-4">
+
+        <div class="text-center mb-4">
+            <img src="~/images/file_0000000079e461fd8636559665695d53.png"
+                 alt="Farmacia Santa Rita"
+                 style="width: 100%; height: auto; max-height: 180px; object-fit: contain;">
+        </div>
+
+        <h4 class="text-center mb-2">Recordar Cuenta</h4>
+        <p class="text-muted text-center small mb-4">Ingresa tu número de DNI para consultar tus datos.</p>
+
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <form asp-action="Index" method="post" id="recordarForm" class="flex-grow-1">
+                <div class="input-group">
+                    <input type="text" name="dni" class="form-control" id="dniInput" placeholder="DNI..." maxlength="10" style="border-radius: 8px 0 0 8px;" />
+                    <button class="btn btn-outline-primary" type="submit" style="border-radius: 0 8px 8px 0;">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                </div>
+            </form>
+            <a asp-controller="Login" asp-action="Index" class="btn btn-primary" style="border-radius: 8px; height: 38px; display: flex; align-items: center;">
+                Volver
+            </a>
+        </div>
+
+        @if (ViewBag.NombreUsuario != null)
+        {
+            <div class="p-3 border-start border-primary border-4 bg-light rounded shadow-sm">
+                <p class="mb-1"><strong>Usuario:</strong> <span class="text-primary">@ViewBag.NombreUsuario</span></p>
+                <p class="mb-0"><strong>Contraseña:</strong> <span>@ViewBag.Contraseña</span></p>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    // 1. Manejo de errores y mensajes con SweetAlert2
+    document.addEventListener('DOMContentLoaded', function() {
+        @if (ViewBag.Mensaje != null)
+        {
+                <text>
+                Swal.fire({
+                    title: 'Información',
+                    text: '@ViewBag.Mensaje',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+                });
+                </text>
+        }
+    });
+
+    // 2. Validación de campo vacío antes de enviar
+    const form = document.getElementById('recordarForm');
+    const dniInput = document.getElementById('dniInput');
+
+    form.addEventListener('submit', function(e) {
+        if (dniInput.value.trim() === "") {
+            e.preventDefault();
+
+            // Outer Glow de error
+            dniInput.style.boxShadow = "0 0 12px rgba(220, 53, 69, 0.5)";
+            dniInput.style.borderColor = "#dc3545";
+
+            Swal.fire({
+                title: '¡Atención!',
+                text: 'Por favor, ingresa tu número de DNI para realizar la búsqueda.',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
+            });
+        }
+    });
+
+    // Limpiar el brillo de error al escribir
+    dniInput.addEventListener('input', function() {
+        dniInput.style.boxShadow = "";
+        dniInput.style.borderColor = "";
+    });
+</script>

@@ -1,0 +1,157 @@
+﻿@model FarmaciaSantaRita.Models.Vacacion
+
+@{
+    ViewData["Title"] = "Agregar Vacaciones";
+    var idProv = (ViewData["IdProveedor"] ?? Context.Request.Query["idProveedor"].FirstOrDefault() ?? "0").ToString();
+    string vistaActual = "Vacaciones";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<style>
+    /* Mismos estilos que Index */
+    .card-principal {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .bloque-principal {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 40px 20px;
+        width: 100%;
+        max-width: 800px;
+    }
+
+    .row > .col-md-2 {
+        margin-top: -115px;
+        height: 420px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        padding-top: 50px;
+    }
+
+    .col-md-2 a.btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-weight: 600;
+        min-width: 140px;
+        width: 100%;
+        max-width: 180px;
+        margin-bottom: 10px;
+        text-align: center;
+        height: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+        .col-md-2 a.btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+    #logoContainer {
+        min-width: 140px;
+        max-width: 180px;
+        height: 200px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #farmaciaLogo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+        width: 100%;
+        max-width: 500px;
+    }
+
+    .is-invalid {
+        border-color: red !important;
+        box-shadow: 0 0 5px red !important;
+    }
+</style>
+
+<div class="container mt-5">
+    <div class="card shadow-lg p-4 card-principal">
+        <h2 class="text-center mb-4 fw-bold text-primary">AGREGAR VACACIONES</h2>
+        <div class="row">
+            <!-- Panel izquierdo -->
+            <div class="col-md-2 d-flex flex-column align-items-start">
+                <div id="logoContainer">
+                    <img src="/images/file_0000000079e461fd8636559665695d530001.png" alt="Logo" id="farmaciaLogo" />
+                </div>
+                <a href="/Actualizar/ActualizarCuenta?idProveedor=@idProv&vista=@vistaActual" class="btn">Cuenta</a>
+                <a href="/Proveedores/IngresarProveedor?idProveedorSeleccionado=@idProv&vista=@vistaActual" class="btn">Boletas</a>
+                <a href="/CuentaCliente/Index?idProveedor=@idProv&vistaOrigen=@vistaActual" class="btn">Cuentas de Clientes</a>
+                <a href="/Proveedores/Inasistencia?origen=@vistaActual&idProveedor=@idProv" class="btn">Inasistencia</a>
+                <a href="/Vacaciones" class="btn">Vacaciones</a>
+                <a href="/Proveedores/Index" class="btn">Volver</a>
+            </div>
+
+            <!-- Formulario -->
+            <div class="col-md-10 d-flex justify-content-center">
+                <div class="bloque-principal">
+                    <form asp-action="Create" method="post">
+                        <div class="form-group">
+                            <label asp-for="Idusuario" class="form-label">Empleado</label>
+                            <select asp-for="Idusuario" class="form-control" asp-items="@(new SelectList(ViewBag.Usuarios, "Idusuario", "NombreEmpleado"))">
+                                <option value="">-- Seleccione un empleado --</option>
+                            </select>
+                            <span asp-validation-for="Idusuario" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="DiasVacaciones" class="form-label">Días de vacaciones solicitados</label>
+                            <input asp-for="DiasVacaciones" class="form-control" type="number" min="1" max="60" />
+                            <span asp-validation-for="DiasVacaciones" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="FechaInicio" class="form-label">Fecha de inicio</label>
+                            <input asp-for="FechaInicio" class="form-control" type="date" />
+                            <span asp-validation-for="FechaInicio" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="FechaFin" class="form-label">Fecha de fin</label>
+                            <input asp-for="FechaFin" class="form-control" type="date" />
+                            <span asp-validation-for="FechaFin" class="text-danger"></span>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-success btn-lg px-5">Guardar Vacaciones</button>
+                            <a asp-action="Index" class="btn btn-secondary btn-lg px-5 ms-3">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

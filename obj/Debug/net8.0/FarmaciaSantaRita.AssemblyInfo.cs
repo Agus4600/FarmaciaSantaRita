@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FarmaciaSantaRita")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+747b734e955840603c32052488053e5aa9c3837a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1ad5a78451babef015fdcb0786b10e6ed44eefb8")]
 [assembly: System.Reflection.AssemblyProductAttribute("FarmaciaSantaRita")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FarmaciaSantaRita")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

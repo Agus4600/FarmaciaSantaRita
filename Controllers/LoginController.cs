@@ -26,6 +26,12 @@ namespace FarmaciaSantaRita.Controllers
 
         public IActionResult Index()
         {
+            // Esto generará la versión encriptada de admin123 usando TU clave secreta
+            string claveEncriptada = _encryptionService.Encrypt("admin123");
+
+            // Lo mandamos a la consola para que lo puedas ver en los Logs de Render
+            Console.WriteLine("CLAVE_PARA_NEON: " + claveEncriptada);
+
             return View();
         }
 

@@ -27,31 +27,41 @@ namespace FarmaciaSantaRita.Controllers
         [HttpPost]
         public async Task<IActionResult> Index(Usuario nuevoUsuario)
         {
+            // Ignoramos campos que no vienen del formulario para que no bloqueen la validación
+            ModelState.Remove("Idusuario");
+            ModelState.Remove("Contraseña");
+            ModelState.Remove("Eliminado");
+
             if (ModelState.IsValid)
             {
                 try
                 {
+                    // Encriptamos la contraseña usando el campo temporal ContraseñaPlana
                     nuevoUsuario.Contraseña = _encryptionService.Encrypt(nuevoUsuario.ContraseñaPlana);
-                    nuevoUsuario.ContraseñaPlana = null;
+
+                    // Forzamos valores por defecto para que la BD no dé error
+                    nuevoUsuario.Eliminado = false;
+                    nuevoUsuario.Rol = "Usuario"; // O el rol por defecto que prefieras
+
                     _context.Usuarios.Add(nuevoUsuario);
                     await _context.SaveChangesAsync();
 
                     TempData["ResultadoActualizacion"] = "Exito";
-                    return RedirectToAction("Index");
+                    // Una vez creado, lo mandamos al Login para que pruebe su cuenta
+                    return RedirectToAction("Index", "Login");
                 }
                 catch (Exception ex)
                 {
-                    ViewBag.Error = $"Error detallado: {ex.Message}";
-                    if (ex.InnerException != null)
-                        ViewBag.Error += $" | Detalle: {ex.InnerException.Message}";
+                    // Capturamos el error real de la base de datos (InnerException)
+                    var errorReal = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                    ViewBag.Error = "Error en la base de datos: " + errorReal;
                     return View(nuevoUsuario);
                 }
             }
-            else
-            {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-                ViewBag.Error = "Errores de validación: " + string.Join(" | ", errors);
-            }
+            // Si llegamos aquí es porque el formulario tiene errores (ej: falta un campo)
+            var listaErrores = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+            ViewBag.Error = "Campos incompletos: " + string.Join(", ", listaErrores);
+
             return View(nuevoUsuario);
         }
     }

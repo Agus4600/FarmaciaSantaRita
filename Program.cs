@@ -29,7 +29,7 @@ builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<FarmaciabdContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("FarmaciaContext"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 }
 );
 

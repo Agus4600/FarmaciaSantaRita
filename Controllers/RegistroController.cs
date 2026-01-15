@@ -27,7 +27,7 @@ namespace FarmaciaSantaRita.Controllers
         [HttpPost]
         public async Task<IActionResult> Index(Usuario nuevoUsuario)
         {
-            // Ignoramos campos que no vienen del formulario para que no bloqueen la validación
+            // Limpiamos errores de campos que la BD genera o que no controlamos aquí
             ModelState.Remove("Idusuario");
             ModelState.Remove("Contraseña");
             ModelState.Remove("Eliminado");
@@ -36,31 +36,32 @@ namespace FarmaciaSantaRita.Controllers
             {
                 try
                 {
-                    // Encriptamos la contraseña usando el campo temporal ContraseñaPlana
-                    nuevoUsuario.Contraseña = _encryptionService.Encrypt(nuevoUsuario.ContraseñaPlana);
+                    // --- ESTA ES LA LÍNEA CLAVE ---
+                    // Convertimos la fecha a UTC para que PostgreSQL no se queje
+                    nuevoUsuario.FechaNacimiento = DateTime.SpecifyKind(nuevoUsuario.FechaNacimiento.Value, DateTimeKind.Utc);
+                    // ------------------------------
 
-                    // Forzamos valores por defecto para que la BD no dé error
+                    nuevoUsuario.Contraseña = _encryptionService.Encrypt(nuevoUsuario.ContraseñaPlana);
                     nuevoUsuario.Eliminado = false;
-                    nuevoUsuario.Rol = "Usuario"; // O el rol por defecto que prefieras
+                    nuevoUsuario.Rol = "Usuario";
 
                     _context.Usuarios.Add(nuevoUsuario);
                     await _context.SaveChangesAsync();
 
                     TempData["ResultadoActualizacion"] = "Exito";
-                    // Una vez creado, lo mandamos al Login para que pruebe su cuenta
                     return RedirectToAction("Index", "Login");
                 }
                 catch (Exception ex)
                 {
-                    // Capturamos el error real de la base de datos (InnerException)
                     var errorReal = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                     ViewBag.Error = "Error en la base de datos: " + errorReal;
                     return View(nuevoUsuario);
                 }
             }
-            // Si llegamos aquí es porque el formulario tiene errores (ej: falta un campo)
-            var listaErrores = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-            ViewBag.Error = "Campos incompletos: " + string.Join(", ", listaErrores);
+
+            // SI LLEGA AQUÍ, HAY ERRORES. Vamos a ver cuáles son:
+            var errores = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+            ViewBag.Error = "No se pudo crear la cuenta: " + string.Join(" | ", errores);
 
             return View(nuevoUsuario);
         }

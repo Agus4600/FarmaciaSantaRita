@@ -163,7 +163,12 @@
         <div class="logo-container">
             <img src="~/images/file_0000000079e461fd8636559665695d53.png" alt="Logo Farmacia Santa Rita" class="logo-img">
         </div>
-
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger" style="border-radius: 15px; margin-bottom: 20px;">
+                <i class="bi bi-exclamation-triangle-fill"></i> @ViewBag.Error
+            </div>
+        }
         <form asp-action="Index" method="post" id="registroForm" autocomplete="off" novalidate>
             <fieldset class="custom-groupbox">
                 <legend>Datos Personales</legend>

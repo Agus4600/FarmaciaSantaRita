@@ -27,7 +27,7 @@ namespace FarmaciaSantaRita.Controllers
         [HttpPost]
         public async Task<IActionResult> Index(Usuario nuevoUsuario)
         {
-            // Limpiamos errores de campos que la BD genera o que no controlamos aquí
+            // Limpiamos errores de campos automáticos
             ModelState.Remove("Idusuario");
             ModelState.Remove("Contraseña");
             ModelState.Remove("Eliminado");
@@ -36,12 +36,19 @@ namespace FarmaciaSantaRita.Controllers
             {
                 try
                 {
-                    // --- ESTA ES LA LÍNEA CLAVE ---
-                    // Convertimos la fecha a UTC para que PostgreSQL no se queje
-                    nuevoUsuario.FechaNacimiento = DateTime.SpecifyKind(nuevoUsuario.FechaNacimiento.Value, DateTimeKind.Utc);
-                    // ------------------------------
+                    // Fix para PostgreSQL (sin el .Value porque FechaNacimiento no es nullable)
+                    nuevoUsuario.FechaNacimiento = DateTime.SpecifyKind(nuevoUsuario.FechaNacimiento, DateTimeKind.Utc);
 
-                    nuevoUsuario.Contraseña = _encryptionService.Encrypt(nuevoUsuario.ContraseñaPlana);
+                    // Encriptación segura
+                    if (!string.IsNullOrEmpty(nuevoUsuario.ContraseñaPlana))
+                    {
+                        nuevoUsuario.Contraseña = _encryptionService.Encrypt(nuevoUsuario.ContraseñaPlana);
+                    }
+                    else
+                    {
+                        nuevoUsuario.Contraseña = "";
+                    }
+
                     nuevoUsuario.Eliminado = false;
                     nuevoUsuario.Rol = "Usuario";
 
@@ -53,13 +60,14 @@ namespace FarmaciaSantaRita.Controllers
                 }
                 catch (Exception ex)
                 {
+                    // Captura el error real de la base de datos (por si el DNI está duplicado, etc.)
                     var errorReal = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                     ViewBag.Error = "Error en la base de datos: " + errorReal;
                     return View(nuevoUsuario);
                 }
             }
 
-            // SI LLEGA AQUÍ, HAY ERRORES. Vamos a ver cuáles son:
+            // Si hay errores de validación en el formulario
             var errores = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             ViewBag.Error = "No se pudo crear la cuenta: " + string.Join(" | ", errores);
 

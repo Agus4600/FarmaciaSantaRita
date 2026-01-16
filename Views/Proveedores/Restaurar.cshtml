@@ -259,6 +259,36 @@
             });
         });
 
+        function ejecutarFetch(url, ids) {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify(ids)
+            })
+            .then(response => response.json())
+            .then(data => {
+                Swal.fire({
+                    title: data.mensaje.includes("Error") ? 'Error' : '¡Logrado!',
+                    text: data.mensaje,
+                    icon: data.mensaje.includes("Error") ? 'error' : 'success',
+                    confirmButtonColor: '#007bff'
+                }).then(() => {
+                    if (!data.mensaje.includes("Error")) {
+                        location.reload(); // Recarga para actualizar la tabla
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error', 'No se pudo procesar la solicitud.', 'error');
+            });
+        }
+
         inputBusqueda.addEventListener("keyup", () => renderizarTabla(inputBusqueda.value));
         renderizarTabla();
     </script>

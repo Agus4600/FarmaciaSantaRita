@@ -233,11 +233,13 @@
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label">Usuario</label>
-                        <input asp-for="NombreUsuario" class="form-control-custom" required autocomplete="off" />
+                        <input asp-for="NombreUsuario" id="NombreUsuario" class="form-control-custom" required autocomplete="off" />
+                        <span id="err-NombreUsuario" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Correo Electrónico</label>
                         <input asp-for="CorreoUsuario" id="CorreoUsuario" type="email" class="form-control-custom" required autocomplete="off" />
+                        <span id="err-CorreoUsuario" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Contraseña</label>
@@ -247,6 +249,7 @@
                                 <i id="passIcon" class="bi bi-eye"></i>
                             </button>
                         </div>
+                        <span id="err-passInput" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
                 </div>
             </fieldset>
@@ -263,13 +266,13 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // 1. Limpiar mensajes rojos al empezar a escribir o al reintentar
     function limpiarErrores() {
         document.querySelectorAll('.error-label').forEach(el => el.innerText = '');
-        document.querySelectorAll('.form-control-custom').forEach(el => el.style.borderColor = '#ced4da');
+        document.querySelectorAll('.form-control-custom').forEach(el => {
+            el.style.borderColor = '#ced4da';
+        });
     }
 
-    // 2. Función para mostrar el error justo debajo del input
     function aplicarError(idInput, mensaje) {
         const span = document.getElementById('err-' + idInput);
         const input = document.getElementById(idInput);
@@ -297,11 +300,10 @@
         }
     }
 
-            function validarYEnviar() {
+    function validarYEnviar() {
         limpiarErrores();
         const form = document.getElementById('registroForm');
 
-        // Función auxiliar para obtener valores
         const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value.trim() : "";
 
         // Captura de valores
@@ -310,16 +312,15 @@
         const dni = getVal("Dni");
         const telefono = getVal("Telefono");
         const direccion = getVal("Direccion");
+        const fechaNac = getVal("FechaNacimiento");
+        const usuario = getVal("NombreUsuario");
+        const correo = getVal("CorreoUsuario");
         const pass = getVal("passInput");
-
-        // Captura de correo (buscamos por ID o por Name)
-        const correoInput = document.getElementById("CorreoUsuario") || document.getElementsByName("CorreoUsuario")[0];
-        const correo = correoInput ? correoInput.value.trim().toLowerCase() : "";
 
         // 1. Validaciones de Datos Personales
         if (nombre === "") { aplicarError("Nombre", "El nombre es obligatorio"); return; }
         if (apellido === "") { aplicarError("Apellido", "El apellido es obligatorio"); return; }
-        if (dni.length < 7 || dni.length > 10) { aplicarError("Dni", "DNI no válido"); return; }
+        if (dni.length < 7 || dni.length > 10) { aplicarError("Dni", "DNI debe tener 7-10 números"); return; }
         if (telefono === "") { aplicarError("Telefono", "El teléfono es obligatorio"); return; }
 
         if (!direccion.includes(',')) {
@@ -327,31 +328,34 @@
             return;
         }
 
-        // 2. VALIDACIÓN DE CORREO (Gmail, Hotmail, Outlook y termina en .com)
-        
-        const regexCorreo = /^[a-zA-Z0-9._%+-]+@@(gmail | hotmail | outlook)\.com$/;
+        if (fechaNac === "") { aplicarError("FechaNacimiento", "La fecha es obligatoria"); return; }
 
-        if (!regexCorreo.test(correo)) {
+        // 2. Validación de Cuenta
+        if (usuario === "") { aplicarError("NombreUsuario", "El usuario es obligatorio"); return; }
+
+        // REGEX CORREGIDA: Sin espacios y con @@ para ASP.NET
+        const regexCorreo = /^[a-zA-Z0-9._%+-]+@@(gmail|hotmail|outlook)\.com$/;
+
+        if (correo === "") {
+            aplicarError("CorreoUsuario", "El correo es obligatorio");
+            return;
+        } else if (!regexCorreo.test(correo.toLowerCase())) {
             Swal.fire({
-                icon: 'warning',
-                title: 'Correo no admitido',
-                text: 'Debes usar una cuenta de Gmail, Hotmail o Outlook que termine en .com',
+                title: 'Correo no válido',
+                text: 'Debe ser @@gmail.com, @@hotmail.com o @@outlook.com',
                 confirmButtonColor: '#007bff'
+                confirmButtonText: 'Entendido'
             });
-            if(correoInput) {
-                correoInput.style.borderColor = 'red';
-                correoInput.focus();
-            }
+            aplicarError("CorreoUsuario", "Formato inválido");
             return;
         }
 
-        // 3. Validación de Contraseña
         if (pass.length < 6) {
             aplicarError("passInput", "Mínimo 6 caracteres");
             return;
         }
 
-        // Si todo está OK, confirmación final
+        // Si todo está OK
         Swal.fire({
             title: '¿Confirmar Registro?',
             text: "Los datos son correctos.",

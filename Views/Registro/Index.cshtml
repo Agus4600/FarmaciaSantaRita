@@ -175,43 +175,35 @@
                 <div class="row g-3">
                     <div class="col-md-3">
                         <label class="form-label">Nombre</label>
-                        <input asp-for="Nombre" class="form-control-custom" required />
+                        <input asp-for="Nombre" id="Nombre" class="form-control-custom" required />
+                        <span id="err-Nombre" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Apellido</label>
-                        <input asp-for="Apellido" class="form-control-custom" required />
+                        <input asp-for="Apellido" id="Apellido" class="form-control-custom" required />
+                        <span id="err-Apellido" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">DNI</label>
-                        <input asp-for="Dni" class="form-control-custom" maxlength="10" required onkeypress="return soloNumeros(event)" />
+                        <input asp-for="Dni" id="Dni" class="form-control-custom" maxlength="8" required onkeypress="return soloNumeros(event)" />
+                        <span id="err-Dni" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Teléfono</label>
-                        <input asp-for="Telefono" class="form-control-custom" required />
-                    </div>
+
                     <div class="col-md-4">
                         <label class="form-label">Dirección</label>
                         <input asp-for="Direccion" id="Direccion" class="form-control-custom" required />
+                        <span id="err-Direccion" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Fecha Nacimiento</label>
-                        <input asp-for="FechaNacimiento" type="date" class="form-control-custom" required />
-                    </div>
-                    <div class="col-md-5">
-                        <div class="custom-groupbox m-0" style="padding: 10px 20px; border-width: 1px;">
-                            <legend style="font-size: 0.9rem !important; padding: 0 10px;">Rol</legend>
-                            <div class="d-flex justify-content-around align-items-center">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" asp-for="Rol" value="Empleado/a" id="rolEmpleado" checked />
-                                    <label class="form-check-label" for="rolEmpleado">Empleado/a</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" asp-for="Rol" value="Jefe/a" id="rolJefe" />
-                                    <label class="form-check-label" for="rolJefe">Jefe/a</label>
-                                </div>
-                            </div>
-                            <span asp-validation-for="Rol" class="text-danger"></span>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Contraseña</label>
+                        <div class="password-wrapper">
+                            <input id="passInput" asp-for="ContraseñaPlana" type="password" class="form-control-custom" required autocomplete="new-password" />
+                            <button type="button" class="btn-toggle-view" onclick="togglePass()">
+                                <i id="passIcon" class="bi bi-eye"></i>
+                            </button>
                         </div>
+                        <span id="err-passInput" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
                 </div>
             </fieldset>

@@ -342,22 +342,23 @@ namespace FarmaciaSantaRita.Controllers
             }
         }
 
+
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult RestaurarSeleccionados([FromBody] List<int> ids)
         {
             if (ids == null || !ids.Any())
-                return BadRequest(new { mensaje = "No se recibieron proveedores para restaurar." });
+                return BadRequest(new { mensaje = "No se recibieron proveedores." });
 
             try
             {
+                // Importante: IgnoreQueryFilters() permite encontrar registros con 'Eliminado = true'
                 var proveedores = _context.Proveedors
                     .IgnoreQueryFilters()
-                    .Where(p => ids.Contains(p.Idproveedor) && p.Eliminado)
+                    .Where(p => ids.Contains(p.Idproveedor))
                     .ToList();
-
-                if (!proveedores.Any())
-                    return NotFound(new { mensaje = "No se encontraron los proveedores seleccionados." });
 
                 foreach (var p in proveedores)
                 {
@@ -370,7 +371,7 @@ namespace FarmaciaSantaRita.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { mensaje = "Error al restaurar los proveedores: " + ex.Message });
+                return StatusCode(500, new { mensaje = "Error en el servidor: " + ex.Message });
             }
         }
     }

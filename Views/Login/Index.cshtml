@@ -126,18 +126,18 @@
         });
     });
 
-    // 4. Validación de campos vacíos al intentar enviar el formulario
+        // 4. Validación de campos vacíos al intentar enviar el formulario
     form.addEventListener('submit', function(e) {
         if (!userInput.value.trim() || !passwordInput.value.trim()) {
             e.preventDefault();
             aplicarGlowError();
             Swal.fire({
                 title: '¡Atención!',
-                html: 'Pulsa <b>Recordar Cuenta</b> si no recuerdas tu usuario o contrase\u00f1a',
+                html: 'Pulsa Recordar cuenta si no recuerdas tu usuario o contraseña, pero si eres nuevo pulsa Crear Cuenta',
                 confirmButtonText: 'Entendido',
                 confirmButtonColor: '#007bff'
             });
-            recordarBtn.style.display = 'flex';
+            recordarBtn.style.display = 'flex'; // Muestra el botón de recordar
         }
     });
 
@@ -150,7 +150,7 @@
                 <text>
                 Swal.fire({
                     title: '¡Registro Exitoso!',
-                    text: 'Tu cuenta ha sido creada correctamente. Ya puedes iniciar sesión.',
+                    text: 'Tu cuenta ha sido creada correctamente, ya puedes iniciar sesión.',
                     icon: 'success',
                     confirmButtonColor: '#007bff',
                     confirmButtonText: 'Entendido'

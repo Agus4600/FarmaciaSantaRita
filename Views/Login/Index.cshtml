@@ -95,6 +95,8 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
     const togglePassword = document.getElementById('togglePassword');
     const passwordInput = document.getElementById('passwordInput');
@@ -124,7 +126,7 @@
         });
     });
 
-    // 4. Validación de campos vacíos
+    // 4. Validación de campos vacíos al intentar enviar el formulario
     form.addEventListener('submit', function(e) {
         if (!userInput.value.trim() || !passwordInput.value.trim()) {
             e.preventDefault();
@@ -139,8 +141,24 @@
         }
     });
 
-    // 5. Manejo de errores desde el Servidor
+    // 5. Manejo de mensajes desde el Servidor (Registro exitoso, Errores de Login, Cuenta Desactivada)
     document.addEventListener('DOMContentLoaded', function() {
+
+        // --- MENSAJE DE ÉXITO (Viene del Registro) ---
+        @if (TempData["ResultadoActualizacion"]?.ToString() == "Exito")
+        {
+                <text>
+                Swal.fire({
+                    title: '¡Registro Exitoso!',
+                    text: 'Tu cuenta ha sido creada correctamente. Ya puedes iniciar sesión.',
+                    icon: 'success',
+                    confirmButtonColor: '#007bff',
+                    confirmButtonText: 'Entendido'
+                });
+                </text>
+        }
+
+        // --- ERROR DE CREDENCIALES ---
         @if (ViewBag.Error != null)
         {
                 <text>
@@ -155,26 +173,26 @@
                 </text>
         }
 
-                @if (ViewBag.ShowDisabledModal != null && ViewBag.ShowDisabledModal == true)
-    {
-            <text>
-            aplicarGlowError();
-            Swal.fire({
-                title: 'Acceso Denegado',
-                html: `
-                    <p style="font-size: 1.2rem; color:red; font-weight: 700; margin-bottom: 15px;">
-                        Cuenta Desactivada
-                    </p>
-                    <p style="font-size: 1rem; color: #495057; line-height: 1.5;">
-                        Tu cuenta fue desactivada o eliminada,<br>
-                        habla con tu jefe/a
-                    </p>
-                `,
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#007bff',
-                width: '420px'
-            });
-            </text>
-    }
+        // --- CUENTA DESACTIVADA ---
+        @if (ViewBag.ShowDisabledModal != null && (bool)ViewBag.ShowDisabledModal)
+        {
+                <text>
+                aplicarGlowError();
+                Swal.fire({
+                    title: 'Acceso Denegado',
+                    html: `
+                        <p style="font-size: 1.2rem; color:red; font-weight: 700; margin-bottom: 15px;">
+                            Cuenta Desactivada
+                        </p>
+                        <p style="font-size: 1rem; color: #495057; line-height: 1.5;">
+                            Tu cuenta fue desactivada o eliminada,<br>
+                            habla con tu jefe/a
+                        </p>
+                    `,
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff',
+                });
+                </text>
+        }
     });
 </script>

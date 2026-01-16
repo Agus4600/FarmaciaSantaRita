@@ -249,25 +249,30 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // SweetAlert de éxito si viene del registro exitoso
-    @if (TempData["ResultadoActualizacion"]?.ToString() == "Exito")
-    {
-            <text>
-            Swal.fire({
-                title: '¡Éxito!',
-                text: 'Cuenta creada exitosamente! El usuario ha sido registrado correctamente.',
-                icon: 'success',
-                confirmButtonColor: '#007bff',
-                confirmButtonText: 'Entendido'
-            });
-            </text>
+    // 1. Limpiar mensajes rojos al empezar a escribir o al reintentar
+    function limpiarErrores() {
+        document.querySelectorAll('.error-label').forEach(el => el.innerText = '');
+        document.querySelectorAll('.form-control-custom').forEach(el => el.style.borderColor = '#ced4da');
+    }
+
+    // 2. Función para mostrar el error justo debajo del input
+    function aplicarError(idInput, mensaje) {
+        const span = document.getElementById('err-' + idInput);
+        const input = document.getElementById(idInput);
+        if (span) { span.innerText = mensaje; }
+        if (input) {
+            input.style.borderColor = 'red';
+            input.focus();
+        }
     }
 
     function soloNumeros(e) {
         let key = e.keyCode || e.which;
         if (key < 48 || key > 57) return false;
     }
+
     function togglePass() {
         const input = document.getElementById('passInput');
         const icon = document.getElementById('passIcon');
@@ -279,47 +284,49 @@
             icon.className = "bi bi-eye";
         }
     }
-    function validarDireccion() {
-        const direccionInput = document.getElementById('Direccion');
-        const tieneComa = direccionInput.value.trim().includes(',');
-        if (!tieneComa) {
-            direccionInput.classList.add('invalid-comma');
-        } else {
-            direccionInput.classList.remove('invalid-comma');
-        }
-        return tieneComa;
-    }
+
     function validarYEnviar() {
+        limpiarErrores();
         const form = document.getElementById('registroForm');
-        const direccionValida = validarDireccion();
-        if (!form.checkValidity() || !direccionValida) {
-            form.classList.add('show-errors');
-            let mensaje = 'Por favor, rellena todos los campos marcados en rojo correctamente.';
-            if (form.checkValidity() && !direccionValida) {
-                mensaje = 'La dirección debe incluir una coma para separar la calle de la localidad (ej: "25 de mayo 52, Río Seco").';
-            }
-            Swal.fire({
-                title: 'Campos Incompletos o Incorrectos',
-                text: mensaje,
-                confirmButtonColor: '#007bff',
-                confirmButtonText: 'Entendido'
-            });
-        } else {
-            form.classList.remove('show-errors');
-            Swal.fire({
-                title: '¿Confirmar Registro?',
-                text: "Los datos se guardarán en el sistema.",
-                showCancelButton: true,
-                confirmButtonColor: '#007bff',
-                cancelButtonColor: '#007bff',
-                confirmButtonText: 'Sí, crear cuenta',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
-            });
+
+        // Captura de valores por ID
+        const nombre = document.getElementById("Nombre").value.trim();
+        const apellido = document.getElementById("Apellido").value.trim();
+        const dni = document.getElementById("Dni").value.trim();
+        const direccion = document.getElementById("Direccion").value.trim();
+        const pass = document.getElementById("passInput").value.trim();
+
+        // VALIDACIONES INDIVIDUALES (Aparecen debajo del campo)
+        if (nombre === "") { aplicarError("Nombre", "El nombre es obligatorio"); return; }
+        if (apellido === "") { aplicarError("Apellido", "El apellido es obligatorio"); return; }
+
+        if (dni.length < 7 || dni.length > 8) {
+            aplicarError("Dni", "El DNI debe tener 7 u 8 números");
+            return;
         }
+
+        if (!direccion.includes(',')) {
+            aplicarError("Debe especificarse la dirección (ej: Calle 123, Ciudad)");
+            return;
+        }
+
+        if (pass.length < 6) {
+            aplicarError("passInput", "Mínimo 6 caracteres");
+            return;
+        }
+
+        // Si todo está OK, confirmación con SweetAlert
+        Swal.fire({
+            title: '¿Confirmar Registro?',
+            text: "Los datos son correctos.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#007bff',
+            confirmButtonText: 'Sí, registrar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
     }
-    document.getElementById('Direccion').addEventListener('input', validarDireccion);
 </script>

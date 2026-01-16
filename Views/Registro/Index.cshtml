@@ -266,31 +266,39 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Limpiar cualquier estado previo (ya no usamos spans ni bordes rojos)
     function limpiarErrores() {
-        // No necesitamos limpiar spans ni bordes, porque no los usamos
+        const form = document.getElementById('registroForm');
+        form.classList.remove('show-errors');
+        
+        // Resetear todos los estados de validación
+        document.querySelectorAll('.form-control-custom').forEach(el => {
+            el.setCustomValidity('');
+            el.classList.remove('invalid-comma');
+        });
+        document.querySelector('.rol-group').classList.remove('invalid');
     }
 
-    // Mostrar error en un cuadro SweetAlert2
-    function mostrarError(mensaje) {
+    function mostrarError(mensaje, idInput) {
+        // Activamos el resplandor en el input específico
+        if(idInput) {
+            const el = document.getElementById(idInput);
+            if(el) el.setCustomValidity('invalid');
+        }
+
         Swal.fire({
+            icon: 'error',
             title: 'Campo inválido',
             text: mensaje,
             confirmButtonColor: '#007bff',
-            confirmButtonText: 'Aceptar',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            position: 'center'
+            confirmButtonText: 'Entendido'
         });
     }
 
-    // Solo números en DNI
     function soloNumeros(e) {
         let key = e.keyCode || e.which;
         if (key < 48 || key > 57) return false;
     }
 
-    // Toggle ver/ocultar contraseña
     function togglePass() {
         const input = document.getElementById('passInput');
         const icon = document.getElementById('passIcon');
@@ -303,68 +311,55 @@
         }
     }
 
-    // Validar y enviar
     function validarYEnviar() {
         limpiarErrores();
+        const form = document.getElementById('registroForm');
+        form.classList.add('show-errors'); 
 
-        // Capturar valores
-        const nombre = document.getElementById("Nombre").value.trim();
-        const apellido = document.getElementById("Apellido").value.trim();
-        const dni = document.getElementById("Dni").value.trim();
-        const telefono = document.getElementById("Telefono").value.trim();
-        const direccion = document.getElementById("Direccion").value.trim();
-        const fechaNac = document.getElementById("FechaNacimiento").value.trim();
-        const usuario = document.getElementById("NombreUsuario").value.trim();
-        const correo = document.getElementById("CorreoUsuario").value.trim();
-        const pass = document.getElementById("passInput").value.trim();
-
-        // Validaciones (cada error muestra un cuadro independiente)
-        if (nombre === "") {
-            mostrarError("El nombre es obligatorio");
-            return;
+        const val = (id) => document.getElementById(id).value.trim();
+        
+        // Validaciones con activación de Outer Glow
+        if (val("Nombre") === "") { mostrarError("El nombre es obligatorio", "Nombre"); return; }
+        if (val("Apellido") === "") { mostrarError("El apellido es obligatorio", "Apellido"); return; }
+        
+        const dni = val("Dni");
+        if (dni.length < 7 || dni.length > 8) { mostrarError("El DNI debe tener 7 u 8 números", "Dni"); return; }
+        
+        if (val("Telefono") === "") { mostrarError("El teléfono es obligatorio", "Telefono"); return; }
+        
+        if (!val("Direccion").includes(',')) { 
+            document.getElementById("Direccion").classList.add("invalid-comma");
+            mostrarError("La dirección debe incluir una coma (ej: Calle 123, Ciudad)", "Direccion"); 
+            return; 
         }
-        if (apellido === "") {
-            mostrarError("El apellido es obligatorio");
-            return;
-        }
-        if (dni.length < 7 || dni.length > 8) {
-            mostrarError("El DNI debe tener 7 u 8 números");
-            return;
-        }
-        if (telefono === "") {
-            mostrarError("El teléfono es obligatorio");
-            return;
-        }
-        if (!direccion.includes(',')) {
-            mostrarError("La dirección debe incluir una coma (ej: Calle 123, Ciudad)");
-            return;
-        }
-        if (fechaNac === "") {
-            mostrarError("La fecha de nacimiento es obligatoria");
-            return;
-        }
-        if (usuario === "") {
-            mostrarError("El nombre de usuario es obligatorio");
-            return;
-        }
-            const regexCorreo = /^[a-zA-Z0-9._%+-]+@@(gmail|hotmail|outlook)\.com$/i;
-
-    if (correo === "") {
-        mostrarError("El correo electrónico es obligatorio");
-        return;
-    } else if (!regexCorreo.test(correo)) {
-        mostrarError("El correo debe tener arroba seguido de gmail.com, hotmail.com o outlook.com (ejemplo: nombre arroba gmail punto com)");
-        return;
-    }
-        if (pass.length < 6) {
-            mostrarError("La contraseña debe tener al menos 6 caracteres");
+        
+        if (val("FechaNacimiento") === "") { mostrarError("La fecha de nacimiento es obligatoria", "FechaNacimiento"); return; }
+        
+        const rolSeleccionado = document.querySelector('input[name="Rol"]:checked');
+        if (!rolSeleccionado) {
+            document.querySelector('.rol-group').classList.add('invalid');
+            mostrarError("Debe seleccionar un rol");
             return;
         }
 
-        // Todo OK → SweetAlert de confirmación
+        if (val("NombreUsuario") === "") { mostrarError("El usuario es obligatorio", "NombreUsuario"); return; }
+
+        const correo = val("CorreoUsuario");
+        const regexCorreo = /^[a-zA-Z0-9._%+-]+@@(gmail|hotmail|outlook)\.com$/i;
+        if (correo === "") { 
+            mostrarError("El correo es obligatorio", "CorreoUsuario"); 
+            return; 
+        } else if (!regexCorreo.test(correo)) {
+            mostrarError("El correo debe ser gmail.com, hotmail.com o outlook.com", "CorreoUsuario");
+            return;
+        }
+
+        if (val("passInput").length < 6) { mostrarError("La contraseña debe tener mínimo 6 caracteres", "passInput"); return; }
+
+        // Si llegó aquí, todo está OK
         Swal.fire({
             title: '¿Confirmar Registro?',
-            text: "Se creará la cuenta de " + nombre,
+            text: "Se creará la cuenta para " + val("Nombre"),
             showCancelButton: true,
             confirmButtonColor: '#007bff',
             cancelButtonColor: '#007bff',
@@ -372,7 +367,7 @@
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                document.getElementById('registroForm').submit();
+                form.submit();
             }
         });
     }

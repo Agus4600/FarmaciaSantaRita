@@ -185,13 +185,11 @@ namespace FarmaciaSantaRita.Controllers
         // * ACCIÓN MODIFICADA: Guardar Boleta (usa DateTime)
         // ************************************************
         [HttpPost]
-        public async Task<IActionResult> GuardarBoleta([FromBody] BoletaDto data) // ⬅️ Usar el DTO
+        public async Task<IActionResult> GuardarBoleta([FromBody] BoletaDto data)
         {
             try
             {
-                // 1. Validar y convertir la fecha
-                // Usamos DateTime.TryParseExact para aceptar el string "yyyy-MM-dd"
-                // y convertirlo al tipo DateTime, compatible con EF Core/SQL Express.
+                // 1. Convertir la fecha a UTC (esto soluciona el error)
                 if (!DateTime.TryParseExact(data.Fecha, "yyyy-MM-dd",
                                             System.Globalization.CultureInfo.InvariantCulture,
                                             System.Globalization.DateTimeStyles.None,
@@ -200,19 +198,22 @@ namespace FarmaciaSantaRita.Controllers
                     return BadRequest(new { exito = false, mensaje = "Formato de fecha inválido. Se espera yyyy-MM-dd." });
                 }
 
-                // 2. Crear el objeto Boletum con los datos del DTO
+                // ★★★ Línea clave: Forzar UTC ★★★
+                fechaParsed = DateTime.SpecifyKind(fechaParsed, DateTimeKind.Utc);
+                // O mejor aún (si la fecha viene sin hora): 
+                // fechaParsed = fechaParsed.ToUniversalTime();
+
                 var boleta = new Boletum
                 {
                     Idusuario = data.Idusuario,
                     Idproveedor = data.Idproveedor,
-                    Fecha = fechaParsed, // ⬅️ Fecha ya convertida a DateTime
+                    Fecha = fechaParsed,  // Ahora es UTC → PostgreSQL lo acepta
                     ImporteFinal = data.ImporteFinal,
                     Transfer = data.Transfer,
                     Categoria = data.Categoria,
                     Detalle = data.Detalle ?? string.Empty
                 };
 
-                // 3. Guardar en la base de datos
                 _context.Boleta.Add(boleta);
                 await _context.SaveChangesAsync();
 

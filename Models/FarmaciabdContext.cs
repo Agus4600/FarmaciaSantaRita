@@ -43,6 +43,11 @@ public partial class FarmaciabdContext : DbContext
     {
         modelBuilder.Entity<Boletum>(entity =>
         {
+            entity.ToTable("Boletas");
+
+            entity.HasKey(e => e.Idboleta);
+
+            entity.Property(e => e.Idboleta).HasColumnName("IDBoleta");
             entity.HasKey(e => e.Idboleta);
 
             entity.Property(e => e.Idboleta).HasColumnName("IDBoleta");

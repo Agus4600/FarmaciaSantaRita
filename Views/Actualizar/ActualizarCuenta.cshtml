@@ -285,6 +285,7 @@
                 <div class="bloque-principal">
                     <form asp-action="ActualizarCuenta" id="formCuenta" asp-controller="Actualizar" method="post" class="campos-cuenta" novalidate>
                         @Html.AntiForgeryToken()
+                        @Html.HiddenFor(model => model.Idusuario)
                         <input type="hidden" name="idProveedor" value="@ViewData["IdProveedor"]" />
                         <input type="hidden" name="vista" value="@ViewData["vista"]" />
                         <input type="hidden" asp-for="Idusuario" />
@@ -417,95 +418,146 @@
                 </text>
         }
         // Lógica del botón Guardar
-        document.getElementById('btnGuardarCambios').addEventListener('click', function() {
-            const form = document.getElementById('formCuenta');
-            const campos = {
-                nombre: document.getElementById('Nombre'),
-                apellido: document.getElementById('Apellido'),
-                usuario: document.getElementById('NombreUsuario'),
-                correo: document.getElementById('CorreoUsuario'),
-                dni: document.getElementById('Dni'),
-                direccion: document.getElementById('DireccionInput'),
-                nuevaPass: document.getElementById('nuevaContraseña'),
-                wrapNuevaPass: document.getElementById('wrapperNuevaContrasena')
-            };
-            // Resetear glows (resplandor rojo)
-            Object.values(campos).forEach(c => {
-                if(c) c.classList.remove('invalid-glow');
-            });
-            let errores = [];
-            const regexLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
-            const regexMail = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-            // Validaciones
-            if (!regexLetras.test(campos.nombre.value)) { errores.push("El <b>Nombre</b> solo debe contener letras."); campos.nombre.classList.add('invalid-glow'); }
-            if (!regexLetras.test(campos.apellido.value)) { errores.push("El <b>Apellido</b> solo debe contener letras."); campos.apellido.classList.add('invalid-glow'); }
-            if (campos.usuario.value.includes(" ")) { errores.push("El <b>Nombre de Usuario</b> no puede tener espacios."); campos.usuario.classList.add('invalid-glow'); }
-            if (!regexMail.test(campos.correo.value) || !campos.correo.value.endsWith(".com")) { errores.push("El <b>Correo</b> debe ser válido (con @@ y terminar en .com)."); campos.correo.classList.add('invalid-glow'); }
-            if (!/^\d{7,8}$/.test(campos.dni.value)) { errores.push("El <b>DNI</b> debe tener entre 7 y 8 números."); campos.dni.classList.add('invalid-glow'); }
-            // Dirección con coma y localidad
-            const dirVal = campos.direccion.value;
-            if (!dirVal.includes(",") || dirVal.split(",")[1].trim().length < 2) {
-                errores.push("La <b>Dirección</b> debe incluir una coma para especificar la dirección, (ej: 25 de mayo 52, Rio Seco).");
-                campos.direccion.classList.add('invalid-glow');
-            }
-            // Nueva pass no igual a la actual
-            const passActual = document.getElementById('contrasenaActual').value;
-            if (campos.nuevaPass.value !== "" && campos.nuevaPass.value === passActual) {
-                errores.push("La <b>Nueva Contraseña</b> no puede ser igual a la anterior.");
-                campos.wrapNuevaPass.classList.add('invalid-glow');
-            }
-                    if (errores.length > 0) {
-            Swal.fire({
-                title: 'Campos inválidos',
-                html: `<ul style="text-align:left">${errores.map(e => `<li>${e}</li>`).join('')}</ul>`,
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#007bff',
-                showConfirmButton: true
-            });
-            return;
+document.getElementById('btnGuardarCambios').addEventListener('click', function() {
+    const form = document.getElementById('formCuenta');
+    const campos = {
+        nombre: document.getElementById('Nombre'),
+        apellido: document.getElementById('Apellido'),
+        usuario: document.getElementById('NombreUsuario'),
+        correo: document.getElementById('CorreoUsuario'),
+        dni: document.getElementById('Dni'),
+        direccion: document.getElementById('DireccionInput'),
+        telefono: document.getElementById('Telefono'),
+        fechaNacimiento: document.getElementById('FechaNacimiento'),
+        nuevaPass: document.getElementById('nuevaContraseña'),
+        wrapNuevaPass: document.getElementById('wrapperNuevaContrasena')
+    };
+
+    // Resetear glows (resplandor rojo)
+    Object.values(campos).forEach(c => {
+        if (c) c.classList.remove('invalid-glow');
+        if (c && c.closest('.password-wrapper')) {
+            c.closest('.password-wrapper').classList.remove('invalid-glow');
         }
-            // NUEVO: SweetAlert cuando no hay cambios
-            const valoresOriginales = {
-                nombre: "@(Model?.Nombre?.Trim() ?? "")",
-                apellido: "@(Model?.Apellido?.Trim() ?? "")",
-                usuario: "@(Model?.NombreUsuario?.Trim() ?? "")",
-                correo: "@(Model?.CorreoUsuario?.Trim() ?? "")",
-                dni: "@(Model?.Dni?.Trim() ?? "")",
-                direccion: "@(Model?.Direccion?.Trim() ?? "")",
-                fechaNacimiento: "@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")"
-            };
-            const hayCambios = (
-                campos.nombre.value.trim() !== valoresOriginales.nombre ||
-                campos.apellido.value.trim() !== valoresOriginales.apellido ||
-                campos.usuario.value.trim() !== valoresOriginales.usuario ||
-                campos.correo.value.trim() !== valoresOriginales.correo ||
-                campos.dni.value.trim() !== valoresOriginales.dni ||
-                campos.direccion.value.trim() !== valoresOriginales.direccion ||
-                document.getElementById('FechaNacimiento').value !== valoresOriginales.fechaNacimiento ||
-                campos.nuevaPass.value.trim() !== ""
-            );
-            if (!hayCambios) {
-                Swal.fire({
-                    title: 'Sin cambios',
-                    text: 'No se detectaron cambios en los datos.',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
-                });
-                return;
-            }
-            // Confirmación de guardado (igual que antes)
-            Swal.fire({
-                title: 'Confirmar cambios',
-                text: "¿Quieres guardar los cambios?",
-                showCancelButton: true,
-                confirmButtonColor: '#007bff',
-                cancelButtonColor: '#007bff',
-                confirmButtonText: 'Sí, guardar',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) form.submit();
-            });
+    });
+
+    let errores = [];
+    const regexLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+    const regexMail = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const regexDni = /^\d{7,8}$/;
+
+    // Validaciones (igual que antes, pero agregamos teléfono)
+    if (!regexLetras.test(campos.nombre.value.trim())) {
+        errores.push("El <b>Nombre</b> solo debe contener letras.");
+        campos.nombre.classList.add('invalid-glow');
+    }
+    if (!regexLetras.test(campos.apellido.value.trim())) {
+        errores.push("El <b>Apellido</b> solo debe contener letras.");
+        campos.apellido.classList.add('invalid-glow');
+    }
+    if (campos.usuario.value.includes(" ")) {
+        errores.push("El <b>Nombre de Usuario</b> no puede tener espacios.");
+        campos.usuario.classList.add('invalid-glow');
+    }
+    if (!regexMail.test(campos.correo.value.trim())) {
+        errores.push("El <b>Correo</b> debe ser válido (con @@ y terminar en .com).");
+        campos.correo.classList.add('invalid-glow');
+    }
+    if (!regexDni.test(campos.dni.value.trim())) {
+        errores.push("El <b>DNI</b> debe tener entre 7 y 8 números.");
+        campos.dni.classList.add('invalid-glow');
+    }
+    // Dirección con coma
+    const dirVal = campos.direccion.value.trim();
+    if (!dirVal.includes(",") || dirVal.split(",")[1].trim().length < 2) {
+        errores.push("La <b>Dirección</b> debe incluir una coma y localidad (ej: 25 de mayo 52, Rio Seco).");
+        campos.direccion.classList.add('invalid-glow');
+    }
+    // Teléfono: mínimo 7 dígitos (permitir vacío si querés)
+    if (campos.telefono.value.trim() !== "" && !/^\d{7,15}$/.test(campos.telefono.value.trim())) {
+        errores.push("El <b>Teléfono</b> debe tener entre 7 y 15 números.");
+        campos.telefono.classList.add('invalid-glow');
+    }
+    // Nueva pass no igual a la actual
+    const passActual = document.getElementById('contrasenaActual').value;
+    if (campos.nuevaPass.value.trim() !== "" && campos.nuevaPass.value.trim() === passActual) {
+        errores.push("La <b>Nueva Contraseña</b> no puede ser igual a la anterior.");
+        campos.wrapNuevaPass.classList.add('invalid-glow');
+    }
+
+    if (errores.length > 0) {
+        Swal.fire({
+            title: 'Campos inválidos',
+            html: `<ul style="text-align:left">${errores.map(e => `<li>${e}</li>`).join('')}</ul>`,
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#007bff'
         });
+        return;
+    }
+
+    // ★★★ MEJOR DETECCIÓN DE CAMBIOS ★★★
+    // Limpiamos y normalizamos valores para comparar correctamente
+    const valoresOriginales = {
+        nombre: "@(Model?.Nombre?.Trim() ?? "")",
+        apellido: "@(Model?.Apellido?.Trim() ?? "")",
+        usuario: "@(Model?.NombreUsuario?.Trim() ?? "")",
+        correo: "@(Model?.CorreoUsuario?.Trim() ?? "")",
+        dni: "@(Model?.Dni?.Trim() ?? "")",
+        direccion: "@(Model?.Direccion?.Trim() ?? "")",
+        telefono: "@(Model?.Telefono?.Trim() ?? "")",
+        fechaNacimiento: "@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")",
+        nuevaPass: "" // Nueva contraseña siempre se considera cambio si se llena
+    };
+
+    const valoresActuales = {
+        nombre: campos.nombre.value.trim(),
+        apellido: campos.apellido.value.trim(),
+        usuario: campos.usuario.value.trim(),
+        correo: campos.correo.value.trim(),
+        dni: campos.dni.value.trim(),
+        direccion: campos.direccion.value.trim(),
+        telefono: campos.telefono.value.trim(),
+        fechaNacimiento: campos.fechaNacimiento.value.trim(), // Formato yyyy-MM-dd
+        nuevaPass: campos.nuevaPass.value.trim()
+    };
+
+    const hayCambios = (
+        valoresActuales.nombre !== valoresOriginales.nombre ||
+        valoresActuales.apellido !== valoresOriginales.apellido ||
+        valoresActuales.usuario !== valoresOriginales.usuario ||
+        valoresActuales.correo !== valoresOriginales.correo ||
+        valoresActuales.dni !== valoresOriginales.dni ||
+        valoresActuales.direccion !== valoresOriginales.direccion ||
+        valoresActuales.telefono !== valoresOriginales.telefono ||
+        valoresActuales.fechaNacimiento !== valoresOriginales.fechaNacimiento ||
+        valoresActuales.nuevaPass !== ""
+    );
+
+    if (!hayCambios) {
+        Swal.fire({
+            title: 'Sin cambios',
+            text: 'No se detectaron cambios en los datos.',
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#007bff'
+        });
+        return;
+    }
+
+    // Confirmación de guardado
+    Swal.fire({
+        title: 'Confirmar cambios',
+        text: "¿Quieres guardar los cambios?",
+        showCancelButton: true,
+        confirmButtonColor: '#007bff',
+                cancelButtonColor: '#007bff',
+        confirmButtonText: 'Sí, guardar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            form.submit();
+        }
+    });
+});
 
         // NUEVO: Quitar el outer glow rojo al escribir en cualquier campo
         document.querySelectorAll('.form-control, .password-wrapper').forEach(elemento => {

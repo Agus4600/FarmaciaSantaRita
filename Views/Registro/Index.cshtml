@@ -266,28 +266,32 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    // Limpiar cualquier estado previo (ya no usamos spans ni bordes rojos)
     function limpiarErrores() {
-        document.querySelectorAll('.error-label').forEach(el => el.innerText = '');
-        document.querySelectorAll('.form-control-custom').forEach(el => {
-            el.style.borderColor = '#ced4da';
+        // No necesitamos limpiar spans ni bordes, porque no los usamos
+    }
+
+    // Mostrar error en un cuadro SweetAlert2
+    function mostrarError(mensaje) {
+        Swal.fire({
+            title: 'Campo inválido',
+            text: mensaje,
+            icon: 'error',
+            confirmButtonColor: '#007bff',
+            confirmButtonText: 'Aceptar',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            position: 'center'
         });
     }
 
-    function aplicarError(idInput, mensaje) {
-        const span = document.getElementById('err-' + idInput);
-        const input = document.getElementById(idInput);
-        if (span) { span.innerText = mensaje; }
-        if (input) {
-            input.style.borderColor = 'red';
-            input.focus();
-        }
-    }
-
+    // Solo números en DNI
     function soloNumeros(e) {
         let key = e.keyCode || e.which;
         if (key < 48 || key > 57) return false;
     }
 
+    // Toggle ver/ocultar contraseña
     function togglePass() {
         const input = document.getElementById('passInput');
         const icon = document.getElementById('passIcon');
@@ -300,65 +304,68 @@
         }
     }
 
+    // Validar y enviar
     function validarYEnviar() {
         limpiarErrores();
-        const form = document.getElementById('registroForm');
 
-        const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value.trim() : "";
+        // Capturar valores
+        const nombre = document.getElementById("Nombre").value.trim();
+        const apellido = document.getElementById("Apellido").value.trim();
+        const dni = document.getElementById("Dni").value.trim();
+        const telefono = document.getElementById("Telefono").value.trim();
+        const direccion = document.getElementById("Direccion").value.trim();
+        const fechaNac = document.getElementById("FechaNacimiento").value.trim();
+        const usuario = document.getElementById("NombreUsuario").value.trim();
+        const correo = document.getElementById("CorreoUsuario").value.trim();
+        const pass = document.getElementById("passInput").value.trim();
 
-        // Captura de valores
-        const nombre = getVal("Nombre");
-        const apellido = getVal("Apellido");
-        const dni = getVal("Dni");
-        const telefono = getVal("Telefono");
-        const direccion = getVal("Direccion");
-        const fechaNac = getVal("FechaNacimiento");
-        const usuario = getVal("NombreUsuario");
-        const correo = getVal("CorreoUsuario");
-        const pass = getVal("passInput");
-
-        // 1. Validaciones de Datos Personales
-        if (nombre === "") { aplicarError("Nombre", "El nombre es obligatorio"); return; }
-        if (apellido === "") { aplicarError("Apellido", "El apellido es obligatorio"); return; }
-        if (dni.length < 7 || dni.length > 10) { aplicarError("Dni", "DNI debe tener 7-10 números"); return; }
-        if (telefono === "") { aplicarError("Telefono", "El teléfono es obligatorio"); return; }
-
+        // Validaciones (cada error muestra un cuadro independiente)
+        if (nombre === "") {
+            mostrarError("El nombre es obligatorio");
+            return;
+        }
+        if (apellido === "") {
+            mostrarError("El apellido es obligatorio");
+            return;
+        }
+        if (dni.length < 7 || dni.length > 8) {
+            mostrarError("El DNI debe tener 7 u 8 números");
+            return;
+        }
+        if (telefono === "") {
+            mostrarError("El teléfono es obligatorio");
+            return;
+        }
         if (!direccion.includes(',')) {
-            aplicarError("Direccion", "Falta la coma (ej: Calle 123, Ciudad)");
+            mostrarError("La dirección debe incluir una coma (ej: Calle 123, Ciudad)");
             return;
         }
-
-        if (fechaNac === "") { aplicarError("FechaNacimiento", "La fecha es obligatoria"); return; }
-
-        // 2. Validación de Cuenta
-        if (usuario === "") { aplicarError("NombreUsuario", "El usuario es obligatorio"); return; }
-
-        // REGEX CORREGIDA: Sin espacios y con @@ para ASP.NET
-        const regexCorreo = /^[a-zA-Z0-9._%+-]+@@(gmail|hotmail|outlook)\.com$/;
-
-        if (correo === "") {
-            aplicarError("CorreoUsuario", "El correo es obligatorio");
-            return;
-        } else if (!regexCorreo.test(correo.toLowerCase())) {
-            Swal.fire({
-                title: 'Correo no válido',
-                text: 'Debe ser @@gmail.com, @@hotmail.com o @@outlook.com',
-                confirmButtonColor: '#007bff'
-                confirmButtonText: 'Entendido'
-            });
-            aplicarError("CorreoUsuario", "Formato inválido");
+        if (fechaNac === "") {
+            mostrarError("La fecha de nacimiento es obligatoria");
             return;
         }
+        if (usuario === "") {
+            mostrarError("El nombre de usuario es obligatorio");
+            return;
+        }
+            const regexCorreo = /^[a-zA-Z0-9._%+-]+@@(gmail|hotmail|outlook)\.com$/i;
 
+    if (correo === "") {
+        mostrarError("El correo electrónico es obligatorio");
+        return;
+    } else if (!regexCorreo.test(correo)) {
+        mostrarError("El correo debe tener arroba seguido de gmail.com, hotmail.com o outlook.com (ejemplo: nombre arroba gmail punto com)");
+        return;
+    }
         if (pass.length < 6) {
-            aplicarError("passInput", "Mínimo 6 caracteres");
+            mostrarError("La contraseña debe tener al menos 6 caracteres");
             return;
         }
 
-        // Si todo está OK
+        // Todo OK → SweetAlert de confirmación
         Swal.fire({
             title: '¿Confirmar Registro?',
-            text: "Los datos son correctos.",
+            text: "Se creará la cuenta de " + nombre,
             showCancelButton: true,
             confirmButtonColor: '#007bff',
             cancelButtonColor: '#007bff',
@@ -366,7 +373,7 @@
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                form.submit();
+                document.getElementById('registroForm').submit();
             }
         });
     }

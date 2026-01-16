@@ -368,11 +368,11 @@
         }
         if (!direccion.includes(',')) {
             document.getElementById("Direccion").classList.add("invalid-comma");
-            mostrarError("Direccion", "Debe especificarse con una coma (ej: Calle 123, Ciudad)");
+            mostrarError("Direccion", "Especificarse la dirección (ej: Calle 123, Ciudad)");
             hayError = true;
         }
         if (fechaNac === "") {
-            mostrarError("FechaNacimiento", "La fecha de nacimiento es obligatoria");
+            mostrarError("FechaNacimiento", "La f.nacimiento es obligatoria");
             hayError = true;
         }
         if (usuario === "") {

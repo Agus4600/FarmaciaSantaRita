@@ -237,7 +237,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Correo Electrónico</label>
-                        <input asp-for="CorreoUsuario" type="email" class="form-control-custom" required autocomplete="off" />
+                        <input asp-for="CorreoUsuario" id="CorreoUsuario" type="email" class="form-control-custom" required autocomplete="off" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Contraseña</label>
@@ -297,11 +297,11 @@
         }
     }
 
-        function validarYEnviar() {
+            function validarYEnviar() {
         limpiarErrores();
         const form = document.getElementById('registroForm');
 
-        // Función auxiliar para obtener valores de forma segura
+        // Función auxiliar para obtener valores
         const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value.trim() : "";
 
         // Captura de valores
@@ -312,28 +312,46 @@
         const direccion = getVal("Direccion");
         const pass = getVal("passInput");
 
-        // VALIDACIONES (Aparecen debajo del campo)
+        // Captura de correo (buscamos por ID o por Name)
+        const correoInput = document.getElementById("CorreoUsuario") || document.getElementsByName("CorreoUsuario")[0];
+        const correo = correoInput ? correoInput.value.trim().toLowerCase() : "";
+
+        // 1. Validaciones de Datos Personales
         if (nombre === "") { aplicarError("Nombre", "El nombre es obligatorio"); return; }
         if (apellido === "") { aplicarError("Apellido", "El apellido es obligatorio"); return; }
-
-        if (dni.length < 7 || dni.length > 10) {
-            aplicarError("Dni", "El DNI debe tener entre 7 y 10 números");
-            return;
-        }
-
+        if (dni.length < 7 || dni.length > 10) { aplicarError("Dni", "DNI no válido"); return; }
         if (telefono === "") { aplicarError("Telefono", "El teléfono es obligatorio"); return; }
 
         if (!direccion.includes(',')) {
-            aplicarError("Direccion", "Debes especificar tu dirección (ej: Calle 123, Ciudad)");
+            aplicarError("Direccion", "Falta la coma (ej: Calle 123, Ciudad)");
             return;
         }
 
+        // 2. VALIDACIÓN DE CORREO (Gmail, Hotmail, Outlook y termina en .com)
+        
+        const regexCorreo = /^[a-zA-Z0-9._%+-]+@@(gmail | hotmail | outlook)\.com$/;
+
+        if (!regexCorreo.test(correo)) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Correo no admitido',
+                text: 'Debes usar una cuenta de Gmail, Hotmail o Outlook que termine en .com',
+                confirmButtonColor: '#007bff'
+            });
+            if(correoInput) {
+                correoInput.style.borderColor = 'red';
+                correoInput.focus();
+            }
+            return;
+        }
+
+        // 3. Validación de Contraseña
         if (pass.length < 6) {
-            aplicarError("passInput", "La contraseña debe tener al menos 6 caracteres");
+            aplicarError("passInput", "Mínimo 6 caracteres");
             return;
         }
 
-        // Si todo está OK, confirmación con SweetAlert
+        // Si todo está OK, confirmación final
         Swal.fire({
             title: '¿Confirmar Registro?',
             text: "Los datos son correctos.",

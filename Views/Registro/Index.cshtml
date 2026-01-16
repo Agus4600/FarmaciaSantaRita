@@ -316,17 +316,19 @@
         }
 
         // Si todo está OK, confirmación con SweetAlert
-        Swal.fire({
-            title: '¿Confirmar Registro?',
-            text: "Los datos son correctos.",
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#007bff',
-            confirmButtonText: 'Sí, registrar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                form.submit();
-            }
-        });
+            Swal.fire({
+        title: '¿Confirmar Registro?',
+        text: "Los datos son correctos.",
+        icon: 'question', // Agregamos el icono de pregunta para que se vea mejor
+        showCancelButton: true,
+        confirmButtonColor: '#007bff',
+        cancelButtonColor: '#007bff',
+        confirmButtonText: 'Sí, registrar',
+        cancelButtonText: 'Cancelar' 
+    }).then((result) => {
+        if (result.isConfirmed) {
+            form.submit();
+        }
+    });
     }
 </script>

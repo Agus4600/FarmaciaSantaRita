@@ -297,50 +297,55 @@
         }
     }
 
-    function validarYEnviar() {
+        function validarYEnviar() {
         limpiarErrores();
         const form = document.getElementById('registroForm');
 
-        // Captura de valores por ID
-        const nombre = document.getElementById("Nombre").value.trim();
-        const apellido = document.getElementById("Apellido").value.trim();
-        const dni = document.getElementById("Dni").value.trim();
-        const direccion = document.getElementById("Direccion").value.trim();
-        const pass = document.getElementById("passInput").value.trim();
+        // Función auxiliar para obtener valores de forma segura
+        const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value.trim() : "";
 
-        // VALIDACIONES INDIVIDUALES (Aparecen debajo del campo)
+        // Captura de valores
+        const nombre = getVal("Nombre");
+        const apellido = getVal("Apellido");
+        const dni = getVal("Dni");
+        const telefono = getVal("Telefono");
+        const direccion = getVal("Direccion");
+        const pass = getVal("passInput");
+
+        // VALIDACIONES (Aparecen debajo del campo)
         if (nombre === "") { aplicarError("Nombre", "El nombre es obligatorio"); return; }
         if (apellido === "") { aplicarError("Apellido", "El apellido es obligatorio"); return; }
 
-        if (dni.length < 7 || dni.length > 8) {
-            aplicarError("Dni", "El DNI debe tener 7 u 8 números");
+        if (dni.length < 7 || dni.length > 10) {
+            aplicarError("Dni", "El DNI debe tener entre 7 y 10 números");
             return;
         }
 
+        if (telefono === "") { aplicarError("Telefono", "El teléfono es obligatorio"); return; }
+
         if (!direccion.includes(',')) {
-            aplicarError("Debe especificarse la dirección (ej: Calle 123, Ciudad)");
+            aplicarError("Direccion", "Debes especificar tu dirección (ej: Calle 123, Ciudad)");
             return;
         }
 
         if (pass.length < 6) {
-            aplicarError("passInput", "Mínimo 6 caracteres");
+            aplicarError("passInput", "La contraseña debe tener al menos 6 caracteres");
             return;
         }
 
         // Si todo está OK, confirmación con SweetAlert
-            Swal.fire({
-        title: '¿Confirmar Registro?',
-        text: "Los datos son correctos.",
-        icon: 'question', // Agregamos el icono de pregunta para que se vea mejor
-        showCancelButton: true,
-        confirmButtonColor: '#007bff',
-        cancelButtonColor: '#007bff',
-        confirmButtonText: 'Sí, registrar',
-        cancelButtonText: 'Cancelar' 
-    }).then((result) => {
-        if (result.isConfirmed) {
-            form.submit();
-        }
-    });
+        Swal.fire({
+            title: '¿Confirmar Registro?',
+            text: "Los datos son correctos.",
+            showCancelButton: true,
+            confirmButtonColor: '#007bff',
+            cancelButtonColor: '#007bff',
+            confirmButtonText: 'Sí, registrar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
     }
 </script>

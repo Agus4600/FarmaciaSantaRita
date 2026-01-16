@@ -368,7 +368,7 @@
         }
         if (!direccion.includes(',')) {
             document.getElementById("Direccion").classList.add("invalid-comma");
-            mostrarError("Direccion", "La dirección debe especificarse con una coma (ej: Calle 123, Ciudad)");
+            mostrarError("Direccion", "Debe especificarse con una coma (ej: Calle 123, Ciudad)");
             hayError = true;
         }
         if (fechaNac === "") {
@@ -384,7 +384,7 @@
             mostrarError("CorreoUsuario", "El correo es obligatorio");
             hayError = true;
         } else if (!regexCorreo.test(correo)) {
-            mostrarError("CorreoUsuario", "El correo debe tener arroba seguido de gmail.com, hotmail.com o outlook.com");
+            mostrarError("CorreoUsuario", "El correo debe tener @@ seguido de gmail.com, hotmail.com o outlook.com");
             hayError = true;
         }
         if (pass.length < 6) {

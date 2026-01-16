@@ -266,43 +266,32 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Limpiar errores previos
+    // Limpiar errores (resplandor y texto)
     function limpiarErrores() {
         const form = document.getElementById('registroForm');
         form.classList.remove('show-errors');
         document.querySelectorAll('.form-control-custom, .password-wrapper, .custom-groupbox.rol-group').forEach(el => {
             el.classList.remove('invalid');
-            el.querySelectorAll('input').forEach(inp => {
-                inp.setCustomValidity('');   // Resetea el estado inválido
-                inp.reportValidity();        // Notifica al navegador
-            });
         });
+        document.querySelectorAll('.error-label').forEach(el => el.innerText = '');
     }
 
-    // Mostrar error con SweetAlert2 (sin icono) + FORZAR resplandor rojo
+    // Mostrar error debajo del campo + resplandor rojo
     function mostrarError(idInput, mensaje) {
+        const span = document.getElementById('err-' + idInput);
         const input = document.getElementById(idInput);
         const wrapper = idInput === 'passInput' ? document.querySelector('.password-wrapper') : input;
         const group = idInput === 'rolEmpleado' || idInput === 'rolJefe' ? document.querySelector('.custom-groupbox.rol-group') : null;
 
-        // FORZAR estado inválido para activar :invalid en CSS
+        // Mostrar texto debajo del campo
+        if (span) span.innerText = mensaje;
+
+        // Forzar resplandor rojo
         if (input) {
-            input.setCustomValidity(mensaje);  // Marca como inválido con mensaje
-            input.reportValidity();            // Fuerza al navegador a reconocerlo como :invalid
-            input.classList.add('invalid');    // Clase extra por si acaso
+            input.classList.add('invalid');
         }
         if (wrapper) wrapper.classList.add('invalid');
         if (group) group.classList.add('invalid');
-
-        // SweetAlert2 como cuadro limpio (sin icono)
-        Swal.fire({
-            title: 'Campo inválido',
-            text: mensaje,
-            confirmButtonColor: '#dc3545',
-            confirmButtonText: 'Aceptar',
-            position: 'center',
-            allowOutsideClick: false
-        });
     }
 
     // Solo números en DNI
@@ -323,6 +312,18 @@
             icon.className = "bi bi-eye";
         }
     }
+
+    // Eliminar resplandor y texto cuando el usuario empieza a escribir
+    document.addEventListener('input', function(e) {
+        const target = e.target;
+        if (target.classList.contains('form-control-custom') || target.parentElement.classList.contains('password-wrapper')) {
+            target.classList.remove('invalid');
+            target.parentElement.classList.remove('invalid');
+            const spanId = 'err-' + target.id;
+            const span = document.getElementById(spanId);
+            if (span) span.innerText = '';
+        }
+    });
 
     // Validar y enviar
     function validarYEnviar() {
@@ -345,7 +346,7 @@
 
         let hayError = false;
 
-        // Validaciones + FORZAR resplandor rojo + SweetAlert
+        // Validaciones + texto debajo + resplandor rojo
         if (nombre === "") {
             mostrarError("Nombre", "El nombre es obligatorio");
             hayError = true;
@@ -389,7 +390,7 @@
         }
         if (!rolSeleccionado) {
             document.querySelector('.custom-groupbox.rol-group').classList.add('invalid');
-            mostrarError("Debe seleccionar un rol (Empleado/a o Jefe/a)");
+            mostrarError("rolEmpleado", "Debe seleccionar un rol (Empleado/a o Jefe/a)");
             hayError = true;
         }
 
@@ -397,7 +398,7 @@
             return;
         }
 
-        // Todo OK → Confirmación
+        // Todo OK → Confirmación con SweetAlert2
         Swal.fire({
             title: '¿Confirmar Registro?',
             text: "Los datos son correctos.",

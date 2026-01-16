@@ -50,7 +50,6 @@ namespace FarmaciaSantaRita.Controllers
                     }
 
                     nuevoUsuario.Eliminado = false;
-                    nuevoUsuario.Rol = "Usuario";
 
                     _context.Usuarios.Add(nuevoUsuario);
                     await _context.SaveChangesAsync();

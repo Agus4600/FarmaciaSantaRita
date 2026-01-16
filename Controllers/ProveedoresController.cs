@@ -213,17 +213,12 @@ namespace FarmaciaSantaRita.Controllers
                 new { idProveedor = idProveedorSeleccionado, nombreMostrar = proveedor.NombreProveedor });
         }
 
-        // ==========================================================
-        // 💾 ACCIONES DE MANEJO DE DATOS (POST)
-        // ==========================================================
-        // (El resto de tus métodos POST se mantienen exactamente igual)
-        // Registrar, EliminarSeleccionados, EliminarPermanente, RestaurarSeleccionados...
-        // No los toco porque ya funcionan perfecto.
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Registrar(Proveedor proveedor)
         {
+            // 1. Validar campos básicos
             if (string.IsNullOrWhiteSpace(proveedor.NombreProveedor) ||
                 string.IsNullOrWhiteSpace(proveedor.TelefonoProveedor) ||
                 string.IsNullOrWhiteSpace(proveedor.CorreoProveedor))
@@ -232,33 +227,31 @@ namespace FarmaciaSantaRita.Controllers
                 return RedirectToAction("Registrar");
             }
 
-            string[] dominiosPermitidos = {
-                "gmail.com", "outlook.com", "hotmail.com", "yahoo.com", "mail.com",
-                "empresa.org", "universidad.edu", "pais.co.uk"
-            };
-
-            var match = Regex.Match(proveedor.CorreoProveedor, @"@(.+)$");
-            if (!match.Success || !dominiosPermitidos.Contains(match.Groups[1].Value.ToLower()))
+            // 2. Validación de Correo más flexible (Quitamos la lista de dominios fijos)
+            var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+            if (!emailRegex.IsMatch(proveedor.CorreoProveedor))
             {
-                TempData["MensajeError"] = "No se pudo registrar: dominio de correo no permitido.";
+                TempData["MensajeError"] = "El formato del correo electrónico no es válido.";
                 return RedirectToAction("Registrar");
             }
 
             try
             {
                 proveedor.EstadoProveedor = "Activo";
-                if (!_context.Proveedors.Any())
-                {
-                    _context.Database.ExecuteSqlRaw("DBCC CHECKIDENT ('Proveedor', RESEED, 0)");
-                }
+                proveedor.Eliminado = false; // Aseguramos que no nazca eliminado
+
+                // 3. Guardado directo
                 _context.Proveedors.Add(proveedor);
                 _context.SaveChanges();
+
                 TempData["MensajeExito"] = "Proveedor registrado correctamente.";
                 return RedirectToAction("Registrar");
             }
             catch (Exception ex)
             {
-                TempData["MensajeError"] = "Error al registrar el proveedor: " + ex.Message;
+                // Esto te dirá exactamente qué falló en la consola
+                _logger.LogError(ex, "Error al registrar proveedor");
+                TempData["MensajeError"] = "Error interno: " + ex.InnerException?.Message ?? ex.Message;
                 return RedirectToAction("Registrar");
             }
         }

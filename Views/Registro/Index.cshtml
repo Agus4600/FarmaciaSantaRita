@@ -266,39 +266,52 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    // Limpiar errores previos
     function limpiarErrores() {
         const form = document.getElementById('registroForm');
         form.classList.remove('show-errors');
-        
-        // Resetear todos los estados de validación
-        document.querySelectorAll('.form-control-custom').forEach(el => {
-            el.setCustomValidity('');
-            el.classList.remove('invalid-comma');
+        document.querySelectorAll('.form-control-custom, .password-wrapper, .custom-groupbox.rol-group').forEach(el => {
+            el.classList.remove('invalid');
+            el.querySelectorAll('input').forEach(inp => {
+                inp.setCustomValidity('');   // Resetea el estado inválido
+                inp.reportValidity();        // Notifica al navegador
+            });
         });
-        document.querySelector('.rol-group').classList.remove('invalid');
     }
 
-    function mostrarError(mensaje, idInput) {
-        // Activamos el resplandor en el input específico
-        if(idInput) {
-            const el = document.getElementById(idInput);
-            if(el) el.setCustomValidity('invalid');
-        }
+    // Mostrar error con SweetAlert2 (sin icono) + FORZAR resplandor rojo
+    function mostrarError(idInput, mensaje) {
+        const input = document.getElementById(idInput);
+        const wrapper = idInput === 'passInput' ? document.querySelector('.password-wrapper') : input;
+        const group = idInput === 'rolEmpleado' || idInput === 'rolJefe' ? document.querySelector('.custom-groupbox.rol-group') : null;
 
+        // FORZAR estado inválido para activar :invalid en CSS
+        if (input) {
+            input.setCustomValidity(mensaje);  // Marca como inválido con mensaje
+            input.reportValidity();            // Fuerza al navegador a reconocerlo como :invalid
+            input.classList.add('invalid');    // Clase extra por si acaso
+        }
+        if (wrapper) wrapper.classList.add('invalid');
+        if (group) group.classList.add('invalid');
+
+        // SweetAlert2 como cuadro limpio (sin icono)
         Swal.fire({
-            icon: 'error',
             title: 'Campo inválido',
             text: mensaje,
-            confirmButtonColor: '#007bff',
-            confirmButtonText: 'Entendido'
+            confirmButtonColor: '#dc3545',
+            confirmButtonText: 'Aceptar',
+            position: 'center',
+            allowOutsideClick: false
         });
     }
 
+    // Solo números en DNI
     function soloNumeros(e) {
         let key = e.keyCode || e.which;
         if (key < 48 || key > 57) return false;
     }
 
+    // Toggle contraseña
     function togglePass() {
         const input = document.getElementById('passInput');
         const icon = document.getElementById('passIcon');
@@ -311,55 +324,83 @@
         }
     }
 
+    // Validar y enviar
     function validarYEnviar() {
         limpiarErrores();
+
         const form = document.getElementById('registroForm');
-        form.classList.add('show-errors'); 
+        form.classList.add('show-errors'); // Activa TODOS los resplandores del CSS
 
-        const val = (id) => document.getElementById(id).value.trim();
-        
-        // Validaciones con activación de Outer Glow
-        if (val("Nombre") === "") { mostrarError("El nombre es obligatorio", "Nombre"); return; }
-        if (val("Apellido") === "") { mostrarError("El apellido es obligatorio", "Apellido"); return; }
-        
-        const dni = val("Dni");
-        if (dni.length < 7 || dni.length > 8) { mostrarError("El DNI debe tener 7 u 8 números", "Dni"); return; }
-        
-        if (val("Telefono") === "") { mostrarError("El teléfono es obligatorio", "Telefono"); return; }
-        
-        if (!val("Direccion").includes(',')) { 
-            document.getElementById("Direccion").classList.add("invalid-comma");
-            mostrarError("La dirección debe incluir una coma (ej: Calle 123, Ciudad)", "Direccion"); 
-            return; 
-        }
-        
-        if (val("FechaNacimiento") === "") { mostrarError("La fecha de nacimiento es obligatoria", "FechaNacimiento"); return; }
-        
+        // Capturar valores
+        const nombre = document.getElementById("Nombre").value.trim();
+        const apellido = document.getElementById("Apellido").value.trim();
+        const dni = document.getElementById("Dni").value.trim();
+        const telefono = document.getElementById("Telefono").value.trim();
+        const direccion = document.getElementById("Direccion").value.trim();
+        const fechaNac = document.getElementById("FechaNacimiento").value.trim();
+        const usuario = document.getElementById("NombreUsuario").value.trim();
+        const correo = document.getElementById("CorreoUsuario").value.trim();
+        const pass = document.getElementById("passInput").value.trim();
         const rolSeleccionado = document.querySelector('input[name="Rol"]:checked');
-        if (!rolSeleccionado) {
-            document.querySelector('.rol-group').classList.add('invalid');
-            mostrarError("Debe seleccionar un rol");
-            return;
+
+        let hayError = false;
+
+        // Validaciones + FORZAR resplandor rojo + SweetAlert
+        if (nombre === "") {
+            mostrarError("Nombre", "El nombre es obligatorio");
+            hayError = true;
         }
-
-        if (val("NombreUsuario") === "") { mostrarError("El usuario es obligatorio", "NombreUsuario"); return; }
-
-        const correo = val("CorreoUsuario");
+        if (apellido === "") {
+            mostrarError("Apellido", "El apellido es obligatorio");
+            hayError = true;
+        }
+        if (dni.length < 7 || dni.length > 8) {
+            mostrarError("Dni", "El DNI debe tener 7 u 8 números");
+            hayError = true;
+        }
+        if (telefono === "") {
+            mostrarError("Telefono", "El teléfono es obligatorio");
+            hayError = true;
+        }
+        if (!direccion.includes(',')) {
+            document.getElementById("Direccion").classList.add("invalid-comma");
+            mostrarError("Direccion", "La dirección debe incluir una coma (ej: Calle 123, Ciudad)");
+            hayError = true;
+        }
+        if (fechaNac === "") {
+            mostrarError("FechaNacimiento", "La fecha de nacimiento es obligatoria");
+            hayError = true;
+        }
+        if (usuario === "") {
+            mostrarError("NombreUsuario", "El usuario es obligatorio");
+            hayError = true;
+        }
         const regexCorreo = /^[a-zA-Z0-9._%+-]+@@(gmail|hotmail|outlook)\.com$/i;
-        if (correo === "") { 
-            mostrarError("El correo es obligatorio", "CorreoUsuario"); 
-            return; 
+        if (correo === "") {
+            mostrarError("CorreoUsuario", "El correo es obligatorio");
+            hayError = true;
         } else if (!regexCorreo.test(correo)) {
-            mostrarError("El correo debe ser gmail.com, hotmail.com o outlook.com", "CorreoUsuario");
+            mostrarError("CorreoUsuario", "El correo debe tener arroba seguido de gmail.com, hotmail.com o outlook.com");
+            hayError = true;
+        }
+        if (pass.length < 6) {
+            mostrarError("passInput", "La contraseña debe tener mínimo 6 caracteres");
+            hayError = true;
+        }
+        if (!rolSeleccionado) {
+            document.querySelector('.custom-groupbox.rol-group').classList.add('invalid');
+            mostrarError("Debe seleccionar un rol (Empleado/a o Jefe/a)");
+            hayError = true;
+        }
+
+        if (hayError) {
             return;
         }
 
-        if (val("passInput").length < 6) { mostrarError("La contraseña debe tener mínimo 6 caracteres", "passInput"); return; }
-
-        // Si llegó aquí, todo está OK
+        // Todo OK → Confirmación
         Swal.fire({
             title: '¿Confirmar Registro?',
-            text: "Se creará la cuenta para " + val("Nombre"),
+            text: "Los datos son correctos.",
             showCancelButton: true,
             confirmButtonColor: '#007bff',
             cancelButtonColor: '#007bff',

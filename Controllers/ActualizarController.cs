@@ -55,39 +55,69 @@ namespace FarmaciaSantaRita.Controllers
             ViewData["IdProveedor"] = idProveedor;
             ViewData["vista"] = vista;
 
+            // 1. Obtener ID del usuario autenticado desde el claim
             var idUsuarioClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(idUsuarioClaim, out int idUsuario) || modeloActualizado.Idusuario != idUsuario)
+            if (!int.TryParse(idUsuarioClaim, out int idUsuarioAutenticado))
             {
                 TempData["ResultadoActualizacion"] = "Error";
                 return RedirectToAction("Index", "Login");
             }
 
+            // 2. Validar que el ID enviado coincida con el autenticado
+            if (modeloActualizado.Idusuario != idUsuarioAutenticado)
+            {
+                TempData["ResultadoActualizacion"] = "Error: ID de usuario inválido.";
+                return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
+            }
+
             try
             {
-                var usuarioParaActualizar = _context.Usuarios.Find(idUsuario);
+                // 3. Buscar el usuario REAL en la BD usando el ID autenticado
+                var usuarioParaActualizar = _context.Usuarios.Find(idUsuarioAutenticado);
                 if (usuarioParaActualizar == null)
                 {
-                    TempData["ResultadoActualizacion"] = "Error";
+                    TempData["ResultadoActualizacion"] = "Error: Usuario no encontrado.";
                     return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
                 }
 
-                // Actualizamos todos los campos sin preguntar si cambió
-                usuarioParaActualizar.Nombre = modeloActualizado.Nombre?.Trim();
-                usuarioParaActualizar.Apellido = modeloActualizado.Apellido?.Trim();
-                usuarioParaActualizar.NombreUsuario = modeloActualizado.NombreUsuario?.Trim();
-                usuarioParaActualizar.Telefono = modeloActualizado.Telefono?.Trim();
-                usuarioParaActualizar.CorreoUsuario = modeloActualizado.CorreoUsuario?.Trim();
-                usuarioParaActualizar.Dni = modeloActualizado.Dni?.Trim();
-                usuarioParaActualizar.FechaNacimiento = modeloActualizado.FechaNacimiento;
-                usuarioParaActualizar.Direccion = modeloActualizado.Direccion?.Trim();
-                usuarioParaActualizar.Rol = modeloActualizado.Rol;
+                // 4. Actualizar solo los campos que vinieron (evitar sobrescribir con null)
+                if (!string.IsNullOrWhiteSpace(modeloActualizado.Nombre))
+                    usuarioParaActualizar.Nombre = modeloActualizado.Nombre.Trim();
 
-                // Nueva contraseña
+                if (!string.IsNullOrWhiteSpace(modeloActualizado.Apellido))
+                    usuarioParaActualizar.Apellido = modeloActualizado.Apellido.Trim();
+
+                if (!string.IsNullOrWhiteSpace(modeloActualizado.NombreUsuario))
+                    usuarioParaActualizar.NombreUsuario = modeloActualizado.NombreUsuario.Trim();
+
+                if (!string.IsNullOrWhiteSpace(modeloActualizado.Telefono))
+                    usuarioParaActualizar.Telefono = modeloActualizado.Telefono.Trim();
+
+                if (!string.IsNullOrWhiteSpace(modeloActualizado.CorreoUsuario))
+                    usuarioParaActualizar.CorreoUsuario = modeloActualizado.CorreoUsuario.Trim();
+
+                if (!string.IsNullOrWhiteSpace(modeloActualizado.Dni))
+                    usuarioParaActualizar.Dni = modeloActualizado.Dni.Trim();
+
+                if (modeloActualizado.FechaNacimiento != default(DateTime))
+                    usuarioParaActualizar.FechaNacimiento = modeloActualizado.FechaNacimiento;
+
+                if (!string.IsNullOrWhiteSpace(modeloActualizado.Direccion))
+                    usuarioParaActualizar.Direccion = modeloActualizado.Direccion.Trim();
+
+                // Rol: solo si cambió (por seguridad, quizás no permitir cambiar rol aquí)
+                if (!string.IsNullOrWhiteSpace(modeloActualizado.Rol) && modeloActualizado.Rol != usuarioParaActualizar.Rol)
+                {
+                    usuarioParaActualizar.Rol = modeloActualizado.Rol;
+                }
+
+                // Contraseña nueva (solo si se ingresó)
                 if (!string.IsNullOrWhiteSpace(modeloActualizado.NuevaContraseña))
                 {
                     usuarioParaActualizar.Contraseña = _encryptionService.Encrypt(modeloActualizado.NuevaContraseña.Trim());
                 }
 
+                // 5. Guardar cambios
                 _context.SaveChanges();
 
                 TempData["ResultadoActualizacion"] = "Exito";
@@ -96,6 +126,7 @@ namespace FarmaciaSantaRita.Controllers
             catch (Exception ex)
             {
                 TempData["ResultadoActualizacion"] = "Error";
+                ViewBag.ErrorMessage = ex.Message; // Opcional: mostrar el error real en la vista
                 return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
             }
         }

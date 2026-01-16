@@ -272,14 +272,14 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Limpiar errores (resplandor y texto)
+    // Limpiar errores (solo resplandor, NO texto)
     function limpiarErrores() {
         const form = document.getElementById('registroForm');
         form.classList.remove('show-errors');
         document.querySelectorAll('.form-control-custom, .password-wrapper, .custom-groupbox.rol-group').forEach(el => {
             el.classList.remove('invalid');
         });
-        document.querySelectorAll('.error-label').forEach(el => el.innerText = '');
+        // NO borramos los textos de error aquí (se mantienen hasta que el campo sea válido)
     }
 
     // Mostrar error debajo del campo + resplandor rojo
@@ -289,13 +289,11 @@
         const wrapper = idInput === 'passInput' ? document.querySelector('.password-wrapper') : input;
         const group = idInput === 'rolEmpleado' || idInput === 'rolJefe' ? document.querySelector('.custom-groupbox.rol-group') : null;
 
-        // Mostrar texto debajo del campo
+        // Mostrar texto debajo del campo (se mantiene hasta que sea válido)
         if (span) span.innerText = mensaje;
 
         // Forzar resplandor rojo
-        if (input) {
-            input.classList.add('invalid');
-        }
+        if (input) input.classList.add('invalid');
         if (wrapper) wrapper.classList.add('invalid');
         if (group) group.classList.add('invalid');
     }
@@ -319,15 +317,15 @@
         }
     }
 
-    // Eliminar resplandor y texto cuando el usuario empieza a escribir
+    // Eliminar SOLO el resplandor rojo al empezar a escribir (el texto se mantiene)
     document.addEventListener('input', function(e) {
         const target = e.target;
         if (target.classList.contains('form-control-custom') || target.parentElement.classList.contains('password-wrapper')) {
             target.classList.remove('invalid');
-            target.parentElement.classList.remove('invalid');
-            const spanId = 'err-' + target.id;
-            const span = document.getElementById(spanId);
-            if (span) span.innerText = '';
+            if (target.parentElement.classList.contains('password-wrapper')) {
+                target.parentElement.classList.remove('invalid');
+            }
+            // NO borramos el texto del span aquí → se mantiene hasta que el campo sea válido
         }
     });
 
@@ -352,7 +350,6 @@
 
         let hayError = false;
 
-        // Validaciones + texto debajo + resplandor rojo
         if (nombre === "") {
             mostrarError("Nombre", "El nombre es obligatorio");
             hayError = true;
@@ -371,7 +368,7 @@
         }
         if (!direccion.includes(',')) {
             document.getElementById("Direccion").classList.add("invalid-comma");
-            mostrarError("Direccion", "La dirección debe incluir una coma (ej: Calle 123, Ciudad)");
+            mostrarError("Direccion", "La dirección debe especificarse con una coma (ej: Calle 123, Ciudad)");
             hayError = true;
         }
         if (fechaNac === "") {
@@ -404,7 +401,7 @@
             return;
         }
 
-        // Todo OK → Confirmación con SweetAlert2
+        // Todo OK → Confirmación
         Swal.fire({
             title: '¿Confirmar Registro?',
             text: "Los datos son correctos.",

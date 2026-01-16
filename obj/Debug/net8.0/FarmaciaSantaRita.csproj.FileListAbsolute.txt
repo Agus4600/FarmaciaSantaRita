@@ -10,6 +10,7 @@ C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\bin\Debug\net8.0
 C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\bin\Debug\net8.0\FarmaciaSantaRita.staticwebassets.runtime.json
 C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\bin\Debug\net8.0\FarmaciaSantaRita.staticwebassets.endpoints.json
 C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\bin\Debug\net8.0\FarmaciaSantaRita.exe
+C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\bin\Debug\net8.0\Dockerfile
 C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\bin\Debug\net8.0\FarmaciaSantaRita.deps.json
 C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\bin\Debug\net8.0\FarmaciaSantaRita.runtimeconfig.json
 C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\bin\Debug\net8.0\FarmaciaSantaRita.dll
@@ -129,6 +130,7 @@ C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\obj\Debug\net8.0
 C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\obj\Debug\net8.0\staticwebassets.build.json.cache
 C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\obj\Debug\net8.0\staticwebassets.development.json
 C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\obj\Debug\net8.0\staticwebassets.build.endpoints.json
+C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\obj\Debug\net8.0\Farmacia.4FA9DD0C.Up2Date
 C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\obj\Debug\net8.0\FarmaciaSantaRita.dll
 C:\Users\MI PC\source\repos\FarmaciaSantaRita\FarmaciaSantaRita\obj\Debug\net8.0\refint\FarmaciaSantaRita.dll

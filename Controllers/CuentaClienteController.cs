@@ -31,7 +31,6 @@ namespace FarmaciaSantaRita.Controllers
             public string estado { get; set; }
             public string telefono { get; set; }
             public string direccion { get; set; }
-
             public string fecha { get; set; }
         }
 
@@ -39,11 +38,11 @@ namespace FarmaciaSantaRita.Controllers
         public async Task<IActionResult> Index()
         {
             var comprasBD = await _context.Compras
-    .Include(c => c.IdclienteNavigation)
-    .Include(c => c.IdlineaDeCompraNavigation)  // ← "l" minúscula
-        .ThenInclude(l => l.IdproductoNavigation)
-    .OrderByDescending(c => c.Idcompras)
-    .ToListAsync();
+                .Include(c => c.IdclienteNavigation)
+                .Include(c => c.LineaDeCompras) // CAMBIO: Usamos la colección de líneas
+                    .ThenInclude(l => l.IdproductoNavigation)
+                .OrderByDescending(c => c.Idcompras)
+                .ToListAsync();
 
             var viewModel = new
             {
@@ -62,45 +61,29 @@ namespace FarmaciaSantaRita.Controllers
             return View(viewModel);
         }
 
-
-
-
-
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> GuardarNuevaCompra([FromBody] CompraDto datos)
         {
             if (datos == null) return Json(new { success = false, message = "Datos nulos" });
 
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                // 1. Manejo del Cliente
                 Cliente cliente = null;
-
-                // 1. Buscar SOLO por DNI (Identificador único)
                 if (!string.IsNullOrEmpty(datos.dni))
                 {
-                    cliente = await _context.Clientes
-                        .FirstOrDefaultAsync(c => c.DNI == datos.dni.Trim());
-
+                    cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.DNI == datos.dni.Trim());
                     if (cliente != null)
                     {
-                        // Existe por DNI → Actualizar datos con lo que viene del formulario
                         cliente.NombreCliente = datos.nombre?.Trim() ?? cliente.NombreCliente;
-
-                        if (!string.IsNullOrEmpty(datos.telefono))
-                            cliente.TelefonoCliente = datos.telefono.Trim();
-
-                        if (!string.IsNullOrEmpty(datos.direccion))
-                            cliente.DireccionCliente = datos.direccion.Trim();
-
-                        cliente.EstadoDePago = "Pendiente";
+                        if (!string.IsNullOrEmpty(datos.telefono)) cliente.TelefonoCliente = datos.telefono.Trim();
+                        if (!string.IsNullOrEmpty(datos.direccion)) cliente.DireccionCliente = datos.direccion.Trim();
                         _context.Clientes.Update(cliente);
                     }
                 }
 
-                // 2. Si no existe por DNI (o no se ingresó DNI) → Crear nuevo cliente
-                // Eliminamos la búsqueda por nombre para evitar que personas distintas se pisen
                 if (cliente == null)
                 {
                     cliente = new Cliente
@@ -113,22 +96,15 @@ namespace FarmaciaSantaRita.Controllers
                     };
                     _context.Clientes.Add(cliente);
                 }
-
-                // Guardamos cambios del cliente para asegurar que tengamos su ID
                 await _context.SaveChangesAsync();
 
-                // 3. Manejo del Producto
+                // 2. Manejo del Producto
                 var nombreProdNorm = datos.producto.ToLower().Trim();
-                var prod = await _context.Productos
-                    .FirstOrDefaultAsync(p => p.NombreProducto.ToLower() == nombreProdNorm);
+                var prod = await _context.Productos.FirstOrDefaultAsync(p => p.NombreProducto.ToLower() == nombreProdNorm);
 
                 if (prod == null)
                 {
-                    prod = new Producto
-                    {
-                        NombreProducto = datos.producto.Trim(),
-                        PrecioUnitario = datos.precio
-                    };
+                    prod = new Producto { NombreProducto = datos.producto.Trim(), PrecioUnitario = datos.precio };
                     _context.Productos.Add(prod);
                 }
                 else
@@ -138,57 +114,46 @@ namespace FarmaciaSantaRita.Controllers
                 }
                 await _context.SaveChangesAsync();
 
-                // 4. Crear Línea de Compra
-                var linea = new LineaDeCompra { Idproducto = prod.Idproducto, Cantidad = datos.cantidad };
-                _context.Set<LineaDeCompra>().Add(linea);
-                await _context.SaveChangesAsync();
-
-                // 5. ID usuario logueado
+                // 3. Crear la COMPRA primero (porque LineaDeCompra necesita el ID de Compra)
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 int idUsuarioLogueado = string.IsNullOrEmpty(userIdClaim) ? 1 : int.Parse(userIdClaim);
 
-                // 6. Fecha segura - Parseo inteligente
-                DateOnly fechaCompra;
-                if (!string.IsNullOrWhiteSpace(datos.fecha) && DateOnly.TryParse(datos.fecha, out DateOnly parsedFecha))
-                {
-                    fechaCompra = parsedFecha;
-                }
-                else
-                {
-                    fechaCompra = DateOnly.FromDateTime(DateTime.Now);
-                }
+                DateOnly fechaCompra = DateOnly.TryParse(datos.fecha, out DateOnly parsedFecha)
+                    ? parsedFecha : DateOnly.FromDateTime(DateTime.Now);
 
-                // 7. Crear la Compra final
-                int proximoIdCompra = await _context.Compras.AnyAsync() ? await _context.Compras.MaxAsync(c => c.Idcompras) + 1 : 1;
                 var nuevaCompra = new Compra
                 {
-                    Idcompras = proximoIdCompra,
-                    IdlineaDeCompra = linea.IdlineaDeCompra,
                     Descripcion = $"Venta de {datos.producto}",
                     FechaCompra = fechaCompra,
                     MontoCompra = datos.cantidad * datos.precio,
-                    Idcliente = cliente.Idcliente, // ID del cliente que encontramos o creamos arriba
+                    Idcliente = cliente.Idcliente,
                     Idusuario = idUsuarioLogueado,
-                    EstadoDePago = "pendiente"
+                    EstadoDePago = "Pendiente"
                 };
 
                 _context.Compras.Add(nuevaCompra);
+                await _context.SaveChangesAsync(); // Genera el IDCompras
+
+                // 4. Crear la Línea de Compra vinculada a la Compra anterior
+                var linea = new LineaDeCompra
+                {
+                    Idcompras = nuevaCompra.Idcompras,
+                    Idproducto = prod.Idproducto,
+                    Cantidad = datos.cantidad
+                };
+                _context.LineaDeCompras.Add(linea);
                 await _context.SaveChangesAsync();
 
+                await transaction.CommitAsync();
                 return Json(new { success = true, idCompra = nuevaCompra.Idcompras });
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 return Json(new { success = false, message = ex.InnerException?.Message ?? ex.Message });
             }
         }
 
-
-
-
-
-
-        // El resto del controlador (ActualizarCompra, EliminarCompra, Cuenta) queda igual
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ActualizarCompra([FromBody] CompraDto datos)
@@ -196,28 +161,22 @@ namespace FarmaciaSantaRita.Controllers
             try
             {
                 var compra = await _context.Compras
+                    .Include(c => c.LineaDeCompras)
                     .FirstOrDefaultAsync(c => c.Idcompras == datos.idCompra);
+
                 if (compra == null) return Json(new { success = false, message = "Compra no encontrada" });
 
-                // Actualizar monto
                 compra.MontoCompra = datos.cantidad * datos.precio;
+                compra.EstadoDePago = datos.estado;
 
-                // Actualizar cantidad en la línea de compra
-                var linea = await _context.Set<LineaDeCompra>()
-    .FirstOrDefaultAsync(l => l.IdlineaDeCompra == compra.IdlineaDeCompra);  // ← "l" minúscula
+                // Actualizar la primera línea de la compra (asumiendo venta simple)
+                var linea = compra.LineaDeCompras.FirstOrDefault();
                 if (linea != null)
                 {
                     linea.Cantidad = datos.cantidad;
                 }
 
-                // ACTUALIZAR ESTADO DE PAGO
-                compra.EstadoDePago = datos.estado;
-
-                // Marcar la entidad como modificada
-                _context.Entry(compra).State = EntityState.Modified;
-
                 await _context.SaveChangesAsync();
-
                 return Json(new { success = true });
             }
             catch (Exception ex)
@@ -250,34 +209,20 @@ namespace FarmaciaSantaRita.Controllers
         public async Task<IActionResult> Cuenta(int id)
         {
             var cliente = await _context.Clientes
+                .Include(c => c.Compras)
+                    .ThenInclude(comp => comp.LineaDeCompras)
+                        .ThenInclude(l => l.IdproductoNavigation)
                 .FirstOrDefaultAsync(c => c.Idcliente == id);
+
             if (cliente == null)
             {
                 TempData["Error"] = "Cliente no encontrado.";
                 return RedirectToAction("Index");
             }
 
-            var compras = await _context.Compras
-                .Where(c => c.Idcliente == id)
-                .OrderByDescending(c => c.FechaCompra)
-                .ToListAsync();
+            // Pasamos las compras ordenadas para la vista
+            ViewBag.ComprasOrdenadas = cliente.Compras.OrderByDescending(c => c.FechaCompra).ToList();
 
-            var comprasConDetalle = new List<object>();
-            foreach (var compra in compras)
-            {
-                var lineas = await _context.Set<LineaDeCompra>()
-    .Include(l => l.IdproductoNavigation)
-    .Where(l => l.IdlineaDeCompra == compra.IdlineaDeCompra)  // ← "l" minúscula
-    .ToListAsync();
-
-                comprasConDetalle.Add(new
-                {
-                    Compra = compra,
-                    Lineas = lineas
-                });
-            }
-
-            ViewBag.ComprasConDetalle = comprasConDetalle;
             return View(cliente);
         }
     }

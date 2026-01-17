@@ -89,51 +89,33 @@ public partial class FarmaciabdContext : DbContext
 
         modelBuilder.Entity<Cliente>(entity =>
         {
+            entity.ToTable("Clientes");
             entity.HasKey(e => e.Idcliente);
-
             entity.Property(e => e.Idcliente).HasColumnName("IDCliente");
-            entity.Property(e => e.DireccionCliente).IsUnicode(false);
-            entity.Property(e => e.EstadoDePago)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.NombreCliente).IsUnicode(false);
-            entity.Property(e => e.TelefonoCliente)
-                .HasMaxLength(20)
-                .IsUnicode(false);
+            entity.Property(e => e.NombreCliente).HasColumnName("NombreCliente");
+            // Ajustado según tu última captura (parece tener espacios)
+            entity.Property(e => e.TelefonoCliente).HasColumnName("Teléfono Cliente");
+            entity.Property(e => e.DireccionCliente).HasColumnName("Dirección Cliente");
+            entity.Property(e => e.EstadoDePago).HasColumnName("EstadoPago"); // Sin el "De"
+            entity.Property(e => e.DNI).HasColumnName("DNI");
         });
 
         modelBuilder.Entity<Compra>(entity =>
         {
             entity.ToTable("Compras");
-
             entity.HasKey(e => e.Idcompras);
-            entity.Property(e => e.Idcompras)
-                  .ValueGeneratedNever()
-                  .HasColumnName("IDCompras");
-
-            entity.Property(e => e.Descripcion).IsUnicode(false);
+            entity.Property(e => e.Idcompras).HasColumnName("IDCompras");
             entity.Property(e => e.Idcliente).HasColumnName("IDCliente");
-            entity.Property(e => e.IdlineaDeCompra).HasColumnName("IDLineaDeCompra");
             entity.Property(e => e.Idusuario).HasColumnName("IDUsuario");
-            entity.Property(e => e.MontoCompra).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Descripcion).HasColumnName("Descripcion");
+            entity.Property(e => e.FechaCompra).HasColumnName("FechaCompra");
+            entity.Property(e => e.MontoCompra).HasColumnName("MontoCompra");
+            entity.Property(e => e.EstadoDePago).HasColumnName("EstadoDePago");
 
+            // Relación Compra -> Cliente
             entity.HasOne(d => d.IdclienteNavigation)
                   .WithMany(p => p.Compras)
-                  .HasForeignKey(d => d.Idcliente)
-                  .OnDelete(DeleteBehavior.ClientSetNull)
-                  .HasConstraintName("FK_Compras_Clientes");
-
-            entity.HasOne(d => d.IdlineaDeCompraNavigation)
-                  .WithMany(p => p.Compras)
-                  .HasForeignKey(d => d.IdlineaDeCompra)
-                  .OnDelete(DeleteBehavior.ClientSetNull)
-                  .HasConstraintName("FK_Compras_LineaDeCompra");
-
-            entity.HasOne(d => d.IdusuarioNavigation)
-                  .WithMany(p => p.Compras)
-                  .HasForeignKey(d => d.Idusuario)
-                  .OnDelete(DeleteBehavior.ClientSetNull)
-                  .HasConstraintName("FK_Compras_Usuarios");
+                  .HasForeignKey(d => d.Idcliente);
         });
 
         modelBuilder.Entity<Inasistencium>(entity =>
@@ -156,25 +138,30 @@ public partial class FarmaciabdContext : DbContext
             entity.ToTable("LineaDeCompra");
             entity.HasKey(e => e.IdlineaDeCompra);
             entity.Property(e => e.IdlineaDeCompra).HasColumnName("IDLineaDeCompra");
+            entity.Property(e => e.Idcompras).HasColumnName("IDCompras"); // FK hacia Compras
             entity.Property(e => e.Idproducto).HasColumnName("IDProducto");
-            entity.Property(e => e.Cantidad);
+            entity.Property(e => e.Cantidad).HasColumnName("Cantidad");
 
+            // Relación Línea -> Compra
+            entity.HasOne(d => d.IdcomprasNavigation)
+          .WithMany(p => p.LineaDeCompras)
+          .HasForeignKey(d => d.Idcompras)
+          .OnDelete(DeleteBehavior.ClientSetNull) // Esto indica que no puede ser nulo en la DB
+          .IsRequired();
+
+            // Relación Línea -> Producto
             entity.HasOne(d => d.IdproductoNavigation)
                   .WithMany(p => p.LineaDeCompras)
-                  .HasForeignKey(d => d.Idproducto)
-                  .OnDelete(DeleteBehavior.ClientSetNull)
-                  .HasConstraintName("FK_LineaDeCompra_Producto");
+                  .HasForeignKey(d => d.Idproducto);
         });
 
         modelBuilder.Entity<Producto>(entity =>
         {
-            entity.HasKey(e => e.Idproducto);
-
             entity.ToTable("Producto");
-
+            entity.HasKey(e => e.Idproducto);
             entity.Property(e => e.Idproducto).HasColumnName("IDProducto");
-            entity.Property(e => e.NombreProducto).IsUnicode(false);
-            entity.Property(e => e.PrecioUnitario).HasColumnType("decimal(18, 0)");
+            entity.Property(e => e.NombreProducto).HasColumnName("NombreProducto");
+            entity.Property(e => e.PrecioUnitario).HasColumnName("PrecioUnitario");
         });
 
         modelBuilder.Entity<Proveedor>(entity =>
@@ -265,8 +252,8 @@ public partial class FarmaciabdContext : DbContext
             entity.HasKey(v => v.IdVacaciones);
 
             entity.HasOne(v => v.Usuario)
-                  .WithMany() // ← Sin navegación inversa → no requiere propiedad en Usuario
-                  .HasForeignKey(v => v.Idusuario) // ← Nombre exacto
+                  .WithMany() 
+                  .HasForeignKey(v => v.Idusuario) 
                   .OnDelete(DeleteBehavior.Cascade);
         });
 

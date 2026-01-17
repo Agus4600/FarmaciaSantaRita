@@ -1,31 +1,30 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
 namespace FarmaciaSantaRita.Models;
 
-[Table("compra")]
 public partial class Compra
 {
-    [Key]
-    [Column("idcompras")]
     public int Idcompras { get; set; }
 
-    [Column("idlineadecompra")] // ¡Aquí estaba el error! EF buscaba IDLineaDeCompra
-    public int IdlineaDeCompra { get; set; }
+    // Borramos IdlineaDeCompra porque la FK está en la otra tabla
 
     public string Descripcion { get; set; } = null!;
+
     public DateOnly FechaCompra { get; set; }
+
     public decimal MontoCompra { get; set; }
 
-    [Column("idcliente")]
     public int Idcliente { get; set; }
 
-    [Column("idusuario")]
     public int Idusuario { get; set; }
 
     public string EstadoDePago { get; set; }
 
     public virtual Cliente IdclienteNavigation { get; set; } = null!;
-    public virtual LineaDeCompra IdlineaDeCompraNavigation { get; set; } = null!;
+
     public virtual Usuario IdusuarioNavigation { get; set; } = null!;
+
+    // Ahora la compra tiene una lista de líneas
+    public virtual ICollection<LineaDeCompra> LineaDeCompras { get; set; } = new List<LineaDeCompra>();
 }

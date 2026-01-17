@@ -322,11 +322,7 @@
                         <div class="tres-columnas">
                             <div class="grupo-campo">
                                 <label asp-for="FechaNacimiento">Fecha de Nacimiento</label>
-                                <input asp-for="FechaNacimiento"
-                                       type="date"
-                                       id="FechaNacimiento"
-                                       class="form-control"
-                                       value="@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")" />
+                                <input type="date" name="FechaNacimientoStr" id="FechaNacimiento" class="form-control" value="@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")" required />
                             </div>
                             <div class="grupo-campo">
                                 <label>Contraseña Actual</label>
@@ -383,20 +379,20 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Limpiar nueva contraseña (evitar autocompletado)
+            // Limpiar nueva contraseña
             setTimeout(function() {
                 const inputNuevaPass = document.getElementById('nuevaContraseña');
                 if (inputNuevaPass) inputNuevaPass.value = "";
             }, 10);
 
-            // Cargar valor inicial de fecha en formato correcto
+            // Forzar valor inicial de fecha
             const fechaInput = document.getElementById('FechaNacimiento');
             if (fechaInput && fechaInput.value === "") {
                 fechaInput.value = "@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")";
             }
         });
 
-        // Toggle de visibilidad de contraseñas
+        // Toggle contraseñas
         document.querySelectorAll('.btn-toggle-view').forEach(btn => {
             btn.addEventListener('click', function() {
                 const input = this.previousElementSibling;
@@ -411,7 +407,7 @@
             });
         });
 
-        // Swal de éxito desde TempData
+        // Swal de éxito
         @if (TempData["ResultadoActualizacion"]?.ToString() == "Exito")
         {
             <text>
@@ -453,13 +449,13 @@
             const regexDni = /^\d{7,8}$/;
             const regexTelefono = /^\d{7,15}$/;
 
-            // Validaciones obligatorias + formatos
+            // Validaciones obligatorias
             if (!campos.nombre.value.trim() || !regexLetras.test(campos.nombre.value.trim())) {
-                errores.push("El <b>Nombre</b> es obligatorio y solo puede contener letras.");
+                errores.push("El <b>Nombre</b> es obligatorio y solo letras.");
                 campos.nombre.classList.add('invalid-glow');
             }
             if (!campos.apellido.value.trim() || !regexLetras.test(campos.apellido.value.trim())) {
-                errores.push("El <b>Apellido</b> es obligatorio y solo puede contener letras.");
+                errores.push("El <b>Apellido</b> es obligatorio y solo letras.");
                 campos.apellido.classList.add('invalid-glow');
             }
             if (!campos.usuario.value.trim()) {
@@ -487,7 +483,7 @@
                 campos.fechaNacimiento.classList.add('invalid-glow');
             }
 
-            // Contraseña nueva (opcional, pero si se pone no puede ser igual a la actual)
+            // Nueva contraseña (opcional)
             const passActual = document.getElementById('contrasenaActual').value;
             if (campos.nuevaPass.value.trim() !== "" && campos.nuevaPass.value.trim() === passActual) {
                 errores.push("La <b>Nueva Contraseña</b> no puede ser igual a la anterior.");
@@ -504,7 +500,7 @@
                 return;
             }
 
-            // Detección de cambios (comparación limpia)
+            // Detección de cambios
             const valoresOriginales = {
                 nombre: "@(Model?.Nombre?.Trim() ?? "")",
                 apellido: "@(Model?.Apellido?.Trim() ?? "")",
@@ -529,9 +525,7 @@
                 nuevaPass: campos.nuevaPass.value.trim()
             };
 
-            const hayCambios = Object.keys(valoresOriginales).some(key => 
-                valoresActuales[key] !== valoresOriginales[key]
-            );
+            const hayCambios = Object.keys(valoresOriginales).some(key => valoresActuales[key] !== valoresOriginales[key]);
 
             if (!hayCambios) {
                 Swal.fire({
@@ -543,13 +537,14 @@
                 return;
             }
 
-            // Confirmación final
+            // Confirmación
             Swal.fire({
                 title: '¿Guardar cambios?',
                 text: "Se actualizará la información de tu cuenta.",
                 showCancelButton: true,
                 confirmButtonColor: '#007bff',
                 cancelButtonColor: '#007bff',
+
                 confirmButtonText: 'Sí, guardar',
                 cancelButtonText: 'Cancelar'
             }).then((result) => {

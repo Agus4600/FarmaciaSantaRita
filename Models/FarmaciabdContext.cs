@@ -159,26 +159,22 @@ public partial class FarmaciabdContext : DbContext
             entity.HasKey(e => e.Idlineadecompra);
             entity.Property(e => e.Idlineadecompra).HasColumnName("IDLineaDeCompra");
 
-            // FK a Compra (columna real en BD)
             entity.Property(e => e.Idcompras).HasColumnName("IDCompras");
-
-            // FK a Producto (columna real en BD)
             entity.Property(e => e.Idproducto).HasColumnName("IDProducto");
-
             entity.Property(e => e.Cantidad);
 
-            // Relación con Compra (inversa)
+            // Relación con Compra → ELIMINACIÓN EN CASCADA
             entity.HasOne(l => l.IdcomprasNavigation)
                   .WithMany(c => c.LineaDeCompras)
-                  .HasForeignKey(l => l.Idcompras)  // ← Usa propiedad C# Idcompras
-                  .OnDelete(DeleteBehavior.Cascade);
+                  .HasForeignKey(l => l.Idcompras)
+                  .OnDelete(DeleteBehavior.Cascade)  // ← ¡Esto es lo clave!
+                  .HasConstraintName("FK_LineaDeCompra_Compras");
 
-            // Relación con Producto - FUERZA la columna real "IDProducto"
+            // Relación con Producto (sin cascada, para no borrar productos por accidente)
             entity.HasOne(l => l.IdproductoNavigation)
                   .WithMany(p => p.LineaDeCompras)
-                  .HasForeignKey(l => l.Idproducto)  // ← Esto evita que EF invente "IdproductoNavigationIdproducto"
-                  .OnDelete(DeleteBehavior.ClientSetNull)
-                  .HasConstraintName("FK_LineaDeCompra_Producto");
+                  .HasForeignKey(l => l.Idproducto)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Producto>(entity =>

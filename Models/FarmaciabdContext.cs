@@ -90,13 +90,14 @@ public partial class FarmaciabdContext : DbContext
         modelBuilder.Entity<Cliente>(entity =>
         {
             entity.ToTable("Clientes");
+
             entity.HasKey(e => e.Idcliente);
             entity.Property(e => e.Idcliente).HasColumnName("IDCliente");
+
             entity.Property(e => e.NombreCliente).HasColumnName("NombreCliente");
-            // Ajustado según tu última captura (parece tener espacios)
-            entity.Property(e => e.TelefonoCliente).HasColumnName("Teléfono Cliente");
-            entity.Property(e => e.DireccionCliente).HasColumnName("Dirección Cliente");
-            entity.Property(e => e.EstadoDePago).HasColumnName("EstadoPago"); // Sin el "De"
+            entity.Property(e => e.TelefonoCliente).HasColumnName("TelefonoCliente");  // Sin acento ni espacio si en BD es así
+            entity.Property(e => e.DireccionCliente).HasColumnName("DirecciónCliente");  // ← ¡Aquí! Sin espacio
+            entity.Property(e => e.EstadoDePago).HasColumnName("EstadoPago");
             entity.Property(e => e.DNI).HasColumnName("DNI");
         });
 

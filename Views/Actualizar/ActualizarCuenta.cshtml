@@ -324,11 +324,11 @@
                         <div class="tres-columnas">
                             <div class="grupo-campo">
                                 <label asp-for="FechaNacimiento">Fecha de Nacimiento</label>
-                                <input type="date"
-                                       asp-for="FechaNacimiento"
+                                <input asp-for="FechaNacimiento"
+                                       type="date"
                                        id="FechaNacimiento"
                                        class="form-control"
-                                       value="@Model.FechaNacimiento.ToString("yyyy-MM-dd")" />
+                                       value="@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")" />
                             </div>
                             <div class="grupo-campo">
                                 <label>Contraseña Actual</label>
@@ -385,16 +385,20 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // 1. Limpiar el campo de nueva contraseña al cargar (evitar autocompletado)
+            // Limpiar nueva contraseña (evitar autocompletado)
             setTimeout(function() {
                 const inputNuevaPass = document.getElementById('nuevaContraseña');
-                if (inputNuevaPass) {
-                    inputNuevaPass.value = "";
-                }
+                if (inputNuevaPass) inputNuevaPass.value = "";
             }, 10);
+
+            // Cargar valor inicial de fecha en formato correcto
+            const fechaInput = document.getElementById('FechaNacimiento');
+            if (fechaInput && fechaInput.value === "") {
+                fechaInput.value = "@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")";
+            }
         });
 
-        // 2. Toggle passwords (Ver/Ocultar contraseña)
+        // Toggle de visibilidad de contraseñas
         document.querySelectorAll('.btn-toggle-view').forEach(btn => {
             btn.addEventListener('click', function() {
                 const input = this.previousElementSibling;
@@ -409,21 +413,21 @@
             });
         });
 
-        // 3. Notificación de éxito desde el servidor
+        // Swal de éxito desde TempData
         @if (TempData["ResultadoActualizacion"]?.ToString() == "Exito")
         {
-                <text>
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Cuenta Actualizada!',
-                    text: 'Los cambios se aplicaron con éxito.',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
-                });
-                </text>
+            <text>
+            Swal.fire({
+                icon: 'success',
+                title: '¡Cuenta Actualizada!',
+                text: 'Los cambios se aplicaron con éxito.',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
+            });
+            </text>
         }
 
-        // 4. Lógica del botón Guardar
+        // Botón Guardar Cambios
         document.getElementById('btnGuardarCambios').addEventListener('click', function() {
             const form = document.getElementById('formCuenta');
             const campos = {
@@ -439,12 +443,10 @@
                 wrapNuevaPass: document.getElementById('wrapperNuevaContrasena')
             };
 
-            // Resetear efectos visuales (glows)
+            // Limpiar glows
             Object.values(campos).forEach(c => {
                 if (c) c.classList.remove('invalid-glow');
-                if (c && c.closest('.password-wrapper')) {
-                    c.closest('.password-wrapper').classList.remove('invalid-glow');
-                }
+                if (c?.closest('.password-wrapper')) c.closest('.password-wrapper').classList.remove('invalid-glow');
             });
 
             let errores = [];
@@ -453,30 +455,50 @@
             const regexDni = /^\d{7,8}$/;
             const regexTelefono = /^\d{7,15}$/;
 
-            // Validaciones de campos vacíos y formatos
-            if (!campos.nombre.value.trim()) {
-                errores.push("El <b>Nombre</b> es obligatorio.");
+            // Validaciones obligatorias + formatos
+            if (!campos.nombre.value.trim() || !regexLetras.test(campos.nombre.value.trim())) {
+                errores.push("El <b>Nombre</b> es obligatorio y solo puede contener letras.");
                 campos.nombre.classList.add('invalid-glow');
             }
-
-            if (!campos.apellido.value.trim()) {
-                errores.push("El <b>Apellido</b> es obligatorio.");
+            if (!campos.apellido.value.trim() || !regexLetras.test(campos.apellido.value.trim())) {
+                errores.push("El <b>Apellido</b> es obligatorio y solo puede contener letras.");
                 campos.apellido.classList.add('invalid-glow');
             }
-
+            if (!campos.usuario.value.trim()) {
+                errores.push("El <b>Nombre de Usuario</b> es obligatorio.");
+                campos.usuario.classList.add('invalid-glow');
+            }
             if (!campos.correo.value.trim() || !regexMail.test(campos.correo.value.trim())) {
                 errores.push("Ingresa un <b>Correo</b> válido.");
                 campos.correo.classList.add('invalid-glow');
             }
-
+            if (!campos.dni.value.trim() || !regexDni.test(campos.dni.value.trim())) {
+                errores.push("El <b>DNI</b> es obligatorio y debe tener 7 u 8 números.");
+                campos.dni.classList.add('invalid-glow');
+            }
+            if (!campos.direccion.value.trim() || !campos.direccion.value.includes(",") || campos.direccion.value.split(",")[1].trim().length < 2) {
+                errores.push("La <b>Dirección</b> es obligatoria y debe incluir coma + localidad.");
+                campos.direccion.classList.add('invalid-glow');
+            }
+            if (!campos.telefono.value.trim() || !regexTelefono.test(campos.telefono.value.trim())) {
+                errores.push("El <b>Teléfono</b> es obligatorio y debe tener 7-15 números.");
+                campos.telefono.classList.add('invalid-glow');
+            }
             if (!campos.fechaNacimiento.value) {
                 errores.push("La <b>Fecha de Nacimiento</b> es obligatoria.");
                 campos.fechaNacimiento.classList.add('invalid-glow');
             }
 
+            // Contraseña nueva (opcional, pero si se pone no puede ser igual a la actual)
+            const passActual = document.getElementById('contrasenaActual').value;
+            if (campos.nuevaPass.value.trim() !== "" && campos.nuevaPass.value.trim() === passActual) {
+                errores.push("La <b>Nueva Contraseña</b> no puede ser igual a la anterior.");
+                campos.wrapNuevaPass.classList.add('invalid-glow');
+            }
+
             if (errores.length > 0) {
                 Swal.fire({
-                    title: 'Campos inválidos',
+                    title: 'Campos inválidos o vacíos',
                     html: `<ul style="text-align:left">${errores.map(e => `<li>${e}</li>`).join('')}</ul>`,
                     confirmButtonText: 'Revisar',
                     confirmButtonColor: '#007bff'
@@ -484,7 +506,7 @@
                 return;
             }
 
-            // --- DETECCIÓN DE CAMBIOS ---
+            // Detección de cambios (comparación limpia)
             const valoresOriginales = {
                 nombre: "@(Model?.Nombre?.Trim() ?? "")",
                 apellido: "@(Model?.Apellido?.Trim() ?? "")",
@@ -493,7 +515,7 @@
                 dni: "@(Model?.Dni?.Trim() ?? "")",
                 direccion: "@(Model?.Direccion?.Trim() ?? "")",
                 telefono: "@(Model?.Telefono?.Trim() ?? "")",
-                fechaNacimiento: "@Model.FechaNacimiento.ToString("yyyy-MM-dd")",
+                fechaNacimiento: "@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")",
                 nuevaPass: ""
             };
 
@@ -505,33 +527,25 @@
                 dni: campos.dni.value.trim(),
                 direccion: campos.direccion.value.trim(),
                 telefono: campos.telefono.value.trim(),
-                fechaNacimiento: campos.fechaNacimiento.value, // yyyy-mm-dd
+                fechaNacimiento: campos.fechaNacimiento.value.trim(),
                 nuevaPass: campos.nuevaPass.value.trim()
             };
 
-            const hayCambios = (
-                valoresActuales.nombre !== valoresOriginales.nombre ||
-                valoresActuales.apellido !== valoresOriginales.apellido ||
-                valoresActuales.usuario !== valoresOriginales.usuario ||
-                valoresActuales.correo !== valoresOriginales.correo ||
-                valoresActuales.dni !== valoresOriginales.dni ||
-                valoresActuales.direccion !== valoresOriginales.direccion ||
-                valoresActuales.telefono !== valoresOriginales.telefono ||
-                valoresActuales.fechaNacimiento !== valoresOriginales.fechaNacimiento ||
-                valoresActuales.nuevaPass !== ""
+            const hayCambios = Object.keys(valoresOriginales).some(key => 
+                valoresActuales[key] !== valoresOriginales[key]
             );
 
             if (!hayCambios) {
                 Swal.fire({
                     title: 'Sin cambios',
-                    text: 'No has realizado ninguna modificación.',
+                    text: 'No has modificado ningún dato.',
                     confirmButtonText: 'Entendido',
                     confirmButtonColor: '#007bff'
                 });
                 return;
             }
 
-            // Confirmación Final
+            // Confirmación final
             Swal.fire({
                 title: '¿Guardar cambios?',
                 text: "Se actualizará la información de tu cuenta.",
@@ -547,10 +561,13 @@
             });
         });
 
-        // Quitar el brillo rojo al escribir
-        document.querySelectorAll('.form-control').forEach(input => {
-            input.addEventListener('input', function() {
+        // Quitar glow al escribir
+        document.querySelectorAll('.form-control, .password-wrapper').forEach(el => {
+            el.addEventListener('input', function() {
                 this.classList.remove('invalid-glow');
+                if (this.closest('.password-wrapper')) {
+                    this.closest('.password-wrapper').classList.remove('invalid-glow');
+                }
             });
         });
     </script>

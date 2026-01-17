@@ -41,6 +41,19 @@ public partial class FarmaciabdContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
+        // Forzamos TODAS las tablas con su nombre exacto (mayúscula y comillas)
+        modelBuilder.Entity<Boletum>().ToTable("Boleta");
+        modelBuilder.Entity<Cliente>().ToTable("Clientes");
+        modelBuilder.Entity<Compra>().ToTable("Compras");  // ← Clave para tu error actual
+        modelBuilder.Entity<Inasistencium>().ToTable("Inasistencia");
+        modelBuilder.Entity<LineaDeCompra>().ToTable("LineaDeCompra");
+        modelBuilder.Entity<Producto>().ToTable("Producto");
+        modelBuilder.Entity<Proveedor>().ToTable("Proveedor");
+        modelBuilder.Entity<Usuario>().ToTable("Usuarios");
+        modelBuilder.Entity<Vacacion>().ToTable("Vacaciones");
+
         modelBuilder.Entity<Boletum>(entity =>
         {
             entity.ToTable("Boleta");
@@ -91,12 +104,12 @@ public partial class FarmaciabdContext : DbContext
 
         modelBuilder.Entity<Compra>(entity =>
         {
-            entity.ToTable("Compras");  // ← ¡Esto es lo clave! Fuerza el nombre exacto con mayúscula
+            entity.ToTable("Compras");
 
             entity.HasKey(e => e.Idcompras);
             entity.Property(e => e.Idcompras)
-                .ValueGeneratedNever()
-                .HasColumnName("IDCompras");
+                  .ValueGeneratedNever()
+                  .HasColumnName("IDCompras");
 
             entity.Property(e => e.Descripcion).IsUnicode(false);
             entity.Property(e => e.Idcliente).HasColumnName("IDCliente");
@@ -140,17 +153,17 @@ public partial class FarmaciabdContext : DbContext
 
         modelBuilder.Entity<LineaDeCompra>(entity =>
         {
-            entity.HasKey(e => e.IdlineaDeCompra);
-
             entity.ToTable("LineaDeCompra");
-
+            entity.HasKey(e => e.IdlineaDeCompra);
             entity.Property(e => e.IdlineaDeCompra).HasColumnName("IDLineaDeCompra");
             entity.Property(e => e.Idproducto).HasColumnName("IDProducto");
+            entity.Property(e => e.Cantidad);
 
-            entity.HasOne(d => d.IdproductoNavigation).WithMany(p => p.LineaDeCompras)
-                .HasForeignKey(d => d.Idproducto)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_LineaDeCompra_Producto");
+            entity.HasOne(d => d.IdproductoNavigation)
+                  .WithMany(p => p.LineaDeCompras)
+                  .HasForeignKey(d => d.Idproducto)
+                  .OnDelete(DeleteBehavior.ClientSetNull)
+                  .HasConstraintName("FK_LineaDeCompra_Producto");
         });
 
         modelBuilder.Entity<Producto>(entity =>

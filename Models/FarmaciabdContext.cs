@@ -103,20 +103,35 @@ public partial class FarmaciabdContext : DbContext
         modelBuilder.Entity<Compra>(entity =>
         {
             entity.ToTable("Compras");
+
             entity.HasKey(e => e.Idcompras);
-
-            // Mapeo simple de propiedades
             entity.Property(e => e.Idcompras).HasColumnName("IDCompras");
-            entity.Property(e => e.Idusuario).HasColumnName("IDUsuario"); // Columna física en Neon
 
-            // Configuración de la relación con Usuario
+            entity.Property(e => e.Descripcion).IsUnicode(false);
+            entity.Property(e => e.Idcliente).HasColumnName("IDCliente");  // ← Ya lo tenés
+            entity.Property(e => e.Idusuario).HasColumnName("IDUsuario");
+            entity.Property(e => e.MontoCompra).HasColumnType("decimal(18, 2)");
+
+            // Relación con Cliente: fuerza la FK real "IDCliente"
+            entity.HasOne(d => d.IdclienteNavigation)
+                  .WithMany(p => p.Compras)
+                  .HasForeignKey("IDCliente")  // ← ¡Esto es lo clave! Usa el nombre físico de la columna
+                  .HasPrincipalKey(c => c.Idcliente)
+                  .OnDelete(DeleteBehavior.ClientSetNull)
+                  .HasConstraintName("FK_Compras_Clientes");
+
+            // Relación con Usuario (ya está bien)
             entity.HasOne(d => d.IdusuarioNavigation)
                   .WithMany(p => p.Compras)
-                  .HasForeignKey(d => d.Idusuario)
+                  .HasForeignKey("IDUsuario")
+                  .OnDelete(DeleteBehavior.ClientSetNull)
                   .HasConstraintName("FK_Compras_Usuarios");
 
-            // ESTO ES LO QUE FALTA: Forzar a EF a que no invente nombres
-            entity.Navigation(e => e.IdusuarioNavigation);
+            // Relación con LineaDeCompra (si tenés la colección)
+            entity.HasMany(c => c.LineaDeCompras)
+                  .WithOne(l => l.IdcomprasNavigation)
+                  .HasForeignKey("IDCompras")
+                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Inasistencium>(entity =>

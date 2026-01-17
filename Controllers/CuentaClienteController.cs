@@ -37,28 +37,28 @@ namespace FarmaciaSantaRita.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
+            // 1. Obtenemos las compras con todas sus relaciones
             var comprasBD = await _context.Compras
                 .Include(c => c.IdclienteNavigation)
-                .Include(c => c.LineaDeCompras) // CAMBIO: Usamos la colección de líneas
+                .Include(c => c.LineaDeCompras)
                     .ThenInclude(l => l.IdproductoNavigation)
                 .OrderByDescending(c => c.Idcompras)
                 .ToListAsync();
 
-            var viewModel = new
-            {
-                Clientes = await _context.Clientes
-                    .Select(c => new
-                    {
-                        idcliente = c.Idcliente,
-                        nombreCliente = c.NombreCliente,
-                        telefonoCliente = c.TelefonoCliente,
-                        direccionCliente = c.DireccionCliente
-                    }).ToListAsync(),
-                Productos = await _context.Productos.ToListAsync(),
-                ComprasExistentes = comprasBD
-            };
+            // 2. Usamos ViewBag para los datos de apoyo (combos/selects)
+            // Usamos Select para enviar solo lo necesario y ahorrar memoria
+            ViewBag.Clientes = await _context.Clientes
+                .Select(c => new {
+                    id = c.Idcliente,
+                    nombre = c.NombreCliente,
+                    dni = c.DNI
+                }).ToListAsync();
 
-            return View(viewModel);
+            ViewBag.Productos = await _context.Productos.ToListAsync();
+
+            // 3. Retornamos la lista de compras como el MODELO principal
+            // Esto hace que en la vista puedas usar @model IEnumerable<Compra>
+            return View(comprasBD);
         }
 
         [HttpPost]

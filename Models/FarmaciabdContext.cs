@@ -77,16 +77,20 @@ public partial class FarmaciabdContext : DbContext
         modelBuilder.Entity<Cliente>(entity =>
         {
             entity.HasKey(e => e.Idcliente);
+            entity.ToTable("cliente"); // Asegúrate de que el nombre de la tabla también sea minúscula
 
-            entity.Property(e => e.Idcliente).HasColumnName("IDCliente");
-            entity.Property(e => e.DireccionCliente).IsUnicode(false);
+            entity.Property(e => e.Idcliente).HasColumnName("idcliente");
+            entity.Property(e => e.DireccionCliente).IsUnicode(false).HasColumnName("direccioncliente");
             entity.Property(e => e.EstadoDePago)
                 .HasMaxLength(50)
-                .IsUnicode(false);
-            entity.Property(e => e.NombreCliente).IsUnicode(false);
+                .IsUnicode(false)
+                .HasColumnName("estadodepago");
+            entity.Property(e => e.NombreCliente).IsUnicode(false).HasColumnName("nombrecliente");
             entity.Property(e => e.TelefonoCliente)
                 .HasMaxLength(20)
-                .IsUnicode(false);
+                .IsUnicode(false)
+                .HasColumnName("telefonocliente");
+            entity.Property(e => e.DNI).HasColumnName("dni");
         });
 
         modelBuilder.Entity<Compra>(entity =>
@@ -95,13 +99,22 @@ public partial class FarmaciabdContext : DbContext
 
             entity.Property(e => e.Idcompras)
                 .ValueGeneratedNever()
-                .HasColumnName("IDCompras");
+                .HasColumnName("idcompras"); // ← Cambiado a minúsculas
+
             entity.Property(e => e.Descripcion).IsUnicode(false);
-            entity.Property(e => e.Idcliente).HasColumnName("IDCliente");
-            entity.Property(e => e.IdlineaDeCompra).HasColumnName("IDLineaDeCompra");
-            entity.Property(e => e.Idusuario).HasColumnName("IDUsuario");
+
+            entity.Property(e => e.Idcliente)
+                .HasColumnName("idcliente"); // ← Cambiado a minúsculas
+
+            entity.Property(e => e.IdlineaDeCompra)
+                .HasColumnName("idlineadecompra"); // ← Cambiado a minúsculas (Este era el del error)
+
+            entity.Property(e => e.Idusuario)
+                .HasColumnName("idusuario"); // ← Cambiado a minúsculas
+
             entity.Property(e => e.MontoCompra).HasColumnType("decimal(18, 2)");
 
+            // Relaciones (Se mantienen igual, pero asegúrate de que las FK apunten a los campos corregidos)
             entity.HasOne(d => d.IdclienteNavigation).WithMany(p => p.Compras)
                 .HasForeignKey(d => d.Idcliente)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -137,10 +150,11 @@ public partial class FarmaciabdContext : DbContext
         {
             entity.HasKey(e => e.IdlineaDeCompra);
 
-            entity.ToTable("LineaDeCompra");
+            entity.ToTable("lineadecompra"); // Minúsculas
 
-            entity.Property(e => e.IdlineaDeCompra).HasColumnName("IDLineaDeCompra");
-            entity.Property(e => e.Idproducto).HasColumnName("IDProducto");
+            entity.Property(e => e.IdlineaDeCompra).HasColumnName("idlineadecompra");
+            entity.Property(e => e.Idproducto).HasColumnName("idproducto");
+            entity.Property(e => e.Cantidad).HasColumnName("cantidad");
 
             entity.HasOne(d => d.IdproductoNavigation).WithMany(p => p.LineaDeCompras)
                 .HasForeignKey(d => d.Idproducto)
@@ -152,11 +166,11 @@ public partial class FarmaciabdContext : DbContext
         {
             entity.HasKey(e => e.Idproducto);
 
-            entity.ToTable("Producto");
+            entity.ToTable("producto"); // Minúsculas
 
-            entity.Property(e => e.Idproducto).HasColumnName("IDProducto");
-            entity.Property(e => e.NombreProducto).IsUnicode(false);
-            entity.Property(e => e.PrecioUnitario).HasColumnType("decimal(18, 0)");
+            entity.Property(e => e.Idproducto).HasColumnName("idproducto");
+            entity.Property(e => e.NombreProducto).IsUnicode(false).HasColumnName("nombreproducto");
+            entity.Property(e => e.PrecioUnitario).HasColumnType("decimal(18, 0)").HasColumnName("preciounitario");
         });
 
         modelBuilder.Entity<Proveedor>(entity =>

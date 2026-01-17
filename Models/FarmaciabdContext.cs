@@ -108,29 +108,32 @@ public partial class FarmaciabdContext : DbContext
             entity.Property(e => e.Idcompras).HasColumnName("IDCompras");
 
             entity.Property(e => e.Descripcion).IsUnicode(false);
-            entity.Property(e => e.Idcliente).HasColumnName("IDCliente");  // ← Ya lo tenés
-            entity.Property(e => e.Idusuario).HasColumnName("IDUsuario");
             entity.Property(e => e.MontoCompra).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.FechaCompra).HasColumnType("date");
+            entity.Property(e => e.EstadoDePago).HasMaxLength(20).IsUnicode(false);
 
-            // Relación con Cliente: fuerza la FK real "IDCliente"
+            // Columna física de la FK (esto es lo que EF no está viendo)
+            entity.Property(e => e.Idcliente).HasColumnName("IDCliente");
+            entity.Property(e => e.Idusuario).HasColumnName("IDUsuario");
+
+            // Relación con Cliente - FUERZA la columna real "IDCliente"
             entity.HasOne(d => d.IdclienteNavigation)
                   .WithMany(p => p.Compras)
-                  .HasForeignKey("IDCliente")  // ← ¡Esto es lo clave! Usa el nombre físico de la columna
-                  .HasPrincipalKey(c => c.Idcliente)
-                  .OnDelete(DeleteBehavior.ClientSetNull)
-                  .HasConstraintName("FK_Compras_Clientes");
+                  .HasForeignKey(d => d.Idcliente)  // ← Usa la propiedad C# Idcliente
+                  .HasConstraintName("FK_Compras_Clientes")
+                  .OnDelete(DeleteBehavior.ClientSetNull);
 
-            // Relación con Usuario (ya está bien)
+            // Relación con Usuario
             entity.HasOne(d => d.IdusuarioNavigation)
                   .WithMany(p => p.Compras)
-                  .HasForeignKey("IDUsuario")
-                  .OnDelete(DeleteBehavior.ClientSetNull)
-                  .HasConstraintName("FK_Compras_Usuarios");
+                  .HasForeignKey(d => d.Idusuario)
+                  .HasConstraintName("FK_Compras_Usuarios")
+                  .OnDelete(DeleteBehavior.ClientSetNull);
 
-            // Relación con LineaDeCompra (si tenés la colección)
+            // Relación con líneas de compra (si la tenés)
             entity.HasMany(c => c.LineaDeCompras)
                   .WithOne(l => l.IdcomprasNavigation)
-                  .HasForeignKey("IDCompras")
+                  .HasForeignKey(l => l.Idcompras)
                   .OnDelete(DeleteBehavior.Cascade);
         });
 

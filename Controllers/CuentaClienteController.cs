@@ -186,17 +186,29 @@ namespace FarmaciaSantaRita.Controllers
         {
             try
             {
-                var compra = await _context.Compras.FindAsync(id);
-                if (compra != null)
+                var compra = await _context.Compras
+                    .Include(c => c.LineaDeCompras)  // ← Cargamos las líneas asociadas
+                    .FirstOrDefaultAsync(c => c.Idcompras == id);
+
+                if (compra == null)
+                    return Json(new { success = false, message = "Compra no encontrada" });
+
+                // 1. Borramos primero las líneas de compra
+                if (compra.LineaDeCompras != null && compra.LineaDeCompras.Any())
                 {
-                    _context.Compras.Remove(compra);
-                    await _context.SaveChangesAsync();
+                    _context.LineaDeCompras.RemoveRange(compra.LineaDeCompras);
                 }
+
+                // 2. Luego borramos la compra
+                _context.Compras.Remove(compra);
+
+                await _context.SaveChangesAsync();
+
                 return Json(new { success = true });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = ex.InnerException?.Message ?? ex.Message });
             }
         }
 

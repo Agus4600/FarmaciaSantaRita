@@ -324,7 +324,11 @@
                         <div class="tres-columnas">
                             <div class="grupo-campo">
                                 <label asp-for="FechaNacimiento">Fecha de Nacimiento</label>
-                                <input asp-for="FechaNacimiento" class="form-control" id="FechaNacimiento" type="date" />
+                                <input type="date"
+                                       name="FechaNacimiento"
+                                       id="FechaNacimiento"
+                                       class="form-control"
+                                       value="@Model.FechaNacimiento.ToString("yyyy-MM-dd")" />
                             </div>
                             <div class="grupo-campo">
                                 <label>Contraseña Actual</label>
@@ -433,7 +437,7 @@ document.getElementById('btnGuardarCambios').addEventListener('click', function(
         wrapNuevaPass: document.getElementById('wrapperNuevaContrasena')
     };
 
-    // Resetear glows (resplandor rojo)
+    // Resetear glows
     Object.values(campos).forEach(c => {
         if (c) c.classList.remove('invalid-glow');
         if (c && c.closest('.password-wrapper')) {
@@ -445,40 +449,74 @@ document.getElementById('btnGuardarCambios').addEventListener('click', function(
     const regexLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
     const regexMail = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const regexDni = /^\d{7,8}$/;
+    const regexTelefono = /^\d{7,15}$/;
 
-    // Validaciones (igual que antes, pero agregamos teléfono)
-    if (!regexLetras.test(campos.nombre.value.trim())) {
+    // Validaciones OBLIGATORIAS (no permitir vacío)
+    if (!campos.nombre.value.trim()) {
+        errores.push("El <b>Nombre</b> es obligatorio.");
+        campos.nombre.classList.add('invalid-glow');
+    } else if (!regexLetras.test(campos.nombre.value.trim())) {
         errores.push("El <b>Nombre</b> solo debe contener letras.");
         campos.nombre.classList.add('invalid-glow');
     }
-    if (!regexLetras.test(campos.apellido.value.trim())) {
+
+    if (!campos.apellido.value.trim()) {
+        errores.push("El <b>Apellido</b> es obligatorio.");
+        campos.apellido.classList.add('invalid-glow');
+    } else if (!regexLetras.test(campos.apellido.value.trim())) {
         errores.push("El <b>Apellido</b> solo debe contener letras.");
         campos.apellido.classList.add('invalid-glow');
     }
-    if (campos.usuario.value.includes(" ")) {
+
+    if (!campos.usuario.value.trim()) {
+        errores.push("El <b>Nombre de Usuario</b> es obligatorio.");
+        campos.usuario.classList.add('invalid-glow');
+    } else if (campos.usuario.value.includes(" ")) {
         errores.push("El <b>Nombre de Usuario</b> no puede tener espacios.");
         campos.usuario.classList.add('invalid-glow');
     }
-    if (!regexMail.test(campos.correo.value.trim())) {
+
+    if (!campos.correo.value.trim()) {
+        errores.push("El <b>Correo</b> es obligatorio.");
+        campos.correo.classList.add('invalid-glow');
+    } else if (!regexMail.test(campos.correo.value.trim())) {
         errores.push("El <b>Correo</b> debe ser válido (con @@ y terminar en .com).");
         campos.correo.classList.add('invalid-glow');
     }
-    if (!regexDni.test(campos.dni.value.trim())) {
+
+    if (!campos.dni.value.trim()) {
+        errores.push("El <b>DNI</b> es obligatorio.");
+        campos.dni.classList.add('invalid-glow');
+    } else if (!regexDni.test(campos.dni.value.trim())) {
         errores.push("El <b>DNI</b> debe tener entre 7 y 8 números.");
         campos.dni.classList.add('invalid-glow');
     }
-    // Dirección con coma
-    const dirVal = campos.direccion.value.trim();
-    if (!dirVal.includes(",") || dirVal.split(",")[1].trim().length < 2) {
-        errores.push("La <b>Dirección</b> debe incluir una coma y localidad (ej: 25 de mayo 52, Rio Seco).");
+
+    if (!campos.direccion.value.trim()) {
+        errores.push("La <b>Dirección</b> es obligatoria.");
         campos.direccion.classList.add('invalid-glow');
+    } else {
+        const dirVal = campos.direccion.value.trim();
+        if (!dirVal.includes(",") || dirVal.split(",")[1].trim().length < 2) {
+            errores.push("La <b>Dirección</b> debe incluir una coma y localidad (ej: 25 de mayo 52, Rio Seco).");
+            campos.direccion.classList.add('invalid-glow');
+        }
     }
-    // Teléfono: mínimo 7 dígitos (permitir vacío si querés)
-    if (campos.telefono.value.trim() !== "" && !/^\d{7,15}$/.test(campos.telefono.value.trim())) {
+
+    if (!campos.telefono.value.trim()) {
+        errores.push("El <b>Teléfono</b> es obligatorio.");
+        campos.telefono.classList.add('invalid-glow');
+    } else if (!regexTelefono.test(campos.telefono.value.trim())) {
         errores.push("El <b>Teléfono</b> debe tener entre 7 y 15 números.");
         campos.telefono.classList.add('invalid-glow');
     }
-    // Nueva pass no igual a la actual
+
+    if (!campos.fechaNacimiento.value.trim()) {
+        errores.push("La <b>Fecha de Nacimiento</b> es obligatoria.");
+        campos.fechaNacimiento.classList.add('invalid-glow');
+    }
+
+    // Nueva pass no igual a la actual (solo si se intenta cambiar)
     const passActual = document.getElementById('contrasenaActual').value;
     if (campos.nuevaPass.value.trim() !== "" && campos.nuevaPass.value.trim() === passActual) {
         errores.push("La <b>Nueva Contraseña</b> no puede ser igual a la anterior.");
@@ -487,7 +525,7 @@ document.getElementById('btnGuardarCambios').addEventListener('click', function(
 
     if (errores.length > 0) {
         Swal.fire({
-            title: 'Campos inválidos',
+            title: 'Campos inválidos o vacíos',
             html: `<ul style="text-align:left">${errores.map(e => `<li>${e}</li>`).join('')}</ul>`,
             confirmButtonText: 'Entendido',
             confirmButtonColor: '#007bff'
@@ -495,8 +533,7 @@ document.getElementById('btnGuardarCambios').addEventListener('click', function(
         return;
     }
 
-    // ★★★ MEJOR DETECCIÓN DE CAMBIOS ★★★
-    // Limpiamos y normalizamos valores para comparar correctamente
+    // Detección de cambios (comparación limpia)
     const valoresOriginales = {
         nombre: "@(Model?.Nombre?.Trim() ?? "")",
         apellido: "@(Model?.Apellido?.Trim() ?? "")",
@@ -505,8 +542,8 @@ document.getElementById('btnGuardarCambios').addEventListener('click', function(
         dni: "@(Model?.Dni?.Trim() ?? "")",
         direccion: "@(Model?.Direccion?.Trim() ?? "")",
         telefono: "@(Model?.Telefono?.Trim() ?? "")",
-        fechaNacimiento: "@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")",
-        nuevaPass: "" // Nueva contraseña siempre se considera cambio si se llena
+        fechaNacimiento: "@Model.FechaNacimiento.ToString("yyyy-MM-dd")",
+        nuevaPass: "" // Nueva contraseña siempre cambio si se llena
     };
 
     const valoresActuales = {
@@ -517,7 +554,7 @@ document.getElementById('btnGuardarCambios').addEventListener('click', function(
         dni: campos.dni.value.trim(),
         direccion: campos.direccion.value.trim(),
         telefono: campos.telefono.value.trim(),
-        fechaNacimiento: campos.fechaNacimiento.value.trim(), // Formato yyyy-MM-dd
+        fechaNacimiento: campos.fechaNacimiento.value.trim(),
         nuevaPass: campos.nuevaPass.value.trim()
     };
 
@@ -536,17 +573,17 @@ document.getElementById('btnGuardarCambios').addEventListener('click', function(
     if (!hayCambios) {
         Swal.fire({
             title: 'Sin cambios',
-            text: 'No se detectaron cambios en los datos.',
+            text: 'No se detectaron modificaciones en los datos.',
             confirmButtonText: 'Entendido',
             confirmButtonColor: '#007bff'
         });
         return;
     }
 
-    // Confirmación de guardado
+    // Confirmación
     Swal.fire({
         title: 'Confirmar cambios',
-        text: "¿Quieres guardar los cambios?",
+        text: "¿Quieres guardar los cambios en tu cuenta?",
         showCancelButton: true,
         confirmButtonColor: '#007bff',
                 cancelButtonColor: '#007bff',

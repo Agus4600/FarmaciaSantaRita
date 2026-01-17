@@ -77,7 +77,7 @@ namespace FarmaciaSantaRita.Controllers
                     return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
                 }
 
-                // Validación: NO permitir campos vacíos obligatorios
+                // Validación de campos obligatorios
                 if (string.IsNullOrWhiteSpace(modeloActualizado.Nombre) ||
                     string.IsNullOrWhiteSpace(modeloActualizado.Apellido) ||
                     string.IsNullOrWhiteSpace(modeloActualizado.NombreUsuario) ||
@@ -88,11 +88,18 @@ namespace FarmaciaSantaRita.Controllers
                     modeloActualizado.FechaNacimiento == default(DateTime))
                 {
                     TempData["ResultadoActualizacion"] = "Error";
-                    ViewBag.ErrorMessage = "Todos los campos obligatorios deben estar completos (no se permiten vacíos).";
-                    return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
+                    ViewBag.ErrorMessage = "Todos los campos obligatorios deben estar completos.";
+                    ViewBag.ContraseñaActualDesencriptada = _encryptionService.Decrypt(usuarioParaActualizar.Contraseña);
+                    return View(usuarioParaActualizar);
                 }
 
-                // Actualizar TODOS los campos (ya sabemos que no están vacíos)
+                // --- INICIO DE ACTUALIZACIÓN ---
+
+                // 1. Asignamos la fecha y forzamos la marca de modificación para Entity Framework
+                usuarioParaActualizar.FechaNacimiento = modeloActualizado.FechaNacimiento;
+                _context.Entry(usuarioParaActualizar).Property(u => u.FechaNacimiento).IsModified = true;
+
+                // 2. Actualizamos el resto de los campos
                 usuarioParaActualizar.Nombre = modeloActualizado.Nombre.Trim();
                 usuarioParaActualizar.Apellido = modeloActualizado.Apellido.Trim();
                 usuarioParaActualizar.NombreUsuario = modeloActualizado.NombreUsuario.Trim();
@@ -101,29 +108,27 @@ namespace FarmaciaSantaRita.Controllers
                 usuarioParaActualizar.Dni = modeloActualizado.Dni.Trim();
                 usuarioParaActualizar.Direccion = modeloActualizado.Direccion.Trim();
 
-                // FechaNacimiento: siempre actualiza si llegó (ya validamos que no sea default)
-                usuarioParaActualizar.FechaNacimiento = modeloActualizado.FechaNacimiento;
-
-                // Rol: solo si cambió (por seguridad)
                 if (!string.IsNullOrWhiteSpace(modeloActualizado.Rol) && modeloActualizado.Rol != usuarioParaActualizar.Rol)
                 {
                     usuarioParaActualizar.Rol = modeloActualizado.Rol;
                 }
 
-                // Contraseña nueva (solo si se ingresó)
                 if (!string.IsNullOrWhiteSpace(modeloActualizado.NuevaContraseña))
                 {
                     usuarioParaActualizar.Contraseña = _encryptionService.Encrypt(modeloActualizado.NuevaContraseña.Trim());
                 }
 
+                // 3. Guardamos los cambios en la base de datos
                 _context.SaveChanges();
+
                 TempData["ResultadoActualizacion"] = "Exito";
                 return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
             }
             catch (Exception ex)
             {
+                // ESTO ES LO QUE FALTABA: Cerrar el bloque try y manejar la excepción
                 TempData["ResultadoActualizacion"] = "Error";
-                ViewBag.ErrorMessage = ex.Message;
+                ViewBag.ErrorMessage = "Error al guardar cambios: " + ex.Message;
                 return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
             }
         }

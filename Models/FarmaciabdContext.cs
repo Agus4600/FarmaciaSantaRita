@@ -167,7 +167,7 @@ public partial class FarmaciabdContext : DbContext
             entity.HasOne(l => l.IdcomprasNavigation)
                   .WithMany(c => c.LineaDeCompras)
                   .HasForeignKey(l => l.Idcompras)
-                  .OnDelete(DeleteBehavior.Cascade)  // ← ¡Esto es lo clave!
+                  .OnDelete(DeleteBehavior.Cascade)  // FORZAR DEPLOY 2025: cascada en LineaDeCompra
                   .HasConstraintName("FK_LineaDeCompra_Compras");
 
             // Relación con Producto (sin cascada, para no borrar productos por accidente)

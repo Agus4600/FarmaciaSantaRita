@@ -37,13 +37,13 @@ namespace FarmaciaSantaRita.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
+            // 1. Obtenemos las compras con todas sus relaciones
             var comprasBD = await _context.Compras
-    .Include(c => c.IdclienteNavigation)
-    .Include(c => c.LineaDeCompras)
-        .ThenInclude(l => l.IdproductoNavigation)
-    .OrderByDescending(c => c.Idcompras)
-    .AsNoTracking() // <-- Agrega esto para evitar que EF intente cachear relaciones raras
-    .ToListAsync();
+                .Include(c => c.IdclienteNavigation)
+                .Include(c => c.LineaDeCompras)
+                    .ThenInclude(l => l.IdproductoNavigation)
+                .OrderByDescending(c => c.Idcompras)
+                .ToListAsync();
 
             // 2. Usamos ViewBag para los datos de apoyo (combos/selects)
             // Usamos Select para enviar solo lo necesario y ahorrar memoria

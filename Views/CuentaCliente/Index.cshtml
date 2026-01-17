@@ -596,6 +596,14 @@
 <script>
     const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
+    // Lista de nombres de clientes existentes (desde ViewBag.Clientes)
+    const clientesExistentes = [
+        @foreach (var c in ViewBag.Clientes)
+        {
+                <text>'@c.nombre.trim().toLowerCase()',</text>
+        }
+    ];
+
     function quitarGlow(input) {
         input.classList.remove('outer-glow-error');
     }
@@ -604,12 +612,10 @@
         const camposObligatorios = ['inputNombreCliente', 'inputProducto', 'inputPrecio'];
         camposObligatorios.forEach(id => {
             const el = document.getElementById(id);
-            if (el) {
-                if (!el.value.trim()) {
-                    el.classList.add('outer-glow-error');
-                } else {
-                    el.classList.remove('outer-glow-error');
-                }
+            if (el && !el.value.trim()) {
+                el.classList.add('outer-glow-error');
+            } else if (el) {
+                el.classList.remove('outer-glow-error');
             }
         });
     }
@@ -658,6 +664,49 @@
         td.dataset.precioRaw = raw.toFixed(2);
     }
 
+    // NUEVA LÓGICA: DNI opcional si cliente ya existe
+    const inputCliente = document.getElementById('inputNombreCliente');
+    const inputDNI = document.getElementById('inputDNI');
+    const labelDNI = inputDNI.previousElementSibling; // El <label> anterior
+
+    function verificarClienteExistente() {
+        const nombreIngresado = inputCliente.value.trim().toLowerCase();
+
+        // Limpiamos glow y errores previos
+        quitarGlow(inputDNI);
+        inputDNI.removeAttribute('required');
+        inputDNI.classList.remove('outer-glow-error');
+
+        if (nombreIngresado === '') {
+            labelDNI.textContent = 'DNI';
+            inputDNI.disabled = false;
+            return;
+        }
+
+        const existe = clientesExistentes.includes(nombreIngresado);
+
+        if (existe) {
+            // Cliente ya registrado → DNI opcional
+            inputDNI.disabled = false;
+            inputDNI.removeAttribute('required');
+            labelDNI.textContent = 'DNI (opcional)';
+            inputDNI.placeholder = 'Opcional si cliente ya existe';
+        } else {
+            // Cliente nuevo → DNI obligatorio
+            inputDNI.disabled = false;
+            inputDNI.setAttribute('required', 'required');
+            labelDNI.textContent = 'DNI *';
+            inputDNI.placeholder = 'Ingrese DNI del nuevo cliente';
+        }
+    }
+
+    // Ejecutar verificación al perder foco o al cambiar
+    inputCliente.addEventListener('blur', verificarClienteExistente);
+    inputCliente.addEventListener('input', verificarClienteExistente);
+
+    // Ejecutar al cargar página
+    document.addEventListener('DOMContentLoaded', verificarClienteExistente);
+
     async function agregarProductoATabla() {
         const n = document.getElementById('inputNombreCliente').value.trim();
         const dni = document.getElementById('inputDNI').value.trim();
@@ -679,11 +728,19 @@
             return;
         }
 
-        // Si querés DNI obligatorio (como está ahora), dejalo así.
-        // Si querés opcional, comentá las siguientes 4 líneas:
-        if (!dni) {
+        // Verificar si es cliente nuevo (no existe en la lista)
+        const nombreCliente = n.toLowerCase();
+        const esClienteNuevo = !clientesExistentes.includes(nombreCliente);
+
+        // Solo validar DNI si es cliente nuevo
+        if (esClienteNuevo && !dni) {
             document.getElementById('inputDNI').classList.add('outer-glow-error');
-            Swal.fire({ title: 'Error', text: 'Ingrese el DNI del cliente' });
+            Swal.fire({
+                title: 'Error',
+                text: 'Ingrese el DNI para registrar un cliente nuevo',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
+            });
             return;
         }
 
@@ -693,7 +750,7 @@
                 headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
                 body: JSON.stringify({
                     nombre: n,
-                    dni: dni,          // ← Envía el DNI al controlador
+                    dni: dni, // Se envía aunque sea opcional
                     producto: p,
                     cantidad: c,
                     precio: u,
@@ -706,7 +763,7 @@
 
             const result = await response.json();
             if (result.success) {
-                location.reload();  // Recarga para ver el nuevo registro
+                location.reload(); // Recarga para ver el nuevo registro
             } else {
                 Swal.fire({
                     title: 'Error',
@@ -779,16 +836,18 @@
                 setTimeout(() => location.reload(), 1600);
             } else {
                 Swal.fire({
-                    icon: 'error',
                     title: 'Error',
                     text: result.message || 'No se pudo actualizar'
+                    confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
                 });
             }
         } catch (e) {
             Swal.fire({
-                icon: 'error',
                 title: 'Error de conexión',
                 text: 'No se pudo contactar con el servidor'
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
             });
         }
     }
@@ -810,9 +869,9 @@
 
         if (filasDatos.length === 0) {
             Swal.fire({
-                icon: 'info',
                 title: 'Sin datos',
                 text: 'No hay registros para exportar.',
+                confirmButtonText: 'Entendido',
                 confirmButtonColor: '#007bff'
             });
             return;
@@ -1020,9 +1079,9 @@
         const confirmacion = await Swal.fire({
             title: '¿Eliminar compra?',
             text: 'Esta acción no se puede deshacer',
-            icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#007bff',
+            confirmButtonColor: '#007bff',
             confirmButtonText: 'Sí, eliminar',
             cancelButtonText: 'Cancelar'
         });
@@ -1048,16 +1107,18 @@
                 });
             } else {
                 Swal.fire({
-                    icon: 'error',
                     title: 'Error',
                     text: result.message || 'No se pudo eliminar'
+                    confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
                 });
             }
         } catch (e) {
             Swal.fire({
-                icon: 'error',
                 title: 'Error de conexión',
                 text: 'No se pudo contactar con el servidor'
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
             });
         }
     }

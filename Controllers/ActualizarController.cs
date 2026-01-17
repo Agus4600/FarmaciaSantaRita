@@ -77,24 +77,34 @@ namespace FarmaciaSantaRita.Controllers
                     return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
                 }
 
-                // Actualizar TODOS los campos (permite vaciarlos)
-                usuarioParaActualizar.Nombre = modeloActualizado.Nombre?.Trim();
-                usuarioParaActualizar.Apellido = modeloActualizado.Apellido?.Trim();
-                usuarioParaActualizar.NombreUsuario = modeloActualizado.NombreUsuario?.Trim();
-                usuarioParaActualizar.Telefono = modeloActualizado.Telefono?.Trim(); // ← Ahora sí permite vacío
-                usuarioParaActualizar.CorreoUsuario = modeloActualizado.CorreoUsuario?.Trim();
-                usuarioParaActualizar.Dni = modeloActualizado.Dni?.Trim();
-                usuarioParaActualizar.Direccion = modeloActualizado.Direccion?.Trim();
-
-                // FechaNacimiento: solo actualiza si viene con valor válido (no default)
-                if (modeloActualizado.FechaNacimiento != default(DateTime) && modeloActualizado.FechaNacimiento.Year > 1900)
+                // Validación: NO permitir campos vacíos obligatorios
+                if (string.IsNullOrWhiteSpace(modeloActualizado.Nombre) ||
+                    string.IsNullOrWhiteSpace(modeloActualizado.Apellido) ||
+                    string.IsNullOrWhiteSpace(modeloActualizado.NombreUsuario) ||
+                    string.IsNullOrWhiteSpace(modeloActualizado.CorreoUsuario) ||
+                    string.IsNullOrWhiteSpace(modeloActualizado.Dni) ||
+                    string.IsNullOrWhiteSpace(modeloActualizado.Direccion) ||
+                    string.IsNullOrWhiteSpace(modeloActualizado.Telefono) ||
+                    modeloActualizado.FechaNacimiento == default(DateTime))
                 {
-                    usuarioParaActualizar.FechaNacimiento = modeloActualizado.FechaNacimiento;
+                    TempData["ResultadoActualizacion"] = "Error";
+                    ViewBag.ErrorMessage = "Todos los campos obligatorios deben estar completos (no se permiten vacíos).";
+                    return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
                 }
-                // Si el input date está vacío → no tocamos la fecha existente (o la ponemos null si tu modelo lo permite)
-                // Si querés permitir vaciar la fecha: usuarioParaActualizar.FechaNacimiento = modeloActualizado.FechaNacimiento;
 
-                // Rol: solo si cambió
+                // Actualizar TODOS los campos (ya sabemos que no están vacíos)
+                usuarioParaActualizar.Nombre = modeloActualizado.Nombre.Trim();
+                usuarioParaActualizar.Apellido = modeloActualizado.Apellido.Trim();
+                usuarioParaActualizar.NombreUsuario = modeloActualizado.NombreUsuario.Trim();
+                usuarioParaActualizar.Telefono = modeloActualizado.Telefono.Trim();
+                usuarioParaActualizar.CorreoUsuario = modeloActualizado.CorreoUsuario.Trim();
+                usuarioParaActualizar.Dni = modeloActualizado.Dni.Trim();
+                usuarioParaActualizar.Direccion = modeloActualizado.Direccion.Trim();
+
+                // FechaNacimiento: siempre actualiza si llegó (ya validamos que no sea default)
+                usuarioParaActualizar.FechaNacimiento = modeloActualizado.FechaNacimiento;
+
+                // Rol: solo si cambió (por seguridad)
                 if (!string.IsNullOrWhiteSpace(modeloActualizado.Rol) && modeloActualizado.Rol != usuarioParaActualizar.Rol)
                 {
                     usuarioParaActualizar.Rol = modeloActualizado.Rol;

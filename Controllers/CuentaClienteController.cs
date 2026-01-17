@@ -39,11 +39,11 @@ namespace FarmaciaSantaRita.Controllers
         public async Task<IActionResult> Index()
         {
             var comprasBD = await _context.Compras
-                .Include(c => c.IdclienteNavigation)
-                .Include(c => c.IdlineaDeCompraNavigation)
-                    .ThenInclude(l => l.IdproductoNavigation)
-                .OrderByDescending(c => c.Idcompras)
-                .ToListAsync();
+    .Include(c => c.IdclienteNavigation)
+    .Include(c => c.IdlineaDeCompraNavigation)  // ← "l" minúscula
+        .ThenInclude(l => l.IdproductoNavigation)
+    .OrderByDescending(c => c.Idcompras)
+    .ToListAsync();
 
             var viewModel = new
             {
@@ -204,7 +204,7 @@ namespace FarmaciaSantaRita.Controllers
 
                 // Actualizar cantidad en la línea de compra
                 var linea = await _context.Set<LineaDeCompra>()
-                    .FirstOrDefaultAsync(l => l.IdlineaDeCompra == compra.IdlineaDeCompra);
+    .FirstOrDefaultAsync(l => l.IdlineaDeCompra == compra.IdlineaDeCompra);  // ← "l" minúscula
                 if (linea != null)
                 {
                     linea.Cantidad = datos.cantidad;
@@ -266,9 +266,9 @@ namespace FarmaciaSantaRita.Controllers
             foreach (var compra in compras)
             {
                 var lineas = await _context.Set<LineaDeCompra>()
-                    .Include(l => l.IdproductoNavigation)
-                    .Where(l => l.IdlineaDeCompra == compra.IdlineaDeCompra)
-                    .ToListAsync();
+    .Include(l => l.IdproductoNavigation)
+    .Where(l => l.IdlineaDeCompra == compra.IdlineaDeCompra)  // ← "l" minúscula
+    .ToListAsync();
 
                 comprasConDetalle.Add(new
                 {

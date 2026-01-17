@@ -104,18 +104,19 @@ public partial class FarmaciabdContext : DbContext
         {
             entity.ToTable("Compras");
             entity.HasKey(e => e.Idcompras);
-            entity.Property(e => e.Idcompras).HasColumnName("IDCompras");
-            entity.Property(e => e.Idcliente).HasColumnName("IDCliente");
-            entity.Property(e => e.Idusuario).HasColumnName("IDUsuario");
-            entity.Property(e => e.Descripcion).HasColumnName("Descripcion");
-            entity.Property(e => e.FechaCompra).HasColumnName("FechaCompra");
-            entity.Property(e => e.MontoCompra).HasColumnName("MontoCompra");
-            entity.Property(e => e.EstadoDePago).HasColumnName("EstadoDePago");
 
-            // Relación Compra -> Cliente
-            entity.HasOne(d => d.IdclienteNavigation)
+            // Mapeo simple de propiedades
+            entity.Property(e => e.Idcompras).HasColumnName("IDCompras");
+            entity.Property(e => e.Idusuario).HasColumnName("IDUsuario"); // Columna física en Neon
+
+            // Configuración de la relación con Usuario
+            entity.HasOne(d => d.IdusuarioNavigation)
                   .WithMany(p => p.Compras)
-                  .HasForeignKey(d => d.Idcliente);
+                  .HasForeignKey(d => d.Idusuario)
+                  .HasConstraintName("FK_Compras_Usuarios");
+
+            // ESTO ES LO QUE FALTA: Forzar a EF a que no invente nombres
+            entity.Navigation(e => e.IdusuarioNavigation);
         });
 
         modelBuilder.Entity<Inasistencium>(entity =>
@@ -136,23 +137,16 @@ public partial class FarmaciabdContext : DbContext
         modelBuilder.Entity<LineaDeCompra>(entity =>
         {
             entity.ToTable("LineaDeCompra");
-            entity.HasKey(e => e.IdlineaDeCompra);
-            entity.Property(e => e.IdlineaDeCompra).HasColumnName("IDLineaDeCompra");
-            entity.Property(e => e.Idcompras).HasColumnName("IDCompras"); // FK hacia Compras
-            entity.Property(e => e.Idproducto).HasColumnName("IDProducto");
-            entity.Property(e => e.Cantidad).HasColumnName("Cantidad");
+            entity.HasKey(e => e.Idlineadecompra);
 
-            // Relación Línea -> Compra
+            entity.Property(e => e.Idlineadecompra).HasColumnName("IDLineaDeCompra");
+
+            // Cambia 'Idcompras' e 'IdcomprasNavigation' a minúscula si el error persiste
+            entity.Property(e => e.Idcompras).HasColumnName("IDCompras");
+
             entity.HasOne(d => d.IdcomprasNavigation)
-          .WithMany(p => p.LineaDeCompras)
-          .HasForeignKey(d => d.Idcompras)
-          .OnDelete(DeleteBehavior.ClientSetNull) // Esto indica que no puede ser nulo en la DB
-          .IsRequired();
-
-            // Relación Línea -> Producto
-            entity.HasOne(d => d.IdproductoNavigation)
                   .WithMany(p => p.LineaDeCompras)
-                  .HasForeignKey(d => d.Idproducto);
+                  .HasForeignKey(d => d.Idcompras);
         });
 
         modelBuilder.Entity<Producto>(entity =>

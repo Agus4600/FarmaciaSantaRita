@@ -5,17 +5,11 @@ namespace FarmaciaSantaRita.Models;
 
 public partial class LineaDeCompra
 {
-    public int IdlineaDeCompra { get; set; }
-
-    // Añadimos la FK que está en tu base de datos
-    public int Idcompras { get; set; }
-
+    public int Idlineadecompra { get; set; }
+    public int Idcompras { get; set; } // Debe ser 'c' minúscula según tu error CS1061
     public int Idproducto { get; set; }
-
     public int Cantidad { get; set; }
 
-    // Cambiamos la colección por una navegación simple a Compra
-    public virtual Compra IdcomprasNavigation { get; set; } = null!;
-
+    public virtual Compra IdcomprasNavigation { get; set; } = null!; 
     public virtual Producto IdproductoNavigation { get; set; } = null!;
 }

@@ -1,11 +1,11 @@
 ﻿using FarmaciaSantaRita.Models;
-using FarmaciaSantaRita.Services; // ← Necesario para EncryptionService
+using FarmaciaSantaRita.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
 
 namespace FarmaciaSantaRita.Controllers
 {
@@ -21,7 +21,6 @@ namespace FarmaciaSantaRita.Controllers
             _encryptionService = encryptionService;
         }
 
-        // GET: Muestra el formulario de edición
         [HttpGet]
         public IActionResult ActualizarCuenta(int idProveedor, string vista)
         {
@@ -39,14 +38,9 @@ namespace FarmaciaSantaRita.Controllers
 
             ViewData["IdProveedor"] = idProveedor;
             ViewData["vista"] = vista;
-
-            // Desencriptamos la contraseña actual para mostrarla en la vista
             ViewBag.ContraseñaActualDesencriptada = _encryptionService.Decrypt(usuario.Contraseña);
-
             return View(usuario);
         }
-
-
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -77,7 +71,7 @@ namespace FarmaciaSantaRita.Controllers
                     return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
                 }
 
-                // Validación de campos obligatorios
+                // Validación: TODOS obligatorios
                 if (string.IsNullOrWhiteSpace(modeloActualizado.Nombre) ||
                     string.IsNullOrWhiteSpace(modeloActualizado.Apellido) ||
                     string.IsNullOrWhiteSpace(modeloActualizado.NombreUsuario) ||
@@ -93,13 +87,7 @@ namespace FarmaciaSantaRita.Controllers
                     return View(usuarioParaActualizar);
                 }
 
-                // --- INICIO DE ACTUALIZACIÓN ---
-
-                // 1. Asignamos la fecha y forzamos la marca de modificación para Entity Framework
-                usuarioParaActualizar.FechaNacimiento = modeloActualizado.FechaNacimiento;
-                _context.Entry(usuarioParaActualizar).Property(u => u.FechaNacimiento).IsModified = true;
-
-                // 2. Actualizamos el resto de los campos
+                // Actualización segura
                 usuarioParaActualizar.Nombre = modeloActualizado.Nombre.Trim();
                 usuarioParaActualizar.Apellido = modeloActualizado.Apellido.Trim();
                 usuarioParaActualizar.NombreUsuario = modeloActualizado.NombreUsuario.Trim();
@@ -107,6 +95,7 @@ namespace FarmaciaSantaRita.Controllers
                 usuarioParaActualizar.CorreoUsuario = modeloActualizado.CorreoUsuario.Trim();
                 usuarioParaActualizar.Dni = modeloActualizado.Dni.Trim();
                 usuarioParaActualizar.Direccion = modeloActualizado.Direccion.Trim();
+                usuarioParaActualizar.FechaNacimiento = modeloActualizado.FechaNacimiento.Date;
 
                 if (!string.IsNullOrWhiteSpace(modeloActualizado.Rol) && modeloActualizado.Rol != usuarioParaActualizar.Rol)
                 {
@@ -118,26 +107,18 @@ namespace FarmaciaSantaRita.Controllers
                     usuarioParaActualizar.Contraseña = _encryptionService.Encrypt(modeloActualizado.NuevaContraseña.Trim());
                 }
 
-                // 3. Guardamos los cambios en la base de datos
                 _context.SaveChanges();
-
                 TempData["ResultadoActualizacion"] = "Exito";
                 return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
             }
             catch (Exception ex)
             {
-                // ESTO ES LO QUE FALTABA: Cerrar el bloque try y manejar la excepción
                 TempData["ResultadoActualizacion"] = "Error";
-                ViewBag.ErrorMessage = "Error al guardar cambios: " + ex.Message;
+                ViewBag.ErrorMessage = "Error al guardar: " + ex.Message;
                 return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
             }
         }
 
-
-
-
-
-        // Acción para Gestionar Empleados (la tienes, la dejo igual)
         [HttpGet]
         public IActionResult GestionarEmpleados(int idProveedor)
         {

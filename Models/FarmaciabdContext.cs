@@ -155,16 +155,30 @@ public partial class FarmaciabdContext : DbContext
         modelBuilder.Entity<LineaDeCompra>(entity =>
         {
             entity.ToTable("LineaDeCompra");
-            entity.HasKey(e => e.Idlineadecompra);
 
+            entity.HasKey(e => e.Idlineadecompra);
             entity.Property(e => e.Idlineadecompra).HasColumnName("IDLineaDeCompra");
 
-            // Cambia 'Idcompras' e 'IdcomprasNavigation' a minúscula si el error persiste
+            // FK a Compra (columna real en BD)
             entity.Property(e => e.Idcompras).HasColumnName("IDCompras");
 
-            entity.HasOne(d => d.IdcomprasNavigation)
+            // FK a Producto (columna real en BD)
+            entity.Property(e => e.Idproducto).HasColumnName("IDProducto");
+
+            entity.Property(e => e.Cantidad);
+
+            // Relación con Compra (inversa)
+            entity.HasOne(l => l.IdcomprasNavigation)
+                  .WithMany(c => c.LineaDeCompras)
+                  .HasForeignKey(l => l.Idcompras)  // ← Usa propiedad C# Idcompras
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Relación con Producto - FUERZA la columna real "IDProducto"
+            entity.HasOne(l => l.IdproductoNavigation)
                   .WithMany(p => p.LineaDeCompras)
-                  .HasForeignKey(d => d.Idcompras);
+                  .HasForeignKey(l => l.Idproducto)  // ← Esto evita que EF invente "IdproductoNavigationIdproducto"
+                  .OnDelete(DeleteBehavior.ClientSetNull)
+                  .HasConstraintName("FK_LineaDeCompra_Producto");
         });
 
         modelBuilder.Entity<Producto>(entity =>

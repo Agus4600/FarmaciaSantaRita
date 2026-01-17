@@ -1,4 +1,5 @@
-﻿@model dynamic
+﻿@model List<FarmaciaSantaRita.Models.Compra>
+
 @{
 
     var currentIdProveedor = ViewData["IdProveedor"] ?? Context.Request.Query["idProveedor"].ToString() ?? "0";
@@ -415,9 +416,9 @@
                                        oninput="quitarGlow(this); this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')" />
 
                                 <datalist id="listaClientes">
-                                    @foreach (var c in Model.Clientes)
+                                    @foreach (var c in ViewBag.Clientes)
                                     {
-                                        <option value="@c.nombreCliente">@c.dni</option>
+                                        <option value="@c.nombre">@c.dni</option>
                                     }
                                 </datalist>
                             </div>
@@ -445,9 +446,9 @@
                                 <label>Producto</label>
                                 <input type="text" id="inputProducto" class="form-control" placeholder="Nombre del producto" list="listaProductos" oninput="quitarGlow(this)" />
                                 <datalist id="listaProductos">
-                                    @foreach (var p in Model.Productos)
+                                    @foreach (var p in ViewBag.Productos)
                                     {
-                                        <option value="@p.NombreProducto">@p.PrecioUnitario</option>
+                                        <option value="@p.nombre">@p.precio</option>
                                     }
                                 </datalist>
                             </div>
@@ -519,31 +520,33 @@
                                 </tr>
                             </thead>
                                 <tbody>
-                                    @foreach (var compra in Model.ComprasExistentes)
+                                    @foreach (var compra in Model)
                                     {
                                         var nombreCliente = compra.IdclienteNavigation?.NombreCliente ?? "Desconocido";
                                         var telefonoCliente = compra.IdclienteNavigation?.TelefonoCliente ?? "Sin teléfono";
                                         var direccionCliente = compra.IdclienteNavigation?.DireccionCliente ?? "Sin dirección";
                                         var dniCliente = compra.IdclienteNavigation?.DNI ?? "Sin DNI";
-                                        <!-- ← Variable auxiliar para mayor claridad -->
+
+                                        // Tomamos la PRIMERA línea de compra (asumiendo que por ahora hay solo una por compra)
+                                        var linea = compra.LineaDeCompras?.FirstOrDefault();
 
                                         <tr data-id="@compra.Idcompras"
                                             data-nombre="@(nombreCliente.ToLower())"
                                             data-telefono="@telefonoCliente"
                                             data-direccion="@direccionCliente"
                                             data-dni="@dniCliente">
-                                            <!-- ← Ahora sí está bien dentro del tag <tr> -->
-
                                             <td class="fw-bold">
                                                 <span class="nombre-cliente-link"
                                                       style="cursor: pointer; text-decoration: underline; color: #007bff;">
                                                     @nombreCliente
                                                 </span>
                                             </td>
-                                            <td>@compra.IdlineaDeCompraNavigation?.IdproductoNavigation?.NombreProducto</td>
-                                            <td contenteditable="true" class="edit-cant">@compra.IdlineaDeCompraNavigation?.Cantidad</td>
-                                            <td contenteditable="true" class="edit-precio" data-precio-raw="@compra.IdlineaDeCompraNavigation?.IdproductoNavigation?.PrecioUnitario">
-                                                $@string.Format("{0:N2}", compra.IdlineaDeCompraNavigation?.IdproductoNavigation?.PrecioUnitario ?? 0).Replace(",", "X").Replace(".", ",").Replace("X", ".")
+                                            <td>@(linea?.IdproductoNavigation?.NombreProducto ?? "Sin producto")</td>
+                                            <td contenteditable="true" class="edit-cant">@(linea?.Cantidad ?? 0)</td>
+                                            <td contenteditable="true" class="edit-precio"
+                                                data-precio-raw="@(linea?.IdproductoNavigation?.PrecioUnitario ?? 0)">
+                                                $@string.Format("{0:N2}", linea?.IdproductoNavigation?.PrecioUnitario ?? 0)
+                                                .Replace(",", "X").Replace(".", ",").Replace("X", ".")
                                             </td>
                                             <td>@compra.FechaCompra.ToString("dd/MM/yyyy")</td>
                                             <td class="text-primary fw-bold">$ @compra.MontoCompra.ToString("N2")</td>
@@ -566,7 +569,7 @@
                                             </td>
                                         </tr>
                                     }
-                                    @for (int i = Model.ComprasExistentes.Count; i < 5; i++)
+                                    @for (int i = Model.Count; i < 5; i++)
                                     {
                                         <tr class="fila-vacia">
                                             <td>&nbsp;</td>

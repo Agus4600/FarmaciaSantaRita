@@ -554,24 +554,18 @@
 
 
 @section Scripts {
-    <!-- jQuery PRIMERO (OBLIGATORIO para DateRangePicker) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- Moment.js -->
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/locale/es.js"></script>
-
-    <!-- DateRangePicker -->
     <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
-
-    <!-- SweetAlert y ExcelJS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+
     <script>
-        // === CONFIGURACIÓN DE CALENDARIOS ===
-                $(function () {
-            // 1. Configuración de Calendario de Filtros
+        // Esperamos que jQuery y el DOM estén listos
+        $(function () {
+            // 1. Calendario de FILTROS (Rango de Fechas)
             $('#btnAbrirCalendario').daterangepicker({
                 autoUpdateInput: false,
                 opens: 'left',
@@ -584,7 +578,7 @@
                 }
             });
 
-            // 2. Configuración de Calendario de Período (para agregar vacación)
+            // 2. Calendario de PERÍODO (para agregar vacación)
             $('#btnPeriodo').daterangepicker({
                 autoUpdateInput: false,
                 opens: 'left',
@@ -597,15 +591,13 @@
                 }
             });
 
-            // 3. EVENTO CLIC ÚNICO (Para ambos botones)
-            // Usamos toggle() para que si hacen clic de nuevo se cierre
+            // 3. Evento CLICK único para AMBOS botones (mejor UX: toggle abre/cierra)
             $('#btnAbrirCalendario, #btnPeriodo').on('click', function (e) {
                 e.preventDefault();
                 $(this).data('daterangepicker').toggle();
             });
 
-            // 4. EVENTOS DE ACTUALIZACIÓN DE TEXTO (Apply/Cancel)
-
+            // 4. Actualizar texto cuando se aplica o limpia
             // Filtros
             $('#btnAbrirCalendario').on('apply.daterangepicker', function(ev, picker) {
                 $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
@@ -613,8 +605,7 @@
             $('#btnAbrirCalendario').on('cancel.daterangepicker', function(ev, picker) {
                 $(this).text('dd/mm/yyyy - dd/mm/yyyy');
             });
-
-            // Registro de Vacación
+            // Período
             $('#btnPeriodo').on('apply.daterangepicker', function(ev, picker) {
                 $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
             });
@@ -628,31 +619,35 @@
             const TABLA_ID = "tablaVacaciones";
             const MIN_FILAS_VISIBLE = 5;
 
-                    function agregarFilasVacias() {
-            const tbody = document.querySelector(`#${TABLA_ID} tbody`);
-            if (!tbody) return;
+            function agregarFilasVacias() {
+                const tbody = document.querySelector(`#${TABLA_ID} tbody`);
+                if (!tbody) return;
 
-            // 1. Contamos cuántas filas reales (con datos) hay
-            const filasConDatos = tbody.querySelectorAll('tr[data-vacacion-id]').length;
+                // Limpiamos filas vacías anteriores para evitar duplicados
+                const filasVacias = tbody.querySelectorAll('tr.fila-relleno');
+                filasVacias.forEach(f => f.remove());
 
-            // 2. Si hay menos de 5, rellenamos hasta llegar a 5
-            // 3. Si quieres que SIEMPRE haya 5 vacías sin importar los datos, quita la resta
-            const filasNecesarias = Math.max(0, MIN_FILAS_VISIBLE - filasConDatos);
+                // Contamos filas reales (con datos)
+                const filasConDatos = tbody.querySelectorAll('tr[data-vacacion-id]').length;
 
-            for (let i = 0; i < filasNecesarias; i++) {
-                const filaVacia = document.createElement('tr');
-                filaVacia.classList.add("fila-relleno"); // Añadimos una clase para identificarlas
-                filaVacia.innerHTML = `
-                    <td>&nbsp;</td>
-                    <td class="text-center">&nbsp;</td>
-                    <td class="text-center">&nbsp;</td>
-                    <td class="text-center">&nbsp;</td>
-                    <td><input type="checkbox" class="form-check-input" disabled /></td>
-                `;
-                tbody.appendChild(filaVacia);
+                // Calculamos cuántas vacías necesitamos
+                const filasNecesarias = Math.max(0, MIN_FILAS_VISIBLE - filasConDatos);
+
+                for (let i = 0; i < filasNecesarias; i++) {
+                    const filaVacia = document.createElement('tr');
+                    filaVacia.classList.add('fila-relleno');
+                    filaVacia.innerHTML = `
+                        <td>&nbsp;</td>
+                        <td class="text-center">&nbsp;</td>
+                        <td class="text-center">&nbsp;</td>
+                        <td class="text-center">&nbsp;</td>
+                        <td><input type="checkbox" class="form-check-input fila-check" disabled /></td>
+                    `;
+                    tbody.appendChild(filaVacia);
+                }
             }
-        }
 
+            // Ejecutar al cargar la página
             agregarFilasVacias();
 
 

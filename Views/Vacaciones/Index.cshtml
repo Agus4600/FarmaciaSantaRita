@@ -499,14 +499,13 @@
                             </div>
                         </div>
                         <!-- Fila 2: Fecha Inicio y Fecha Fin -->
+                        <!-- Período (mismo estilo que el filtro) -->
                         <div class="campos-centrados" style="margin-top: 15px; margin-bottom: 10px !important;">
-                            <div class="campo" style="flex: 0 0 200px; max-width: 200px;">
-                                <label for="fechaInicioInput">Fecha Inicio</label>
-                                <input type="date" id="fechaInicioInput" class="form-control shadow-sm" />
-                            </div>
-                            <div class="campo" style="flex: 0 0 200px; max-width: 200px;">
-                                <label for="fechaFinInput">Fecha Fin</label>
-                                <input type="date" id="fechaFinInput" class="form-control shadow-sm" />
+                            <div class="campo" style="flex: 0 0 400px; max-width: 400px;">
+                                <label for="btnPeriodo">Período de Vacaciones</label>
+                                <button type="button" id="btnPeriodo" class="btn btn-outline-primary shadow-sm w-100" style="height: 38px;">
+                                    dd/mm/yyyy - dd/mm/yyyy
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -596,6 +595,29 @@
         $('#btnAbrirCalendario').on('cancel.daterangepicker', function(ev, picker) {
             $(this).text('dd/mm/yyyy - dd/mm/yyyy');
         });
+
+                // Configuración del botón Período (igual que el filtro)
+        $('#btnPeriodo').daterangepicker({
+            autoUpdateInput: false,
+            locale: {
+                format: 'DD/MM/YYYY',
+                applyLabel: 'Aplicar',
+                cancelLabel: 'Limpiar',
+                daysOfWeek: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'],
+                monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+            }
+        });
+
+        // Al seleccionar período
+        $('#btnPeriodo').on('apply.daterangepicker', function(ev, picker) {
+            $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+        });
+
+        // Al limpiar
+        $('#btnPeriodo').on('cancel.daterangepicker', function(ev, picker) {
+            $(this).text('dd/mm/yyyy - dd/mm/yyyy');
+        });
+
         document.addEventListener('DOMContentLoaded', function () {
             const TABLA_ID = "tablaVacaciones";
             const MIN_FILAS_VISIBLE = 5;
@@ -707,36 +729,34 @@
 
 
 
-            // === BOTÓN AGREGAR (Versión Corregida) ===
-                    document.getElementById('btnAgregar').addEventListener('click', async function () {
+                   document.getElementById('btnAgregar').addEventListener('click', async function () {
             const elEmpleado = document.getElementById('empleadoSelect');
             const elDias = document.getElementById('diasInput');
-            const elInicio = document.getElementById('fechaInicioInput');
-            const elFin = document.getElementById('fechaFinInput');
+            const btnPeriodo = document.getElementById('btnPeriodo');
+
             const empleadoId = elEmpleado.value;
             const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.text.trim() || '';
             const diasVal = parseInt(elDias.value) || 0;
-            const inicioVal = elInicio.value;
-            const finVal = elFin.value;
+            const periodoTexto = btnPeriodo.textContent.trim();
 
-            if (!empleadoId || !inicioVal || !finVal) {
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Debe seleccionar un empleado y las fechas de inicio/fin',
-                    icon: 'error',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
-                });
+            // Validación
+            if (!empleadoId || diasVal < 1) {
+                Swal.fire('Error', 'Seleccione empleado y días (mínimo 1)', 'error');
                 return;
             }
+
+            if (periodoTexto === 'dd/mm/yyyy - dd/mm/yyyy') {
+                Swal.fire('Error', 'Seleccione el período de vacaciones', 'error');
+                return;
+            }
+
+            // Extraer fechas del texto del botón
+            const [desde, hasta] = periodoTexto.split(' - ');
+            const inicioVal = desde.split('/').reverse().join('-'); // yyyy-mm-dd
+            const finVal = hasta.split('/').reverse().join('-');
+
             if (new Date(finVal) < new Date(inicioVal)) {
-                Swal.fire({
-                    title: 'Error',
-                    text: 'La fecha fin no puede ser anterior al inicio',
-                    icon: 'error',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
-                });
+                Swal.fire('Error', 'La fecha fin no puede ser anterior al inicio', 'error');
                 return;
             }
 
@@ -751,49 +771,58 @@
             try {
                 const response = await fetch('/Vacaciones/ApiCreate', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
                     body: JSON.stringify(datos)
                 });
+
+                if (!response.ok) throw new Error(`Error ${response.status}`);
+
                 const result = await response.json();
+
                 if (result.success) {
-                    const tbody = document.querySelector(`#tablaVacaciones tbody`);
-                    const dReales = (new Date(finVal) - new Date(inicioVal)) / (1000 * 60 * 60 * 24) + 1;
+                    // Calcular días reales y favor
+                    const dInicio = new Date(inicioVal);
+                    const dFin = new Date(finVal);
+                    const dReales = Math.round((dFin - dInicio) / (86400000)) + 1;
                     const dFavor = Math.abs(diasVal - dReales);
-                    const nuevaFila = `
-                        <tr data-vacacion-id="${result.id}">
-                            <td>${empleadoNombre}</td>
-                            <td class="text-center">${diasVal}</td>
-                            <td class="text-center">${inicioVal.split('-').reverse().join('/')}</td>
-                            <td class="text-center">${finVal.split('-').reverse().join('/')}</td>
-                            <td class="text-center">${dFavor}</td>
-                            <td><input type="checkbox" class="form-check-input fila-check" /></td>
-                        </tr>`;
-                    tbody.insertAdjacentHTML('afterbegin', nuevaFila);
-                    // Limpiar campos
+
+                    // Agregar fila
+                    const tbody = document.querySelector('#tablaVacaciones tbody');
+                    const nuevaFila = document.createElement('tr');
+                    nuevaFila.setAttribute('data-vacacion-id', result.id);
+                    nuevaFila.innerHTML = `
+                        <td>${empleadoNombre}</td>
+                        <td class="text-center">${diasVal}</td>
+                        <td class="text-center">${desde}</td>
+                        <td class="text-center">${hasta}</td>
+                        <td class="text-center">${dFavor}</td>
+                        <td><input type="checkbox" class="form-check-input fila-check" /></td>
+                    `;
+                    tbody.insertBefore(nuevaFila, tbody.firstChild);
+
+                    // Limpiar
                     elEmpleado.value = '';
-                    elInicio.value = '';
-                    elFin.value = '';
                     elDias.value = '15';
-                    // === SIN MENSAJE DE ÉXITO ===
-                    // Registro guardado silenciosamente
-                    if (typeof agregarFilasVacias === 'function') agregarFilasVacias();
-                } else {
+                    btnPeriodo.textContent = 'dd/mm/yyyy - dd/mm/yyyy';
+
+                    agregarFilasVacias();
+
                     Swal.fire({
-                        title: 'Error',
-                        text: result.message || 'Error al guardar',
-                        icon: 'error',
-                        confirmButtonText: 'Entendido',
-                        confirmButtonColor: '#007bff'
+                        icon: 'success',
+                        title: '¡Agregado!',
+                        text: 'Vacación registrada correctamente',
+                        timer: 1800,
+                        showConfirmButton: false
                     });
+                } else {
+                    Swal.fire('Error', result.message || 'No se pudo guardar', 'error');
                 }
             } catch (err) {
-                console.error("Error en Fetch:", err);
-                Swal.fire({
-                    title: 'Error',
-                    text: 'No se pudo conectar con el servidor',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
-                });
+                console.error(err);
+                Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
             }
         });
 

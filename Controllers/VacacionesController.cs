@@ -167,21 +167,21 @@ namespace FarmaciaSantaRita.Controllers
         {
             var query = _context.Vacaciones.AsQueryable();
 
-            // Filtro por nombre (case insensitive y acentos ignorados con ILike)
+            // Filtro por nombre (ILike: ignora mayúsculas y acentos)
             if (!string.IsNullOrEmpty(nombreEmpleado))
             {
                 query = query.Where(v => EF.Functions.ILike(v.NombreEmpleadoRegistrado ?? "", $"%{nombreEmpleado}%"));
             }
 
-            // Filtro por rango de fechas (comparación directa con DateTime, sin .Date)
+            // Filtro por rango de fechas
             if (fechaDesde.HasValue && fechaHasta.HasValue)
             {
-                // Asumimos que fechaDesde y fechaHasta vienen como yyyy-MM-dd (sin hora)
-                // Truncamos a la fecha completa para incluir todo el día
-                var desdeTruncado = fechaDesde.Value.Date;
-                var hastaTruncado = fechaHasta.Value.Date.AddDays(1).AddTicks(-1); // Incluye todo el día final
+                // Fuerza UTC en las fechas de filtro (Kind=Utc) para que Npgsql las acepte
+                var desdeUtc = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
+                var hastaUtc = DateTime.SpecifyKind(fechaHasta.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
 
-                query = query.Where(v => v.FechaInicio >= desdeTruncado && v.FechaInicio <= hastaTruncado);
+                query = query.Where(v =>
+                    v.FechaInicio >= desdeUtc && v.FechaInicio <= hastaUtc);
             }
 
             var resultados = await query

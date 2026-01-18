@@ -28,16 +28,20 @@ namespace FarmaciaSantaRita.Controllers
 
             var vacaciones = await _context.Vacaciones
                 .AsNoTracking()
-                .Include(v => v.Usuario) // Asegúrate que la relación en el Context sea correcta
                 .OrderByDescending(v => v.FechaInicio)
+                .Select(v => new Vacacion // ← Proyectamos directamente lo que necesitamos
+                {
+                    IdVacaciones = v.IdVacaciones,
+                    DiasVacaciones = v.DiasVacaciones,
+                    FechaInicio = v.FechaInicio,
+                    FechaFin = v.FechaFin,
+                    DiasFavor = v.DiasFavor,
+                    NombreEmpleadoRegistrado = v.NombreEmpleadoRegistrado ?? "Sin nombre"
+                    // No necesitamos Usuario ni Idusuario aquí
+                })
                 .ToListAsync();
 
-            // Filtramos para asegurarnos de no enviar nulos a la vista
-            var listaFiltrada = vacaciones
-                .Where(v => v.Usuario != null)
-                .ToList();
-
-            return View(listaFiltrada);
+            return View(vacaciones);
         }
 
 

@@ -173,10 +173,10 @@ namespace FarmaciaSantaRita.Controllers
                 query = query.Where(v => EF.Functions.ILike(v.NombreEmpleadoRegistrado ?? "", $"%{nombreEmpleado}%"));
             }
 
-            // Filtro por rango de fechas
+            // Filtro por rango de fechas (comparación directa y segura)
             if (fechaDesde.HasValue && fechaHasta.HasValue)
             {
-                // Fuerza UTC en las fechas de filtro (Kind=Utc) para que Npgsql las acepte
+                // Fuerza UTC en las fechas de filtro
                 var desdeUtc = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
                 var hastaUtc = DateTime.SpecifyKind(fechaHasta.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
 
@@ -193,6 +193,7 @@ namespace FarmaciaSantaRita.Controllers
                     v.DiasVacaciones,
                     fechaInicio = v.FechaInicio.ToString("dd/MM/yyyy"),
                     fechaFin = v.FechaFin.ToString("dd/MM/yyyy"),
+                    // Cálculo correcto de diasFavor: EF traduce (FechaFin - FechaInicio).Days directamente a resta de fechas en PostgreSQL
                     diasFavor = Math.Abs(v.DiasVacaciones - ((v.FechaFin - v.FechaInicio).Days + 1))
                 })
                 .ToListAsync();

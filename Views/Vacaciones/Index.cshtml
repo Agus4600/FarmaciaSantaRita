@@ -569,32 +569,12 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
     <script>
-        // === CONFIGURACIÓN DEL CALENDARIO (RANGO DE FECHAS) ===
-        $('#btnAbrirCalendario').daterangepicker({
-            autoUpdateInput: false,
-            locale: {
-                format: 'DD/MM/YYYY',
-                applyLabel: 'Aplicar',
-                cancelLabel: 'Limpiar',
-                daysOfWeek: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'],
-                monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-            }
-        });
-        // Al seleccionar las fechas
-        $('#btnAbrirCalendario').on('apply.daterangepicker', function(ev, picker) {
-            $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
-        });
-        // Al cancelar/limpiar
-        $('#btnAbrirCalendario').on('cancel.daterangepicker', function(ev, picker) {
-            $(this).text('dd/mm/yyyy - dd/mm/yyyy');
-        });
-
-                // Configuración del botón Período (igual que el filtro)
-        document.addEventListener('DOMContentLoaded', function () {
-            // Inicializar DateRangePicker
-            $('#btnPeriodo').daterangepicker({
+        // === CONFIGURACIÓN DE CALENDARIOS ===
+        $(function () {  // Espera que el DOM esté listo (mejor que DOMContentLoaded duplicado)
+            // Calendario de filtros
+            $('#btnAbrirCalendario').daterangepicker({
                 autoUpdateInput: false,
-                opens: 'left', // Abre hacia la izquierda para que no se corte
+                opens: 'left',
                 locale: {
                     format: 'DD/MM/YYYY',
                     applyLabel: 'Aplicar',
@@ -604,27 +584,46 @@
                 }
             });
 
-            // Abrir el calendario al hacer click en el botón
-            $('#btnPeriodo').on('click', function (e) {
-                e.preventDefault(); // Evita comportamiento por defecto
-                $(this).data('daterangepicker').show(); // Fuerza la apertura
-            });
-
-            // Al aplicar el rango
-            $('#btnPeriodo').on('apply.daterangepicker', function (ev, picker) {
+            $('#btnAbrirCalendario').on('apply.daterangepicker', function(ev, picker) {
                 $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
             });
 
-            // Al limpiar
-            $('#btnPeriodo').on('cancel.daterangepicker', function (ev, picker) {
+            $('#btnAbrirCalendario').on('cancel.daterangepicker', function(ev, picker) {
+                $(this).text('dd/mm/yyyy - dd/mm/yyyy');
+            });
+
+            // Calendario de Período (para agregar vacación)
+            $('#btnPeriodo').daterangepicker({
+                autoUpdateInput: false,
+                opens: 'left',
+                locale: {
+                    format: 'DD/MM/YYYY',
+                    applyLabel: 'Aplicar',
+                    cancelLabel: 'Limpiar',
+                    daysOfWeek: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'],
+                    monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+                }
+            });
+
+            $('#btnPeriodo').on('click', function (e) {
+                e.preventDefault();
+                $(this).data('daterangepicker').show();
+            });
+
+            $('#btnPeriodo').on('apply.daterangepicker', function(ev, picker) {
+                $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+            });
+
+            $('#btnPeriodo').on('cancel.daterangepicker', function(ev, picker) {
                 $(this).text('dd/mm/yyyy - dd/mm/yyyy');
             });
         });
 
+        // === LÓGICA DE LA TABLA ===
         document.addEventListener('DOMContentLoaded', function () {
             const TABLA_ID = "tablaVacaciones";
             const MIN_FILAS_VISIBLE = 5;
-            // === MANTENER 5 FILAS VISIBLES ===
+
             function agregarFilasVacias() {
                 const tbody = document.querySelector(`#${TABLA_ID} tbody`);
                 if (!tbody) return;
@@ -640,14 +639,13 @@
                             <td class="text-center">&nbsp;</td>
                             <td class="text-center">&nbsp;</td>
                             <td class="text-center">&nbsp;</td>
-                            <td class="text-center">&nbsp;</td>
                             <td><input type="checkbox" class="form-check-input fila-check" disabled /></td>
                         `;
                         tbody.appendChild(filaVacia);
                     }
                 }
             }
-            // Ejecutar al cargar
+
             agregarFilasVacias();
 
 

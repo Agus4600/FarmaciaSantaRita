@@ -709,39 +709,35 @@
     // Ejecutar al cargar página
     document.addEventListener('DOMContentLoaded', verificarClienteExistente);
 
-    async function agregarProductoATabla() {
+        async function agregarProductoATabla() {
         const n = document.getElementById('inputNombreCliente').value.trim();
         const dni = document.getElementById('inputDNI').value.trim();
         const t = document.getElementById('inputTelefono').value.trim();
         const d = document.getElementById('inputDireccion').value.trim();
         const p = document.getElementById('inputProducto').value.trim();
-        const c = parseInt(document.getElementById('inputCantidad').value);
-        const u = parseFloat(document.getElementById('inputPrecio').value);
+        let c = parseInt(document.getElementById('inputCantidad').value);
+        let u = parseFloat(document.getElementById('inputPrecio').value.replace(',', '.')); // ← Fix: reemplaza coma por punto para parseFloat
         const f = document.getElementById('inputFecha').value;
 
         if (!n || !p || isNaN(c) || isNaN(u) || !f) {
             aplicarGlowErrores();
             Swal.fire({
                 title: 'Error',
-                text: 'Complete los campos obligatorios',
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#007bff'
+                text: 'Complete los campos obligatorios (producto, cantidad, precio, fecha)',
+                icon: 'warning'
             });
             return;
         }
 
-        // Verificar si es cliente nuevo (no existe en la lista)
         const nombreCliente = n.toLowerCase();
         const esClienteNuevo = !clientesExistentes.includes(nombreCliente);
 
-        // Solo validar DNI si es cliente nuevo
         if (esClienteNuevo && !dni) {
             document.getElementById('inputDNI').classList.add('outer-glow-error');
             Swal.fire({
                 title: 'Error',
                 text: 'Ingrese el DNI para registrar un cliente nuevo',
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#007bff'
+                icon: 'warning'
             });
             return;
         }
@@ -749,13 +745,16 @@
         try {
             const response = await fetch('/CuentaCliente/GuardarNuevaCompra', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
                 body: JSON.stringify({
                     nombre: n,
-                    dni: dni, // Se envía aunque sea opcional
+                    dni: dni,
                     producto: p,
                     cantidad: c,
-                    precio: u,
+                    precio: u, // ahora es número válido
                     estado: "pendiente",
                     telefono: t,
                     direccion: d,
@@ -763,23 +762,40 @@
                 })
             });
 
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error del servidor:', response.status, errorText);
+                Swal.fire({
+                    title: 'Error del servidor',
+                    text: `Status ${response.status}: ${errorText || 'Intenta de nuevo'}`,
+                    icon: 'error'
+                });
+                return;
+            }
+
             const result = await response.json();
             if (result.success) {
-                location.reload(); // Recarga para ver el nuevo registro
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Guardado',
+                    text: 'Compra registrada correctamente',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                location.reload();
             } else {
                 Swal.fire({
-                    title: 'Error',
+                    title: 'Error al guardar',
                     text: result.message || 'No se pudo guardar la compra',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
+                    icon: 'error'
                 });
             }
         } catch (error) {
+            console.error('Error en fetch:', error);
             Swal.fire({
-                title: 'Error',
-                text: 'No se pudo conectar con el servidor',
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#007bff'
+                title: 'Error de conexión',
+                text: 'No se pudo conectar con el servidor. Revisa tu conexión.',
+                icon: 'error'
             });
         }
     }

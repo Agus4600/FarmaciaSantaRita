@@ -596,65 +596,54 @@
 <script>
     const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
+    // Lista de clientes existentes para detectar si es nuevo o registrado
+    const clientesExistentes = [
+        @foreach (var c in ViewBag.Clientes)
+        {
+                var nombreLimpio = (c.nombre ?? "").Trim().ToLowerInvariant();
+                <text>'@nombreLimpio',</text>
+        }
+    ];
+
     function quitarGlow(input) {
         input.classList.remove('outer-glow-error');
     }
 
     function aplicarGlowErrores() {
-        const camposObligatorios = ['inputNombreCliente', 'inputProducto', 'inputPrecio'];
+        const camposObligatorios = ['inputNombreCliente', 'inputProducto', 'inputCantidad', 'inputPrecio', 'inputFecha'];
         camposObligatorios.forEach(id => {
             const el = document.getElementById(id);
-            if (el) {
-                if (!el.value.trim()) {
-                    el.classList.add('outer-glow-error');
-                } else {
-                    el.classList.remove('outer-glow-error');
-                }
+            if (el && !el.value.trim()) {
+                el.classList.add('outer-glow-error');
+            } else if (el) {
+                el.classList.remove('outer-glow-error');
             }
         });
     }
 
     function corregirCantidad(input) {
         let valor = parseInt(input.value);
-        if (isNaN(valor) || valor < 1) {
-            input.value = 1;
-        } else {
-            input.value = valor;
-        }
+        if (isNaN(valor) || valor < 1) input.value = 1;
         quitarGlow(input);
     }
 
     function corregirPrecioInput(input) {
         let valor = input.value.trim();
-        if (valor === '') {
-            quitarGlow(input);
-            return;
-        }
-        valor = valor.replace(/[^0-9,.]/g, '');
-        const partes = valor.split(/[,.]/);
-        if (partes.length > 2) {
-            valor = partes[0] + ',' + partes.slice(1).join('');
-        }
-        valor = valor.replace('.', ',');
-        let [enteros, decimales] = valor.split(',');
-        enteros = enteros.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-        decimales = (decimales || '').substring(0, 2);
-        valor = enteros;
-        if (decimales) valor += ',' + decimales;
-        input.value = (valor === '0' || valor === '') ? valor : valor;
+        if (valor === '') return quitarGlow(input);
+        valor = valor.replace(/[^0-9,.]/g, '').replace(',', '.');
+        input.value = valor;
         quitarGlow(input);
     }
 
     function formatearPrecioEnTabla(td) {
         if (!td) return;
-        const raw = parseFloat(td.dataset.precioRaw || td.innerText.replace(/[^\d,-]/g, '').replace(',', '.') || 0);
+        const raw = parseFloat(td.dataset.precioRaw || td.innerText.replace(/[^\d.]/g, '') || 0);
         if (isNaN(raw)) {
             td.innerText = '$ 0,00';
             td.dataset.precioRaw = '0';
             return;
         }
-        const formatted = raw.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        td.innerText = '$ ' + formatted;
+        td.innerText = '$ ' + raw.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         td.dataset.precioRaw = raw.toFixed(2);
     }
 
@@ -668,60 +657,54 @@
         const u = parseFloat(document.getElementById('inputPrecio').value);
         const f = document.getElementById('inputFecha').value;
 
+        // Validación básica: campos obligatorios siempre
         if (!n || !p || isNaN(c) || isNaN(u) || !f) {
             aplicarGlowErrores();
-            Swal.fire({
-                title: 'Error',
-                text: 'Complete los campos obligatorios',
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#007bff'
-            });
+            Swal.fire('Error', 'Complete: Cliente, Producto, Cantidad, Precio y Fecha', 'warning');
             return;
         }
 
-        // Si querés DNI obligatorio (como está ahora), dejalo así.
-        // Si querés opcional, comentá las siguientes 4 líneas:
-        if (!dni) {
+        // Solo si es cliente NUEVO → obligamos DNI
+        const nombreNorm = n.toLowerCase();
+        const esClienteNuevo = !clientesExistentes.includes(nombreNorm);
+        if (esClienteNuevo && !dni) {
             document.getElementById('inputDNI').classList.add('outer-glow-error');
-            Swal.fire({ title: 'Error', text: 'Ingrese el DNI del cliente' });
+            Swal.fire('Error', 'Cliente nuevo: ingrese DNI', 'warning');
             return;
         }
 
         try {
             const response = await fetch('/CuentaCliente/GuardarNuevaCompra', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
                 body: JSON.stringify({
                     nombre: n,
-                    dni: dni,          // ← Envía el DNI al controlador
+                    dni: dni || null,         // Enviamos null si no hay DNI (cliente existente)
                     producto: p,
                     cantidad: c,
                     precio: u,
                     estado: "pendiente",
-                    telefono: t,
-                    direccion: d,
+                    telefono: t || null,
+                    direccion: d || null,
                     fecha: f
                 })
             });
 
+            if (!response.ok) throw new Error(`Error ${response.status}`);
+
             const result = await response.json();
+
             if (result.success) {
-                location.reload();  // Recarga para ver el nuevo registro
+                location.reload();  // Recarga y muestra la nueva compra
             } else {
-                Swal.fire({
-                    title: 'Error',
-                    text: result.message || 'No se pudo guardar la compra',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
-                });
+                Swal.fire('Error', result.message || 'No se pudo guardar', 'error');
             }
         } catch (error) {
-            Swal.fire({
-                title: 'Error',
-                text: 'No se pudo conectar con el servidor',
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#007bff'
-            });
+            console.error(error);
+            Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
         }
     }
 

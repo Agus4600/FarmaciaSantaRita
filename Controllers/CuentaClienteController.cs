@@ -66,31 +66,48 @@ namespace FarmaciaSantaRita.Controllers
             try
             {
                 // 1. Manejo del Cliente
+                // 1. Manejo del Cliente
                 Cliente cliente = null;
-                if (!string.IsNullOrEmpty(datos.dni))
+
+                if (!string.IsNullOrEmpty(datos.dni?.Trim()))
                 {
                     cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.DNI == datos.dni.Trim());
-                    if (cliente != null)
-                    {
-                        cliente.NombreCliente = datos.nombre?.Trim() ?? cliente.NombreCliente;
-                        if (!string.IsNullOrEmpty(datos.telefono)) cliente.TelefonoCliente = datos.telefono.Trim();
-                        if (!string.IsNullOrEmpty(datos.direccion)) cliente.DireccionCliente = datos.direccion.Trim();
-                        _context.Clientes.Update(cliente);
-                    }
                 }
 
-                if (cliente == null)
+                if (cliente == null && !string.IsNullOrEmpty(datos.nombre?.Trim()))
                 {
+                    var nombreNorm = datos.nombre.Trim().ToLowerInvariant();
+                    cliente = await _context.Clientes
+                        .FirstOrDefaultAsync(c => c.NombreCliente.ToLowerInvariant() == nombreNorm);
+                }
+
+                if (cliente != null)
+                {
+                    // Cliente existente → actualizamos solo lo que venga
+                    cliente.NombreCliente = datos.nombre?.Trim() ?? cliente.NombreCliente;
+                    if (!string.IsNullOrEmpty(datos.telefono)) cliente.TelefonoCliente = datos.telefono.Trim();
+                    if (!string.IsNullOrEmpty(datos.direccion)) cliente.DireccionCliente = datos.direccion.Trim();
+                    if (!string.IsNullOrEmpty(datos.dni)) cliente.DNI = datos.dni.Trim();
+                    _context.Clientes.Update(cliente);
+                }
+                else
+                {
+                    // Cliente nuevo → DNI obligatorio
+                    if (string.IsNullOrEmpty(datos.dni?.Trim()))
+                    {
+                        return Json(new { success = false, message = "DNI es obligatorio para clientes nuevos" });
+                    }
                     cliente = new Cliente
                     {
                         NombreCliente = datos.nombre?.Trim() ?? "Sin nombre",
-                        DNI = datos.dni?.Trim(),
-                        TelefonoCliente = string.IsNullOrEmpty(datos.telefono) ? "Sin especificar" : datos.telefono.Trim(),
-                        DireccionCliente = string.IsNullOrEmpty(datos.direccion) ? "Sin especificar" : datos.direccion.Trim(),
+                        DNI = datos.dni.Trim(),
+                        TelefonoCliente = datos.telefono?.Trim() ?? "Sin especificar",
+                        DireccionCliente = datos.direccion?.Trim() ?? "Sin especificar",
                         EstadoDePago = "Pendiente"
                     };
                     _context.Clientes.Add(cliente);
                 }
+
                 await _context.SaveChangesAsync();
 
                 // 2. Manejo del Producto

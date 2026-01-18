@@ -29,7 +29,7 @@ namespace FarmaciaSantaRita.Controllers
             var vacaciones = await _context.Vacaciones
                 .AsNoTracking()
                 .OrderByDescending(v => v.FechaInicio)
-                .Select(v => new Vacacion // ← Proyectamos directamente lo que necesitamos
+                .Select(v => new Vacacion
                 {
                     IdVacaciones = v.IdVacaciones,
                     DiasVacaciones = v.DiasVacaciones,
@@ -37,7 +37,6 @@ namespace FarmaciaSantaRita.Controllers
                     FechaFin = v.FechaFin,
                     DiasFavor = v.DiasFavor,
                     NombreEmpleadoRegistrado = v.NombreEmpleadoRegistrado ?? "Sin nombre"
-                    // No necesitamos Usuario ni Idusuario aquí
                 })
                 .ToListAsync();
 

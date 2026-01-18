@@ -10,8 +10,8 @@ namespace FarmaciaSantaRita.Models
         [Key]
         public int IdVacaciones { get; set; }
 
-        [Column("IDUsuari")]  // ← ESTA LÍNEA ES LA CLAVE: fuerza el mapeo a la columna real de la BD
-        public int Idusuario { get; set; }  // Nombre en C# puede seguir siendo Idusuario
+        [Column("IDUsuari")]  // ← ESTA LÍNEA ES LA QUE FALTA: fuerza el mapeo a la columna real "IDUsuari" de la BD
+        public int Idusuario { get; set; }  // El nombre en C# puede seguir siendo Idusuario (camelCase)
 
         public int DiasVacaciones { get; set; }
 

@@ -1046,10 +1046,10 @@
 
 
 
-    document.querySelectorAll('.nombre-cliente-link').forEach(link => {
+        document.querySelectorAll('.nombre-cliente-link').forEach(link => {
         link.addEventListener('click', function() {
             const tr = this.closest('tr');
-            const nombre = tr.querySelector('.nombre-cliente-link').innerText.trim();
+            const nombre = this.innerText.trim(); // directamente del span
             const telefono = tr.dataset.telefono || 'Sin teléfono';
             const direccion = tr.dataset.direccion || 'Sin dirección';
             const dni = tr.dataset.dni || 'Sin DNI';

@@ -65,38 +65,56 @@ namespace FarmaciaSantaRita.Controllers
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // 1. Manejo del Cliente
                 Cliente cliente = null;
-                if (!string.IsNullOrEmpty(datos.dni))
+
+                // 1. Buscar cliente existente: primero por DNI (si hay), sino por nombre exacto
+                if (!string.IsNullOrEmpty(datos.dni?.Trim()))
                 {
-                    cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.DNI == datos.dni.Trim());
-                    if (cliente != null)
-                    {
-                        cliente.NombreCliente = datos.nombre?.Trim() ?? cliente.NombreCliente;
-                        if (!string.IsNullOrEmpty(datos.telefono)) cliente.TelefonoCliente = datos.telefono.Trim();
-                        if (!string.IsNullOrEmpty(datos.direccion)) cliente.DireccionCliente = datos.direccion.Trim();
-                        _context.Clientes.Update(cliente);
-                    }
+                    cliente = await _context.Clientes
+                        .FirstOrDefaultAsync(c => c.DNI == datos.dni.Trim());
                 }
 
-                if (cliente == null)
+                // Si no encontró por DNI o DNI está vacío, busca por nombre exacto (case insensitive)
+                if (cliente == null && !string.IsNullOrEmpty(datos.nombre?.Trim()))
                 {
+                    var nombreNorm = datos.nombre.Trim().ToLowerInvariant();
+                    cliente = await _context.Clientes
+                        .FirstOrDefaultAsync(c => c.NombreCliente.ToLower() == nombreNorm);
+                }
+
+                if (cliente != null)
+                {
+                    // Actualizar datos si se proporcionaron
+                    cliente.NombreCliente = datos.nombre?.Trim() ?? cliente.NombreCliente;
+                    if (!string.IsNullOrEmpty(datos.telefono)) cliente.TelefonoCliente = datos.telefono.Trim();
+                    if (!string.IsNullOrEmpty(datos.direccion)) cliente.DireccionCliente = datos.direccion.Trim();
+                    if (!string.IsNullOrEmpty(datos.dni)) cliente.DNI = datos.dni.Trim(); // actualiza si vino
+                    _context.Clientes.Update(cliente);
+                }
+                else
+                {
+                    // Cliente nuevo (obligatorio DNI si es nuevo)
+                    if (string.IsNullOrEmpty(datos.dni?.Trim()))
+                    {
+                        return Json(new { success = false, message = "DNI es obligatorio para clientes nuevos" });
+                    }
+
                     cliente = new Cliente
                     {
                         NombreCliente = datos.nombre?.Trim() ?? "Sin nombre",
-                        DNI = datos.dni?.Trim(),
-                        TelefonoCliente = string.IsNullOrEmpty(datos.telefono) ? "Sin especificar" : datos.telefono.Trim(),
-                        DireccionCliente = string.IsNullOrEmpty(datos.direccion) ? "Sin especificar" : datos.direccion.Trim(),
+                        DNI = datos.dni.Trim(),
+                        TelefonoCliente = datos.telefono?.Trim() ?? "Sin especificar",
+                        DireccionCliente = datos.direccion?.Trim() ?? "Sin especificar",
                         EstadoDePago = "Pendiente"
                     };
                     _context.Clientes.Add(cliente);
                 }
+
                 await _context.SaveChangesAsync();
 
-                // 2. Manejo del Producto
+                // 2. Manejo del Producto (sin cambios, está bien)
                 var nombreProdNorm = datos.producto.ToLower().Trim();
                 var prod = await _context.Productos.FirstOrDefaultAsync(p => p.NombreProducto.ToLower() == nombreProdNorm);
-
                 if (prod == null)
                 {
                     prod = new Producto { NombreProducto = datos.producto.Trim(), PrecioUnitario = datos.precio };
@@ -109,10 +127,9 @@ namespace FarmaciaSantaRita.Controllers
                 }
                 await _context.SaveChangesAsync();
 
-                // 3. Crear la COMPRA primero (porque LineaDeCompra necesita el ID de Compra)
+                // 3. Crear Compra
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 int idUsuarioLogueado = string.IsNullOrEmpty(userIdClaim) ? 1 : int.Parse(userIdClaim);
-
                 DateOnly fechaCompra = DateOnly.TryParse(datos.fecha, out DateOnly parsedFecha)
                     ? parsedFecha : DateOnly.FromDateTime(DateTime.Now);
 
@@ -127,19 +144,21 @@ namespace FarmaciaSantaRita.Controllers
                 };
 
                 _context.Compras.Add(nuevaCompra);
-                await _context.SaveChangesAsync(); // Genera el IDCompras
+                await _context.SaveChangesAsync();
 
-                // 4. Crear la Línea de Compra vinculada a la Compra anterior
+                // 4. Línea de Compra
                 var linea = new LineaDeCompra
                 {
                     Idcompras = nuevaCompra.Idcompras,
                     Idproducto = prod.Idproducto,
                     Cantidad = datos.cantidad
                 };
+
                 _context.LineaDeCompras.Add(linea);
                 await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
+
                 return Json(new { success = true, idCompra = nuevaCompra.Idcompras });
             }
             catch (Exception ex)

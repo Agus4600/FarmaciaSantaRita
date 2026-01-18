@@ -554,6 +554,7 @@
 
 
 @section Scripts {
+    <!-- Librerías -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/locale/es.js"></script>
@@ -563,8 +564,9 @@
     <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
 
     <script>
+        // Calendarios con jQuery
         $(document).ready(function () {
-            // Calendario de FILTROS
+            // Filtros
             $('#btnAbrirCalendario').daterangepicker({
                 autoUpdateInput: false,
                 opens: 'left',
@@ -584,7 +586,7 @@
                 $(this).text('dd/mm/yyyy - dd/mm/yyyy');
             });
 
-            // Calendario de PERÍODO
+            // Período
             $('#btnPeriodo').daterangepicker({
                 autoUpdateInput: false,
                 opens: 'left',
@@ -597,7 +599,6 @@
                 }
             });
 
-            // Click para abrir/cierra (toggle)
             $('#btnAbrirCalendario, #btnPeriodo').on('click', function(e) {
                 e.preventDefault();
                 $(this).data('daterangepicker').toggle();
@@ -611,7 +612,7 @@
             });
         });
 
-        // Lógica de la tabla (independiente)
+        // Lógica de la tabla
         document.addEventListener('DOMContentLoaded', function () {
             const TABLA_ID = "tablaVacaciones";
             const MIN_FILAS_VISIBLE = 5;
@@ -640,10 +641,9 @@
                 }
             }
 
-            // Ejecutar al cargar
             agregarFilasVacias();
 
-            // Evento Buscar Filtro (con agregar filas vacías si no hay resultados)
+            // Buscar Filtro
             document.getElementById('btnBuscarFiltro').addEventListener('click', async function () {
                 const nombre = document.getElementById('buscarEmpleadoInput').value.trim();
                 const rangoBtn = document.getElementById('btnAbrirCalendario');
@@ -658,7 +658,6 @@
                 const hayNombre = nombre !== '';
                 const hayRango = fechaDesde !== '' && fechaHasta !== '';
                 const hayAlgunFiltro = hayNombre || hayRango;
-
                 try {
                     let url = '/Vacaciones/BuscarVacaciones?';
                     if (nombre) url += `nombreEmpleado=${encodeURIComponent(nombre)}&`;
@@ -666,10 +665,8 @@
                     if (fechaHasta) url += `fechaHasta=${encodeURIComponent(fechaHasta)}`;
                     const response = await fetch(url);
                     const data = await response.json();
-
                     const tbody = document.querySelector('#tablaVacaciones tbody');
                     tbody.innerHTML = '';
-
                     data.forEach(v => {
                         const fila = document.createElement('tr');
                         fila.setAttribute('data-vacacion-id', v.idVacaciones);
@@ -683,9 +680,7 @@
                         `;
                         tbody.appendChild(fila);
                     });
-
-                    agregarFilasVacias(); // <--- Aquí agregamos las vacías si no hay resultados
-
+                    agregarFilasVacias();
                     if (hayAlgunFiltro) {
                         if (data.length > 0) {
                             Swal.fire({
@@ -715,122 +710,99 @@
                 }
             });
 
-
-
-
-
-                   document.getElementById('btnAgregar').addEventListener('click', async function () {
-            const elEmpleado = document.getElementById('empleadoSelect');
-            const elDias = document.getElementById('diasInput');
-            const btnPeriodo = document.getElementById('btnPeriodo');
-
-            const empleadoId = elEmpleado.value;
-            const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.text.trim() || '';
-            const diasVal = parseInt(elDias.value) || 0;
-            const periodoTexto = btnPeriodo.textContent.trim();
-
-            // Validación
-            if (!empleadoId || diasVal < 1) {
-                Swal.fire('Error', 'Seleccione empleado y días (mínimo 1)', 'error');
-                return;
-            }
-
-            if (periodoTexto === 'dd/mm/yyyy - dd/mm/yyyy') {
-                Swal.fire('Error', 'Seleccione el período de vacaciones', 'error');
-                return;
-            }
-
-            // Extraer fechas del texto del botón
-            const [desde, hasta] = periodoTexto.split(' - ');
-            const inicioVal = desde.split('/').reverse().join('-'); // yyyy-mm-dd
-            const finVal = hasta.split('/').reverse().join('-');
-
-            if (new Date(finVal) < new Date(inicioVal)) {
-                Swal.fire('Error', 'La fecha fin no puede ser anterior al inicio', 'error');
-                return;
-            }
-
-            const datos = {
-                Idusuario: parseInt(empleadoId),
-                DiasVacaciones: diasVal,
-                FechaInicio: inicioVal,
-                FechaFin: finVal,
-                NombreEmpleadoFrontend: empleadoNombre
-            };
-
-            try {
-                const response = await fetch('/Vacaciones/ApiCreate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    },
-                    body: JSON.stringify(datos)
-                });
-
-                if (!response.ok) throw new Error(`Error ${response.status}`);
-
-                const result = await response.json();
-
-                if (result.success) {
-                    // Calcular días reales y favor
-                    const dInicio = new Date(inicioVal);
-                    const dFin = new Date(finVal);
-                    const dReales = Math.floor((dFin - dInicio) / 86400000) + 1; // +1 para incluir ambos días
-                    const dFavor = Math.abs(diasVal - dReales);
-
-                    // Agregar fila
-                    const tbody = document.querySelector('#tablaVacaciones tbody');
-                    const nuevaFila = document.createElement('tr');
-                    nuevaFila.setAttribute('data-vacacion-id', result.id);
-                    nuevaFila.innerHTML = `
-                    <td>${empleadoNombre}</td>
-                    <td class="text-center">${diasVal}</td>
-                    <td class="text-center">${desde} - ${hasta}</td>
-                    <td class="text-center">${dFavor}</td>
-                    <td><input type="checkbox" class="form-check-input fila-check" /></td>
-                    `;
-                    tbody.insertBefore(nuevaFila, tbody.firstChild);
-
-                    // Limpiar
-                    elEmpleado.value = '';
-                    elDias.value = '15';
-                    btnPeriodo.textContent = 'dd/mm/yyyy - dd/mm/yyyy';
-
-                    agregarFilasVacias();
-
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Agregado!',
-                        text: 'Vacación registrada correctamente',
-                        timer: 1800,
-                        showConfirmButton: false
-                    });
-                } else {
-                    Swal.fire('Error', result.message || 'No se pudo guardar', 'error');
+            // btnAgregar
+            document.getElementById('btnAgregar').addEventListener('click', async function () {
+                const elEmpleado = document.getElementById('empleadoSelect');
+                const elDias = document.getElementById('diasInput');
+                const btnPeriodo = document.getElementById('btnPeriodo');
+                const empleadoId = elEmpleado.value;
+                const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.text.trim() || '';
+                const diasVal = parseInt(elDias.value) || 0;
+                const periodoTexto = btnPeriodo.textContent.trim();
+                if (!empleadoId || diasVal < 1) {
+                    Swal.fire('Error', 'Seleccione empleado y días (mínimo 1)', 'error');
+                    return;
                 }
-            } catch (err) {
-                console.error(err);
-                Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
-            }
-        });
+                if (periodoTexto === 'dd/mm/yyyy - dd/mm/yyyy') {
+                    Swal.fire('Error', 'Seleccione el período de vacaciones', 'error');
+                    return;
+                }
+                const [desde, hasta] = periodoTexto.split(' - ');
+                const inicioVal = desde.split('/').reverse().join('-');
+                const finVal = hasta.split('/').reverse().join('-');
+                if (new Date(finVal) < new Date(inicioVal)) {
+                    Swal.fire('Error', 'La fecha fin no puede ser anterior al inicio', 'error');
+                    return;
+                }
+                const datos = {
+                    Idusuario: parseInt(empleadoId),
+                    DiasVacaciones: diasVal,
+                    FechaInicio: inicioVal,
+                    FechaFin: finVal,
+                    NombreEmpleadoFrontend: empleadoNombre
+                };
+                try {
+                    const response = await fetch('/Vacaciones/ApiCreate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify(datos)
+                    });
+                    if (!response.ok) throw new Error(`Error ${response.status}`);
+                    const result = await response.json();
+                    if (result.success) {
+                        const dInicio = new Date(inicioVal);
+                        const dFin = new Date(finVal);
+                        const dReales = Math.floor((dFin - dInicio) / 86400000) + 1;
+                        const dFavor = Math.abs(diasVal - dReales);
+                        const tbody = document.querySelector('#tablaVacaciones tbody');
+                        const nuevaFila = document.createElement('tr');
+                        nuevaFila.setAttribute('data-vacacion-id', result.id);
+                        nuevaFila.innerHTML = `
+                            <td>${empleadoNombre}</td>
+                            <td class="text-center">${diasVal}</td>
+                            <td class="text-center">${desde} - ${hasta}</td>
+                            <td class="text-center">${dFavor}</td>
+                            <td><input type="checkbox" class="form-check-input fila-check" /></td>
+                        `;
+                        tbody.insertBefore(nuevaFila, tbody.firstChild);
+                        elEmpleado.value = '';
+                        elDias.value = '15';
+                        btnPeriodo.textContent = 'dd/mm/yyyy - dd/mm/yyyy';
+                        agregarFilasVacias();
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Agregado!',
+                            text: 'Vacación registrada correctamente',
+                            timer: 1800,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        Swal.fire('Error', result.message || 'No se pudo guardar', 'error');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+                }
+            });
 
-
-
-            // === BOTÓN NUEVO REGISTRO (limpia todo) ===
+            // btnNuevoRegistro
             document.getElementById('btnNuevoRegistro').addEventListener('click', function () {
                 const tbody = document.querySelector(`#${TABLA_ID} tbody`);
                 tbody.innerHTML = '';
                 agregarFilasVacias();
-                        Swal.fire({
-            icon: 'success',
-            title: 'Tabla limpiada',
-            text: 'Puede comenzar un nuevo registro.',
-            timer: 2500,
-            showConfirmButton: false
-        });
-            
-            // === BOTÓN ELIMINAR MÚLTIPLE ===
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Tabla limpiada',
+                    text: 'Puede comenzar un nuevo registro.',
+                    timer: 2500,
+                    showConfirmButton: false
+                });
+            });
+
+            // btnEliminar
             document.getElementById('btnEliminar').addEventListener('click', async function () {
                 const checkboxes = document.querySelectorAll(`#${TABLA_ID} .fila-check:checked`);
                 if (checkboxes.length === 0) {
@@ -882,9 +854,7 @@
                 });
             });
 
-
-
-            // === BOTÓN GUARDAR → EXPORTAR A EXCEL ===
+            // btnGuardar
             document.getElementById('btnGuardar').addEventListener('click', async function () {
                 const filas = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id]:not([data-vacacion-id='0'])`);
                 if (filas.length === 0) {
@@ -900,10 +870,10 @@
                 filas.forEach(f => {
                     const celdas = f.querySelectorAll('td');
                     datos.push([
-                        celdas[0].innerText.trim(), // Empleado
-                        celdas[1].innerText.trim(), // Días
-                        celdas[2].innerText.trim(), // Período
-                        celdas[3].innerText.trim()  // Días Favor
+                        celdas[0].innerText.trim(),
+                        celdas[1].innerText.trim(),
+                        celdas[2].innerText.trim(),
+                        celdas[3].innerText.trim()
                     ]);
                 });
                 const now = new Date();
@@ -912,13 +882,11 @@
                 const fileName = `Registro Vacaciones ${datePart} ${timePart}.xlsx`;
                 const workbook = new ExcelJS.Workbook();
                 const sheet = workbook.addWorksheet('VACACIONES');
-                // Título
                 sheet.addRow(['REGISTRO DE VACACIONES']);
                 sheet.mergeCells('A1:E1');
                 const titleCell = sheet.getCell('A1');
                 titleCell.font = { size: 14, bold: true };
                 titleCell.alignment = { horizontal: 'center' };
-                // Encabezados
                 const headers = ['EMPLEADO', 'DÍAS', 'PERÍODO', 'DÍAS FAVOR'];
                 sheet.addRow(headers);
                 const headerRow = sheet.lastRow;
@@ -933,7 +901,6 @@
                         right: { style: 'thin' }
                     };
                 });
-                // Datos
                 datos.forEach((row, i) => {
                     sheet.addRow(row);
                     const dataRow = sheet.lastRow;
@@ -952,11 +919,9 @@
                         };
                     });
                 });
-                // Anchos de columnas
                 sheet.columns = [
                     { width: 28 }, { width: 10 }, { width: 35 }, { width: 15 }
                 ];
-                // Descarga
                 const buffer = await workbook.xlsx.writeBuffer();
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 const link = document.createElement('a');
@@ -964,7 +929,8 @@
                 link.download = fileName;
                 link.click();
             });
-            // === SELECCIÓN DE FILAS Y CHECK ALL ===
+
+            // Selección de filas y check all
             document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function (e) {
                 const fila = e.target.closest('tr');
                 if (!fila || !fila.hasAttribute('data-vacacion-id')) return;
@@ -978,6 +944,7 @@
                 const marcadas = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id] .fila-check:checked`).length;
                 checkAll.checked = marcadas > 0 && marcadas === totalFilas;
             });
+
             document.getElementById('checkAll').addEventListener('change', function () {
                 const checked = this.checked;
                 document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id] .fila-check`).forEach(chk => {

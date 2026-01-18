@@ -564,8 +564,8 @@
 
     <script>
         // Esperamos que jQuery y el DOM estén listos
-        $(function () {
-            // 1. Calendario de FILTROS (Rango de Fechas)
+        $(document).ready(function () {
+            // Calendario FILTROS (Rango de Fechas)
             $('#btnAbrirCalendario').daterangepicker({
                 autoUpdateInput: false,
                 opens: 'left',
@@ -578,7 +578,14 @@
                 }
             });
 
-            // 2. Calendario de PERÍODO (para agregar vacación)
+            $('#btnAbrirCalendario').on('apply.daterangepicker', function(ev, picker) {
+                $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+            });
+            $('#btnAbrirCalendario').on('cancel.daterangepicker', function(ev, picker) {
+                $(this).text('dd/mm/yyyy - dd/mm/yyyy');
+            });
+
+            // Calendario PERÍODO (agregar vacación)
             $('#btnPeriodo').daterangepicker({
                 autoUpdateInput: false,
                 opens: 'left',
@@ -591,21 +598,12 @@
                 }
             });
 
-            // 3. Evento CLICK único para AMBOS botones (mejor UX: toggle abre/cierra)
-            $('#btnAbrirCalendario, #btnPeriodo').on('click', function (e) {
+            // Click para abrir (toggle para mejor UX)
+            $('#btnAbrirCalendario, #btnPeriodo').on('click', function(e) {
                 e.preventDefault();
                 $(this).data('daterangepicker').toggle();
             });
 
-            // 4. Actualizar texto cuando se aplica o limpia
-            // Filtros
-            $('#btnAbrirCalendario').on('apply.daterangepicker', function(ev, picker) {
-                $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
-            });
-            $('#btnAbrirCalendario').on('cancel.daterangepicker', function(ev, picker) {
-                $(this).text('dd/mm/yyyy - dd/mm/yyyy');
-            });
-            // Período
             $('#btnPeriodo').on('apply.daterangepicker', function(ev, picker) {
                 $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
             });
@@ -614,7 +612,7 @@
             });
         });
 
-        // === LÓGICA DE LA TABLA ===
+        // Lógica de la tabla (separada pero dentro del mismo script)
         document.addEventListener('DOMContentLoaded', function () {
             const TABLA_ID = "tablaVacaciones";
             const MIN_FILAS_VISIBLE = 5;
@@ -623,14 +621,10 @@
                 const tbody = document.querySelector(`#${TABLA_ID} tbody`);
                 if (!tbody) return;
 
-                // Limpiamos filas vacías anteriores para evitar duplicados
-                const filasVacias = tbody.querySelectorAll('tr.fila-relleno');
-                filasVacias.forEach(f => f.remove());
+                // Limpiar filas vacías anteriores
+                document.querySelectorAll('tr.fila-relleno').forEach(f => f.remove());
 
-                // Contamos filas reales (con datos)
-                const filasConDatos = tbody.querySelectorAll('tr[data-vacacion-id]').length;
-
-                // Calculamos cuántas vacías necesitamos
+                const filasConDatos = document.querySelectorAll('tr[data-vacacion-id]').length;
                 const filasNecesarias = Math.max(0, MIN_FILAS_VISIBLE - filasConDatos);
 
                 for (let i = 0; i < filasNecesarias; i++) {
@@ -647,7 +641,7 @@
                 }
             }
 
-            // Ejecutar al cargar la página
+            // Ejecutar al cargar
             agregarFilasVacias();
 
 

@@ -4,29 +4,28 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FarmaciaSantaRita.Models
 {
-    [Table("Vacaciones")]  // Correcto: fuerza el nombre de la tabla
+    [Table("Vacaciones")]
     public class Vacacion
     {
-        [Key]  // ← Agrega esto para dejar claro cuál es la PK (EF lo infiere, pero es buena práctica)
+        [Key]
         public int IdVacaciones { get; set; }
 
-        [Column("IDUsuari")]  // ← ¡¡ESTO ES LA CLAVE!! Mapea la propiedad C# a la columna real de la BD
-        public int Idusuario { get; set; }  // Nombre en C# puede ser Idusuario (camelCase)
+        [Column("IDUsuari")]  // ← ESTA LÍNEA ES LA CLAVE: fuerza el mapeo a la columna real de la BD
+        public int Idusuario { get; set; }  // Nombre en C# puede seguir siendo Idusuario
 
         public int DiasVacaciones { get; set; }
 
-        // DateTime sin ? es NOT NULL, lo cual coincide con tu BD (DATE NOT NULL)
         public DateTime FechaInicio { get; set; }
         public DateTime FechaFin { get; set; }
 
         public int DiasFavor { get; set; }
 
-        public string? NombreEmpleadoRegistrado { get; set; }  // NULLABLE ok
+        public string? NombreEmpleadoRegistrado { get; set; }
 
-        [NotMapped]  // Correcto: no se guarda en BD, solo para el frontend
+        [NotMapped]
         public string? NombreEmpleadoFrontend { get; set; }
 
-        [ForeignKey("Idusuario")]  // Correcto
+        [ForeignKey("Idusuario")]
         public virtual Usuario? Usuario { get; set; }
     }
 }

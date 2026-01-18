@@ -597,10 +597,12 @@
     const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
     // Lista de nombres de clientes existentes (desde ViewBag.Clientes)
-    const clientesExistentes = [
+        const clientesExistentes = [
         @foreach (var c in ViewBag.Clientes)
         {
-                <text>'@c.nombre.trim().toLowerCase()',</text>
+                // Limpiamos y convertimos a minúsculas AQUÍ en C#, no en JS
+                var nombreLimpio = (c.nombre ?? "").Trim().ToLowerInvariant();
+                <text>'@nombreLimpio',</text>
         }
     ];
 

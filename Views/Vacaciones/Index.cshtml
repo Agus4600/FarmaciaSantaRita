@@ -722,82 +722,109 @@
             });
 
             // btnAgregar
-            document.getElementById('btnAgregar').addEventListener('click', async function () {
-                const elEmpleado = document.getElementById('empleadoSelect');
-                const elDias = document.getElementById('diasInput');
-                const btnPeriodo = document.getElementById('btnPeriodo');
-                const empleadoId = elEmpleado.value;
-                const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.text.trim() || '';
-                const diasVal = parseInt(elDias.value) || 0;
-                const periodoTexto = btnPeriodo.textContent.trim();
-                if (!empleadoId || diasVal < 1) {
-                    Swal.fire('Error', 'Seleccione empleado y días (mínimo 1)', 'error');
-                    return;
+                    document.getElementById('btnAgregar').addEventListener('click', async function () {
+            const elEmpleado = document.getElementById('empleadoSelect');
+            const elDias = document.getElementById('diasInput');
+            const btnPeriodo = document.getElementById('btnPeriodo');
+
+            // Validación de elementos existentes
+            if (!elEmpleado || !elDias || !btnPeriodo) {
+                Swal.fire('Error', 'No se encontraron los campos necesarios en la página. Recarga la página.', 'error');
+                return;
+            }
+
+            const empleadoId = elEmpleado.value?.trim() || '';
+            const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.text.trim() || '';
+            const diasVal = parseInt(elDias.value) || 0;
+            const periodoTexto = btnPeriodo.textContent.trim();
+
+            // Validaciones adicionales
+            if (!empleadoId || empleadoId === '') {
+                Swal.fire('Error', 'Seleccione un empleado', 'error');
+                return;
+            }
+            if (diasVal < 1) {
+                Swal.fire('Error', 'Ingrese días solicitados (mínimo 1)', 'error');
+                return;
+            }
+            if (periodoTexto === 'dd/mm/yyyy - dd/mm/yyyy') {
+                Swal.fire('Error', 'Seleccione el período de vacaciones', 'error');
+                return;
+            }
+
+            const [desde, hasta] = periodoTexto.split(' - ');
+            const inicioVal = desde.split('/').reverse().join('-');
+            const finVal = hasta.split('/').reverse().join('-');
+
+            if (new Date(finVal) < new Date(inicioVal)) {
+                Swal.fire('Error', 'La fecha fin no puede ser anterior al inicio', 'error');
+                return;
+            }
+
+            const datos = {
+                Idusuario: parseInt(empleadoId),
+                DiasVacaciones: diasVal,
+                FechaInicio: inicioVal,
+                FechaFin: finVal,
+                NombreEmpleadoFrontend: empleadoNombre
+            };
+
+            try {
+                const response = await fetch('/Vacaciones/ApiCreate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify(datos)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error ${response.status}: ${errorText}`);
                 }
-                if (periodoTexto === 'dd/mm/yyyy - dd/mm/yyyy') {
-                    Swal.fire('Error', 'Seleccione el período de vacaciones', 'error');
-                    return;
-                }
-                const [desde, hasta] = periodoTexto.split(' - ');
-                const inicioVal = desde.split('/').reverse().join('-');
-                const finVal = hasta.split('/').reverse().join('-');
-                if (new Date(finVal) < new Date(inicioVal)) {
-                    Swal.fire('Error', 'La fecha fin no puede ser anterior al inicio', 'error');
-                    return;
-                }
-                const datos = {
-                    Idusuario: parseInt(empleadoId),
-                    DiasVacaciones: diasVal,
-                    FechaInicio: inicioVal,
-                    FechaFin: finVal,
-                    NombreEmpleadoFrontend: empleadoNombre
-                };
-                try {
-                    const response = await fetch('/Vacaciones/ApiCreate', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                        },
-                        body: JSON.stringify(datos)
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const dInicio = new Date(inicioVal);
+                    const dFin = new Date(finVal);
+                    const dReales = Math.floor((dFin - dInicio) / 86400000) + 1;
+                    const dFavor = Math.abs(diasVal - dReales);
+
+                    const tbody = document.querySelector('#tablaVacaciones tbody');
+                    const nuevaFila = document.createElement('tr');
+                    nuevaFila.setAttribute('data-vacacion-id', result.id);
+                    nuevaFila.innerHTML = `
+                        <td>${empleadoNombre}</td>
+                        <td class="text-center">${diasVal}</td>
+                        <td class="text-center">${desde} - ${hasta}</td>
+                        <td class="text-center">${dFavor}</td>
+                        <td><input type="checkbox" class="form-check-input fila-check" /></td>
+                    `;
+                    tbody.insertBefore(nuevaFila, tbody.firstChild);
+
+                    elEmpleado.value = '';
+                    elDias.value = '15';
+                    btnPeriodo.textContent = 'dd/mm/yyyy - dd/mm/yyyy';
+
+                    agregarFilasVacias();
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Agregado!',
+                        text: 'Vacación registrada correctamente',
+                        timer: 1800,
+                        showConfirmButton: false
                     });
-                    if (!response.ok) throw new Error(`Error ${response.status}`);
-                    const result = await response.json();
-                    if (result.success) {
-                        const dInicio = new Date(inicioVal);
-                        const dFin = new Date(finVal);
-                        const dReales = Math.floor((dFin - dInicio) / 86400000) + 1;
-                        const dFavor = Math.abs(diasVal - dReales);
-                        const tbody = document.querySelector('#tablaVacaciones tbody');
-                        const nuevaFila = document.createElement('tr');
-                        nuevaFila.setAttribute('data-vacacion-id', result.id);
-                        nuevaFila.innerHTML = `
-                            <td>${empleadoNombre}</td>
-                            <td class="text-center">${diasVal}</td>
-                            <td class="text-center">${desde} - ${hasta}</td>
-                            <td class="text-center">${dFavor}</td>
-                            <td><input type="checkbox" class="form-check-input fila-check" /></td>
-                        `;
-                        tbody.insertBefore(nuevaFila, tbody.firstChild);
-                        elEmpleado.value = '';
-                        elDias.value = '15';
-                        btnPeriodo.textContent = 'dd/mm/yyyy - dd/mm/yyyy';
-                        agregarFilasVacias();
-                        Swal.fire({
-                            icon: 'success',
-                            title: '¡Agregado!',
-                            text: 'Vacación registrada correctamente',
-                            timer: 1800,
-                            showConfirmButton: false
-                        });
-                    } else {
-                        Swal.fire('Error', result.message || 'No se pudo guardar', 'error');
-                    }
-                } catch (err) {
-                    console.error(err);
-                    Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+                } else {
+                    Swal.fire('Error', result.message || 'No se pudo guardar', 'error');
                 }
-            });
+            } catch (err) {
+                console.error('Error en ApiCreate:', err);
+                Swal.fire('Error', 'No se pudo conectar con el servidor. Verifica tu conexión o intenta más tarde.', 'error');
+            }
+        });
 
             // btnNuevoRegistro
             document.getElementById('btnNuevoRegistro').addEventListener('click', function () {

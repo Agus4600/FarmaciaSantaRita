@@ -165,40 +165,55 @@ namespace FarmaciaSantaRita.Controllers
         [HttpGet]
         public async Task<IActionResult> BuscarVacaciones(string? nombreEmpleado, DateTime? fechaDesde, DateTime? fechaHasta)
         {
-            var query = _context.Vacaciones.AsQueryable();
-
-            // 1. Filtro por nombre
-            if (!string.IsNullOrEmpty(nombreEmpleado))
+            try
             {
-                query = query.Where(v => EF.Functions.ILike(v.NombreEmpleadoRegistrado ?? "", $"%{nombreEmpleado}%"));
-            }
+                var query = _context.Vacaciones.AsNoTracking();
 
-            // 2. Filtro por rango (Sin especificar Kind para evitar conflictos con DATE)
-            if (fechaDesde.HasValue && fechaHasta.HasValue)
-            {
-                var desde = fechaDesde.Value.Date;
-                var hasta = fechaHasta.Value.Date;
+                // 1. Filtro por nombre (ILike es seguro en Postgres)
+                if (!string.IsNullOrEmpty(nombreEmpleado))
+                {
+                    query = query.Where(v => EF.Functions.ILike(v.NombreEmpleadoRegistrado ?? "", $"%{nombreEmpleado}%"));
+                }
 
-                query = query.Where(v => v.FechaInicio >= desde && v.FechaInicio <= hasta);
-            }
+                // 2. Filtro por rango
+                if (fechaDesde.HasValue && fechaHasta.HasValue)
+                {
+                    var desde = fechaDesde.Value.Date;
+                    var hasta = fechaHasta.Value.Date;
+                    query = query.Where(v => v.FechaInicio >= desde && v.FechaInicio <= hasta);
+                }
 
-            var resultados = await query
-                .OrderByDescending(v => v.FechaInicio)
-                .Select(v => new
+                // 3. Traemos SOLO los datos planos (sin cálculos de C# dentro de la consulta SQL)
+                var datosCrudos = await query
+                    .OrderByDescending(v => v.FechaInicio)
+                    .Select(v => new
+                    {
+                        v.IdVacaciones,
+                        v.NombreEmpleadoRegistrado,
+                        v.DiasVacaciones,
+                        v.FechaInicio,
+                        v.FechaFin
+                    })
+                    .ToListAsync();
+
+                // 4. Procesamos el formato y el cálculo de días en MEMORIA (C#)
+                var resultados = datosCrudos.Select(v => new
                 {
                     v.IdVacaciones,
                     nombreEmpleado = v.NombreEmpleadoRegistrado ?? "Sin Nombre",
                     v.DiasVacaciones,
-                    // Formateo simple para el JSON
                     fechaInicio = v.FechaInicio.ToString("dd/MM/yyyy"),
                     fechaFin = v.FechaFin.ToString("dd/MM/yyyy"),
-                    // SOLUCIÓN AL ERROR: Resta directa de fechas
-                    // En Postgres: fecha_fin - fecha_inicio devuelve un integer (días)
+                    // Aquí el cálculo es 100% C#, Postgres ya no interviene
                     diasFavor = Math.Abs(v.DiasVacaciones - ((v.FechaFin - v.FechaInicio).Days + 1))
-                })
-                .ToListAsync();
+                }).ToList();
 
-            return Json(resultados);
+                return Json(resultados);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
 

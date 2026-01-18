@@ -563,9 +563,8 @@
     <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
 
     <script>
-        // Esperamos que jQuery y el DOM estén listos
         $(document).ready(function () {
-            // Calendario FILTROS (Rango de Fechas)
+            // Calendario de FILTROS
             $('#btnAbrirCalendario').daterangepicker({
                 autoUpdateInput: false,
                 opens: 'left',
@@ -585,7 +584,7 @@
                 $(this).text('dd/mm/yyyy - dd/mm/yyyy');
             });
 
-            // Calendario PERÍODO (agregar vacación)
+            // Calendario de PERÍODO
             $('#btnPeriodo').daterangepicker({
                 autoUpdateInput: false,
                 opens: 'left',
@@ -598,7 +597,7 @@
                 }
             });
 
-            // Click para abrir (toggle para mejor UX)
+            // Click para abrir/cierra (toggle)
             $('#btnAbrirCalendario, #btnPeriodo').on('click', function(e) {
                 e.preventDefault();
                 $(this).data('daterangepicker').toggle();
@@ -612,7 +611,7 @@
             });
         });
 
-        // Lógica de la tabla (separada pero dentro del mismo script)
+        // Lógica de la tabla (independiente)
         document.addEventListener('DOMContentLoaded', function () {
             const TABLA_ID = "tablaVacaciones";
             const MIN_FILAS_VISIBLE = 5;
@@ -621,7 +620,7 @@
                 const tbody = document.querySelector(`#${TABLA_ID} tbody`);
                 if (!tbody) return;
 
-                // Limpiar filas vacías anteriores
+                // Limpiar vacías anteriores
                 document.querySelectorAll('tr.fila-relleno').forEach(f => f.remove());
 
                 const filasConDatos = document.querySelectorAll('tr[data-vacacion-id]').length;
@@ -644,83 +643,77 @@
             // Ejecutar al cargar
             agregarFilasVacias();
 
-
-
-
-               document.getElementById('btnBuscarFiltro').addEventListener('click', async function () {
-            const nombre = document.getElementById('buscarEmpleadoInput').value.trim();
-            const rangoBtn = document.getElementById('btnAbrirCalendario');
-            const rangoTexto = rangoBtn.textContent.trim();
-
-            let fechaDesde = '';
-            let fechaHasta = '';
-            if (rangoTexto !== 'dd/mm/yyyy - dd/mm/yyyy') {
-                const [desde, hasta] = rangoTexto.split(' - ');
-                fechaDesde = desde.split('/').reverse().join('-');
-                fechaHasta = hasta.split('/').reverse().join('-');
-            }
-
-            // === DETECTAR SI REALMENTE HAY UN FILTRO ACTIVO ===
-            const hayNombre = nombre !== '';
-            const hayRango = fechaDesde !== '' && fechaHasta !== '';
-            const hayAlgunFiltro = hayNombre || hayRango;
-
-            try {
-                let url = '/Vacaciones/BuscarVacaciones?';
-                if (nombre) url += `nombreEmpleado=${encodeURIComponent(nombre)}&`;
-                if (fechaDesde) url += `fechaDesde=${encodeURIComponent(fechaDesde)}&`;
-                if (fechaHasta) url += `fechaHasta=${encodeURIComponent(fechaHasta)}`;
-
-                const response = await fetch(url);
-                const data = await response.json();
-
-                const tbody = document.querySelector('#tablaVacaciones tbody');
-                tbody.innerHTML = '';
-                data.forEach(v => {
-                    const fila = document.createElement('tr');
-                    fila.setAttribute('data-vacacion-id', v.idVacaciones);
-                    fila.innerHTML = `
-                        <td>${v.nombreEmpleado || ''}</td>
-                        <td class="text-center">${v.diasVacaciones}</td>
-                        <td class="text-center">${v.fechaInicio}</td>
-                        <td class="text-center">${v.fechaFin}</td>
-                        <td class="text-center">${v.diasFavor}</td>
-                        <td><input type="checkbox" class="form-check-input fila-check" /></td>
-                    `;
-                    tbody.appendChild(fila);
-                });
-                agregarFilasVacias();
-
-                // === MOSTRAR MENSAJE SOLO SI HUBO FILTRO ACTIVO ===
-                if (hayAlgunFiltro) {
-                    if (data.length > 0) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Búsqueda exitosa',
-                            text: `Se encontraron ${data.length} registro${data.length === 1 ? '' : 's'}.`,
-                            timer: 2500,
-                            showConfirmButton: false
-                        });
-                    } else {
-                        Swal.fire({
-                            title: 'Sin resultados',
-                            text: 'No se encontraron vacaciones con esos filtros.',
-                            confirmButtonText: 'Entendido',
-                            confirmButtonColor: '#007bff'
-                        });
-                    }
+            // Evento Buscar Filtro (con agregar filas vacías si no hay resultados)
+            document.getElementById('btnBuscarFiltro').addEventListener('click', async function () {
+                const nombre = document.getElementById('buscarEmpleadoInput').value.trim();
+                const rangoBtn = document.getElementById('btnAbrirCalendario');
+                const rangoTexto = rangoBtn.textContent.trim();
+                let fechaDesde = '';
+                let fechaHasta = '';
+                if (rangoTexto !== 'dd/mm/yyyy - dd/mm/yyyy') {
+                    const [desde, hasta] = rangoTexto.split(' - ');
+                    fechaDesde = desde.split('/').reverse().join('-');
+                    fechaHasta = hasta.split('/').reverse().join('-');
                 }
-                // Si no hay filtro activo → no muestra nada
-            } catch (err) {
-                console.error(err);
-                Swal.fire({
-                    title: 'Error',
-                    text: 'No se pudo realizar la búsqueda.',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
-                });
-            }
-        });
+                const hayNombre = nombre !== '';
+                const hayRango = fechaDesde !== '' && fechaHasta !== '';
+                const hayAlgunFiltro = hayNombre || hayRango;
+
+                try {
+                    let url = '/Vacaciones/BuscarVacaciones?';
+                    if (nombre) url += `nombreEmpleado=${encodeURIComponent(nombre)}&`;
+                    if (fechaDesde) url += `fechaDesde=${encodeURIComponent(fechaDesde)}&`;
+                    if (fechaHasta) url += `fechaHasta=${encodeURIComponent(fechaHasta)}`;
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    const tbody = document.querySelector('#tablaVacaciones tbody');
+                    tbody.innerHTML = '';
+
+                    data.forEach(v => {
+                        const fila = document.createElement('tr');
+                        fila.setAttribute('data-vacacion-id', v.idVacaciones);
+                        fila.innerHTML = `
+                            <td>${v.nombreEmpleado || ''}</td>
+                            <td class="text-center">${v.diasVacaciones}</td>
+                            <td class="text-center">${v.fechaInicio}</td>
+                            <td class="text-center">${v.fechaFin}</td>
+                            <td class="text-center">${v.diasFavor}</td>
+                            <td><input type="checkbox" class="form-check-input fila-check" /></td>
+                        `;
+                        tbody.appendChild(fila);
+                    });
+
+                    agregarFilasVacias(); // <--- Aquí agregamos las vacías si no hay resultados
+
+                    if (hayAlgunFiltro) {
+                        if (data.length > 0) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Búsqueda exitosa',
+                                text: `Se encontraron ${data.length} registro${data.length === 1 ? '' : 's'}.`,
+                                timer: 2500,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Sin resultados',
+                                text: 'No se encontraron vacaciones con esos filtros.',
+                                confirmButtonText: 'Entendido',
+                                confirmButtonColor: '#007bff'
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'No se pudo realizar la búsqueda.',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
+                    });
+                }
+            });
 
 
 
@@ -888,6 +881,9 @@
                     confirmButtonColor: '#007bff'
                 });
             });
+
+
+
             // === BOTÓN GUARDAR → EXPORTAR A EXCEL ===
             document.getElementById('btnGuardar').addEventListener('click', async function () {
                 const filas = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id]:not([data-vacacion-id='0'])`);

@@ -570,8 +570,8 @@
     <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
     <script>
         // === CONFIGURACIÓN DE CALENDARIOS ===
-        $(function () {  // Espera que el DOM esté listo (mejor que DOMContentLoaded duplicado)
-            // Calendario de filtros
+                $(function () {
+            // 1. Configuración de Calendario de Filtros
             $('#btnAbrirCalendario').daterangepicker({
                 autoUpdateInput: false,
                 opens: 'left',
@@ -584,15 +584,7 @@
                 }
             });
 
-            $('#btnAbrirCalendario').on('apply.daterangepicker', function(ev, picker) {
-                $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
-            });
-
-            $('#btnAbrirCalendario').on('cancel.daterangepicker', function(ev, picker) {
-                $(this).text('dd/mm/yyyy - dd/mm/yyyy');
-            });
-
-            // Calendario de Período (para agregar vacación)
+            // 2. Configuración de Calendario de Período (para agregar vacación)
             $('#btnPeriodo').daterangepicker({
                 autoUpdateInput: false,
                 opens: 'left',
@@ -605,15 +597,27 @@
                 }
             });
 
-            $('#btnPeriodo').on('click', function (e) {
+            // 3. EVENTO CLIC ÚNICO (Para ambos botones)
+            // Usamos toggle() para que si hacen clic de nuevo se cierre
+            $('#btnAbrirCalendario, #btnPeriodo').on('click', function (e) {
                 e.preventDefault();
-                $(this).data('daterangepicker').show();
+                $(this).data('daterangepicker').toggle();
             });
 
+            // 4. EVENTOS DE ACTUALIZACIÓN DE TEXTO (Apply/Cancel)
+
+            // Filtros
+            $('#btnAbrirCalendario').on('apply.daterangepicker', function(ev, picker) {
+                $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+            });
+            $('#btnAbrirCalendario').on('cancel.daterangepicker', function(ev, picker) {
+                $(this).text('dd/mm/yyyy - dd/mm/yyyy');
+            });
+
+            // Registro de Vacación
             $('#btnPeriodo').on('apply.daterangepicker', function(ev, picker) {
                 $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
             });
-
             $('#btnPeriodo').on('cancel.daterangepicker', function(ev, picker) {
                 $(this).text('dd/mm/yyyy - dd/mm/yyyy');
             });
@@ -624,27 +628,30 @@
             const TABLA_ID = "tablaVacaciones";
             const MIN_FILAS_VISIBLE = 5;
 
-            function agregarFilasVacias() {
-                const tbody = document.querySelector(`#${TABLA_ID} tbody`);
-                if (!tbody) return;
-                const filasVacias = tbody.querySelectorAll('tr:not([data-vacacion-id])');
-                filasVacias.forEach(f => f.remove());
-                const filasConDatos = tbody.querySelectorAll(`tr[data-vacacion-id]`).length;
-                const filasNecesarias = MIN_FILAS_VISIBLE - filasConDatos;
-                if (filasNecesarias > 0) {
-                    for (let i = 0; i < filasNecesarias; i++) {
-                        const filaVacia = document.createElement('tr');
-                        filaVacia.innerHTML = `
-                            <td>&nbsp;</td>
-                            <td class="text-center">&nbsp;</td>
-                            <td class="text-center">&nbsp;</td>
-                            <td class="text-center">&nbsp;</td>
-                            <td><input type="checkbox" class="form-check-input fila-check" disabled /></td>
-                        `;
-                        tbody.appendChild(filaVacia);
-                    }
-                }
+                    function agregarFilasVacias() {
+            const tbody = document.querySelector(`#${TABLA_ID} tbody`);
+            if (!tbody) return;
+
+            // 1. Contamos cuántas filas reales (con datos) hay
+            const filasConDatos = tbody.querySelectorAll('tr[data-vacacion-id]').length;
+
+            // 2. Si hay menos de 5, rellenamos hasta llegar a 5
+            // 3. Si quieres que SIEMPRE haya 5 vacías sin importar los datos, quita la resta
+            const filasNecesarias = Math.max(0, MIN_FILAS_VISIBLE - filasConDatos);
+
+            for (let i = 0; i < filasNecesarias; i++) {
+                const filaVacia = document.createElement('tr');
+                filaVacia.classList.add("fila-relleno"); // Añadimos una clase para identificarlas
+                filaVacia.innerHTML = `
+                    <td>&nbsp;</td>
+                    <td class="text-center">&nbsp;</td>
+                    <td class="text-center">&nbsp;</td>
+                    <td class="text-center">&nbsp;</td>
+                    <td><input type="checkbox" class="form-check-input" disabled /></td>
+                `;
+                tbody.appendChild(filaVacia);
             }
+        }
 
             agregarFilasVacias();
 

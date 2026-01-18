@@ -721,7 +721,6 @@
                 }
             });
 
-            // btnAgregar
                     document.getElementById('btnAgregar').addEventListener('click', async function () {
             const elEmpleado = document.getElementById('empleadoSelect');
             const elDias = document.getElementById('diasInput');
@@ -753,10 +752,13 @@
             }
 
             const [desde, hasta] = periodoTexto.split(' - ');
-            const inicioVal = desde.split('/').reverse().join('-');
-            const finVal = hasta.split('/').reverse().join('-');
 
-            if (new Date(finVal) < new Date(inicioVal)) {
+            // Convertimos las fechas a objetos Date y luego a ISO UTC (formato que PostgreSQL acepta para timestamp with time zone)
+            const inicioDate = new Date(desde.split('/').reverse().join('-'));
+            const finDate = new Date(hasta.split('/').reverse().join('-'));
+
+            // Validamos que la fecha fin no sea anterior a la inicio
+            if (finDate < inicioDate) {
                 Swal.fire('Error', 'La fecha fin no puede ser anterior al inicio', 'error');
                 return;
             }
@@ -764,8 +766,8 @@
             const datos = {
                 Idusuario: parseInt(empleadoId),
                 DiasVacaciones: diasVal,
-                FechaInicio: inicioVal,
-                FechaFin: finVal,
+                FechaInicio: inicioDate.toISOString(),  // Ahora es UTC: '2026-01-01T00:00:00.000Z'
+                FechaFin: finDate.toISOString(),        // Ahora es UTC
                 NombreEmpleadoFrontend: empleadoNombre
             };
 
@@ -787,8 +789,9 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    const dInicio = new Date(inicioVal);
-                    const dFin = new Date(finVal);
+                    // Calculamos días reales y favor usando las fechas originales (locales)
+                    const dInicio = new Date(inicioDate);
+                    const dFin = new Date(finDate);
                     const dReales = Math.floor((dFin - dInicio) / 86400000) + 1;
                     const dFavor = Math.abs(diasVal - dReales);
 
@@ -807,7 +810,6 @@
                     elEmpleado.value = '';
                     elDias.value = '15';
                     btnPeriodo.textContent = 'dd/mm/yyyy - dd/mm/yyyy';
-
                     agregarFilasVacias();
 
                     Swal.fire({

@@ -167,21 +167,19 @@ namespace FarmaciaSantaRita.Controllers
         {
             var query = _context.Vacaciones.AsQueryable();
 
-            // Filtro por nombre (ILike: ignora mayúsculas y acentos)
+            // 1. Filtro por nombre
             if (!string.IsNullOrEmpty(nombreEmpleado))
             {
                 query = query.Where(v => EF.Functions.ILike(v.NombreEmpleadoRegistrado ?? "", $"%{nombreEmpleado}%"));
             }
 
-            // Filtro por rango de fechas (comparación directa y segura)
+            // 2. Filtro por rango (Sin especificar Kind para evitar conflictos con DATE)
             if (fechaDesde.HasValue && fechaHasta.HasValue)
             {
-                // Fuerza UTC en las fechas de filtro
-                var desdeUtc = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
-                var hastaUtc = DateTime.SpecifyKind(fechaHasta.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+                var desde = fechaDesde.Value.Date;
+                var hasta = fechaHasta.Value.Date;
 
-                query = query.Where(v =>
-                    v.FechaInicio >= desdeUtc && v.FechaInicio <= hastaUtc);
+                query = query.Where(v => v.FechaInicio >= desde && v.FechaInicio <= hasta);
             }
 
             var resultados = await query
@@ -191,9 +189,11 @@ namespace FarmaciaSantaRita.Controllers
                     v.IdVacaciones,
                     nombreEmpleado = v.NombreEmpleadoRegistrado ?? "Sin Nombre",
                     v.DiasVacaciones,
+                    // Formateo simple para el JSON
                     fechaInicio = v.FechaInicio.ToString("dd/MM/yyyy"),
                     fechaFin = v.FechaFin.ToString("dd/MM/yyyy"),
-                    // Cálculo correcto de diasFavor: EF traduce (FechaFin - FechaInicio).Days directamente a resta de fechas en PostgreSQL
+                    // SOLUCIÓN AL ERROR: Resta directa de fechas
+                    // En Postgres: fecha_fin - fecha_inicio devuelve un integer (días)
                     diasFavor = Math.Abs(v.DiasVacaciones - ((v.FechaFin - v.FechaInicio).Days + 1))
                 })
                 .ToListAsync();

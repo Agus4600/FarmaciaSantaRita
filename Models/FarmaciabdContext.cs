@@ -270,14 +270,44 @@ public partial class FarmaciabdContext : DbContext
         });
 
         modelBuilder.Entity<Vacacion>(entity =>
-        {
-            entity.HasKey(v => v.IdVacaciones);
+    {
+        entity.ToTable("Vacaciones");
 
-            entity.HasOne(v => v.Usuario)
-                  .WithMany() 
-                  .HasForeignKey(v => v.Idusuario) 
-                  .OnDelete(DeleteBehavior.Cascade);
-        });
+        // Clave primaria
+        entity.HasKey(v => v.IdVacaciones)
+              .HasName("PK_Vacaciones");  // Si tenés PK con nombre diferente, ajustalo
+
+        // Mapeo explícito de TODAS las columnas (nombres exactos de la BD)
+        entity.Property(v => v.IdVacaciones)
+              .HasColumnName("IDVacaciones")
+              .ValueGeneratedOnAdd();
+
+        entity.Property(v => v.Idusuario)
+              .HasColumnName("IDUsuario");
+
+        entity.Property(v => v.DiasVacaciones)
+              .HasColumnName("DiasVacaciones");
+
+        entity.Property(v => v.FechaInicio)
+              .HasColumnName("FechaInicio");
+
+        entity.Property(v => v.FechaFin)
+              .HasColumnName("FechaFin");
+
+        entity.Property(v => v.DiasFavor)
+              .HasColumnName("DiasFavor");
+
+        entity.Property(v => v.NombreEmpleadoRegistrado)
+              .HasColumnName("NombreEmpleadoRegistrado")
+              .HasMaxLength(200);
+
+        // Relación con Usuario (FK correcta)
+        entity.HasOne(v => v.Usuario)
+              .WithMany()  // Si no tenés colección de Vacaciones en Usuario, dejalo vacío
+              .HasForeignKey(v => v.Idusuario)
+              .HasConstraintName("FK_Vacaciones_Usuarios")  // Nombre de la FK en BD, ajustalo si es diferente
+              .OnDelete(DeleteBehavior.Cascade);
+    });
 
         OnModelCreatingPartial(modelBuilder);
     }

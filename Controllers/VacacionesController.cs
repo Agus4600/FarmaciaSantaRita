@@ -100,6 +100,8 @@ namespace FarmaciaSantaRita.Controllers
                     return Json(new { success = false, message = "Usuario no autenticado." });
                 }
                 vacacion.Idusuario = idUsuarioLogueado;
+                vacacion.FechaInicio = DateTime.SpecifyKind(vacacion.FechaInicio, DateTimeKind.Utc);
+                vacacion.FechaFin = DateTime.SpecifyKind(vacacion.FechaFin, DateTimeKind.Utc);
 
                 _context.Vacaciones.Add(vacacion);
                 await _context.SaveChangesAsync();
@@ -114,9 +116,8 @@ namespace FarmaciaSantaRita.Controllers
             }
             catch (Exception ex)
             {
-                var innerMessage = ex.InnerException?.Message ?? ex.Message;
-                var fullError = $"Error al guardar: {innerMessage}\nStackTrace: {ex.StackTrace}";
-                return Json(new { success = false, message = fullError });
+                
+                return Json(new { success = false, message = "Error al guardar: " + ex.Message });
             }
         }
 
@@ -166,22 +167,17 @@ namespace FarmaciaSantaRita.Controllers
         {
             var query = _context.Vacaciones.AsQueryable();
 
-            // Filtro por nombre y apellido (Ignorando acentos y mayúsculas)
             if (!string.IsNullOrEmpty(nombreEmpleado))
             {
-                // SQL Server Collation: Modern_Spanish_CI_AI 
-                // CI = Case Insensitive (ignora mayúsculas)
-                // AI = Accent Insensitive (ignora acentos)
-                query = query.Where(v => EF.Functions.Collate(v.NombreEmpleadoRegistrado, "Modern_Spanish_CI_AI")
-                                         .Contains(EF.Functions.Collate(nombreEmpleado, "Modern_Spanish_CI_AI")));
+                // ILike: case insensitive y acentos ignorados (PostgreSQL)
+                query = query.Where(v => EF.Functions.ILike(v.NombreEmpleadoRegistrado ?? "", $"%{nombreEmpleado}%"));
             }
 
-            // Filtro por rango de fechas
             if (fechaDesde.HasValue && fechaHasta.HasValue)
             {
-                // Comparamos solo la parte fecha (Date) para evitar problemas de horas
-                query = query.Where(v => v.FechaInicio.Date >= fechaDesde.Value.Date &&
-                                         v.FechaInicio.Date <= fechaHasta.Value.Date);
+                // Filtro por rango (incluye fechas que empiecen o terminen dentro del rango)
+                query = query.Where(v =>
+                    v.FechaInicio <= fechaHasta && v.FechaFin >= fechaDesde);
             }
 
             var resultados = await query
@@ -190,8 +186,7 @@ namespace FarmaciaSantaRita.Controllers
                 {
                     v.IdVacaciones,
                     nombreEmpleado = v.NombreEmpleadoRegistrado ?? "Sin Nombre",
-                    diasVacaciones = v.DiasVacaciones,
-                    // Aquí corregimos el formato de fecha para que el JS lo reciba limpio
+                    v.DiasVacaciones,
                     fechaInicio = v.FechaInicio.ToString("dd/MM/yyyy"),
                     fechaFin = v.FechaFin.ToString("dd/MM/yyyy"),
                     diasFavor = Math.Abs(v.DiasVacaciones - ((v.FechaFin - v.FechaInicio).Days + 1))

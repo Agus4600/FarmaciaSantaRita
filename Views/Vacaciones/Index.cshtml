@@ -656,51 +656,56 @@
 
             // Buscar Filtro
                     // Buscar Filtro
+                // Buscar Filtro
         document.getElementById('btnBuscarFiltro').addEventListener('click', async function () {
             const nombre = document.getElementById('buscarEmpleadoInput').value.trim();
             const rangoBtn = document.getElementById('btnAbrirCalendario');
             const rangoTexto = rangoBtn.textContent.trim();
 
-            let fechaDesde = '';
-            let fechaHasta = '';
+            let fechaDesde = null;
+            let fechaHasta = null;
 
             if (rangoTexto !== 'dd/mm/yyyy - dd/mm/yyyy') {
                 const [desde, hasta] = rangoTexto.split(' - ');
-                // Formato correcto para backend: yyyy-MM-dd
-                fechaDesde = desde.split('/').reverse().join('-');
-                fechaHasta = hasta.split('/').reverse().join('-');
+                try {
+                    fechaDesde = desde.split('/').reverse().join('-'); // yyyy-MM-dd
+                    fechaHasta = hasta.split('/').reverse().join('-');
+                } catch (e) {
+                    Swal.fire('Error', 'Formato de fecha inválido', 'error');
+                    return;
+                }
             }
 
             const hayNombre = nombre !== '';
-            const hayRango = fechaDesde !== '' && fechaHasta !== '';
-            const hayAlgunFiltro = hayNombre || hayRango;
+            const hayRango = fechaDesde !== null && fechaHasta !== null;
 
-            // Si no hay ningún filtro, mostramos mensaje y salimos
-            if (!hayAlgunFiltro) {
+            if (!hayNombre && !hayRango) {
                 Swal.fire({
                     title: 'Atención',
                     text: 'Ingrese al menos un filtro (nombre o rango de fechas)',
                     confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
+                     confirmButtonColor: '#007bff'
                 });
                 return;
             }
 
             try {
                 let url = '/Vacaciones/BuscarVacaciones?';
-                if (nombre) url += `nombreEmpleado=${encodeURIComponent(nombre)}&`;
-                if (fechaDesde) url += `fechaDesde=${encodeURIComponent(fechaDesde)}&`;
-                if (fechaHasta) url += `fechaHasta=${encodeURIComponent(fechaHasta)}`;
+                if (hayNombre) url += `nombreEmpleado=${encodeURIComponent(nombre)}&`;
+                if (hayRango) {
+                    url += `fechaDesde=${encodeURIComponent(fechaDesde)}&fechaHasta=${encodeURIComponent(fechaHasta)}`;
+                }
 
                 const response = await fetch(url);
                 if (!response.ok) {
-                    throw new Error(`Error ${response.status}`);
+                    const errorText = await response.text();
+                    throw new Error(`Error ${response.status}: ${errorText}`);
                 }
 
                 const data = await response.json();
 
                 const tbody = document.querySelector('#tablaVacaciones tbody');
-                tbody.innerHTML = ''; // Limpiamos la tabla
+                tbody.innerHTML = ''; // Limpiamos
 
                 data.forEach(v => {
                     const fila = document.createElement('tr');
@@ -715,7 +720,7 @@
                     tbody.appendChild(fila);
                 });
 
-                agregarFilasVacias(); // Volvemos a poner las filas vacías si es necesario
+                agregarFilasVacias();
 
                 if (data.length > 0) {
                     Swal.fire({
@@ -730,16 +735,16 @@
                         title: 'Sin resultados',
                         text: 'No se encontraron vacaciones con esos filtros.',
                         confirmButtonText: 'Entendido',
-                        confirmButtonColor: '#007bff'
+                         confirmButtonColor: '#007bff'
                     });
                 }
             } catch (err) {
                 console.error('Error en búsqueda:', err);
                 Swal.fire({
                     title: 'Error',
-                    text: 'No se pudo realizar la búsqueda. Intente nuevamente.',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
+                    text: err.message || 'No se pudo realizar la búsqueda. Intente nuevamente.',
+                     confirmButtonText: 'Entendido',
+                      confirmButtonColor: '#007bff'
                 });
             }
         });

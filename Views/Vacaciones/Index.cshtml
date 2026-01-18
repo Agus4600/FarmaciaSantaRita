@@ -223,13 +223,9 @@
     }
     /* Días */
     #tablaVacaciones th:nth-child(3), #tablaVacaciones td:nth-child(3) {
-        width: 20%;
+        width: 30%;
+        white-space: nowrap; /* evita saltos de línea */
     }
-    /* Inicio */
-    #tablaVacaciones th:nth-child(4), #tablaVacaciones td:nth-child(4) {
-        width: 20%;
-    }
-    /* Fin */
     #tablaVacaciones th:nth-child(5), #tablaVacaciones td:nth-child(5) {
         width: 15%;
     }
@@ -520,8 +516,7 @@
                                         <tr>
                                             <th>Empleado</th>
                                             <th>Días</th>
-                                            <th>Inicio</th>
-                                            <th>Fin</th>
+                                            <th>Período</th> <!-- Nueva columna única -->
                                             <th>Días Favor</th>
                                             <th><input type="checkbox" id="checkAll" class="form-check-input" /></th>
                                         </tr>
@@ -529,15 +524,13 @@
                                     <tbody>
                                         @foreach (var v in Model)
                                         {
-
                                             <tr data-vacacion-id="@v.IdVacaciones">
                                                 <td>@(v.NombreEmpleadoRegistrado ?? "Sin nombre")</td>
                                                 <td class="text-center">@v.DiasVacaciones</td>
-                                                <td class="text-center">@v.FechaInicio.ToString("dd/MM/yyyy")</td>
-                                                <td class="text-center">@v.FechaFin.ToString("dd/MM/yyyy")</td>
                                                 <td class="text-center">
-                                                    @Math.Abs(v.DiasFavor)
+                                                    @v.FechaInicio.ToString("dd/MM/yyyy") - @v.FechaFin.ToString("dd/MM/yyyy")
                                                 </td>
+                                                <td class="text-center">@Math.Abs(v.DiasFavor)</td>
                                                 <td><input type="checkbox" class="form-check-input fila-check" /></td>
                                             </tr>
                                         }
@@ -597,25 +590,35 @@
         });
 
                 // Configuración del botón Período (igual que el filtro)
-        $('#btnPeriodo').daterangepicker({
-            autoUpdateInput: false,
-            locale: {
-                format: 'DD/MM/YYYY',
-                applyLabel: 'Aplicar',
-                cancelLabel: 'Limpiar',
-                daysOfWeek: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'],
-                monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-            }
-        });
+        document.addEventListener('DOMContentLoaded', function () {
+            // Inicializar DateRangePicker
+            $('#btnPeriodo').daterangepicker({
+                autoUpdateInput: false,
+                opens: 'left', // Abre hacia la izquierda para que no se corte
+                locale: {
+                    format: 'DD/MM/YYYY',
+                    applyLabel: 'Aplicar',
+                    cancelLabel: 'Limpiar',
+                    daysOfWeek: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'],
+                    monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+                }
+            });
 
-        // Al seleccionar período
-        $('#btnPeriodo').on('apply.daterangepicker', function(ev, picker) {
-            $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
-        });
+            // Abrir el calendario al hacer click en el botón
+            $('#btnPeriodo').on('click', function (e) {
+                e.preventDefault(); // Evita comportamiento por defecto
+                $(this).data('daterangepicker').show(); // Fuerza la apertura
+            });
 
-        // Al limpiar
-        $('#btnPeriodo').on('cancel.daterangepicker', function(ev, picker) {
-            $(this).text('dd/mm/yyyy - dd/mm/yyyy');
+            // Al aplicar el rango
+            $('#btnPeriodo').on('apply.daterangepicker', function (ev, picker) {
+                $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+            });
+
+            // Al limpiar
+            $('#btnPeriodo').on('cancel.daterangepicker', function (ev, picker) {
+                $(this).text('dd/mm/yyyy - dd/mm/yyyy');
+            });
         });
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -786,7 +789,7 @@
                     // Calcular días reales y favor
                     const dInicio = new Date(inicioVal);
                     const dFin = new Date(finVal);
-                    const dReales = Math.round((dFin - dInicio) / (86400000)) + 1;
+                    const dReales = Math.floor((dFin - dInicio) / 86400000) + 1; // +1 para incluir ambos días
                     const dFavor = Math.abs(diasVal - dReales);
 
                     // Agregar fila
@@ -794,12 +797,11 @@
                     const nuevaFila = document.createElement('tr');
                     nuevaFila.setAttribute('data-vacacion-id', result.id);
                     nuevaFila.innerHTML = `
-                        <td>${empleadoNombre}</td>
-                        <td class="text-center">${diasVal}</td>
-                        <td class="text-center">${desde}</td>
-                        <td class="text-center">${hasta}</td>
-                        <td class="text-center">${dFavor}</td>
-                        <td><input type="checkbox" class="form-check-input fila-check" /></td>
+                    <td>${empleadoNombre}</td>
+                    <td class="text-center">${diasVal}</td>
+                    <td class="text-center">${desde} - ${hasta}</td>
+                    <td class="text-center">${dFavor}</td>
+                    <td><input type="checkbox" class="form-check-input fila-check" /></td>
                     `;
                     tbody.insertBefore(nuevaFila, tbody.firstChild);
 
@@ -910,9 +912,8 @@
                     datos.push([
                         celdas[0].innerText.trim(), // Empleado
                         celdas[1].innerText.trim(), // Días
-                        celdas[2].innerText.trim(), // Inicio
-                        celdas[3].innerText.trim(), // Fin
-                        celdas[4].innerText.trim() // Días Favor
+                        celdas[2].innerText.trim(), // Período
+                        celdas[3].innerText.trim()  // Días Favor
                     ]);
                 });
                 const now = new Date();
@@ -928,7 +929,7 @@
                 titleCell.font = { size: 14, bold: true };
                 titleCell.alignment = { horizontal: 'center' };
                 // Encabezados
-                const headers = ['EMPLEADO', 'DÍAS', 'INICIO', 'FIN', 'DÍAS FAVOR'];
+                const headers = ['EMPLEADO', 'DÍAS', 'PERÍODO', 'DÍAS FAVOR'];
                 sheet.addRow(headers);
                 const headerRow = sheet.lastRow;
                 headerRow.eachCell(cell => {
@@ -963,7 +964,7 @@
                 });
                 // Anchos de columnas
                 sheet.columns = [
-                    { width: 25 }, { width: 10 }, { width: 15 }, { width: 15 }, { width: 12 }
+                    { width: 28 }, { width: 10 }, { width: 35 }, { width: 15 }
                 ];
                 // Descarga
                 const buffer = await workbook.xlsx.writeBuffer();

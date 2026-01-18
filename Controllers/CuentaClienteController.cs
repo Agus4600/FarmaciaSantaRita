@@ -67,23 +67,27 @@ namespace FarmaciaSantaRita.Controllers
             {
                 // 1. Manejo del Cliente
                 // 1. Manejo del Cliente
+                // 1. Manejo del Cliente
                 Cliente cliente = null;
 
+                // Primero intentamos por DNI (si viene)
                 if (!string.IsNullOrEmpty(datos.dni?.Trim()))
                 {
-                    cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.DNI == datos.dni.Trim());
+                    cliente = await _context.Clientes
+                        .FirstOrDefaultAsync(c => c.DNI == datos.dni.Trim());
                 }
 
+                // Si no encontró por DNI, buscamos por nombre (insensible a mayúsculas)
                 if (cliente == null && !string.IsNullOrEmpty(datos.nombre?.Trim()))
                 {
-                    var nombreNorm = datos.nombre.Trim().ToLowerInvariant();
+                    var nombreNorm = datos.nombre.Trim(); // ya no necesitamos .ToLower aquí
                     cliente = await _context.Clientes
-                        .FirstOrDefaultAsync(c => c.NombreCliente.ToLowerInvariant() == nombreNorm);
+                        .FirstOrDefaultAsync(c => EF.Functions.ILike(c.NombreCliente, nombreNorm));
                 }
 
                 if (cliente != null)
                 {
-                    // Cliente existente → actualizamos solo lo que venga
+                    // Cliente existente → actualizamos lo que venga
                     cliente.NombreCliente = datos.nombre?.Trim() ?? cliente.NombreCliente;
                     if (!string.IsNullOrEmpty(datos.telefono)) cliente.TelefonoCliente = datos.telefono.Trim();
                     if (!string.IsNullOrEmpty(datos.direccion)) cliente.DireccionCliente = datos.direccion.Trim();
@@ -97,6 +101,7 @@ namespace FarmaciaSantaRita.Controllers
                     {
                         return Json(new { success = false, message = "DNI es obligatorio para clientes nuevos" });
                     }
+
                     cliente = new Cliente
                     {
                         NombreCliente = datos.nombre?.Trim() ?? "Sin nombre",

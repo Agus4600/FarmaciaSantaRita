@@ -114,7 +114,9 @@ namespace FarmaciaSantaRita.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Error al guardar: " + ex.Message });
+                var innerMessage = ex.InnerException?.Message ?? ex.Message;
+                var fullError = $"Error al guardar: {innerMessage}\nStackTrace: {ex.StackTrace}";
+                return Json(new { success = false, message = fullError });
             }
         }
 

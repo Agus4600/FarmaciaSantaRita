@@ -564,9 +564,9 @@
     <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
 
     <script>
-        // Calendarios con jQuery
-        $(document).ready(function () {
-            // Filtros
+         // Calendarios con jQuery
+       $(document).ready(function () {
+            // Calendario FILTROS
             $('#btnAbrirCalendario').daterangepicker({
                 autoUpdateInput: false,
                 opens: 'left',
@@ -586,7 +586,7 @@
                 $(this).text('dd/mm/yyyy - dd/mm/yyyy');
             });
 
-            // Período
+            // Calendario PERÍODO
             $('#btnPeriodo').daterangepicker({
                 autoUpdateInput: false,
                 opens: 'left',
@@ -599,20 +599,35 @@
                 }
             });
 
-            $('#btnAbrirCalendario, #btnPeriodo').on('click', function(e) {
-                e.preventDefault();
-                $(this).data('daterangepicker').toggle();
-            });
-
             $('#btnPeriodo').on('apply.daterangepicker', function(ev, picker) {
                 $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
             });
             $('#btnPeriodo').on('cancel.daterangepicker', function(ev, picker) {
                 $(this).text('dd/mm/yyyy - dd/mm/yyyy');
             });
+
+            // FIX: Apertura forzada y estable
+            $('#btnAbrirCalendario, #btnPeriodo').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation(); // Crucial: evita que el click se propague y cierre el picker
+                const picker = $(this).data('daterangepicker');
+                if (picker) {
+                    picker.show();
+                }
+            });
+
+            // Extra: Mantener abierto al volver a la pestaña
+            $(window).on('focus', function () {
+                if ($('#btnAbrirCalendario').data('daterangepicker')?.element.is(':focus') ||
+                    $('#btnPeriodo').data('daterangepicker')?.element.is(':focus')) {
+                    $('#btnAbrirCalendario, #btnPeriodo').each(function () {
+                        $(this).data('daterangepicker')?.show();
+                    });
+                }
+            });
         });
 
-        // Lógica de la tabla
+        // Lógica de la tabla (queda igual, ya funciona)
         document.addEventListener('DOMContentLoaded', function () {
             const TABLA_ID = "tablaVacaciones";
             const MIN_FILAS_VISIBLE = 5;
@@ -620,13 +635,9 @@
             function agregarFilasVacias() {
                 const tbody = document.querySelector(`#${TABLA_ID} tbody`);
                 if (!tbody) return;
-
-                // Limpiar vacías anteriores
                 document.querySelectorAll('tr.fila-relleno').forEach(f => f.remove());
-
                 const filasConDatos = document.querySelectorAll('tr[data-vacacion-id]').length;
                 const filasNecesarias = Math.max(0, MIN_FILAS_VISIBLE - filasConDatos);
-
                 for (let i = 0; i < filasNecesarias; i++) {
                     const filaVacia = document.createElement('tr');
                     filaVacia.classList.add('fila-relleno');

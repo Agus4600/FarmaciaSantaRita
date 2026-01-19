@@ -175,15 +175,14 @@ namespace FarmaciaSantaRita.Controllers
                     query = query.Where(v => EF.Functions.ILike(v.NombreEmpleadoRegistrado ?? "", $"%{nombreEmpleado}%"));
                 }
 
-                // Filtro por rango de fechas (comparación directa, sin .Date ni funciones complejas)
                 if (fechaDesde.HasValue && fechaHasta.HasValue)
                 {
-                    // Fuerza UTC y truncado a día completo
                     var desdeUtc = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
                     var hastaUtc = DateTime.SpecifyKind(fechaHasta.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
 
+                    // Solo vacaciones COMPLETAMENTE DENTRO del rango
                     query = query.Where(v =>
-                        v.FechaInicio >= desdeUtc && v.FechaInicio <= hastaUtc);
+                        v.FechaInicio >= desdeUtc && v.FechaFin <= hastaUtc);
                 }
 
                 // 1. Traemos SOLO los datos crudos (sin cálculos dentro de la consulta SQL)

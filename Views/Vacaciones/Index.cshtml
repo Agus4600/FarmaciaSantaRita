@@ -538,7 +538,7 @@
                                         @foreach (var v in Model)
                                         {
                                             <tr data-vacacion-id="@v.IdVacaciones">
-                                                <td>@(v.NombreEmpleadoRegistrado ?? "Sin nombre")</td>
+                                                <td class="empleado-clickable">@(v.NombreEmpleadoRegistrado ?? "Sin nombre")</td>
                                                 <td class="text-center">@v.DiasVacaciones</td>
                                                 <td class="text-center">
                                                     @v.FechaInicio.ToString("dd/MM/yyyy") - @v.FechaFin.ToString("dd/MM/yyyy")
@@ -728,7 +728,7 @@
                     const fila = document.createElement('tr');
                     fila.setAttribute('data-vacacion-id', v.idVacaciones);
                     fila.innerHTML = `
-                        <td>${v.nombreEmpleado || ''}</td>
+                         <td class="empleado-clickable">${v.nombreEmpleado || ''}</td>
                         <td class="text-center">${v.diasVacaciones}</td>
                         <td class="text-center">${v.fechaInicio} - ${v.fechaFin}</td>
                         <td class="text-center">${v.diasFavor}</td>
@@ -841,7 +841,7 @@
                     const nuevaFila = document.createElement('tr');
                     nuevaFila.setAttribute('data-vacacion-id', result.id);
                     nuevaFila.innerHTML = `
-                        <td class="empleado-clickable">${empleadoNombre || v.nombreEmpleado || ''}</td>
+                         <td class="empleado-clickable">${empleadoNombre}</td>
                         <td class="text-center">${diasVal}</td>
                         <td class="text-center">${desde} - ${hasta}</td>
                         <td class="text-center">${dFavor}</td>

@@ -482,9 +482,9 @@
                                     <option value="">Seleccione Empleado</option>
                                     @if (ViewBag.Empleados != null)
                                     {
-                                        @foreach (var emp in (List<SelectListItem>)ViewBag.Empleados)
+                                        foreach (var empleado in ViewBag.Empleados)
                                         {
-                                            <option value="@emp.Value">@emp.Text</option>
+                                            <option value="@empleado.Idusuario">@empleado.NombreCompleto</option>
                                         }
                                     }
                                 </select>
@@ -765,10 +765,7 @@
             }
 
             const empleadoId = elEmpleado.value?.trim() || '';
-            // Cambia la línea donde obtienes el nombre por esta:
-            const textoCompleto = elEmpleado.options[elEmpleado.selectedIndex]?.text.trim() || '';
-            // Esto corta el texto antes del guion para sacar solo el nombre
-            const empleadoNombre = textoCompleto.split(' - ')[0];
+            const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.text.trim() || '';
             const diasVal = parseInt(elDias.value) || 0;
             const periodoTexto = btnPeriodo.textContent.trim();
 

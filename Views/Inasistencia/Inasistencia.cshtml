@@ -1492,7 +1492,7 @@
 				// ----------------------------------------------------
 		// 3. INICIALIZACIÓN DEL DOM Y LÓGICA DE EVENTOS (Única ejecución)
 		// ----------------------------------------------------
-		document.addEventListener("DOMContentLoaded", function () {
+			document.addEventListener("DOMContentLoaded", function () {
 			// 1. Prioridad: Cargar datos del servidor
 			if (registrosInasistenciaIniciales.length > 0) {
 				llenarTablaInasistencias(registrosInasistenciaIniciales);
@@ -1564,6 +1564,70 @@
 		$('#fechaDesdeOculto').val('');
 		$('#fechaHastaOculto').val('');
 		});
+
+
+
+
+				// Listener de click en nombre del empleado (funciona como en Vacaciones)
+		document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function (e) {
+			const td = e.target.closest('td');
+			if (!td) return;
+
+			// Solo actuamos si el click fue en la columna del EMPLEADO (segunda columna → cellIndex === 1)
+			if (td.cellIndex !== 1) return;   // 0 = Fecha, 1 = Empleado, 2 = Turno, etc.
+
+			e.stopPropagation();              // Impide que marque checkbox o seleccione fila
+			e.preventDefault();               // Seguridad extra
+
+			const nombreCompleto = td.innerText.trim();
+			if (!nombreCompleto || nombreCompleto === 'Sin nombre') return;
+
+			console.log('[NOMBRE CLICK] Detectado:', nombreCompleto);
+
+			fetch(`/Inasistencia/GetDatosEmpleado?nombre=${encodeURIComponent(nombreCompleto)}`)
+				.then(response => {
+					console.log('[NOMBRE CLICK] Status:', response.status);
+					if (!response.ok) throw new Error(`HTTP ${response.status}`);
+					return response.json();
+				})
+				.then(data => {
+					console.log('[NOMBRE CLICK] Datos recibidos:', data);
+					if (data.success || data.exito) {
+						Swal.fire({
+							title: data.nombreCompleto || data.nombre || 'Datos del empleado',
+							html: `
+								<div class="text-center mt-3">
+									<p class="mb-2"><strong>DNI:</strong> ${data.dni || 'No disponible'}</p>
+									<p class="mb-2"><strong>Teléfono:</strong> ${data.telefono || 'No disponible'}</p>
+									<p class="mb-3"><strong>Dirección:</strong> ${data.direccion || 'No disponible'}</p>
+								</div>
+							`,
+							icon: 'info',
+							confirmButtonText: 'Entendido',
+							confirmButtonColor: '#007bff',
+							customClass: {
+								popup: 'border border-primary shadow-lg rounded-3',
+								title: 'fs-4 fw-bold text-primary mb-4',
+								htmlContainer: 'text-center fs-5'
+							}
+						});
+					} else {
+						Swal.fire('No encontrado', data.message || 'No se encontraron datos', 'warning');
+					}
+				})
+				.catch(err => {
+					console.error('[NOMBRE CLICK] Error:', err);
+					Swal.fire('Error', 'No se pudo cargar los datos del empleado', 'error');
+				});
+		});
+
+
+
+
+
+
+
+
 
 		function quitarAcentos(str) {
 			if (!str) return "";
@@ -1763,23 +1827,6 @@
 				console.error("Error al generar o descargar el archivo Excel:", error); // Error a consola
 				// MENSAJE ELIMINADO: alert("Ocurrió un error al generar el archivo. Por favor, revise la consola.");
 			}
-
-
-		document.addEventListener('click', function (e) {
-			// Detectamos si el clic fue en la celda del nombre
-			const td = e.target.closest('#tablaInasistencias tbody td.columna-empleado');
-			if (!td) return;
-
-			e.stopImmediatePropagation(); // Evita que otros eventos (como el del checkbox) actúen
-
-			const fila = td.closest('tr');
-			const idEmpleado = fila.getAttribute('data-id-empleado');
-
-			if (idEmpleado && idEmpleado !== "0") {
-				console.log("Abriendo detalle para empleado ID:", idEmpleado);
-				mostrarModalDatosEmpleado(idEmpleado);
-			}
-		});
 		});
 	</script>
 }

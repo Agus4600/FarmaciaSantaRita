@@ -1728,8 +1728,10 @@
 			}
 
 
+					// Click en nombre del empleado en la tabla de Inasistencias (delegación de eventos)
+		// Este bloque DEBE estar FUERA del DOMContentLoaded
 		document.addEventListener('click', function (e) {
-			// Solo actúa si clickeamos en la celda del empleado (2da columna)
+			// Solo actúa si el click fue en la celda del empleado (2da columna: nth-child(2))
 			const td = e.target.closest('#tablaInasistencias tbody td:nth-child(2)');
 			if (!td) return;
 
@@ -1766,6 +1768,7 @@
 				.catch(() => {
 					Swal.fire('Error', 'No se pudo cargar los datos del empleado', 'error');
 				});
+		});
 		});
 	</script>
 }

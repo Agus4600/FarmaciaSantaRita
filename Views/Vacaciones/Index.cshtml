@@ -1035,20 +1035,20 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        Swal.fire({
-                            title: data.nombreCompleto,
-                            html: `
-                                <strong>DNI:</strong> ${data.dni || 'No disponible'}<br>
-                                <strong>Teléfono:</strong> ${data.telefono || 'No disponible'}<br>
-                                <strong>Dirección:</strong> ${data.direccion || 'No disponible'}
-                            `,
-                            confirmButtonText: 'Entendido',
-                             confirmButtonColor: '#007bff',const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.text.trim() || '';
-                            customClass: {
-                                title: 'fw-bold text-dark',
-                                htmlContainer: 'text-start'
-                            }
-                        });
+                                Swal.fire({
+            title: data.nombreCompleto,
+            html: `
+                <strong>DNI:</strong> ${data.dni || 'No disponible'}<br>
+                <strong>Teléfono:</strong> ${data.telefono || 'No disponible'}<br>
+                <strong>Dirección:</strong> ${data.direccion || 'No disponible'}
+            `,
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#007bff',
+            customClass: {
+                title: 'fw-bold text-dark',
+                htmlContainer: 'text-start'
+            }
+        });
                     } else {
                         Swal.fire('No encontrado', data.message || 'No se encontraron datos', 'warning');
                     }

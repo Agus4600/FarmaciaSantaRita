@@ -791,13 +791,13 @@
 								
 								<div class="campo">
 									<label for="empleadoSelect">Empleado</label>
-									<select id="empleadoSelect" class="form-control shadow-sm" translate="no" @disabledAttr>
+									<select id="empleadoSelect" class="form-control shadow-sm" translate="no" @(ViewBag.SoloLectura == true ? "disabled" : "")>
 										<option value="">Seleccione Empleado</option>
 										@if (ViewBag.Empleados != null)
 										{
 											foreach (var empleado in ViewBag.Empleados)
 											{
-												// Combinamos Nombre y DNI
+												// Ahora 'empleado.Dni' existe y no causará error
 												string textoAMostrar = $"{empleado.NombreCompleto} - Dni: {empleado.Dni}";
 												<option value="@empleado.Idusuario" translate="no">@textoAMostrar</option>
 											}

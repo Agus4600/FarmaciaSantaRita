@@ -44,15 +44,16 @@ public class InasistenciaController : Controller
         // FORZAMOS QUE TRAIGA A LOS EMPLEADOS POR ID DIRECTO (los que tú sabes que existen)
         // CARGAR TODOS LOS EMPLEADOS Y JEFES (igual que en Vacaciones)
         ViewBag.Empleados = _context.Usuarios
-            .Where(u => u.Rol == "Empleado/a" || u.Rol == "Jefe/a")
-            .OrderBy(u => u.Apellido)
-            .ThenBy(u => u.Nombre)
-            .Select(u => new
-            {
-                u.Idusuario,
-                NombreCompleto = u.Nombre + " " + u.Apellido
-            })
-            .ToList();
+        .Where(u => u.Rol == "Empleado/a" || u.Rol == "Jefe/a")
+        .OrderBy(u => u.Apellido)
+        .ThenBy(u => u.Nombre)
+        .Select(u => new
+        {
+            u.Idusuario,
+            NombreCompleto = u.Nombre + " " + u.Apellido,
+            Dni = u.Dni
+        })
+        .ToList();
 
         ViewData["IdProveedor"] = idProveedor;
         return View();

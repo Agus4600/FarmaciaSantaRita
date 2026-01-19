@@ -19,6 +19,17 @@
 }
 
 <style>
+	/* Estilo para el nombre en la tabla de Inasistencias */
+	#tablaInasistencias tbody td:nth-child(2) {
+		font-weight: bold !important;
+		color: #007bff !important;
+		text-decoration: underline !important;
+		cursor: pointer;
+	}
+
+		#tablaInasistencias tbody td:nth-child(2):hover {
+			color: #0056b3 !important;
+		}
 	/* Primera columna de datos (después de la fecha es el Empleado) */
 	#tablaInasistencias tbody td:nth-child(2) {
 		font-weight: bold !important;
@@ -968,13 +979,16 @@
 			tbody.appendChild(fragment);
 		}
 
-		function llenarTablaInasistencias(registros) {
+				function llenarTablaInasistencias(registros) {
 			const tbody = document.querySelector(`#${TABLA_ID} tbody`);
 			if (!tbody) return;
 			tbody.innerHTML = "";
 
 			registros.forEach(item => {
 				const idRegistro = item.idInasistencia || "0";
+				// IMPORTANTE: Asegúrate de que el objeto 'item' traiga el IdUsuario o IdEmpleado del servidor
+				const idEmpleado = item.idusuario || item.idUsuario || "0";
+
 				const fechaInasistencia = item.fecha || '';
 				const fechaDisplay = fechaInasistencia ? fechaInasistencia.split('-').reverse().join('/') : '';
 
@@ -986,10 +1000,12 @@
 
 				const fila = document.createElement("tr");
 				fila.setAttribute("data-inasistencia-id", idRegistro);
+				// Guardamos el ID del usuario en la fila para el modal
+				fila.setAttribute("data-id-empleado", idEmpleado);
 
 				fila.innerHTML = `
 					<td title="${fechaDisplay}">${fechaDisplay}</td>
-					<td title="${nombreEmpleado}">${nombreEmpleado}</td>
+					<td title="${nombreEmpleado}" class="columna-empleado">${nombreEmpleado}</td>
 					<td title="${turno}">${turno}</td>
 					<td title="${motivo}">${motivo}</td>
 					<td><input type="checkbox" class="form-check-input fila-check" data-id="${idRegistro}" /></td>
@@ -1708,6 +1724,50 @@
 				console.error("Error al generar o descargar el archivo Excel:", error); // Error a consola
 				// MENSAJE ELIMINADO: alert("Ocurrió un error al generar el archivo. Por favor, revise la consola.");
 			}
+
+
+
+
+					// Click en nombre del empleado en la tabla de Inasistencias
+		document.querySelector('#tablaInasistencias tbody').addEventListener('click', function (e) {
+			const td = e.target.closest('td');
+			// Solo la columna del empleado (2da columna: nth-child(2))
+			if (!td || td.cellIndex !== 1) return; // cellIndex 0 = Fecha, 1 = Empleado
+
+			e.stopPropagation(); // Evita que marque el checkbox si hay listener de fila
+
+			const nombreCompleto = td.innerText.trim();
+			if (!nombreCompleto || nombreCompleto === 'Sin nombre') return;
+
+			fetch(`/Inasistencia/GetDatosEmpleado?nombre=${encodeURIComponent(nombreCompleto)}`)
+				.then(response => response.json())
+				.then(data => {
+					if (data.success) {
+						Swal.fire({
+							title: data.nombreCompleto,
+							html: `
+								<div class="text-center mt-3">
+									<p class="mb-2"><strong>DNI:</strong> ${data.dni || 'No disponible'}</p>
+									<p class="mb-2"><strong>Teléfono:</strong> ${data.telefono || 'No disponible'}</p>
+									<p class="mb-3"><strong>Dirección:</strong> ${data.direccion || 'No disponible'}</p>
+								</div>
+							`,
+							confirmButtonText: 'Entendido',
+							confirmButtonColor: '#007bff',
+							customClass: {
+								popup: 'border border-primary shadow-lg rounded-3',
+								title: 'fs-4 fw-bold text-primary mb-4',
+								htmlContainer: 'text-center fs-5'
+							}
+						});
+					} else {
+						Swal.fire('No encontrado', data.message || 'No se encontraron datos', 'warning');
+					}
+				})
+				.catch(() => {
+					Swal.fire('Error', 'No se pudo cargar los datos del empleado', 'error');
+				});
+		});
 		});
 	</script>
 }

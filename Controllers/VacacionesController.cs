@@ -205,13 +205,14 @@ namespace FarmaciaSantaRita.Controllers
                 }
 
                 // Filtro por fechas (queda igual, ya funciona)
+                // Reemplaza el filtro de fechas en tu C# por este:
                 if (fechaDesde.HasValue && fechaHasta.HasValue)
                 {
                     var desdeUtc = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
                     var hastaUtc = DateTime.SpecifyKind(fechaHasta.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
 
-                    query = query.Where(v =>
-                        v.FechaInicio <= hastaUtc && v.FechaFin >= desdeUtc);
+                    // LÓGICA ESTRICTA: Solo las que INICIAN en el rango (ignora las que vienen de antes)
+                    query = query.Where(v => v.FechaInicio >= desdeUtc && v.FechaInicio <= hastaUtc);
                 }
 
                 var datosCrudos = await query

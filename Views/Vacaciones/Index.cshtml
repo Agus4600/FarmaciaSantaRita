@@ -668,7 +668,7 @@
             agregarFilasVacias();
 
             // Buscar Filtro
-                document.getElementById('btnBuscarFiltro').addEventListener('click', async function () {
+            document.getElementById('btnBuscarFiltro').addEventListener('click', async function () {
             const nombre = document.getElementById('buscarEmpleadoInput').value.trim();
             const rangoBtn = document.getElementById('btnAbrirCalendario');
             const rangoTexto = rangoBtn.textContent.trim();
@@ -676,17 +676,20 @@
             let fechaDesde = null;
             let fechaHasta = null;
 
+            // Conversión manual de dd/mm/yyyy a yyyy-MM-dd
             if (rangoTexto !== 'dd/mm/yyyy - dd/mm/yyyy') {
-                const [desdeStr, hastaStr] = rangoTexto.split(' - ');
-                try {
-                    // Convertir dd/mm/yyyy a yyyy-MM-dd para enviar al backend
-                    const desdeParts = desdeStr.split('/');
-                    const hastaParts = hastaStr.split('/');
-                    fechaDesde = `${desdeParts[2]}-${desdeParts[1].padStart(2, '0')}-${desdeParts[0].padStart(2, '0')}`;
-                    fechaHasta = `${hastaParts[2]}-${hastaParts[1].padStart(2, '0')}-${hastaParts[0].padStart(2, '0')}`;
-                } catch (e) {
-                    Swal.fire('Error', 'Formato de fecha inválido', 'error');
-                    return;
+                const partes = rangoTexto.split(' - ');
+                if (partes.length === 2) {
+                    try {
+                        const desdeParts = partes[0].split('/');
+                        const hastaParts = partes[1].split('/');
+                        // Formato ISO para el controlador
+                        fechaDesde = `${desdeParts[2]}-${desdeParts[1].padStart(2, '0')}-${desdeParts[0].padStart(2, '0')}`;
+                        fechaHasta = `${hastaParts[2]}-${hastaParts[1].padStart(2, '0')}-${hastaParts[0].padStart(2, '0')}`;
+                    } catch (e) {
+                        Swal.fire('Error', 'Formato de fecha inválido', 'error');
+                        return;
+                    }
                 }
             }
 
@@ -704,6 +707,7 @@
             }
 
             try {
+                // Construcción de la URL con parámetros
                 let url = '/Vacaciones/BuscarVacaciones?';
                 if (hayNombre) url += `nombreEmpleado=${encodeURIComponent(nombre)}&`;
                 if (hayRango) {
@@ -711,25 +715,18 @@
                 }
 
                 const response = await fetch(url);
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Error ${response.status}: ${errorText}`);
-                }
+                if (!response.ok) throw new Error(`Error ${response.status}`);
 
                 const data = await response.json();
 
-                if (!Array.isArray(data)) {
-                    throw new Error(data.message || 'El servidor devolvió un formato inesperado.');
-                }
-
                 const tbody = document.querySelector('#tablaVacaciones tbody');
-                tbody.innerHTML = ''; // Limpiamos
+                tbody.innerHTML = '';
 
                 data.forEach(v => {
                     const fila = document.createElement('tr');
                     fila.setAttribute('data-vacacion-id', v.idVacaciones);
                     fila.innerHTML = `
-                        <td class="empleado-clickable">${v.nombreEmpleado || ''}</td>
+                        <td class="empleado-clickable">${v.nombreEmpleado}</td>
                         <td class="text-center">${v.diasVacaciones}</td>
                         <td class="text-center">${v.fechaInicio} - ${v.fechaFin}</td>
                         <td class="text-center">${v.diasFavor}</td>
@@ -738,14 +735,15 @@
                     tbody.appendChild(fila);
                 });
 
-                agregarFilasVacias();
+                // Función de relleno para mantener la estética de la tabla
+                if (typeof agregarFilasVacias === "function") agregarFilasVacias();
 
                 if (data.length > 0) {
                     Swal.fire({
                         icon: 'success',
                         title: 'Búsqueda exitosa',
                         text: `Se encontraron ${data.length} registro${data.length === 1 ? '' : 's'}.`,
-                        timer: 2500,
+                        timer: 2000,
                         showConfirmButton: false
                     });
                 } else {
@@ -757,13 +755,8 @@
                     });
                 }
             } catch (err) {
-                console.error('Error en búsqueda:', err);
-                Swal.fire({
-                    title: 'Error',
-                    text: err.message || 'No se pudo realizar la búsqueda. Intente nuevamente.',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
-                });
+                console.error('Error:', err);
+                Swal.fire('Error', 'No se pudo realizar la búsqueda.', 'error');
             }
         });
 

@@ -1035,18 +1035,22 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                                Swal.fire({
+                                        Swal.fire({
             title: data.nombreCompleto,
             html: `
-                <strong>DNI:</strong> ${data.dni || 'No disponible'}<br>
-                <strong>Teléfono:</strong> ${data.telefono || 'No disponible'}<br>
-                <strong>Dirección:</strong> ${data.direccion || 'No disponible'}
+                <div class="text-center mt-3">
+                    <p class="mb-2"><strong>DNI:</strong> ${data.dni || 'No disponible'}</p>
+                    <p class="mb-2"><strong>Teléfono:</strong> ${data.telefono || 'No disponible'}</p>
+                    <p class="mb-3"><strong>Dirección:</strong> ${data.direccion || 'No disponible'}</p>
+                </div>
             `,
+            icon: 'info',
             confirmButtonText: 'Entendido',
             confirmButtonColor: '#007bff',
             customClass: {
-                title: 'fw-bold text-dark',
-                htmlContainer: 'text-start'
+                popup: 'border border-primary shadow-lg rounded-3',  // borde azul y sombra
+                title: 'fs-4 fw-bold text-primary mb-4',             // título grande y azul
+                htmlContainer: 'text-center fs-5'                     // centrado
             }
         });
                     } else {

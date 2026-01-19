@@ -484,7 +484,7 @@
                                     {
                                         foreach (var emp in ViewBag.Empleados)
                                         {
-                                            <option value="@emp.Idusuario">
+                                            <option value="@emp.Idusuario" data-nombre="@emp.NombreCompleto">
                                                 @emp.NombreCompleto - DNI: @emp.Dni
                                             </option>
                                         }
@@ -755,55 +755,52 @@
             }
         });
 
-                    document.getElementById('btnAgregar').addEventListener('click', async function () {
-            const elEmpleado = document.getElementById('empleadoSelect');
-            const elDias = document.getElementById('diasInput');
-            const btnPeriodo = document.getElementById('btnPeriodo');
+                document.getElementById('btnAgregar').addEventListener('click', async function () {
+        const elEmpleado = document.getElementById('empleadoSelect');
+        const elDias = document.getElementById('diasInput');
+        const btnPeriodo = document.getElementById('btnPeriodo');
 
-            // Validación de elementos existentes
-            if (!elEmpleado || !elDias || !btnPeriodo) {
-                Swal.fire('Error', 'No se encontraron los campos necesarios en la página. Recarga la página.', 'error');
-                return;
-            }
+        if (!elEmpleado || !elDias || !btnPeriodo) {
+            Swal.fire('Error', 'No se encontraron los campos necesarios.', 'error');
+            return;
+        }
 
-            const empleadoId = elEmpleado.value?.trim() || '';
-            const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.text.trim() || '';
-            const diasVal = parseInt(elDias.value) || 0;
-            const periodoTexto = btnPeriodo.textContent.trim();
+        const empleadoId = elEmpleado.value?.trim() || '';
+        // ←←← Cambio aquí: usamos data-nombre para obtener solo el nombre limpio
+        const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.getAttribute('data-nombre') || '';
+        const diasVal = parseInt(elDias.value) || 0;
+        const periodoTexto = btnPeriodo.textContent.trim();
 
-            // Validaciones adicionales
-            if (!empleadoId || empleadoId === '') {
-                Swal.fire('Error', 'Seleccione un empleado', 'error');
-                return;
-            }
-            if (diasVal < 1) {
-                Swal.fire('Error', 'Ingrese días solicitados (mínimo 1)', 'error');
-                return;
-            }
-            if (periodoTexto === 'dd/mm/yyyy - dd/mm/yyyy') {
-                Swal.fire('Error', 'Seleccione el período de vacaciones', 'error');
-                return;
-            }
+        // Validaciones (igual)
+        if (!empleadoId || empleadoId === '') {
+            Swal.fire('Error', 'Seleccione un empleado', 'error');
+            return;
+        }
+        if (diasVal < 1) {
+            Swal.fire('Error', 'Ingrese días solicitados (mínimo 1)', 'error');
+            return;
+        }
+        if (periodoTexto === 'dd/mm/yyyy - dd/mm/yyyy') {
+            Swal.fire('Error', 'Seleccione el período de vacaciones', 'error');
+            return;
+        }
 
-            const [desde, hasta] = periodoTexto.split(' - ');
+        const [desde, hasta] = periodoTexto.split(' - ');
+        const inicioDate = new Date(desde.split('/').reverse().join('-'));
+        const finDate = new Date(hasta.split('/').reverse().join('-'));
 
-            // Convertimos las fechas a objetos Date y luego a ISO UTC (formato que PostgreSQL acepta para timestamp with time zone)
-            const inicioDate = new Date(desde.split('/').reverse().join('-'));
-            const finDate = new Date(hasta.split('/').reverse().join('-'));
+        if (finDate < inicioDate) {
+            Swal.fire('Error', 'La fecha fin no puede ser anterior al inicio', 'error');
+            return;
+        }
 
-            // Validamos que la fecha fin no sea anterior a la inicio
-            if (finDate < inicioDate) {
-                Swal.fire('Error', 'La fecha fin no puede ser anterior al inicio', 'error');
-                return;
-            }
-
-            const datos = {
-                Idusuario: parseInt(empleadoId),
-                DiasVacaciones: diasVal,
-                FechaInicio: inicioDate.toISOString(),  // Ahora es UTC: '2026-01-01T00:00:00.000Z'
-                FechaFin: finDate.toISOString(),        // Ahora es UTC
-                NombreEmpleadoFrontend: empleadoNombre
-            };
+        const datos = {
+            Idusuario: parseInt(empleadoId),
+            DiasVacaciones: diasVal,
+            FechaInicio: inicioDate.toISOString(),
+            FechaFin: finDate.toISOString(),
+            NombreEmpleadoFrontend: empleadoNombre  // ← Ahora solo el nombre limpio
+        };
 
             try {
                 const response = await fetch('/Vacaciones/ApiCreate', {
@@ -1046,7 +1043,7 @@
                                 <strong>Dirección:</strong> ${data.direccion || 'No disponible'}
                             `,
                             confirmButtonText: 'Entendido',
-                            confirmButtonColor: '#007bff',
+                             confirmButtonColor: '#007bff',const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.text.trim() || '';
                             customClass: {
                                 title: 'fw-bold text-dark',
                                 htmlContainer: 'text-start'

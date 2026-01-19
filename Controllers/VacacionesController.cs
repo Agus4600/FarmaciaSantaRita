@@ -176,14 +176,16 @@ namespace FarmaciaSantaRita.Controllers
                 }
 
 
-                // 2. Filtro por rango (Versión compatible con Timestamp with Time Zone)
                 if (fechaDesde.HasValue && fechaHasta.HasValue)
                 {
-                    // Convertimos a UTC para que Npgsql no proteste
-                    DateTime desde = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
-                    DateTime hasta = DateTime.SpecifyKind(fechaHasta.Value.Date, DateTimeKind.Utc).AddDays(1).AddTicks(-1);
+                    // 1. Normalizamos las fechas de entrada a UTC medianoche
+                    var inicioBusqueda = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
 
-                    query = query.Where(v => v.FechaInicio >= desde && v.FechaInicio <= hasta);
+                    // 2. Para el final, sumamos un día y restamos un tic para cubrir TODO el día hasta las 23:59:59
+                    var finBusqueda = DateTime.SpecifyKind(fechaHasta.Value.Date, DateTimeKind.Utc).AddDays(1).AddTicks(-1);
+
+                    // 3. Comparamos directamente la columna. Esto es 100% compatible con SQL
+                    query = query.Where(v => v.FechaInicio >= inicioBusqueda && v.FechaInicio <= finBusqueda);
                 }
 
                 // 3. Traemos SOLO los datos planos (sin cálculos de C# dentro de la consulta SQL)

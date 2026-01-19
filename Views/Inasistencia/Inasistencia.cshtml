@@ -19,6 +19,12 @@
 }
 
 <style>
+	/* Primera columna de datos (después de la fecha es el Empleado) */
+	#tablaInasistencias tbody td:nth-child(2) {
+		font-weight: bold !important;
+		color: #007bff !important;
+	}
+
 	.contenedor-deshabilitado {
 		pointer-events: none; /* Impide clics e interacciones */
 		opacity: 0.6; /* Atenúa visualmente el bloque */
@@ -785,13 +791,15 @@
 								
 								<div class="campo">
 									<label for="empleadoSelect">Empleado</label>
-									<select id="empleadoSelect" class="form-control shadow-sm" translate="no">
+									<select id="empleadoSelect" class="form-control shadow-sm" translate="no" @disabledAttr>
 										<option value="">Seleccione Empleado</option>
 										@if (ViewBag.Empleados != null)
 										{
 											foreach (var empleado in ViewBag.Empleados)
 											{
-												<option value="@empleado.Idusuario" translate="no">@empleado.NombreCompleto</option>
+												// Combinamos Nombre y DNI
+												string textoAMostrar = $"{empleado.NombreCompleto} - Dni: {empleado.Dni}";
+												<option value="@empleado.Idusuario" translate="no">@textoAMostrar</option>
 											}
 										}
 									</select>
@@ -1096,6 +1104,7 @@
 			// 1. OBTENER ELEMENTOS Y VALORES
 			const fechaInput = document.getElementById("fechaInput");
 			const empleadoSelect = document.getElementById("empleadoSelect"); // ⭐ CAMBIO CLAVE: Obtener el SELECT
+			const empleadoTextoCompleto = empleadoSelect.options[empleadoSelect.selectedIndex].text.trim();
 			const turnoSelect = document.getElementById("turnoSelect");
 			const motivoInput = document.getElementById("motivoInput");
 			const tbody = document.querySelector("#tablaInasistencias tbody");
@@ -1103,7 +1112,7 @@
 			const fechaValue = fechaInput.value;
 
 			const empleadoId = parseInt(empleadoSelect.value) || 0; // El ID del empleado es el VALUE
-			const empleadoNombre = empleadoSelect.options[empleadoSelect.selectedIndex].text.trim(); // El Nombre es el TEXTO de la opción
+			const empleadoNombre = empleadoTextoCompleto.split(" - Dni:")[0];// El Nombre es el TEXTO de la opción
 
 
 			const turno = turnoSelect.value;

@@ -1535,6 +1535,8 @@
 
 
 
+
+
 				document.getElementById("btnBuscarFiltro").addEventListener("click", async function () {
 			const fechaDesde = document.getElementById('fechaDesdeOculto').value.trim();
 			const fechaHasta = document.getElementById('fechaHastaOculto').value.trim();
@@ -1726,15 +1728,12 @@
 			}
 
 
+		document.addEventListener('click', function (e) {
+			// Solo actúa si clickeamos en la celda del empleado (2da columna)
+			const td = e.target.closest('#tablaInasistencias tbody td:nth-child(2)');
+			if (!td) return;
 
-
-					// Click en nombre del empleado en la tabla de Inasistencias
-		document.querySelector('#tablaInasistencias tbody').addEventListener('click', function (e) {
-			const td = e.target.closest('td');
-			// Solo la columna del empleado (2da columna: nth-child(2))
-			if (!td || td.cellIndex !== 1) return; // cellIndex 0 = Fecha, 1 = Empleado
-
-			e.stopPropagation(); // Evita que marque el checkbox si hay listener de fila
+			e.stopPropagation(); // Evita que marque el checkbox
 
 			const nombreCompleto = td.innerText.trim();
 			if (!nombreCompleto || nombreCompleto === 'Sin nombre') return;
@@ -1767,7 +1766,6 @@
 				.catch(() => {
 					Swal.fire('Error', 'No se pudo cargar los datos del empleado', 'error');
 				});
-		});
 		});
 	</script>
 }

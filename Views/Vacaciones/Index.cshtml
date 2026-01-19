@@ -482,9 +482,11 @@
                                     <option value="">Seleccione Empleado</option>
                                     @if (ViewBag.Empleados != null)
                                     {
-                                        foreach (var empleado in ViewBag.Empleados)
+                                        foreach (var emp in ViewBag.Empleados)
                                         {
-                                            <option value="@empleado.Idusuario">@empleado.NombreCompleto</option>
+                                            <option value="@emp.Idusuario">
+                                                @emp.NombreCompleto - DNI: @emp.Dni
+                                            </option>
                                         }
                                     }
                                 </select>
@@ -1024,6 +1026,40 @@
                     chk.closest('tr').classList.toggle('fila-seleccionada', checked);
                 });
             });
+                    // Al hacer click en el nombre del empleado en la tabla
+        document.querySelector('#tablaVacaciones tbody').addEventListener('click', function (e) {
+            const td = e.target.closest('td');
+            if (!td || td.cellIndex !== 0) return; // Solo columna Empleado
+
+            const nombreCompleto = td.innerText.trim();
+            if (!nombreCompleto || nombreCompleto === 'Sin nombre') return;
+
+            fetch(`/Vacaciones/GetDatosEmpleado?nombre=${encodeURIComponent(nombreCompleto)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: data.nombreCompleto,
+                            html: `
+                                <strong>DNI:</strong> ${data.dni || 'No disponible'}<br>
+                                <strong>Teléfono:</strong> ${data.telefono || 'No disponible'}<br>
+                                <strong>Dirección:</strong> ${data.direccion || 'No disponible'}
+                            `,
+                            confirmButtonText: 'Entendido',
+                            confirmButtonColor: '#007bff',
+                            customClass: {
+                                title: 'fw-bold text-dark',
+                                htmlContainer: 'text-start'
+                            }
+                        });
+                    } else {
+                        Swal.fire('No encontrado', data.message || 'No se encontraron datos', 'warning');
+                    }
+                })
+                .catch(() => {
+                    Swal.fire('Error', 'No se pudo cargar los datos del empleado', 'error');
+                });
+        });
         });
     </script>
 }

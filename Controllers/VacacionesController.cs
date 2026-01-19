@@ -23,10 +23,15 @@ namespace FarmaciaSantaRita.Controllers
         public async Task<IActionResult> Index()
         {
             ViewBag.Empleados = await _context.Usuarios
-                .Where(u => u.Rol == "Empleado/a" || u.Rol == "Jefe/a")
-                .OrderBy(u => u.Apellido)
-                .Select(u => new { u.Idusuario, NombreCompleto = u.Nombre + " " + u.Apellido })
-                .ToListAsync();
+    .Where(u => u.Rol == "Empleado/a" || u.Rol == "Jefe/a")
+    .OrderBy(u => u.Apellido)
+    .Select(u => new
+    {
+        u.Idusuario,
+        NombreCompleto = u.Nombre + " " + u.Apellido,
+        u.Dni  // ← Agregar DNI
+    })
+    .ToListAsync();
 
             var vacaciones = await _context.Vacaciones
                 .AsNoTracking()
@@ -50,23 +55,28 @@ namespace FarmaciaSantaRita.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> GetEmpleados()
+        public async Task<IActionResult> GetDatosEmpleado(string nombre)
         {
-            var empleados = await _context.Usuarios
-                .Where(u => u.Rol == "Empleado/a" || u.Rol == "Jefe/a")
-                .OrderBy(u => u.Apellido)
-                .ThenBy(u => u.Nombre)
+            if (string.IsNullOrWhiteSpace(nombre))
+                return Json(new { success = false, message = "Nombre requerido" });
+
+            var empleado = await _context.Usuarios
+                .Where(u => EF.Functions.ILike(u.Nombre + " " + u.Apellido, $"%{nombre.Trim()}%"))
                 .Select(u => new
                 {
-                    idusuario = u.Idusuario,
-                    nombre = u.Nombre + " " + u.Apellido 
+                    success = true,
+                    nombreCompleto = u.Nombre + " " + u.Apellido,
+                    dni = u.Dni,
+                    telefono = u.Telefono,
+                    direccion = u.Direccion
                 })
-                .ToListAsync();
+                .FirstOrDefaultAsync();
 
-            return Json(empleados);
+            if (empleado == null)
+                return Json(new { success = false, message = "Empleado no encontrado" });
+
+            return Json(empleado);
         }
-
-        // API POST: Crea vacación desde JavaScript (botón "Agregar")
 
 
 

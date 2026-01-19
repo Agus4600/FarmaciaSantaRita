@@ -178,13 +178,11 @@ namespace FarmaciaSantaRita.Controllers
 
                 if (fechaDesde.HasValue && fechaHasta.HasValue)
                 {
-                    // 1. Normalizamos las fechas de entrada a UTC medianoche
-                    var inicioBusqueda = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
+                    // Aseguramos que las fechas de búsqueda sean el inicio y el fin exacto del día en UTC
+                    var inicioBusqueda = fechaDesde.Value.Date.ToUniversalTime();
+                    var finBusqueda = fechaHasta.Value.Date.AddDays(1).AddTicks(-1).ToUniversalTime();
 
-                    // 2. Para el final, sumamos un día y restamos un tic para cubrir TODO el día hasta las 23:59:59
-                    var finBusqueda = DateTime.SpecifyKind(fechaHasta.Value.Date, DateTimeKind.Utc).AddDays(1).AddTicks(-1);
-
-                    // 3. Comparamos directamente la columna. Esto es 100% compatible con SQL
+                    // Filtramos comparando contra la columna de Inicio de las vacaciones
                     query = query.Where(v => v.FechaInicio >= inicioBusqueda && v.FechaInicio <= finBusqueda);
                 }
 

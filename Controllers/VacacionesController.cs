@@ -175,11 +175,14 @@ namespace FarmaciaSantaRita.Controllers
                     query = query.Where(v => EF.Functions.ILike(v.NombreEmpleadoRegistrado ?? "", $"%{nombreEmpleado}%"));
                 }
 
-                // 2. Filtro por rango
+
+                // 2. Filtro por rango (Versión compatible con Timestamp with Time Zone)
                 if (fechaDesde.HasValue && fechaHasta.HasValue)
                 {
-                    var desde = fechaDesde.Value.Date;
-                    var hasta = fechaHasta.Value.Date;
+                    // Convertimos a UTC para que Npgsql no proteste
+                    DateTime desde = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
+                    DateTime hasta = DateTime.SpecifyKind(fechaHasta.Value.Date, DateTimeKind.Utc).AddDays(1).AddTicks(-1);
+
                     query = query.Where(v => v.FechaInicio >= desde && v.FechaInicio <= hasta);
                 }
 

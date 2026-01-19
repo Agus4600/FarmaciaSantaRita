@@ -957,10 +957,16 @@
                 const workbook = new ExcelJS.Workbook();
                 const sheet = workbook.addWorksheet('VACACIONES');
                 sheet.addRow(['REGISTRO DE VACACIONES']);
-                sheet.mergeCells('A1:E1');
+                sheet.mergeCells('A1:D1');
                 const titleCell = sheet.getCell('A1');
                 titleCell.font = { size: 14, bold: true };
                 titleCell.alignment = { horizontal: 'center' };
+                titleCell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
                 const headers = ['EMPLEADO', 'DÍAS', 'PERÍODO', 'DÍAS FAVOR'];
                 sheet.addRow(headers);
                 const headerRow = sheet.lastRow;

@@ -19,6 +19,17 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
+    .empleado-clickable {
+        cursor: pointer;
+        color: #007bff;
+        text-decoration: underline;
+        transition: color 0.2s ease;
+    }
+
+        .empleado-clickable:hover {
+            color: #0056b3;
+        }
+
     /* Tus estilos existentes (los mismos de Inasistencias) */
     .contenedor-deshabilitado {
         pointer-events: none;
@@ -830,7 +841,7 @@
                     const nuevaFila = document.createElement('tr');
                     nuevaFila.setAttribute('data-vacacion-id', result.id);
                     nuevaFila.innerHTML = `
-                        <td>${empleadoNombre}</td>
+                        <td class="empleado-clickable">${empleadoNombre || v.nombreEmpleado || ''}</td>
                         <td class="text-center">${diasVal}</td>
                         <td class="text-center">${desde} - ${hasta}</td>
                         <td class="text-center">${dFavor}</td>

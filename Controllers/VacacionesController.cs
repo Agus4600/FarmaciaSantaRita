@@ -175,46 +175,45 @@ namespace FarmaciaSantaRita.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> BuscarVacaciones(string? nombreEmpleado, DateTime? fechaDesde, DateTime? fechaHasta)
+        public async Task<IActionResult> BuscarVacaciones(string? nombreEmpleado, string? fechaDesde, string? fechaHasta)
         {
             try
             {
                 var query = _context.Vacaciones.AsNoTracking();
 
-                // Filtro ultra-tolerante por nombre/apellido
+                // 1. Filtro por nombre (Tolerante)
                 if (!string.IsNullOrWhiteSpace(nombreEmpleado))
                 {
-                    // 1. Limpiamos el texto que escribe el usuario
                     string textoBuscado = nombreEmpleado
-                        .ToLowerInvariant()                           // Todo minúsculas
-                        .Normalize(NormalizationForm.FormD)           // Descompone acentos (á → a + ´)
-                        .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark) // Quita marcas de acento
+                        .ToLowerInvariant()
+                        .Normalize(NormalizationForm.FormD)
+                        .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
                         .Aggregate("", (current, c) => current + c)
-                        .Replace(" ", "")                             // Quita espacios
-                        .Replace(".", "").Replace(",", "")            // Quita puntos y comas
-                        .Replace("-", "").Replace("_", "");           // Quita guiones y guiones bajos
+                        .Replace(" ", "").Replace(".", "").Replace(",", "");
 
-                    // 2. Buscamos con ILike (ya ignora case y acentos en Postgres)
-                    // Usamos %...% para coincidencia parcial
                     query = query.Where(v =>
                         EF.Functions.ILike(
-                            EF.Functions.Unaccent(v.NombreEmpleadoRegistrado ?? ""), // Unaccent en la BD (extra tolerancia)
+                            EF.Functions.Unaccent(v.NombreEmpleadoRegistrado ?? ""),
                             $"%{textoBuscado}%"
                         )
                     );
                 }
 
-                // Filtro por fechas (queda igual, ya funciona)
-                // Reemplaza el filtro de fechas en tu C# por este:
-                if (fechaDesde.HasValue && fechaHasta.HasValue)
+                // 2. Filtro por fechas (Recibiendo strings desde JS)
+                if (!string.IsNullOrEmpty(fechaDesde) && !string.IsNullOrEmpty(fechaHasta))
                 {
-                    var desdeUtc = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
-                    var hastaUtc = DateTime.SpecifyKind(fechaHasta.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+                    // Intentamos convertir el string "YYYY-MM-DD" que manda el JS
+                    if (DateTime.TryParse(fechaDesde, out DateTime inicio) && DateTime.TryParse(fechaHasta, out DateTime fin))
+                    {
+                        var desdeUtc = DateTime.SpecifyKind(inicio.Date, DateTimeKind.Utc);
+                        var hastaUtc = DateTime.SpecifyKind(fin.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
 
-                    // LÓGICA ESTRICTA: Solo las que INICIAN en el rango (ignora las que vienen de antes)
-                    query = query.Where(v => v.FechaInicio >= desdeUtc && v.FechaInicio <= hastaUtc);
+                        // Lógica ESTRICTA: Solo las que EMPIEZAN en el rango
+                        query = query.Where(v => v.FechaInicio >= desdeUtc && v.FechaInicio <= hastaUtc);
+                    }
                 }
 
+                // 3. Ejecución de la consulta
                 var datosCrudos = await query
                     .OrderByDescending(v => v.FechaInicio)
                     .Select(v => new
@@ -227,6 +226,7 @@ namespace FarmaciaSantaRita.Controllers
                     })
                     .ToListAsync();
 
+                // 4. Mapeo final para el Frontend
                 var resultados = datosCrudos.Select(v => new
                 {
                     v.IdVacaciones,
@@ -241,7 +241,7 @@ namespace FarmaciaSantaRita.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { success = false, message = ex.Message + " | Inner: " + (ex.InnerException?.Message ?? "sin inner") });
+                return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
 

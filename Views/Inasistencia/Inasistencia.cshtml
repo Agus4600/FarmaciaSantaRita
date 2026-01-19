@@ -1732,31 +1732,33 @@
 		// Este bloque DEBE estar FUERA del DOMContentLoaded
 
 				// Click en nombre del empleado en la tabla de Inasistencias (versión debug)
+				// Click en nombre del empleado en la tabla de Inasistencias (prioridad alta + stopPropagation)
 		document.addEventListener('click', function (e) {
-			// Buscamos el <td> que contiene el nombre (más flexible que nth-child)
+			// Solo la celda del empleado (más flexible: title + clase)
 			const td = e.target.closest('#tablaInasistencias tbody td[title]');
-			if (!td) return; // No es una celda con title → salimos
+			if (!td) return;
 
-			// Verificamos que sea la columna del empleado (por clase o contenido)
-			if (!td.classList.contains('columna-empleado') && !td.innerText.includes(' ')) return;
+			if (!td.classList.contains('columna-empleado') && !td.innerText.trim().includes(' ')) return;
 
-			e.stopPropagation(); // Evita marcar checkbox
+			// ¡Clave! Detenemos la propagación ANTES de que llegue al <tr>
+			e.stopPropagation();
+			e.preventDefault(); // Extra seguridad para evitar selección
 
 			const nombreCompleto = td.innerText.trim();
-			console.log('[DEBUG] Click detectado en nombre:', nombreCompleto); // ← Esto debe aparecer en consola
+			console.log('[CLICK NOMBRE] Detectado:', nombreCompleto);
 
 			if (!nombreCompleto || nombreCompleto === 'Sin nombre') return;
 
-			console.log('[DEBUG] Intentando fetch para:', nombreCompleto);
+			console.log('[CLICK NOMBRE] Fetch iniciado para:', nombreCompleto);
 
 			fetch(`/Inasistencia/GetDatosEmpleado?nombre=${encodeURIComponent(nombreCompleto)}`)
 				.then(response => {
-					console.log('[DEBUG] Respuesta fetch status:', response.status);
+					console.log('[CLICK NOMBRE] Status:', response.status);
 					if (!response.ok) throw new Error(`HTTP ${response.status}`);
 					return response.json();
 				})
 				.then(data => {
-					console.log('[DEBUG] Datos recibidos:', data);
+					console.log('[CLICK NOMBRE] Datos:', data);
 					if (data.success) {
 						Swal.fire({
 							title: data.nombreCompleto,
@@ -1776,14 +1778,14 @@
 							}
 						});
 					} else {
-						Swal.fire('No encontrado', data.message || 'No se encontraron datos', 'warning');
+						Swal.fire('No encontrado', data.message || 'Empleado no encontrado', 'warning');
 					}
 				})
 				.catch(err => {
-					console.error('[ERROR] Fetch falló:', err);
-					Swal.fire('Error', 'No se pudo cargar los datos del empleado: ' + err.message, 'error');
+					console.error('[CLICK NOMBRE] Error fetch:', err);
+					Swal.fire('Error', 'No se pudo cargar los datos: ' + err.message, 'error');
 				});
-		});
+		}, { capture: true });  // ← ¡Importante! capture: true → se ejecuta ANTES que otros listeners
 		});
 	</script>
 }

@@ -202,14 +202,19 @@ namespace FarmaciaSantaRita.Controllers
                 // 2. Filtro por fechas (Recibiendo strings desde JS)
                 if (!string.IsNullOrEmpty(fechaDesde) && !string.IsNullOrEmpty(fechaHasta))
                 {
-                    // Intentamos convertir el string "YYYY-MM-DD" que manda el JS
-                    if (DateTime.TryParse(fechaDesde, out DateTime inicio) && DateTime.TryParse(fechaHasta, out DateTime fin))
+                    if (DateTime.TryParse(fechaDesde, out DateTime inicio) &&
+                        DateTime.TryParse(fechaHasta, out DateTime fin))
                     {
-                        var desdeUtc = DateTime.SpecifyKind(inicio.Date, DateTimeKind.Utc);
-                        var hastaUtc = DateTime.SpecifyKind(fin.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+                        // 1. Forzamos que sean fechas 'Unspecified' antes de pasarlas a UTC 
+                        // para que no haya saltos de zona horaria inesperados.
+                        var fechaInicioUtc = DateTime.SpecifyKind(inicio.Date, DateTimeKind.Utc);
 
-                        // Lógica ESTRICTA: Solo las que EMPIEZAN en el rango
-                        query = query.Where(v => v.FechaInicio >= desdeUtc && v.FechaInicio <= hastaUtc);
+                        // 2. Para la fecha FIN, sumamos un día y restamos un tick. 
+                        // Esto nos da las 23:59:59.999 del día que eligió el usuario.
+                        var fechaFinUtc = DateTime.SpecifyKind(fin.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+
+                        // 3. La consulta LINQ definitiva
+                        query = query.Where(v => v.FechaInicio >= fechaInicioUtc && v.FechaInicio <= fechaFinUtc);
                     }
                 }
 

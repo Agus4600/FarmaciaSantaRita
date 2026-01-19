@@ -169,24 +169,24 @@ namespace FarmaciaSantaRita.Controllers
             {
                 var query = _context.Vacaciones.AsNoTracking();
 
-                // 1. Filtro por nombre (ILike es seguro en Postgres)
+                // Filtro por nombre (ILike es seguro y eficiente en Postgres)
                 if (!string.IsNullOrEmpty(nombreEmpleado))
                 {
                     query = query.Where(v => EF.Functions.ILike(v.NombreEmpleadoRegistrado ?? "", $"%{nombreEmpleado}%"));
                 }
 
-
+                // Filtro por rango de fechas (comparación directa, sin .Date ni funciones complejas)
                 if (fechaDesde.HasValue && fechaHasta.HasValue)
                 {
-                    // Aseguramos que las fechas de búsqueda sean el inicio y el fin exacto del día en UTC
-                    var inicioBusqueda = fechaDesde.Value.Date.ToUniversalTime();
-                    var finBusqueda = fechaHasta.Value.Date.AddDays(1).AddTicks(-1).ToUniversalTime();
+                    // Fuerza UTC y truncado a día completo
+                    var desdeUtc = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
+                    var hastaUtc = DateTime.SpecifyKind(fechaHasta.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
 
-                    // Filtramos comparando contra la columna de Inicio de las vacaciones
-                    query = query.Where(v => v.FechaInicio >= inicioBusqueda && v.FechaInicio <= finBusqueda);
+                    query = query.Where(v =>
+                        v.FechaInicio >= desdeUtc && v.FechaInicio <= hastaUtc);
                 }
 
-                // 3. Traemos SOLO los datos planos (sin cálculos de C# dentro de la consulta SQL)
+                // 1. Traemos SOLO los datos crudos (sin cálculos dentro de la consulta SQL)
                 var datosCrudos = await query
                     .OrderByDescending(v => v.FechaInicio)
                     .Select(v => new
@@ -199,7 +199,7 @@ namespace FarmaciaSantaRita.Controllers
                     })
                     .ToListAsync();
 
-                // 4. Procesamos el formato y el cálculo de días en MEMORIA (C#)
+                // 2. Procesamos formato y cálculo de días FAVOR en MEMORIA (C#)
                 var resultados = datosCrudos.Select(v => new
                 {
                     v.IdVacaciones,
@@ -207,7 +207,7 @@ namespace FarmaciaSantaRita.Controllers
                     v.DiasVacaciones,
                     fechaInicio = v.FechaInicio.ToString("dd/MM/yyyy"),
                     fechaFin = v.FechaFin.ToString("dd/MM/yyyy"),
-                    // Aquí el cálculo es 100% C#, Postgres ya no interviene
+                    // Cálculo 100% en C#: Postgres no interviene aquí
                     diasFavor = Math.Abs(v.DiasVacaciones - ((v.FechaFin - v.FechaInicio).Days + 1))
                 }).ToList();
 
@@ -215,7 +215,8 @@ namespace FarmaciaSantaRita.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                // Para depuración: devuelve el error completo
+                return StatusCode(500, new { success = false, message = ex.Message + " | Inner: " + (ex.InnerException?.Message ?? "sin inner") });
             }
         }
 

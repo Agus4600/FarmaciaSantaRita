@@ -668,56 +668,57 @@
             agregarFilasVacias();
 
             // Buscar Filtro
-            document.getElementById('btnBuscarFiltro').addEventListener('click', async function () {
-            const nombre = document.getElementById('buscarEmpleadoInput').value.trim();
-            const rangoBtn = document.getElementById('btnAbrirCalendario');
-            const rangoTexto = rangoBtn.textContent.trim();
+                document.getElementById('btnBuscarFiltro').addEventListener('click', async function () {
+        const nombre = document.getElementById('buscarEmpleadoInput').value.trim();
+        const rangoBtn = document.getElementById('btnAbrirCalendario');
+        const rangoTexto = rangoBtn.textContent.trim();
 
-            let fechaDesde = null;
-            let fechaHasta = null;
+        let fechaDesde = null; // Estas son las que usa el fetch abajo
+        let fechaHasta = null;
 
-            // Conversión manual de dd/mm/yyyy a yyyy-MM-dd
-            if (rangoTexto !== 'dd/mm/yyyy - dd/mm/yyyy') {
-                const partes = rangoTexto.split(' - ');
-                if (partes.length === 2) {
-                    try {
-                        const desdeParts = partes[0].split('/');
-                        const hastaParts = partes[1].split('/');
-                        // Formato ISO para el controlador
-                        fechaDesde = `${desdeParts[2]}-${desdeParts[1].padStart(2, '0')}-${desdeParts[0].padStart(2, '0')}`;
-                        fechaHasta = `${hastaParts[2]}-${hastaParts[1].padStart(2, '0')}-${hastaParts[0].padStart(2, '0')}`;
-                    } catch (e) {
-                        Swal.fire('Error', 'Formato de fecha inválido', 'error');
-                        return;
-                    }
+        if (rangoTexto !== 'dd/mm/yyyy - dd/mm/yyyy') {
+            const partes = rangoTexto.split(' - ');
+            if (partes.length === 2) {
+                try {
+                    const desdeParts = partes[0].split('/');
+                    const hastaParts = partes[1].split('/');
+
+                    // ASIGNACIÓN CORRECTA: Guardamos en las variables de afuera
+                    fechaDesde = `${desdeParts[2]}-${desdeParts[1]}-${desdeParts[0]}`;
+                    fechaHasta = `${hastaParts[2]}-${hastaParts[1]}-${hastaParts[0]}`;
+                } catch (e) {
+                    Swal.fire('Error', 'Formato de fecha inválido', 'error');
+                    return;
                 }
             }
+        }
 
-            const hayNombre = nombre !== '';
-            const hayRango = fechaDesde !== null && fechaHasta !== null;
+        const hayNombre = nombre !== '';
+        const hayRango = fechaDesde !== null && fechaHasta !== null;
 
-            if (!hayNombre && !hayRango) {
-                Swal.fire({
-                    title: 'Atención',
-                    text: 'Ingrese al menos un filtro (nombre o rango de fechas)',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
-                });
-                return;
+        if (!hayNombre && !hayRango) {
+            Swal.fire({
+                title: 'Atención',
+                text: 'Ingrese al menos un filtro (nombre o rango de fechas)',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
+            });
+            return;
+        }
+
+        try {
+            // Construcción limpia de la URL
+            let params = new URLSearchParams();
+            if (hayNombre) params.append('nombreEmpleado', nombre);
+            if (hayRango) {
+                params.append('fechaDesde', fechaDesde);
+                params.append('fechaHasta', fechaHasta);
             }
 
-            try {
-                // Construcción de la URL con parámetros
-                let url = '/Vacaciones/BuscarVacaciones?';
-                if (hayNombre) url += `nombreEmpleado=${encodeURIComponent(nombre)}&`;
-                if (hayRango) {
-                    url += `fechaDesde=${encodeURIComponent(fechaDesde)}&fechaHasta=${encodeURIComponent(fechaHasta)}`;
-                }
+            const response = await fetch('/Vacaciones/BuscarVacaciones?' + params.toString());
+            if (!response.ok) throw new Error(`Error ${response.status}`);
 
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`Error ${response.status}`);
-
-                const data = await response.json();
+            const data = await response.json()
 
                 const tbody = document.querySelector('#tablaVacaciones tbody');
                 tbody.innerHTML = '';

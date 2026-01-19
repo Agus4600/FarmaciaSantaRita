@@ -668,57 +668,55 @@
             agregarFilasVacias();
 
             // Buscar Filtro
-                document.getElementById('btnBuscarFiltro').addEventListener('click', async function () {
-        const nombre = document.getElementById('buscarEmpleadoInput').value.trim();
-        const rangoBtn = document.getElementById('btnAbrirCalendario');
-        const rangoTexto = rangoBtn.textContent.trim();
+                 document.getElementById('btnBuscarFiltro').addEventListener('click', async function () {
+            const nombre = document.getElementById('buscarEmpleadoInput').value.trim();
+            const rangoBtn = document.getElementById('btnAbrirCalendario');
+            const rangoTexto = rangoBtn.textContent.trim();
 
-        let fechaDesde = null; // Estas son las que usa el fetch abajo
-        let fechaHasta = null;
+            // 1. Definimos las variables con el mismo nombre que usaremos abajo
+            let fDesde = null;
+            let fHasta = null;
 
-        if (rangoTexto !== 'dd/mm/yyyy - dd/mm/yyyy') {
-            const partes = rangoTexto.split(' - ');
-            if (partes.length === 2) {
-                try {
-                    const desdeParts = partes[0].split('/');
-                    const hastaParts = partes[1].split('/');
+            if (rangoTexto !== 'dd/mm/yyyy - dd/mm/yyyy') {
+                const partes = rangoTexto.split(' - ');
+                if (partes.length === 2) {
+                    try {
+                        const desdeParts = partes[0].split('/');
+                        const hastaParts = partes[1].split('/');
 
-                    // ASIGNACIÓN CORRECTA: Guardamos en las variables de afuera
-                    fechaDesde = `${desdeParts[2]}-${desdeParts[1]}-${desdeParts[0]}`;
-                    fechaHasta = `${hastaParts[2]}-${hastaParts[1]}-${hastaParts[0]}`;
-                } catch (e) {
-                    Swal.fire('Error', 'Formato de fecha inválido', 'error');
-                    return;
+                        // Asignamos a fDesde y fHasta
+                        fDesde = `${desdeParts[2]}-${desdeParts[1]}-${desdeParts[0]}`;
+                        fHasta = `${hastaParts[2]}-${hastaParts[1]}-${hastaParts[0]}`;
+                    } catch (e) {
+                        Swal.fire('Error', 'Formato de fecha inválido', 'error');
+                        return;
+                    }
                 }
             }
-        }
 
-        const hayNombre = nombre !== '';
-        const hayRango = fechaDesde !== null && fechaHasta !== null;
+            const hayNombre = nombre !== '';
+            const hayRango = fDesde !== null && fHasta !== null;
 
-        if (!hayNombre && !hayRango) {
-            Swal.fire({
-                title: 'Atención',
-                text: 'Ingrese al menos un filtro (nombre o rango de fechas)',
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#007bff'
-            });
-            return;
-        }
-
-        try {
-            // Construcción limpia de la URL
-            let params = new URLSearchParams();
-            if (hayNombre) params.append('nombreEmpleado', nombre);
-            if (hayRango) {
-                params.append('fechaDesde', fechaDesde);
-                params.append('fechaHasta', fechaHasta);
+            if (!hayNombre && !hayRango) {
+                Swal.fire({
+                    title: 'Atención',
+                    text: 'Ingrese al menos un filtro (nombre o rango de fechas)',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+                });
+                return;
             }
 
-            const response = await fetch('/Vacaciones/BuscarVacaciones?' + params.toString());
-            if (!response.ok) throw new Error(`Error ${response.status}`);
+            try {
+                // 2. Construcción de la URL usando fDesde y fHasta (lo que definimos arriba)
+                const url = `/Vacaciones/BuscarVacaciones?nombreEmpleado=${encodeURIComponent(nombre)}&fechaDesde=${fDesde || ''}&fechaHasta=${fHasta || ''}`;
 
-            const data = await response.json()
+                console.log("URL enviada:", url); // <--- Muy importante revisar esto en F12
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`Error ${response.status}`);
+
+                const data = await response.json();
 
                 const tbody = document.querySelector('#tablaVacaciones tbody');
                 tbody.innerHTML = '';
@@ -736,14 +734,13 @@
                     tbody.appendChild(fila);
                 });
 
-                // Función de relleno para mantener la estética de la tabla
                 if (typeof agregarFilasVacias === "function") agregarFilasVacias();
 
                 if (data.length > 0) {
                     Swal.fire({
                         icon: 'success',
                         title: 'Búsqueda exitosa',
-                        text: `Se encontraron ${data.length} registro${data.length === 1 ? '' : 's'}.`,
+                        text: `Se encontraron ${data.length} registros.`,
                         timer: 2000,
                         showConfirmButton: false
                     });

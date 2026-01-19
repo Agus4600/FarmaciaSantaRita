@@ -1038,11 +1038,11 @@
                 });
             });
                     // Al hacer click en el nombre del empleado en la tabla
-        document.querySelector('#tablaVacaciones tbody').addEventListener('click', function (e) {
+                document.querySelector('#tablaVacaciones tbody').addEventListener('click', function (e) {
             const td = e.target.closest('td');
-            if (!td || td.cellIndex !== 0) return; // Solo columna Empleado
+            if (!td || td.cellIndex !== 0) return;
 
-             e.stopPropagation();
+            e.stopPropagation();
 
             const nombreCompleto = td.innerText.trim();
             if (!nombreCompleto || nombreCompleto === 'Sin nombre') return;
@@ -1052,22 +1052,30 @@
                 .then(data => {
                     if (data.success) {
                         Swal.fire({
-                        title: data.nombreCompleto,
-                        html: `
-                         <div class="text-center mt-3">
-                         <p class="mb-2"><strong>DNI:</strong> ${data.dni || 'No disponible'}</p>
-                         <p class="mb-2"><strong>Teléfono:</strong> ${data.telefono || 'No disponible'}</p>
-                        <p class="mb-3"><strong>Dirección:</strong> ${data.direccion || 'No disponible'}</p>
-                        </div>
-                        `,
-                        confirmButtonText: 'Entendido',
-                        confirmButtonColor: '#007bff',
-                        customClass: {
-                        popup: 'border border-primary shadow-lg rounded-3',  // borde azul y sombra
-                        title: 'fs-4 fw-bold text-primary mb-4',             // título grande y azul
-                        htmlContainer: 'text-center fs-5'                     // centrado
-                        }
-           });
+                            title: data.nombreCompleto,
+                            html: `
+                                <div style="margin-top: 20px; color: #555;">
+                                    <p style="margin-bottom: 12px; font-size: 1.2rem;"><strong>DNI:</strong> ${data.dni || 'No disponible'}</p>
+                                    <p style="margin-bottom: 12px; font-size: 1.2rem;"><strong>Teléfono:</strong> ${data.telefono || 'No disponible'}</p>
+                                    <p style="margin-bottom: 10px; font-size: 1.2rem;"><strong>Dirección:</strong> ${data.direccion || 'No disponible'}</p>
+                                </div>
+                            `,
+                            confirmButtonText: 'Entendido',
+                            confirmButtonColor: '#007bff',
+                            showCloseButton: false,
+                            customClass: {
+                                popup: 'rounded-4 shadow-lg',
+                                title: 'custom-swal-title', // Clase personalizada
+                                confirmButton: 'px-5 py-2 fs-5 fw-bold' // Botón más robusto
+                            },
+                            didOpen: () => {
+                                // Aplicamos el color azul específico al título directamente
+                                const title = Swal.getTitle();
+                                title.style.color = '#007bff';
+                                title.style.fontSize = '1.8rem';
+                                title.style.fontWeight = 'bold';
+                            }
+                        });
                     } else {
                         Swal.fire('No encontrado', data.message || 'No se encontraron datos', 'warning');
                     }

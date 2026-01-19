@@ -19,15 +19,20 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
-    .empleado-clickable {
+    /* Esto busca cualquier celda que tenga la clase del empleado y le aplica el estilo */
+    /* Estilo para el nombre del empleado en la tabla */
+    #tablaVacaciones tbody td.empleado-clickable {
+        font-weight: bold !important;
+        color: #007bff !important;
         cursor: pointer;
-        color: #007bff;
-        text-decoration: underline;
-        transition: color 0.2s ease;
+        text-decoration: none; /* Empieza sin subrayado */
+        transition: color 0.2s ease, text-decoration 0.2s ease;
     }
 
-        .empleado-clickable:hover {
-            color: #0056b3;
+        /* Efecto al pasar el mouse */
+        #tablaVacaciones tbody td.empleado-clickable:hover {
+            color: #0056b3 !important;
+            text-decoration: underline !important; /* Se subraya al pasar el mouse */
         }
 
     /* Tus estilos existentes (los mismos de Inasistencias) */

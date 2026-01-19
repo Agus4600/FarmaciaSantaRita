@@ -1039,6 +1039,8 @@
             const td = e.target.closest('td');
             if (!td || td.cellIndex !== 0) return; // Solo columna Empleado
 
+             e.stopPropagation();
+
             const nombreCompleto = td.innerText.trim();
             if (!nombreCompleto || nombreCompleto === 'Sin nombre') return;
 
@@ -1046,24 +1048,23 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                                        Swal.fire({
-            title: data.nombreCompleto,
-            html: `
-                <div class="text-center mt-3">
-                    <p class="mb-2"><strong>DNI:</strong> ${data.dni || 'No disponible'}</p>
-                    <p class="mb-2"><strong>Teléfono:</strong> ${data.telefono || 'No disponible'}</p>
-                    <p class="mb-3"><strong>Dirección:</strong> ${data.direccion || 'No disponible'}</p>
-                </div>
-            `,
-            icon: 'info',
-            confirmButtonText: 'Entendido',
-            confirmButtonColor: '#007bff',
-            customClass: {
-                popup: 'border border-primary shadow-lg rounded-3',  // borde azul y sombra
-                title: 'fs-4 fw-bold text-primary mb-4',             // título grande y azul
-                htmlContainer: 'text-center fs-5'                     // centrado
-            }
-        });
+                        Swal.fire({
+                        title: data.nombreCompleto,
+                        html: `
+                         <div class="text-center mt-3">
+                         <p class="mb-2"><strong>DNI:</strong> ${data.dni || 'No disponible'}</p>
+                         <p class="mb-2"><strong>Teléfono:</strong> ${data.telefono || 'No disponible'}</p>
+                        <p class="mb-3"><strong>Dirección:</strong> ${data.direccion || 'No disponible'}</p>
+                        </div>
+                        `,
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff',
+                        customClass: {
+                        popup: 'border border-primary shadow-lg rounded-3',  // borde azul y sombra
+                        title: 'fs-4 fw-bold text-primary mb-4',             // título grande y azul
+                        htmlContainer: 'text-center fs-5'                     // centrado
+                        }
+           });
                     } else {
                         Swal.fire('No encontrado', data.message || 'No se encontraron datos', 'warning');
                     }

@@ -704,6 +704,10 @@
 
                 const data = await response.json();
 
+                        if (!Array.isArray(data)) {
+            throw new Error(data.message || 'El servidor devolvió un formato inesperado.');
+        }
+
                 const tbody = document.querySelector('#tablaVacaciones tbody');
                 tbody.innerHTML = ''; // Limpiamos
 

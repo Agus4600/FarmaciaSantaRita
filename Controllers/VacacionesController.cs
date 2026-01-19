@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace FarmaciaSantaRita.Controllers
@@ -57,7 +59,7 @@ namespace FarmaciaSantaRita.Controllers
                 .Select(u => new
                 {
                     idusuario = u.Idusuario,
-                    nombre = u.Nombre + " " + u.Apellido
+                    nombre = u.Nombre + " " + u.Apellido 
                 })
                 .ToListAsync();
 
@@ -169,28 +171,39 @@ namespace FarmaciaSantaRita.Controllers
             {
                 var query = _context.Vacaciones.AsNoTracking();
 
-                // Filtro por nombre (ILike es seguro y eficiente en Postgres)
-                if (!string.IsNullOrEmpty(nombreEmpleado))
+                // Filtro ultra-tolerante por nombre/apellido
+                if (!string.IsNullOrWhiteSpace(nombreEmpleado))
                 {
-                    var busquedaLimpia = nombreEmpleado.Replace(".", "").Trim().ToLower();
+                    // 1. Limpiamos el texto que escribe el usuario
+                    string textoBuscado = nombreEmpleado
+                        .ToLowerInvariant()                           // Todo minúsculas
+                        .Normalize(NormalizationForm.FormD)           // Descompone acentos (á → a + ´)
+                        .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark) // Quita marcas de acento
+                        .Aggregate("", (current, c) => current + c)
+                        .Replace(" ", "")                             // Quita espacios
+                        .Replace(".", "").Replace(",", "")            // Quita puntos y comas
+                        .Replace("-", "").Replace("_", "");           // Quita guiones y guiones bajos
 
-                    // Filtramos usando Unaccent (tildes) + ILike (mayúsculas)
+                    // 2. Buscamos con ILike (ya ignora case y acentos en Postgres)
+                    // Usamos %...% para coincidencia parcial
                     query = query.Where(v =>
-                        EF.Functions.ILike(EF.Functions.Unaccent(v.NombreEmpleadoRegistrado ?? ""), $"%{busquedaLimpia}%")
+                        EF.Functions.ILike(
+                            EF.Functions.Unaccent(v.NombreEmpleadoRegistrado ?? ""), // Unaccent en la BD (extra tolerancia)
+                            $"%{textoBuscado}%"
+                        )
                     );
                 }
 
+                // Filtro por fechas (queda igual, ya funciona)
                 if (fechaDesde.HasValue && fechaHasta.HasValue)
                 {
                     var desdeUtc = DateTime.SpecifyKind(fechaDesde.Value.Date, DateTimeKind.Utc);
                     var hastaUtc = DateTime.SpecifyKind(fechaHasta.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
 
-                    // Solo vacaciones COMPLETAMENTE DENTRO del rango
                     query = query.Where(v =>
-                        v.FechaInicio >= desdeUtc && v.FechaFin <= hastaUtc);
+                        v.FechaInicio <= hastaUtc && v.FechaFin >= desdeUtc);
                 }
 
-                // 1. Traemos SOLO los datos crudos (sin cálculos dentro de la consulta SQL)
                 var datosCrudos = await query
                     .OrderByDescending(v => v.FechaInicio)
                     .Select(v => new
@@ -203,7 +216,6 @@ namespace FarmaciaSantaRita.Controllers
                     })
                     .ToListAsync();
 
-                // 2. Procesamos formato y cálculo de días FAVOR en MEMORIA (C#)
                 var resultados = datosCrudos.Select(v => new
                 {
                     v.IdVacaciones,
@@ -211,7 +223,6 @@ namespace FarmaciaSantaRita.Controllers
                     v.DiasVacaciones,
                     fechaInicio = v.FechaInicio.ToString("dd/MM/yyyy"),
                     fechaFin = v.FechaFin.ToString("dd/MM/yyyy"),
-                    // Cálculo 100% en C#: Postgres no interviene aquí
                     diasFavor = Math.Abs(v.DiasVacaciones - ((v.FechaFin - v.FechaInicio).Days + 1))
                 }).ToList();
 
@@ -219,7 +230,6 @@ namespace FarmaciaSantaRita.Controllers
             }
             catch (Exception ex)
             {
-                // Para depuración: devuelve el error completo
                 return StatusCode(500, new { success = false, message = ex.Message + " | Inner: " + (ex.InnerException?.Message ?? "sin inner") });
             }
         }

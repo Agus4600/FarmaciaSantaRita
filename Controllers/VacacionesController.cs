@@ -169,16 +169,14 @@ namespace FarmaciaSantaRita.Controllers
             {
                 var query = _context.Vacaciones.AsNoTracking();
 
-                // Reemplaza el bloque del filtro por nombre con este:
+                // Filtro por nombre (ILike es seguro y eficiente en Postgres)
                 if (!string.IsNullOrEmpty(nombreEmpleado))
                 {
-                    // Usamos interpolación para limpiar de acentos tanto la columna como el parámetro
-                    // 'unaccent' elimina tildes y diéresis
+                    var busquedaLimpia = nombreEmpleado.Replace(".", "").Trim().ToLower();
+
+                    // Filtramos usando Unaccent (tildes) + ILike (mayúsculas)
                     query = query.Where(v =>
-                        EF.Functions.ILike(
-                            EF.Functions.Collate(v.NombreEmpleadoRegistrado ?? "", "unaccent"),
-                            $"%{nombreEmpleado}%"
-                        )
+                        EF.Functions.ILike(EF.Functions.Unaccent(v.NombreEmpleadoRegistrado ?? ""), $"%{busquedaLimpia}%")
                     );
                 }
 

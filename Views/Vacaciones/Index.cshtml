@@ -1013,19 +1013,24 @@
             });
 
             // Selección de filas y check all
-            document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function (e) {
-                const fila = e.target.closest('tr');
-                if (!fila || !fila.hasAttribute('data-vacacion-id')) return;
-                const checkbox = fila.querySelector('.fila-check');
-                if (checkbox) {
-                    if (e.target !== checkbox) checkbox.checked = !checkbox.checked;
-                    fila.classList.toggle('fila-seleccionada', checkbox.checked);
-                }
-                const checkAll = document.getElementById('checkAll');
-                const totalFilas = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id]`).length;
-                const marcadas = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id] .fila-check:checked`).length;
-                checkAll.checked = marcadas > 0 && marcadas === totalFilas;
-            });
+                    document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function (e) {
+            const td = e.target.closest('td');
+            // Si el click fue en la columna del nombre (primera celda), NO hacemos nada aquí
+            if (td && td.cellIndex === 0) return;
+
+            const fila = e.target.closest('tr');
+            if (!fila || !fila.hasAttribute('data-vacacion-id')) return;
+            const checkbox = fila.querySelector('.fila-check');
+            if (checkbox) {
+                if (e.target !== checkbox) checkbox.checked = !checkbox.checked;
+                fila.classList.toggle('fila-seleccionada', checkbox.checked);
+            }
+
+            const checkAll = document.getElementById('checkAll');
+            const totalFilas = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id]`).length;
+            const marcadas = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id] .fila-check:checked`).length;
+            checkAll.checked = marcadas > 0 && marcadas === totalFilas;
+        });
 
             document.getElementById('checkAll').addEventListener('change', function () {
                 const checked = this.checked;

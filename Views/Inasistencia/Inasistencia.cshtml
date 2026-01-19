@@ -917,33 +917,42 @@
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/locale/es.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
-
 	<script>
 		// ----------------------------------------------------
 		// 1. CONSTANTES GLOBALES Y FUNCIONES DE TABLA
 		// ----------------------------------------------------
 		const idUsuarioActual = @(Context.Session.GetInt32("IDUsuario") ?? 1);
-		let registrosInasistenciaIniciales = @Html.Raw(Json.Serialize(ViewBag.Inasistencias ?? new List<object>()));
+
+		// ⭐ AL INICIO ya NO cargamos desde ViewBag, pero lo dejamos como respaldo por si falla la API
+		let registrosInasistenciaIniciales =
+			@Html.Raw(Json.Serialize(ViewBag.Inasistencias ?? new List<object>()));
+
 		const MIN_FILAS_VISIBLE = 5;
 		const TABLA_ID = "tablaInasistencias";
 
+		// ----------------------------------------------------
+		// ⭐ NUEVA FUNCIÓN: CARGA REAL DESDE LA BASE DE DATOS
+		// ----------------------------------------------------
 		async function refrescarTablaDesdeDb() {
 			try {
 				const response = await fetch(`/Inasistencia/GetDbInfo?idProveedor=@idProveedor`);
 				const data = await response.json();
+
 				if (Array.isArray(data)) {
-					registrosInasistenciaIniciales = data;
+					registrosInasistenciaIniciales = data; // Reemplaza ViewBag
 					llenarTablaInasistencias(data);
 				} else {
 					console.error("Formato inesperado recibido del servidor:", data);
 				}
 			} catch (err) {
 				console.error("Error al refrescar la tabla desde el servidor:", err);
+				// Si falla, mostramos datos del ViewBag por seguridad
 				llenarTablaInasistencias(registrosInasistenciaIniciales);
 			}
 		}
@@ -951,10 +960,13 @@
 		function crearFilasVacias(cantidad) {
 			const tbody = document.querySelector(`#${TABLA_ID} tbody`);
 			if (!tbody) return;
+
 			const fragment = document.createDocumentFragment();
+
 			for (let i = 0; i < cantidad; i++) {
 				const fila = document.createElement("tr");
 				fila.setAttribute("data-inasistencia-id", "0");
+
 				fila.innerHTML = `
 					<td></td>
 					<td></td>
@@ -967,23 +979,30 @@
 			tbody.appendChild(fragment);
 		}
 
-		function llenarTablaInasistencias(registros) {
+				function llenarTablaInasistencias(registros) {
 			const tbody = document.querySelector(`#${TABLA_ID} tbody`);
 			if (!tbody) return;
 			tbody.innerHTML = "";
+
 			registros.forEach(item => {
 				const idRegistro = item.idInasistencia || "0";
+				// IMPORTANTE: Asegúrate de que el objeto 'item' traiga el IdUsuario o IdEmpleado del servidor
 				const idEmpleado = item.idusuario || item.idUsuario || "0";
+
 				const fechaInasistencia = item.fecha || '';
 				const fechaDisplay = fechaInasistencia ? fechaInasistencia.split('-').reverse().join('/') : '';
+
 				const nombreEmpleado = item.nombreEmpleado || '';
 				const turno = item.turno || '';
 				const motivo = item.motivo || '';
+
 				if (!fechaInasistencia && !nombreEmpleado && !turno && !motivo) return;
 
 				const fila = document.createElement("tr");
 				fila.setAttribute("data-inasistencia-id", idRegistro);
+				// Guardamos el ID del usuario en la fila para el modal
 				fila.setAttribute("data-id-empleado", idEmpleado);
+
 				fila.innerHTML = `
 					<td title="${fechaDisplay}">${fechaDisplay}</td>
 					<td title="${nombreEmpleado}" class="columna-empleado">${nombreEmpleado}</td>
@@ -993,108 +1012,173 @@
 				`;
 				tbody.appendChild(fila);
 			});
+
 			ajustarFilasVacias();
 		}
 
 		function ajustarFilasVacias() {
 			const filas = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-inasistencia-id]:not([data-inasistencia-id='0'])`);
 			const filasVacias = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-inasistencia-id='0']`);
+
 			filasVacias.forEach(row => row.remove());
+
 			if (filas.length < MIN_FILAS_VISIBLE) {
 				crearFilasVacias(MIN_FILAS_VISIBLE - filas.length);
 			}
 		}
 
+		//---------------------------------------------------------------------
+		// 1. Guardar filas de tabla en localStorage
+		//---------------------------------------------------------------------
 		function guardarTablaLocal() {
 			let datos = [];
+
 			document.querySelectorAll(`#${TABLA_ID} tbody tr`).forEach(tr => {
 				const id = tr.getAttribute('data-inasistencia-id') || "0";
 				const tds = tr.querySelectorAll("td");
 				if (!tds.length) return;
+
 				const fecha = tds[0].innerText.trim();
 				const empleado = tds[1].innerText.trim();
 				const turno = tds[2].innerText.trim();
 				const motivo = tds[3].innerText.trim();
+
 				if (!fecha && !empleado && !turno && !motivo) return;
+
 				datos.push({ id, fecha, empleado, turno, motivo });
 			});
+
 			localStorage.setItem("inasistencias_guardadas", JSON.stringify(datos));
 		}
 
+		//---------------------------------------------------------------------
+		// 2. Cargar la tabla desde localStorage
+		//---------------------------------------------------------------------
 		function cargarTablaLocal() {
 			let datos = JSON.parse(localStorage.getItem("inasistencias_guardadas") || "[]");
 			if (!Array.isArray(datos) || datos.length === 0) return;
+
 			let tbody = document.querySelector(`#${TABLA_ID} tbody`);
 			if (!tbody) return;
+
 			const existeFilaServidor = tbody.querySelector("tr[data-inasistencia-id]:not([data-inasistencia-id='0'])");
+
 			if (!existeFilaServidor) {
 				tbody.innerHTML = "";
+				datos.forEach(d => {
+					tbody.insertAdjacentHTML("beforeend", `
+						<tr data-inasistencia-id="${d.id}">
+							<td>${d.fecha}</td>
+							<td>${d.empleado}</td>
+							<td>${d.turno}</td>
+							<td>${d.motivo}</td>
+							<td><input type="checkbox" class="form-check-input fila-check" data-id="${d.id}"></td>
+						</tr>
+					`);
+				});
+			} else {
+				datos.forEach(d => {
+					if (tbody.querySelector(`tr[data-inasistencia-id='${d.id}']`)) return;
+
+					tbody.insertAdjacentHTML("beforeend", `
+						<tr data-inasistencia-id="${d.id}">
+							<td>${d.fecha}</td>
+							<td>${d.empleado}</td>
+							<td>${d.turno}</td>
+							<td>${d.motivo}</td>
+							<td><input type="checkbox" class="form-check-input fila-check" data-id="${d.id}"></td>
+						</tr>
+					`);
+				});
 			}
-			datos.forEach(d => {
-				if (tbody.querySelector(`tr[data-inasistencia-id='${d.id}']`)) return;
-				tbody.insertAdjacentHTML("beforeend", `
-					<tr data-inasistencia-id="${d.id}">
-						<td>${d.fecha}</td>
-						<td>${d.empleado}</td>
-						<td>${d.turno}</td>
-						<td>${d.motivo}</td>
-						<td><input type="checkbox" class="form-check-input fila-check" data-id="${d.id}"></td>
-					</tr>
-				`);
-			});
+
 			ajustarFilasVacias();
 		}
 
+		// ----------------------------------------------------
+		// ⭐ LIMPIEZA VISUAL PARA "NUEVO REGISTRO"
+		// ----------------------------------------------------
 		function limpiarTablaVisualmente() {
 			const tbody = document.querySelector(`#${TABLA_ID} tbody`);
 			if (!tbody) return;
+
 			document.querySelectorAll(`#${TABLA_ID} tbody tr`).forEach(f => f.remove());
+
 			localStorage.removeItem("inasistencias_guardadas");
 			registrosInasistenciaIniciales = [];
+
 			crearFilasVacias(MIN_FILAS_VISIBLE);
+
+			// MENSAJE ELIMINADO: alert("La tabla ha sido limpiada. Puede comenzar un nuevo registro.");
 		}
-
 		// ----------------------------------------------------
-		// 2. LÓGICA DE BOTONES
+		// 2 LÓGICA DE BOTONES
 		// ----------------------------------------------------
 
-		document.getElementById("btnAgregar").addEventListener("click", async function () {
+				document.getElementById("btnAgregar").addEventListener("click", async function () {
+
+			// 1. OBTENER ELEMENTOS Y VALORES
 			const fechaInput = document.getElementById("fechaInput");
-			const empleadoSelect = document.getElementById("empleadoSelect");
+			const empleadoSelect = document.getElementById("empleadoSelect"); // ⭐ CAMBIO CLAVE: Obtener el SELECT
 			const empleadoTextoCompleto = empleadoSelect.options[empleadoSelect.selectedIndex].text.trim();
 			const turnoSelect = document.getElementById("turnoSelect");
 			const motivoInput = document.getElementById("motivoInput");
 			const tbody = document.querySelector("#tablaInasistencias tbody");
 
 			const fechaValue = fechaInput.value;
-			const empleadoId = parseInt(empleadoSelect.value) || 0;
-			const empleadoNombre = empleadoTextoCompleto.split(" - Dni:")[0];
+
+			const empleadoId = parseInt(empleadoSelect.value) || 0; // El ID del empleado es el VALUE
+			const empleadoNombre = empleadoTextoCompleto.split(" - Dni:")[0];// El Nombre es el TEXTO de la opción
+
+
 			const turno = turnoSelect.value;
 			const motivo = motivoInput.value.trim();
 
+			// 2. LÓGICA DE VALIDACIÓN VISUAL (ERROR FEEDBACK) Y BLOQUEO DE ENVÍO
 			let camposCompletos = true;
-			[fechaInput, empleadoSelect, turnoSelect, motivoInput].forEach(input => input.classList.remove('is-invalid'));
 
-			if (!fechaValue) { fechaInput.classList.add('is-invalid'); camposCompletos = false; }
-			if (empleadoId <= 0) { empleadoSelect.classList.add('is-invalid'); camposCompletos = false; }
-			if (!turno) { turnoSelect.classList.add('is-invalid'); camposCompletos = false; }
-			if (!motivo) { motivoInput.classList.add('is-invalid'); camposCompletos = false; }
+			// Limpieza de errores previos
+			[fechaInput, empleadoSelect, turnoSelect, motivoInput].forEach(input => { // Ajustado para empleadoSelect
+				input.classList.remove('is-invalid');
+			});
 
+			// Verificación de campos y aplicación de error
+			if (!fechaValue) {
+				fechaInput.classList.add('is-invalid');
+				camposCompletos = false;
+			}
+			// ⭐ VALIDACIÓN EMPLEADO: Ahora se valida si el ID es válido (> 0)
+			if (empleadoId <= 0) {
+				empleadoSelect.classList.add('is-invalid');
+				camposCompletos = false;
+			}
+			if (!turno) {
+				turnoSelect.classList.add('is-invalid');
+				camposCompletos = false;
+			}
+			if (!motivo) {
+				motivoInput.classList.add('is-invalid');
+				camposCompletos = false;
+			}
+
+			// ⭐ BLOQUEO CLAVE: Si los campos no están completos, MUESTRA ALERTA Y DETIENE LA EJECUCIÓN
 			if (!camposCompletos) {
 				Swal.fire({
 					title: 'Campos Incompletos',
-					text: 'Debe completar todos los campos antes de agregar.',
+					text: 'Debe completar todos los campos (Fecha, Empleado, Turno y Motivo) antes de agregar la inasistencia.',
 					confirmButtonText: 'Entendido',
 					confirmButtonColor: '#007bff'
 				});
-				return;
+				return; // <--- ESTO DETIENE LA FUNCIÓN Y EVITA QUE SE AGREGUE LA FILA O SE LLAME A LA BD
 			}
+			// Si la ejecución llega aquí, los campos están completos.
 
 			const idUsuarioAutenticado = @(Context.Session.GetInt32("IDUsuario") ?? 1);
+
 			const datosRegistro = {
 				IdUsuario: idUsuarioAutenticado,
-				IdEmpleado: empleadoId,
-				NombreEmpleado: empleadoNombre,
+				IdEmpleado: empleadoId, // ⭐ USAMOS EL ID OBTENIDO DEL SELECT
+				NombreEmpleado: empleadoNombre, // ⭐ USAMOS EL NOMBRE OBTENIDO DEL SELECT
 				Turno: turno,
 				Motivo: motivo,
 				Fecha: fechaValue
@@ -1103,11 +1187,12 @@
 			const partesFecha = fechaValue.split('-');
 			const fechaFormateada = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;
 
+			// Añadir fila temporal de inmediato (color amarillo para indicar guardado pendiente)
 			const filaTemporalId = `temp-${Date.now()}`;
 			const filaTemporalHTML = `
 				<tr data-inasistencia-id="${filaTemporalId}" class="table-warning">
 					<td title="${fechaFormateada}">${fechaFormateada}</td>
-					<td title="${empleadoNombre}" class="columna-empleado">${empleadoNombre}</td>
+					<td title="${empleadoNombre}">${empleadoNombre}</td>
 					<td title="${turno}">${turno}</td>
 					<td title="${motivo}">${motivo}</td>
 					<td><input type="checkbox" class="form-check-input fila-check" data-id="${filaTemporalId}" disabled /></td>
@@ -1115,7 +1200,9 @@
 			`;
 			tbody.insertAdjacentHTML("afterbegin", filaTemporalHTML);
 
+			// Limpiar formulario y ajustar filas vacías
 			document.getElementById("formInasistencia").reset();
+			// document.getElementById("empleadoIdOculto").value = empleadoId; // Ya no es necesario
 			ajustarFilasVacias();
 
 			try {
@@ -1124,38 +1211,51 @@
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(datosRegistro)
 				});
+
 				const data = await response.json();
 				const filaTemporal = document.querySelector(`tr[data-inasistencia-id='${filaTemporalId}']`);
 
 				if (data.exito) {
-					filaTemporal.setAttribute("data-inasistencia-id", data.idInasistencia);
-					filaTemporal.classList.remove('table-warning');
-					filaTemporal.querySelector('.fila-check').removeAttribute('disabled');
-					filaTemporal.querySelector('.fila-check').setAttribute('data-id', data.idInasistencia);
-					registrosInasistenciaIniciales.unshift({
-						IdInasistencia: data.idInasistencia,
-						Fecha: fechaValue,
-						NombreEmpleado: empleadoNombre,
-						Turno: turno,
-						Motivo: motivo
-					});
-				} else {
-					console.error("Error del Servidor:", data.mensaje);
 					if (filaTemporal) {
+						// Actualizar la fila temporal con el ID real de la base de datos
+						filaTemporal.setAttribute("data-inasistencia-id", data.idInasistencia);
 						filaTemporal.classList.remove('table-warning');
 						filaTemporal.querySelector('.fila-check').removeAttribute('disabled');
-						filaTemporal.querySelector('.fila-check').setAttribute('data-id', "0");
+						filaTemporal.querySelector('.fila-check').setAttribute('data-id', data.idInasistencia); // Asegurar que el checkbox tenga el ID de DB
+
+						// Actualizamos los registros iniciales para futuras búsquedas o recargas
+						registrosInasistenciaIniciales.unshift({
+							IdInasistencia: data.idInasistencia,
+							Fecha: fechaValue, // YYYY-MM-DD
+							NombreEmpleado: empleadoNombre,
+							Turno: turno,
+							Motivo: motivo
+						});
+					}
+				} else {
+					// Muestra el mensaje de error del servidor
+					console.error("Error del Servidor:", data.mensaje); // Error a consola
+
+					// Si falla la persistencia, dejamos la fila temporal en la tabla
+					if (filaTemporal) {
+						filaTemporal.classList.remove('table-warning'); // Quitar color de "pendiente"
+						filaTemporal.querySelector('.fila-check').removeAttribute('disabled'); // Permitir selección
+						filaTemporal.querySelector('.fila-check').setAttribute('data-id', "0"); // Usar ID 0 para forzar el tratamiento local
 						filaTemporal.setAttribute("data-inasistencia-id", "0");
 					}
+
+					// Notificación de error de SweetAlert
 					Swal.fire({
 						title: 'Registro No Guardado',
-						text: data.mensaje || 'Intente más tarde.',
+						text: 'El registro no se guardó, intente Guardar/Eliminar más tarde. Error:' + data.mensaje,
 						confirmButtonText: 'Entendido',
 						confirmButtonColor: '#007bff'
 					});
 				}
 			} catch (error) {
-				console.error("Error de conexión:", error);
+				console.error("Error de conexión con el servidor: ", error); // Error a consola
+
+				// Si falla la conexión, dejamos la fila temporal
 				const filaTemporal = document.querySelector(`tr[data-inasistencia-id='${filaTemporalId}']`);
 				if (filaTemporal) {
 					filaTemporal.classList.remove('table-warning');
@@ -1163,108 +1263,163 @@
 					filaTemporal.querySelector('.fila-check').setAttribute('data-id', "0");
 					filaTemporal.setAttribute("data-inasistencia-id", "0");
 				}
+
+				// Notificación de error de SweetAlert
 				Swal.fire({
 					title: 'Error de Conexión',
-					text: 'El registro quedó localmente (ID 0). Intente más tarde.',
+					text: 'No se pudo conectar con el servidor. El registro se ha mantenido en la tabla localmente (ID 0). Intente Guardar/Eliminar más tarde.',
 					confirmButtonText: 'Entendido',
 					confirmButtonColor: '#007bff'
 				});
 			}
-
-			guardarTablaLocal();
+			guardarTablaLocal(); // Guarda el estado actual (con la fila temporal/persisitda)
 		});
 
-		// ... (el resto de los botones: btnEliminarFila, btnBuscarFiltro, btnGuardar, etc. se mantienen igual)
 
-		// 🎯 Lógica para alternar la selección de filas (MODIFICADO PARA IGNORAR COLUMNA EMPLEADO)
-		document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function(e) {
-			// Si clickeó en la columna del nombre → NO hacemos selección
-			if (e.target.closest('td:nth-child(2)') || e.target.closest('td.columna-empleado')) {
-				console.log('[SELECCIÓN] Ignorado: click en columna Empleado');
+		// 🎯 BOTÓN ELIMINAR (Lógica completa y corregida)
+				document.getElementById("btnEliminarFila").addEventListener("click", async function() {
+			const checkboxesSeleccionados = document.querySelectorAll(`#${TABLA_ID} .fila-check:checked`);
+
+			if (!checkboxesSeleccionados || checkboxesSeleccionados.length === 0) {
+				alert("Debe seleccionar un registro de inasistencia para eliminar."); // Validación MANTENIDA
 				return;
 			}
 
+			// Preparar listas
+			const idsParaEliminarEnDB = [];
+			const filasLocalesAEliminar = [];
+
+			checkboxesSeleccionados.forEach(chk => {
+				// Obtenemos el ID de la fila
+				const tr = chk.closest("tr");
+				const dataId = chk.getAttribute('data-id') ?? tr?.getAttribute('data-inasistencia-id') ?? "0";
+
+				// Determinamos si el ID es un número real de DB
+				const idEsValidoDB = !isNaN(parseInt(dataId)) && parseInt(dataId) > 0;
+
+				if (idEsValidoDB) {
+					idsParaEliminarEnDB.push(String(dataId));
+				} else {
+					// Filas locales
+					filasLocalesAEliminar.push(tr);
+				}
+			});
+
+			// 1. Eliminar filas locales del DOM
+			if (filasLocalesAEliminar.length > 0) {
+				filasLocalesAEliminar.forEach(tr => {
+					if (tr) tr.remove();
+				});
+				ajustarFilasVacias();
+			}
+
+			// 2. Eliminar en DB (si hay IDs válidos)
+			if (idsParaEliminarEnDB.length > 0) {
+
+				// ⭐ CONFIGURACIÓN DEL MODAL DE CONFIRMACIÓN (ANTES DE ELIMINAR)
+				const resultadoConfirmacion = await Swal.fire({
+					title: 'Confirmación de Eliminación',
+					html: `¿Está seguro de que desea eliminar <b>${idsParaEliminarEnDB.length} registro(s)</b>?`,
+					showCancelButton: true,
+					confirmButtonColor: '#007bff',
+					cancelButtonColor: '#007bff',
+					confirmButtonText: 'Si, Eliminar',
+					cancelButtonText: 'Cancelar'
+				});
+
+				// Verificamos si el usuario confirmó
+				if (resultadoConfirmacion.isConfirmed) {
+
+					// Si el usuario confirma, procedemos con la eliminación en la DB
+					const resultados = await Promise.allSettled(idsParaEliminarEnDB.map(id =>
+						fetch(`/Inasistencia/EliminarInasistencia?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+							.then(r => r.json())
+					));
+
+					let exitosos = 0;
+					let errores = [];
+
+					for (let i = 0; i < resultados.length; i++) {
+						const res = resultados[i];
+						const id = idsParaEliminarEnDB[i];
+
+						if (res.status === 'fulfilled' && res.value && res.value.success) {
+							const fila = document.querySelector(`#${TABLA_ID} tr[data-inasistencia-id='${id}']`);
+							if (fila) fila.remove();
+
+							registrosInasistenciaIniciales = registrosInasistenciaIniciales.filter(r => String(r.IdInasistencia) !== String(id));
+							exitosos++;
+						} else {
+							let msg = (res.status === 'fulfilled' && res.value && res.value.mensaje) ? res.value.mensaje : (res.reason ? res.reason.message : 'Error desconocido de red/servidor');
+							errores.push({ id, msg });
+						}
+					}
+
+					// Registro de resultados en consola (mantenemos la lógica anterior)
+					if (exitosos > 0) console.log(`[ELIMINAR] ${exitosos} registro(s) eliminados de la DB correctamente.`);
+					if (errores.length > 0) console.error(`[ELIMINAR] Error(es) de DB: ${errores.map(e => `ID ${e.id}: ${e.msg}`).join(' / ')}`);
+
+					// ⭐ OPCIONAL: Mostrar un mensaje de resultado final (de éxito o error) centrado
+					if (exitosos > 0) {
+						// ⭐ CAMBIO CLAVE: Agregamos confirmButtonColor para cambiar el color del botón "OK"
+						Swal.fire({
+							title: '¡Eliminado!',
+							text: 'Los registros seleccionados han sido eliminados.',
+							icon: 'success',
+							confirmButtonText: 'Entendido',
+							confirmButtonColor: '#007bff' // Color azul del botón OK, para que coincida con tus otros botones.
+						});
+					} else if (errores.length > 0) {
+						 Swal.fire('Error de Eliminación', 'Algunos registros no pudieron ser eliminados', 'error');
+					}
+
+				} else {
+					 // El usuario canceló la eliminación en la DB.
+					 console.log("[ELIMINAR] Operación de eliminación cancelada por el usuario.");
+				}
+			}
+
+			// 3. Ajustes finales y guardado local
+			ajustarFilasVacias();
+			guardarTablaLocal();
+		});
+
+
+
+
+		// 🎯 Lógica para alternar la selección de filas
+		document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function(e) {
 			const fila = e.target.closest('tr');
+			// Excluir filas vacías (ID '0') de la selección
 			if (!fila || fila.getAttribute('data-inasistencia-id') === '0') return;
 
 			const checkbox = fila.querySelector('.fila-check');
+
 			if (checkbox) {
+				// 1. Si el click no fue directamente en el checkbox, alternamos su estado
 				if (e.target.tagName !== 'INPUT' || e.target.type !== 'checkbox') {
 					checkbox.checked = !checkbox.checked;
 				}
+
+				// 2. Aplicar/remover estilo de selección y gestionar la selección múltiple
 				if (checkbox.checked) {
 					fila.classList.add('fila-seleccionada');
 				} else {
+					// 3. ⭐ CAMBIO CRÍTICO (A): Al desmarcar, quitamos el estilo
 					fila.classList.remove('fila-seleccionada');
 				}
 			}
 
+			// 4. ⭐ CAMBIO CRÍTICO (B): Sincronizar el Checkbox Maestro con la selección múltiple.
 			const checkAll = document.getElementById('checkAll');
 			if (checkAll) {
 				const filasConDatos = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-inasistencia-id]:not([data-inasistencia-id='0'])`);
 				const checksMarcados = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-inasistencia-id]:not([data-inasistencia-id='0']) .fila-check:checked`);
+
+				// Marcar el maestro si el número de marcados es igual al número total de filas con datos.
 				checkAll.checked = (checksMarcados.length > 0 && checksMarcados.length === filasConDatos.length);
 			}
 		});
-
-		// ----------------------------------------------------
-		// Click en nombre del empleado - PRIORIDAD ALTA
-		// ----------------------------------------------------
-		document.addEventListener('click', function (e) {
-			const td = e.target.closest('#tablaInasistencias tbody td:nth-child(2)');
-			if (!td) return;
-
-			console.log('[NOMBRE] Click detectado en columna Empleado');
-
-			e.stopPropagation();
-			e.preventDefault();
-
-			const nombreCompleto = td.innerText.trim();
-			if (!nombreCompleto || nombreCompleto === 'Sin nombre') return;
-
-			console.log('[NOMBRE] Abriendo modal para:', nombreCompleto);
-
-			fetch(`/Inasistencia/GetDatosEmpleado?nombre=${encodeURIComponent(nombreCompleto)}`)
-				.then(response => {
-					console.log('[NOMBRE] Status fetch:', response.status);
-					if (!response.ok) throw new Error('HTTP ' + response.status);
-					return response.json();
-				})
-				.then(data => {
-					console.log('[NOMBRE] Datos recibidos:', data);
-					if (data.success) {
-						Swal.fire({
-							title: data.nombreCompleto,
-							html: `
-								<div class="text-center mt-3">
-									<p class="mb-2"><strong>DNI:</strong> ${data.dni || 'No disponible'}</p>
-									<p class="mb-2"><strong>Teléfono:</strong> ${data.telefono || 'No disponible'}</p>
-									<p class="mb-3"><strong>Dirección:</strong> ${data.direccion || 'No disponible'}</p>
-								</div>
-							`,
-							icon: 'info',
-							confirmButtonText: 'Entendido',
-							confirmButtonColor: '#007bff',
-							customClass: {
-								popup: 'border border-primary shadow-lg rounded-3',
-								title: 'fs-4 fw-bold text-primary mb-4',
-								htmlContainer: 'text-center fs-5'
-							}
-						});
-					} else {
-						Swal.fire('No encontrado', data.message || 'Empleado no encontrado', 'warning');
-					}
-				})
-				.catch(err => {
-					console.error('[NOMBRE] Error fetch:', err);
-					Swal.fire('Error', 'No se pudo cargar los datos del empleado', 'error');
-				});
-		}, { capture: true });
-
-		// ... (el resto del código: configurarCheckAll, DOMContentLoaded, quitarAcentos, btnBuscarFiltro, btnGuardar, etc. queda igual)
-
-	</script>
-}
 
 
 		// ----------------------------------------------------
@@ -1572,6 +1727,63 @@
 				// MENSAJE ELIMINADO: alert("Ocurrió un error al generar el archivo. Por favor, revise la consola.");
 			}
 
+
+					// Click en nombre del empleado en la tabla de Inasistencias (delegación de eventos)
+		// Este bloque DEBE estar FUERA del DOMContentLoaded
+
+				// Click en nombre del empleado en la tabla de Inasistencias (versión debug)
+		document.addEventListener('click', function (e) {
+			// Buscamos el <td> que contiene el nombre (más flexible que nth-child)
+			const td = e.target.closest('#tablaInasistencias tbody td[title]');
+			if (!td) return; // No es una celda con title → salimos
+
+			// Verificamos que sea la columna del empleado (por clase o contenido)
+			if (!td.classList.contains('columna-empleado') && !td.innerText.includes(' ')) return;
+
+			e.stopPropagation(); // Evita marcar checkbox
+
+			const nombreCompleto = td.innerText.trim();
+			console.log('[DEBUG] Click detectado en nombre:', nombreCompleto); // ← Esto debe aparecer en consola
+
+			if (!nombreCompleto || nombreCompleto === 'Sin nombre') return;
+
+			console.log('[DEBUG] Intentando fetch para:', nombreCompleto);
+
+			fetch(`/Inasistencia/GetDatosEmpleado?nombre=${encodeURIComponent(nombreCompleto)}`)
+				.then(response => {
+					console.log('[DEBUG] Respuesta fetch status:', response.status);
+					if (!response.ok) throw new Error(`HTTP ${response.status}`);
+					return response.json();
+				})
+				.then(data => {
+					console.log('[DEBUG] Datos recibidos:', data);
+					if (data.success) {
+						Swal.fire({
+							title: data.nombreCompleto,
+							html: `
+								<div class="text-center mt-3">
+									<p class="mb-2"><strong>DNI:</strong> ${data.dni || 'No disponible'}</p>
+									<p class="mb-2"><strong>Teléfono:</strong> ${data.telefono || 'No disponible'}</p>
+									<p class="mb-3"><strong>Dirección:</strong> ${data.direccion || 'No disponible'}</p>
+								</div>
+							`,
+							confirmButtonText: 'Entendido',
+							confirmButtonColor: '#007bff',
+							customClass: {
+								popup: 'border border-primary shadow-lg rounded-3',
+								title: 'fs-4 fw-bold text-primary mb-4',
+								htmlContainer: 'text-center fs-5'
+							}
+						});
+					} else {
+						Swal.fire('No encontrado', data.message || 'No se encontraron datos', 'warning');
+					}
+				})
+				.catch(err => {
+					console.error('[ERROR] Fetch falló:', err);
+					Swal.fire('Error', 'No se pudo cargar los datos del empleado: ' + err.message, 'error');
+				});
+		});
 		});
 	</script>
 }

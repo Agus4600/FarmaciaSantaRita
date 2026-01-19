@@ -62,6 +62,34 @@ public class InasistenciaController : Controller
 
 
     [HttpGet]
+    public async Task<IActionResult> GetDatosEmpleado(string nombre)
+    {
+        if (string.IsNullOrWhiteSpace(nombre))
+            return Json(new { success = false, message = "Nombre requerido" });
+
+        var empleado = await _context.Usuarios
+            .Where(u => EF.Functions.ILike(u.Nombre + " " + u.Apellido, $"%{nombre.Trim()}%"))
+            .Select(u => new
+            {
+                success = true,
+                nombreCompleto = u.Nombre + " " + u.Apellido,
+                dni = u.Dni,
+                telefono = u.Telefono,
+                direccion = u.Direccion
+            })
+            .FirstOrDefaultAsync();
+
+        if (empleado == null)
+            return Json(new { success = false, message = "Empleado no encontrado" });
+
+        return Json(empleado);
+    }
+
+
+
+
+
+    [HttpGet]
     public IActionResult BuscarInasistencias([FromQuery] string? fechaDesde,
                                           [FromQuery] string? fechaHasta,
                                           [FromQuery] string? nombreEmpleado,

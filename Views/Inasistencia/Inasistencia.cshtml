@@ -913,11 +913,12 @@
 	</div>
 </div>
 
+
+
 @section Scripts {
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
-
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/locale/es.js"></script>
@@ -979,15 +980,16 @@
 			tbody.appendChild(fragment);
 		}
 
-				function llenarTablaInasistencias(registros) {
+					function llenarTablaInasistencias(registros) {
 			const tbody = document.querySelector(`#${TABLA_ID} tbody`);
 			if (!tbody) return;
 			tbody.innerHTML = "";
 
 			registros.forEach(item => {
 				const idRegistro = item.idInasistencia || "0";
-				// IMPORTANTE: Asegúrate de que el objeto 'item' traiga el IdUsuario o IdEmpleado del servidor
-				const idEmpleado = item.idusuario || item.idUsuario || "0";
+
+				// Aquí extraemos el ID del objeto que viene del servidor
+				const idEmpleado = item.idusuario || item.idUsuario || item.idEmpleado || "0";
 
 				const fechaInasistencia = item.fecha || '';
 				const fechaDisplay = fechaInasistencia ? fechaInasistencia.split('-').reverse().join('/') : '';
@@ -999,8 +1001,11 @@
 				if (!fechaInasistencia && !nombreEmpleado && !turno && !motivo) return;
 
 				const fila = document.createElement("tr");
+
+				// 1. Atributo para identificar la inasistencia (para borrar/editar)
 				fila.setAttribute("data-inasistencia-id", idRegistro);
-				// Guardamos el ID del usuario en la fila para el modal
+
+				// ⭐ 2. AQUÍ COLOCAS LA LÍNEA (Atributo para el modal de datos)
 				fila.setAttribute("data-id-empleado", idEmpleado);
 
 				fila.innerHTML = `
@@ -1388,38 +1393,70 @@
 
 
 		// 🎯 Lógica para alternar la selección de filas
+				// 🎯 Lógica corregida para clics en la tabla
 		document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function(e) {
 			const fila = e.target.closest('tr');
-			// Excluir filas vacías (ID '0') de la selección
 			if (!fila || fila.getAttribute('data-inasistencia-id') === '0') return;
 
-			const checkbox = fila.querySelector('.fila-check');
+			// --- CASO A: CLIC EN EL NOMBRE (Abrir Modal) ---
+			if (e.target.classList.contains('columna-empleado')) {
+				e.stopPropagation(); // ✋ EVITA QUE SE SELECCIONE EL CHECKBOX
 
+				const idEmpleado = fila.getAttribute('data-id-empleado');
+				if (idEmpleado && idEmpleado !== "0") {
+					mostrarModalDatosEmpleado(idEmpleado);
+				}
+				return;
+			}
+
+			// --- CASO B: CLIC EN LA FILA (Seleccionar Checkbox) ---
+			const checkbox = fila.querySelector('.fila-check');
 			if (checkbox) {
-				// 1. Si el click no fue directamente en el checkbox, alternamos su estado
 				if (e.target.tagName !== 'INPUT' || e.target.type !== 'checkbox') {
 					checkbox.checked = !checkbox.checked;
 				}
 
-				// 2. Aplicar/remover estilo de selección y gestionar la selección múltiple
 				if (checkbox.checked) {
 					fila.classList.add('fila-seleccionada');
 				} else {
-					// 3. ⭐ CAMBIO CRÍTICO (A): Al desmarcar, quitamos el estilo
 					fila.classList.remove('fila-seleccionada');
 				}
 			}
 
-			// 4. ⭐ CAMBIO CRÍTICO (B): Sincronizar el Checkbox Maestro con la selección múltiple.
+			// Sincronizar Checkbox Maestro
 			const checkAll = document.getElementById('checkAll');
 			if (checkAll) {
 				const filasConDatos = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-inasistencia-id]:not([data-inasistencia-id='0'])`);
 				const checksMarcados = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-inasistencia-id]:not([data-inasistencia-id='0']) .fila-check:checked`);
-
-				// Marcar el maestro si el número de marcados es igual al número total de filas con datos.
 				checkAll.checked = (checksMarcados.length > 0 && checksMarcados.length === filasConDatos.length);
 			}
 		});
+
+		// Función que hace la llamada al servidor y abre el modal
+		async function mostrarModalDatosEmpleado(id) {
+			try {
+				const response = await fetch(`/Inasistencia/GetDatosEmpleado?id=${id}`);
+				const data = await response.json();
+
+				if (data.exito) {
+					// Llenar los campos del modal (Asegúrate de que los IDs coincidan con tu HTML)
+					document.getElementById("modalNombre").innerText = data.nombreCompleto || "No disponible";
+					document.getElementById("modalDni").innerText = data.dni || "No disponible";
+					document.getElementById("modalTelefono").innerText = data.telefono || "No disponible";
+					document.getElementById("modalDireccion").innerText = data.direccion || "No disponible";
+
+					// Mostrar modal usando Bootstrap 5
+					var modalEl = document.getElementById('modalDatosEmpleado');
+					var modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+					modalInstance.show();
+				} else {
+					Swal.fire('Error', data.message || 'No se pudieron obtener los datos', 'error');
+				}
+			} catch (error) {
+				console.error("Error:", error);
+				Swal.fire('Error', 'Error de conexión con el servidor', 'error');
+			}
+		}
 
 
 		// ----------------------------------------------------
@@ -1728,61 +1765,20 @@
 			}
 
 
-					// Click en nombre del empleado en la tabla de Inasistencias (delegación de eventos)
-		// Este bloque DEBE estar FUERA del DOMContentLoaded
-
-				// Click en nombre del empleado en la tabla de Inasistencias (versión debug)
 		document.addEventListener('click', function (e) {
-			// Buscamos el <td> que contiene el nombre (más flexible que nth-child)
-			const td = e.target.closest('#tablaInasistencias tbody td[title]');
-			if (!td) return; // No es una celda con title → salimos
+			// Detectamos si el clic fue en la celda del nombre
+			const td = e.target.closest('#tablaInasistencias tbody td.columna-empleado');
+			if (!td) return;
 
-			// Verificamos que sea la columna del empleado (por clase o contenido)
-			if (!td.classList.contains('columna-empleado') && !td.innerText.includes(' ')) return;
+			e.stopImmediatePropagation(); // Evita que otros eventos (como el del checkbox) actúen
 
-			e.stopPropagation(); // Evita marcar checkbox
+			const fila = td.closest('tr');
+			const idEmpleado = fila.getAttribute('data-id-empleado');
 
-			const nombreCompleto = td.innerText.trim();
-			console.log('[DEBUG] Click detectado en nombre:', nombreCompleto); // ← Esto debe aparecer en consola
-
-			if (!nombreCompleto || nombreCompleto === 'Sin nombre') return;
-
-			console.log('[DEBUG] Intentando fetch para:', nombreCompleto);
-
-			fetch(`/Inasistencia/GetDatosEmpleado?nombre=${encodeURIComponent(nombreCompleto)}`)
-				.then(response => {
-					console.log('[DEBUG] Respuesta fetch status:', response.status);
-					if (!response.ok) throw new Error(`HTTP ${response.status}`);
-					return response.json();
-				})
-				.then(data => {
-					console.log('[DEBUG] Datos recibidos:', data);
-					if (data.success) {
-						Swal.fire({
-							title: data.nombreCompleto,
-							html: `
-								<div class="text-center mt-3">
-									<p class="mb-2"><strong>DNI:</strong> ${data.dni || 'No disponible'}</p>
-									<p class="mb-2"><strong>Teléfono:</strong> ${data.telefono || 'No disponible'}</p>
-									<p class="mb-3"><strong>Dirección:</strong> ${data.direccion || 'No disponible'}</p>
-								</div>
-							`,
-							confirmButtonText: 'Entendido',
-							confirmButtonColor: '#007bff',
-							customClass: {
-								popup: 'border border-primary shadow-lg rounded-3',
-								title: 'fs-4 fw-bold text-primary mb-4',
-								htmlContainer: 'text-center fs-5'
-							}
-						});
-					} else {
-						Swal.fire('No encontrado', data.message || 'No se encontraron datos', 'warning');
-					}
-				})
-				.catch(err => {
-					console.error('[ERROR] Fetch falló:', err);
-					Swal.fire('Error', 'No se pudo cargar los datos del empleado: ' + err.message, 'error');
-				});
+			if (idEmpleado && idEmpleado !== "0") {
+				console.log("Abriendo detalle para empleado ID:", idEmpleado);
+				mostrarModalDatosEmpleado(idEmpleado);
+			}
 		});
 		});
 	</script>

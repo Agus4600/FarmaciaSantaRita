@@ -509,7 +509,7 @@
                             </div>
                             <div class="campo" style="flex: 0 0 150px; max-width: 150px;">
                                 <label for="diasInput">Días Solicitados</label>
-                                <input type="number" id="diasInput" class="form-control shadow-sm" min="1" max="60" value="15" />
+                                <input type="number" id="diasInput" class="form-control shadow-sm" min="1" max="60" value="1" />
                             </div>
                         </div>
                         <!-- Fila 2: Fecha Inicio y Fecha Fin -->
@@ -741,8 +741,7 @@
         });
 
                 // Validación y lógica completa de Agregar
-        document.getElementById('btnAgregar').addEventListener('click', async function (e) {
-            // Definimos TODAS las variables aquí (para que existan en este scope)
+                document.getElementById('btnAgregar').addEventListener('click', async function (e) {
             const elEmpleado = document.getElementById('empleadoSelect');
             const elDias = document.getElementById('diasInput');
             const btnPeriodo = document.getElementById('btnPeriodo');
@@ -754,16 +753,12 @@
 
             const empleadoId = elEmpleado.value?.trim() || '';
             const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.getAttribute('data-nombre') || '';
-            const diasVal = parseInt(elDias.value) || 0;
+            const diasSolicitados = parseInt(elDias.value) || 0;
             const periodoTexto = btnPeriodo.textContent.trim();
 
-            // Validaciones básicas (las que ya tenías)
+            // Validaciones básicas
             if (!empleadoId || empleadoId === '') {
                 Swal.fire('Error', 'Seleccione un empleado', 'error');
-                return;
-            }
-            if (diasVal < 1) {
-                Swal.fire('Error', 'Ingrese días solicitados (mínimo 1)', 'error');
                 return;
             }
             if (periodoTexto === 'dd/mm/yyyy - dd/mm/yyyy') {
@@ -775,31 +770,48 @@
             const inicioDate = new Date(desde.split('/').reverse().join('-'));
             const finDate = new Date(hasta.split('/').reverse().join('-'));
 
-            if (finDate < inicioDate) {
-                Swal.fire('Error', 'La fecha fin no puede ser anterior al inicio', 'error');
+            if (isNaN(inicioDate) || isNaN(finDate) || finDate < inicioDate) {
+                Swal.fire('Error', 'Fechas inválidas o fin anterior al inicio', 'error');
                 return;
             }
 
-            // ← VALIDACIÓN NUEVA: límite por antigüedad
-            const maxPermitido = parseInt(elDias.max) || 60;
-            if (diasVal > maxPermitido) {
+            // Calcular días reales del período (corridos)
+            const diasReales = Math.floor((finDate - inicioDate) / (1000 * 60 * 60 * 24)) + 1;
+
+            // Validación 1: días solicitados ≤ máximo legal
+            const maxLegal = parseInt(elDias.max) || 60;
+            if (diasSolicitados > maxLegal) {
                 e.preventDefault();
-                e.stopPropagation();
                 Swal.fire({
-                    title: 'Exceso de días',
-                    html: `No se pueden solicitar más de <b>${maxPermitido} días</b> según la antigüedad del empleado (LCT).<br>
-                           Máximo permitido: ${maxPermitido} días corridos.`,
-                    confirmButtonText: 'Corregir',
-                    confirmButtonColor: '#dc3545'
+                    icon: 'error',
+                    title: 'Exceso de días solicitados',
+                    html: `No se pueden solicitar más de <b>${maxLegal} días</b> según la antigüedad del empleado (LCT).<br>
+                           Días solicitados: ${diasSolicitados} (máximo permitido: ${maxLegal})`,
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
                 });
                 elDias.focus();
                 return;
             }
 
-            // Todo OK → tu código original de guardado
+            // Validación 2: días reales del período ≤ máximo legal
+            if (diasReales > maxLegal) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Período demasiado largo',
+                    html: `El período seleccionado tiene <b>${diasReales} días corridos</b>, pero solo corresponden <b>${maxLegal} días</b> por ley.<br>
+                           Reduce el rango de fechas o ajusta los días solicitados.`,
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+                });
+                btnPeriodo.focus();
+                return;
+            }
+
+            // Todo OK → proceder con el guardado
             const datos = {
                 Idusuario: parseInt(empleadoId),
-                DiasVacaciones: diasVal,
+                DiasVacaciones: diasSolicitados,
                 FechaInicio: inicioDate.toISOString(),
                 FechaFin: finDate.toISOString(),
                 NombreEmpleadoFrontend: empleadoNombre
@@ -823,33 +835,31 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    const dInicio = new Date(inicioDate);
-                    const dFin = new Date(finDate);
-                    const dReales = Math.floor((dFin - dInicio) / 86400000) + 1;
-                    const dFavor = Math.abs(diasVal - dReales);  // ← abs en minúscula
+                    // Días favor = máximo legal - días reales tomados
+                    const diasFavor = maxLegal - diasReales;
 
                     const tbody = document.querySelector('#tablaVacaciones tbody');
                     const nuevaFila = document.createElement('tr');
                     nuevaFila.setAttribute('data-vacacion-id', result.id);
                     nuevaFila.innerHTML = `
                         <td class="empleado-clickable">${empleadoNombre}</td>
-                        <td class="text-center">${diasVal}</td>
+                        <td class="text-center">${diasSolicitados}</td>
                         <td class="text-center">${desde} - ${hasta}</td>
-                        <td class="text-center">${dFavor}</td>
+                        <td class="text-center">${diasFavor}</td>
                         <td><input type="checkbox" class="form-check-input fila-check" /></td>
                     `;
                     tbody.insertBefore(nuevaFila, tbody.firstChild);
 
                     elEmpleado.value = '';
-                    elDias.value = '15';
+                    elDias.value = '0'; // ← Vuelve a 0
                     btnPeriodo.textContent = 'dd/mm/yyyy - dd/mm/yyyy';
                     agregarFilasVacias();
 
                     Swal.fire({
                         icon: 'success',
                         title: '¡Agregado!',
-                        text: 'Vacación registrada correctamente',
-                        timer: 1800,
+                        text: `Vacación registrada. Días a favor restantes: ${diasFavor}`,
+                        timer: 2500,
                         showConfirmButton: false
                     });
                 } else {
@@ -857,7 +867,7 @@
                 }
             } catch (err) {
                 console.error('Error en ApiCreate:', err);
-                Swal.fire('Error', 'No se pudo conectar con el servidor. Verifica tu conexión o intenta más tarde.', 'error');
+                Swal.fire('Error', 'No se pudo conectar con el servidor.', 'error');
             }
         });
 

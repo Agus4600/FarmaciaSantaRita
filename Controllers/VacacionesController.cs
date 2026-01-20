@@ -139,9 +139,10 @@ namespace FarmaciaSantaRita.Controllers
         [HttpPost]
         public async Task<IActionResult> ApiCreate([FromBody] Vacacion vacacion)
         {
+            // 1. Verificación básica de datos
             if (vacacion == null || vacacion.Idusuario == 0)
             {
-                return Json(new { success = false, message = "Datos inválidos." });
+                return Json(new { success = false, message = "Debe seleccionar un empleado válido." });
             }
 
             if (vacacion.FechaFin < vacacion.FechaInicio)
@@ -151,43 +152,47 @@ namespace FarmaciaSantaRita.Controllers
 
             try
             {
-                // Calcular días reales y días a favor
+                // 2. CORRECCIÓN DÍAS A FAVOR: 
+                // Calculamos cuántos días está ocupando según el calendario.
                 int diasReales = (vacacion.FechaFin - vacacion.FechaInicio).Days + 1;
-                vacacion.DiasFavor = Math.Abs(vacacion.DiasVacaciones - diasReales);
 
-                // === GUARDAR EL NOMBRE REAL DEL EMPLEADO EN LA BD (histórico) ===
+                // La resta es: (Días que le corresponden por ley) - (Días que eligió)
+                // Ejemplo: 14 (permitidos) - 12 (elegidos) = 2 días a favor.
+                vacacion.DiasFavor = vacacion.DiasVacaciones - diasReales;
+
+                // 3. Guardar nombre histórico (viene del campo oculto en el frontend)
                 vacacion.NombreEmpleadoRegistrado = vacacion.NombreEmpleadoFrontend?.Trim() ?? "Desconocido";
 
-                // === GUARDAR QUIÉN REGISTRÓ LA VACACIÓN (auditoría) ===
-                int idUsuarioLogueado = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-                if (idUsuarioLogueado == 0)
-                {
-                    return Json(new { success = false, message = "Usuario no autenticado." });
-                }
-
+                // 4. Verificación de seguridad (Auditoría)
                 if (!User.Identity.IsAuthenticated)
                 {
-                    return Json(new { success = false, message = "Sesión expirada." });
+                    return Json(new { success = false, message = "Sesión expirada. Por favor inicie sesión nuevamente." });
                 }
-                vacacion.Idusuario = idUsuarioLogueado;
-                vacacion.FechaInicio = DateTime.SpecifyKind(vacacion.FechaInicio, DateTimeKind.Utc);
-                vacacion.FechaFin = DateTime.SpecifyKind(vacacion.FechaFin, DateTimeKind.Utc);
+
+                // IMPORTANTE: Eliminé la línea "vacacion.Idusuario = idUsuarioLogueado" 
+                // para que se mantenga el ID del empleado que elegiste en el Select.
+
+                // 5. Ajuste de fechas para PostgreSQL (UTC)
+                vacacion.FechaInicio = DateTime.SpecifyKind(vacacion.FechaInicio.Date, DateTimeKind.Utc);
+                vacacion.FechaFin = DateTime.SpecifyKind(vacacion.FechaFin.Date, DateTimeKind.Utc);
 
                 _context.Vacaciones.Add(vacacion);
                 await _context.SaveChangesAsync();
 
-                // Devolver éxito con el ID y el nombre para mostrar en la tabla
+                // 6. Respuesta al Frontend
                 return Json(new
                 {
                     success = true,
                     id = vacacion.IdVacaciones,
-                    nombreEmpleado = vacacion.NombreEmpleadoRegistrado
+                    nombreEmpleado = vacacion.NombreEmpleadoRegistrado,
+                    diasFavor = vacacion.DiasFavor // Enviamos el valor para actualizar la tabla
                 });
             }
             catch (Exception ex)
             {
-                
-                return Json(new { success = false, message = "Error al guardar: " + ex.Message });
+                // El InnerException suele dar más detalles si hay errores de base de datos
+                var errorMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Json(new { success = false, message = "Error al guardar: " + errorMsg });
             }
         }
 

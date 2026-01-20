@@ -54,6 +54,57 @@ namespace FarmaciaSantaRita.Controllers
 
 
 
+
+        [HttpGet("GetDiasPermitidos")]
+        public async Task<IActionResult> GetDiasPermitidos(int idUsuario)
+        {
+            var empleado = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.Idusuario == idUsuario);
+
+            if (empleado == null || !empleado.FechaIngreso.HasValue)
+            {
+                return Json(new { success = false, message = "No se encontró la fecha de ingreso del empleado" });
+            }
+
+            // Calcular antigüedad en años completos
+            var hoy = DateOnly.FromDateTime(DateTime.Today);
+            var ingreso = DateOnly.FromDateTime(empleado.FechaIngreso.Value);
+            int antiguedadAnios = hoy.Year - ingreso.Year;
+            if (hoy.Month < ingreso.Month || (hoy.Month == ingreso.Month && hoy.Day < ingreso.Day))
+            {
+                antiguedadAnios--;
+            }
+
+            int diasPermitidos;
+            if (antiguedadAnios <= 5)
+                diasPermitidos = 14;
+            else if (antiguedadAnios <= 10)
+                diasPermitidos = 21;
+            else if (antiguedadAnios <= 20)
+                diasPermitidos = 28;
+            else
+                diasPermitidos = 35;
+
+            return Json(new
+            {
+                success = true,
+                antiguedadAnios,
+                diasPermitidos,
+                mensaje = $"Con {antiguedadAnios} años de antigüedad, le corresponden {diasPermitidos} días corridos de vacaciones (LCT)."
+            });
+        }
+
+
+
+
+
+
+
+
+
+
+
+
         [HttpGet]
         public async Task<IActionResult> GetDatosEmpleado(string nombre)
         {

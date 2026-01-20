@@ -826,7 +826,7 @@
                     const dInicio = new Date(inicioDate);
                     const dFin = new Date(finDate);
                     const dReales = Math.floor((dFin - dInicio) / 86400000) + 1;
-                    const dFavor = Math.Abs(diasVal - dReales);
+                    const dFavor = Math.abs(diasVal - dReales);  // ← abs en minúscula
 
                     const tbody = document.querySelector('#tablaVacaciones tbody');
                     const nuevaFila = document.createElement('tr');

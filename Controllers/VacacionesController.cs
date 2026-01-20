@@ -144,7 +144,6 @@ namespace FarmaciaSantaRita.Controllers
             {
                 return Json(new { success = false, message = "Debe seleccionar un empleado válido." });
             }
-
             if (vacacion.FechaFin < vacacion.FechaInicio)
             {
                 return Json(new { success = false, message = "La fecha de fin no puede ser anterior a la de inicio." });
@@ -152,45 +151,69 @@ namespace FarmaciaSantaRita.Controllers
 
             try
             {
-                // 2. CORRECCIÓN DÍAS A FAVOR: 
-                // Calculamos cuántos días está ocupando según el calendario.
-                int diasReales = (vacacion.FechaFin - vacacion.FechaInicio).Days + 1;
+                // Calcular días reales tomados (corridos)
+                int diasRealesTomados = (vacacion.FechaFin - vacacion.FechaInicio).Days + 1;
 
-                // La resta es: (Días que le corresponden por ley) - (Días que eligió)
-                // Ejemplo: 14 (permitidos) - 12 (elegidos) = 2 días a favor.
-                vacacion.DiasFavor = vacacion.DiasVacaciones - diasReales;
+                // Calcular días legales según antigüedad (igual que GetDiasPermitidos)
+                var empleado = await _context.Usuarios.FindAsync(vacacion.Idusuario);
+                if (empleado == null || !empleado.FechaIngreso.HasValue)
+                {
+                    return Json(new { success = false, message = "No se encontró la fecha de ingreso del empleado." });
+                }
 
-                // 3. Guardar nombre histórico (viene del campo oculto en el frontend)
+                var hoy = DateOnly.FromDateTime(DateTime.UtcNow);
+                var ingreso = DateOnly.FromDateTime(empleado.FechaIngreso.Value);
+                int antiguedadAnios = hoy.Year - ingreso.Year;
+                if (hoy.Month < ingreso.Month || (hoy.Month == ingreso.Month && hoy.Day < ingreso.Day))
+                {
+                    antiguedadAnios--;
+                }
+
+                int diasLegales;
+                if (antiguedadAnios <= 5) diasLegales = 14;
+                else if (antiguedadAnios <= 10) diasLegales = 21;
+                else if (antiguedadAnios <= 20) diasLegales = 28;
+                else diasLegales = 35;
+
+                // Calcular días favor
+                int diasFavorCalculado = diasLegales - diasRealesTomados;
+
+                // Validación: NO permitir si el período excede los días legales
+                if (diasFavorCalculado < 0)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = $"El período seleccionado ({diasRealesTomados} días corridos) excede los {diasLegales} días permitidos por antigüedad. No se puede registrar."
+                    });
+                }
+
+                // Si llega aquí → todo OK
+                vacacion.DiasFavor = diasFavorCalculado;  // Siempre >= 0
                 vacacion.NombreEmpleadoRegistrado = vacacion.NombreEmpleadoFrontend?.Trim() ?? "Desconocido";
 
-                // 4. Verificación de seguridad (Auditoría)
                 if (!User.Identity.IsAuthenticated)
                 {
                     return Json(new { success = false, message = "Sesión expirada. Por favor inicie sesión nuevamente." });
                 }
 
-                // IMPORTANTE: Eliminé la línea "vacacion.Idusuario = idUsuarioLogueado" 
-                // para que se mantenga el ID del empleado que elegiste en el Select.
-
-                // 5. Ajuste de fechas para PostgreSQL (UTC)
                 vacacion.FechaInicio = DateTime.SpecifyKind(vacacion.FechaInicio.Date, DateTimeKind.Utc);
                 vacacion.FechaFin = DateTime.SpecifyKind(vacacion.FechaFin.Date, DateTimeKind.Utc);
 
                 _context.Vacaciones.Add(vacacion);
                 await _context.SaveChangesAsync();
 
-                // 6. Respuesta al Frontend
+                // Respuesta al frontend
                 return Json(new
                 {
                     success = true,
                     id = vacacion.IdVacaciones,
                     nombreEmpleado = vacacion.NombreEmpleadoRegistrado,
-                    diasFavor = vacacion.DiasFavor // Enviamos el valor para actualizar la tabla
+                    diasFavor = vacacion.DiasFavor  // Siempre >= 0
                 });
             }
             catch (Exception ex)
             {
-                // El InnerException suele dar más detalles si hay errores de base de datos
                 var errorMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                 return Json(new { success = false, message = "Error al guardar: " + errorMsg });
             }

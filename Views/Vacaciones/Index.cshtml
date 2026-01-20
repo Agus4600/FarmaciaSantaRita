@@ -1108,7 +1108,9 @@
                 }
                 try {
                     const response = await fetch(`/Vacaciones/GetDiasPermitidos?idUsuario=${empleadoId}`);
-                    if (!response.ok) throw new Error('Error en la respuesta');
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
                     const data = await response.json();
                     if (data.success) {
                         diasInput.max = data.diasPermitidos;
@@ -1127,10 +1129,15 @@
                         diasInput.value = 15;
                     }
                 } catch (err) {
-                    console.error('Error al consultar días permitidos:', err);
-                    Swal.fire('Error', 'No se pudo consultar los días permitidos.', 'error');
-                    diasInput.max = 60;
-                    diasInput.value = 0;
+                        console.error('Error completo al consultar GetDiasPermitidos:', err);
+                        Swal.fire({
+                        title: 'Error de conexión',
+                        html: 'No se pudo obtener los días permitidos.<br><small>Verifica que el servidor esté actualizado o contacta al administrador.</small>',
+                        confirmButtonText: 'Etendido',
+                        confirmButtonColor: '#007bff'
+                });
+                diasInput.max = 60;
+                diasInput.value = 0;
                 }
             });
         });

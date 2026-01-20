@@ -582,7 +582,7 @@
     <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
 
     <script>
-         // Calendarios con jQuery
+        // Inicialización de calendarios (más robusta)
         $(document).ready(function () {
             const commonOptions = {
                 autoUpdateInput: false,
@@ -596,45 +596,34 @@
                 }
             };
 
-            // Calendario para FILTROS (Rango de Fechas)
+            // Calendario FILTROS
             $('#btnAbrirCalendario').daterangepicker(commonOptions);
-            $('#btnAbrirCalendario').on('apply.daterangepicker', function (ev, picker) {
+            $('#btnAbrirCalendario').on('apply.daterangepicker', function(ev, picker) {
                 $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
             });
-            $('#btnAbrirCalendario').on('cancel.daterangepicker', function () {
+            $('#btnAbrirCalendario').on('cancel.daterangepicker', function() {
                 $(this).text('dd/mm/yyyy - dd/mm/yyyy');
             });
 
-            // Calendario para REGISTRO (Período de Vacaciones)
+            // Calendario PERÍODO
             $('#btnPeriodo').daterangepicker(commonOptions);
-            $('#btnPeriodo').on('apply.daterangepicker', function (ev, picker) {
+            $('#btnPeriodo').on('apply.daterangepicker', function(ev, picker) {
                 $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
             });
-            $('#btnPeriodo').on('cancel.daterangepicker', function () {
+            $('#btnPeriodo').on('cancel.daterangepicker', function() {
                 $(this).text('dd/mm/yyyy - dd/mm/yyyy');
             });
 
-            // Forzar apertura al hacer click (más confiable)
-            $('#btnAbrirCalendario, #btnPeriodo').on('click', function (e) {
+            // Forzar apertura al click
+            $('#btnAbrirCalendario, #btnPeriodo').on('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                const $this = $(this);
-                const picker = $this.data('daterangepicker');
-                if (picker) {
-                    picker.show();
-                } else {
-                    console.warn('Daterangepicker no inicializado para:', $this.attr('id'));
-                }
-            });
-
-            // Reintento al enfocar (por si falla el click)
-            $('#btnAbrirCalendario, #btnPeriodo').on('focus', function () {
                 const picker = $(this).data('daterangepicker');
                 if (picker) picker.show();
             });
         });
 
-        // Lógica de la tabla (queda igual, ya funciona)
+        // Lógica principal de la página
         document.addEventListener('DOMContentLoaded', function () {
             const TABLA_ID = "tablaVacaciones";
             const MIN_FILAS_VISIBLE = 5;
@@ -658,7 +647,6 @@
                     tbody.appendChild(filaVacia);
                 }
             }
-
             agregarFilasVacias();
 
             // Buscar Filtro
@@ -752,52 +740,70 @@
             }
         });
 
-        document.getElementById('btnAgregar').addEventListener('click', async function () {
-        const elEmpleado = document.getElementById('empleadoSelect');
-        const elDias = document.getElementById('diasInput');
-        const btnPeriodo = document.getElementById('btnPeriodo');
+                // Validación y lógica completa de Agregar
+        document.getElementById('btnAgregar').addEventListener('click', async function (e) {
+            // Definimos TODAS las variables aquí (para que existan en este scope)
+            const elEmpleado = document.getElementById('empleadoSelect');
+            const elDias = document.getElementById('diasInput');
+            const btnPeriodo = document.getElementById('btnPeriodo');
 
-        if (!elEmpleado || !elDias || !btnPeriodo) {
-            Swal.fire('Error', 'No se encontraron los campos necesarios.', 'error');
-            return;
-        }
+            if (!elEmpleado || !elDias || !btnPeriodo) {
+                Swal.fire('Error', 'No se encontraron los campos necesarios.', 'error');
+                return;
+            }
 
-        const empleadoId = elEmpleado.value?.trim() || '';
-        // ←←← Cambio aquí: usamos data-nombre para obtener solo el nombre limpio
-        const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.getAttribute('data-nombre') || '';
-        const diasVal = parseInt(elDias.value) || 0;
-        const periodoTexto = btnPeriodo.textContent.trim();
+            const empleadoId = elEmpleado.value?.trim() || '';
+            const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.getAttribute('data-nombre') || '';
+            const diasVal = parseInt(elDias.value) || 0;
+            const periodoTexto = btnPeriodo.textContent.trim();
 
-        // Validaciones (igual)
-        if (!empleadoId || empleadoId === '') {
-            Swal.fire('Error', 'Seleccione un empleado', 'error');
-            return;
-        }
-        if (diasVal < 1) {
-            Swal.fire('Error', 'Ingrese días solicitados (mínimo 1)', 'error');
-            return;
-        }
-        if (periodoTexto === 'dd/mm/yyyy - dd/mm/yyyy') {
-            Swal.fire('Error', 'Seleccione el período de vacaciones', 'error');
-            return;
-        }
+            // Validaciones básicas (las que ya tenías)
+            if (!empleadoId || empleadoId === '') {
+                Swal.fire('Error', 'Seleccione un empleado', 'error');
+                return;
+            }
+            if (diasVal < 1) {
+                Swal.fire('Error', 'Ingrese días solicitados (mínimo 1)', 'error');
+                return;
+            }
+            if (periodoTexto === 'dd/mm/yyyy - dd/mm/yyyy') {
+                Swal.fire('Error', 'Seleccione el período de vacaciones', 'error');
+                return;
+            }
 
-        const [desde, hasta] = periodoTexto.split(' - ');
-        const inicioDate = new Date(desde.split('/').reverse().join('-'));
-        const finDate = new Date(hasta.split('/').reverse().join('-'));
+            const [desde, hasta] = periodoTexto.split(' - ');
+            const inicioDate = new Date(desde.split('/').reverse().join('-'));
+            const finDate = new Date(hasta.split('/').reverse().join('-'));
 
-        if (finDate < inicioDate) {
-            Swal.fire('Error', 'La fecha fin no puede ser anterior al inicio', 'error');
-            return;
-        }
+            if (finDate < inicioDate) {
+                Swal.fire('Error', 'La fecha fin no puede ser anterior al inicio', 'error');
+                return;
+            }
 
-        const datos = {
-            Idusuario: parseInt(empleadoId),
-            DiasVacaciones: diasVal,
-            FechaInicio: inicioDate.toISOString(),
-            FechaFin: finDate.toISOString(),
-            NombreEmpleadoFrontend: empleadoNombre  // ← Ahora solo el nombre limpio
-        };
+            // ← VALIDACIÓN NUEVA: límite por antigüedad
+            const maxPermitido = parseInt(elDias.max) || 60;
+            if (diasVal > maxPermitido) {
+                e.preventDefault();
+                e.stopPropagation();
+                Swal.fire({
+                    title: 'Exceso de días',
+                    html: `No se pueden solicitar más de <b>${maxPermitido} días</b> según la antigüedad del empleado (LCT).<br>
+                           Máximo permitido: ${maxPermitido} días corridos.`,
+                    confirmButtonText: 'Corregir',
+                    confirmButtonColor: '#dc3545'
+                });
+                elDias.focus();
+                return;
+            }
+
+            // Todo OK → tu código original de guardado
+            const datos = {
+                Idusuario: parseInt(empleadoId),
+                DiasVacaciones: diasVal,
+                FechaInicio: inicioDate.toISOString(),
+                FechaFin: finDate.toISOString(),
+                NombreEmpleadoFrontend: empleadoNombre
+            };
 
             try {
                 const response = await fetch('/Vacaciones/ApiCreate', {
@@ -817,17 +823,16 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // Calculamos días reales y favor usando las fechas originales (locales)
                     const dInicio = new Date(inicioDate);
                     const dFin = new Date(finDate);
                     const dReales = Math.floor((dFin - dInicio) / 86400000) + 1;
-                    const dFavor = Math.abs(diasVal - dReales);
+                    const dFavor = Math.Abs(diasVal - dReales);
 
                     const tbody = document.querySelector('#tablaVacaciones tbody');
                     const nuevaFila = document.createElement('tr');
                     nuevaFila.setAttribute('data-vacacion-id', result.id);
                     nuevaFila.innerHTML = `
-                         <td class="empleado-clickable">${empleadoNombre}</td>
+                        <td class="empleado-clickable">${empleadoNombre}</td>
                         <td class="text-center">${diasVal}</td>
                         <td class="text-center">${desde} - ${hasta}</td>
                         <td class="text-center">${dFavor}</td>
@@ -1083,70 +1088,41 @@
 
                 // Evento al seleccionar empleado
         document.getElementById('empleadoSelect').addEventListener('change', async function () {
-            const empleadoId = this.value;
-            const diasInput = document.getElementById('diasInput');
-
-            if (!empleadoId || empleadoId === "") {
-                diasInput.max = 60;
-                diasInput.value = 15;
-                diasInput.disabled = false; // por si estaba deshabilitado
-                return;
-            }
-
-            try {
-                const response = await fetch(`/Vacaciones/GetDiasPermitidos?idUsuario=${empleadoId}`);
-                if (!response.ok) throw new Error('Error en la respuesta del servidor');
-
-                const data = await response.json();
-
-                if (data.success) {
-                    diasInput.max = data.diasPermitidos;
-                    diasInput.value = data.diasPermitidos; // Sugerir máximo legal
+                const empleadoId = this.value;
+                const diasInput = document.getElementById('diasInput');
+                if (!empleadoId || empleadoId === "") {
+                    diasInput.max = 60;
+                    diasInput.value = 15;
                     diasInput.disabled = false;
-
-                    Swal.fire({
-                        icon: 'info',
-                        title: 'Días permitidos por ley',
-                        html: `Al empleado seleccionado le corresponden <b>${data.diasPermitidos} días corridos</b> de vacaciones este año.<br>
-                               <small>(antigüedad: ${data.antiguedadAnios} años - LCT art. 150)</small>`,
-                        confirmButtonText: 'Entendido',
-                        confirmButtonColor: '#007bff'
-                    });
-                } else {
-                    Swal.fire('Atención', data.message || 'No se pudo calcular la antigüedad.', 'warning');
+                    return;
+                }
+                try {
+                    const response = await fetch(`/Vacaciones/GetDiasPermitidos?idUsuario=${empleadoId}`);
+                    if (!response.ok) throw new Error('Error en la respuesta');
+                    const data = await response.json();
+                    if (data.success) {
+                        diasInput.max = data.diasPermitidos;
+                        diasInput.value = data.diasPermitidos;
+                        diasInput.disabled = false;
+                        Swal.fire({
+                            title: 'Días permitidos por ley',
+                            html: `Al empleado seleccionado le corresponden <b>${data.diasPermitidos} días corridos</b> de vacaciones este año.<br>
+                                   <small>(antigüedad: ${data.antiguedadAnios} años - LCT art. 150)</small>`,
+                            confirmButtonText: 'Entendido',
+                            confirmButtonColor: '#007bff'
+                        });
+                    } else {
+                        Swal.fire('Atención', data.message || 'No se pudo calcular la antigüedad.', 'warning');
+                        diasInput.max = 60;
+                        diasInput.value = 15;
+                    }
+                } catch (err) {
+                    console.error('Error al consultar días:', err);
+                    Swal.fire('Error', 'No se pudo consultar los días permitidos.', 'error');
                     diasInput.max = 60;
                     diasInput.value = 15;
                 }
-            } catch (err) {
-                console.error('Error al consultar días permitidos:', err);
-                Swal.fire('Error', 'No se pudo consultar los días permitidos. Intenta de nuevo.', 'error');
-                diasInput.max = 60;
-                diasInput.value = 15;
-            }
-        });
-
-        // Validación al presionar Agregar
-        document.getElementById('btnAgregar').addEventListener('click', async function (e) {
-            const diasInput = document.getElementById('diasInput');
-            const diasSolicitados = parseInt(diasInput.value) || 0;
-            const maxPermitido = parseInt(diasInput.max) || 60;
-
-            if (diasSolicitados > maxPermitido) {
-                e.preventDefault();
-                e.stopPropagation(); // Extra seguridad
-                Swal.fire({
-                    title: 'Exceso de días',
-                    html: `No se pueden solicitar más de <b>${maxPermitido} días</b> según la antigüedad del empleado (LCT).<br>
-                           Máximo permitido: ${maxPermitido} días corridos.`,
-                    confirmButtonText: 'Entendido',
-                     confirmButtonColor: '#007bff'
-                });
-                diasInput.focus(); // Pone el cursor en el campo para corregir
-                return;
-            }
-
-
-
+            });
         });
     </script>
 }

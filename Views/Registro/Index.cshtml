@@ -29,7 +29,7 @@
 
     .card-custom {
         width: 95%;
-        max-width: 900px;
+        max-width: 1100px;
         background-color: white;
         border-radius: 25px;
         box-shadow: 0 10px 40px rgba(0,0,0,0.1);
@@ -215,6 +215,12 @@
                         <span id="err-FechaNacimiento" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
 
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha de Ingreso</label>
+                        <input asp-for="FechaIngreso" id="FechaIngreso" type="date" class="form-control-custom" required />
+                        <span id="err-FechaIngreso" class="error-label text-danger" style="font-size: 11px;"></span>
+                    </div>
+
                     <div class="col-md-5">
                         <div class="custom-groupbox m-0" style="padding: 10px 20px; border-width: 1px;">
                             <legend style="font-size: 0.9rem !important; padding: 0 10px;">Rol</legend>
@@ -343,6 +349,7 @@
         const telefono = document.getElementById("Telefono").value.trim();
         const direccion = document.getElementById("Direccion").value.trim();
         const fechaNac = document.getElementById("FechaNacimiento").value.trim();
+        const fechaIngreso = document.getElementById("FechaIngreso").value.trim();
         const usuario = document.getElementById("NombreUsuario").value.trim();
         const correo = document.getElementById("CorreoUsuario").value.trim();
         const pass = document.getElementById("passInput").value.trim();
@@ -371,6 +378,14 @@
             mostrarError("Direccion", "Especificarse la dirección (ej: Calle 123, Ciudad)");
             hayError = true;
         }
+
+        if (fechaIngreso === "") {
+            mostrarError("FechaIngreso", "La fecha de ingreso es obligatoria");
+            hayError = true;
+        }
+
+
+
         if (fechaNac === "") {
             mostrarError("FechaNacimiento", "La f.nacimiento es obligatoria");
             hayError = true;

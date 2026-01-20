@@ -763,7 +763,7 @@
             }
         });
 
-                document.getElementById('btnAgregar').addEventListener('click', async function () {
+        document.getElementById('btnAgregar').addEventListener('click', async function () {
         const elEmpleado = document.getElementById('empleadoSelect');
         const elDias = document.getElementById('diasInput');
         const btnPeriodo = document.getElementById('btnPeriodo');
@@ -1089,6 +1089,75 @@
                     Swal.fire('Error', 'No se pudo cargar los datos del empleado', 'error');
                 });
         });
+
+
+
+                // Evento al seleccionar empleado
+        document.getElementById('empleadoSelect').addEventListener('change', async function () {
+            const empleadoId = this.value;
+            const diasInput = document.getElementById('diasInput');
+
+            if (!empleadoId || empleadoId === "") {
+                diasInput.max = 60;
+                diasInput.value = 15;
+                diasInput.disabled = false; // por si estaba deshabilitado
+                return;
+            }
+
+            try {
+                const response = await fetch(`/Vacaciones/GetDiasPermitidos?idUsuario=${empleadoId}`);
+                if (!response.ok) throw new Error('Error en la respuesta del servidor');
+
+                const data = await response.json();
+
+                if (data.success) {
+                    diasInput.max = data.diasPermitidos;
+                    diasInput.value = data.diasPermitidos; // Sugerir máximo legal
+                    diasInput.disabled = false;
+
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Días permitidos por ley',
+                        html: `Al empleado seleccionado le corresponden <b>${data.diasPermitidos} días corridos</b> de vacaciones este año.<br>
+                               <small>(antigüedad: ${data.antiguedadAnios} años - LCT art. 150)</small>`,
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
+                    });
+                } else {
+                    Swal.fire('Atención', data.message || 'No se pudo calcular la antigüedad.', 'warning');
+                    diasInput.max = 60;
+                    diasInput.value = 15;
+                }
+            } catch (err) {
+                console.error('Error al consultar días permitidos:', err);
+                Swal.fire('Error', 'No se pudo consultar los días permitidos. Intenta de nuevo.', 'error');
+                diasInput.max = 60;
+                diasInput.value = 15;
+            }
+        });
+
+        // Validación al presionar Agregar
+        document.getElementById('btnAgregar').addEventListener('click', async function (e) {
+            const diasInput = document.getElementById('diasInput');
+            const diasSolicitados = parseInt(diasInput.value) || 0;
+            const maxPermitido = parseInt(diasInput.max) || 60;
+
+            if (diasSolicitados > maxPermitido) {
+                e.preventDefault();
+                e.stopPropagation(); // Extra seguridad
+                Swal.fire({
+                    title: 'Exceso de días',
+                    html: `No se pueden solicitar más de <b>${maxPermitido} días</b> según la antigüedad del empleado (LCT).<br>
+                           Máximo permitido: ${maxPermitido} días corridos.`,
+                    confirmButtonText: 'Entendido',
+                     confirmButtonColor: '#007bff'
+                });
+                diasInput.focus(); // Pone el cursor en el campo para corregir
+                return;
+            }
+
+
+
         });
     </script>
 }

@@ -1195,7 +1195,7 @@
 			// Añadir fila temporal de inmediato (color amarillo para indicar guardado pendiente)
 			const filaTemporalId = `temp-${Date.now()}`;
 			const filaTemporalHTML = `
-				<tr data-inasistencia-id="${filaTemporalId}" class="table-warning">
+				<tr data-inasistencia-id="${filaTemporalId}">
 					<td title="${fechaFormateada}">${fechaFormateada}</td>
 					<td title="${empleadoNombre}">${empleadoNombre}</td>
 					<td title="${turno}">${turno}</td>
@@ -1224,7 +1224,6 @@
 					if (filaTemporal) {
 						// Actualizar la fila temporal con el ID real de la base de datos
 						filaTemporal.setAttribute("data-inasistencia-id", data.idInasistencia);
-						filaTemporal.classList.remove('table-warning');
 						filaTemporal.querySelector('.fila-check').removeAttribute('disabled');
 						filaTemporal.querySelector('.fila-check').setAttribute('data-id', data.idInasistencia); // Asegurar que el checkbox tenga el ID de DB
 
@@ -1602,7 +1601,6 @@
 									<p class="mb-3"><strong>Dirección:</strong> ${data.direccion || 'No disponible'}</p>
 								</div>
 							`,
-							icon: 'info',
 							confirmButtonText: 'Entendido',
 							confirmButtonColor: '#007bff',
 							customClass: {

@@ -19,20 +19,20 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
-    /* Esto busca cualquier celda que tenga la clase del empleado y le aplica el estilo */
-    /* Estilo para el nombre del empleado en la tabla */
+    /* Nombre del empleado siempre subrayado, color azul, cursor pointer */
     #tablaVacaciones tbody td.empleado-clickable {
         font-weight: bold !important;
         color: #007bff !important;
         cursor: pointer;
-        text-decoration: none; /* Empieza sin subrayado */
-        transition: color 0.2s ease, text-decoration 0.2s ease;
+        text-decoration: underline !important; /* ← subrayado permanente */
+        text-decoration-color: #007bff !important; /* color del subrayado = azul */
+        text-underline-offset: 2px; /* opcional: un poco más separado del texto */
     }
 
-        /* Efecto al pasar el mouse */
+        /* Hover: solo cambia intensidad del color (subrayado se mantiene) */
         #tablaVacaciones tbody td.empleado-clickable:hover {
-            color: #0056b3 !important;
-            text-decoration: underline !important; /* Se subraya al pasar el mouse */
+            color: #0056b3 !important; /* azul más oscuro */
+            text-decoration: underline !important; /* se mantiene */
         }
 
     /* Tus estilos existentes (los mismos de Inasistencias) */

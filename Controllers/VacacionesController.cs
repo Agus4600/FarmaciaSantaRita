@@ -244,24 +244,16 @@ namespace FarmaciaSantaRita.Controllers
             {
                 var query = _context.Vacaciones.AsNoTracking();
 
-                // 1. Filtro por nombre (Tolerante)
+                // 1. Filtro por nombre (Optimizado)
                 if (!string.IsNullOrWhiteSpace(nombreEmpleado))
                 {
-                    string textoBuscado = nombreEmpleado
-                        .ToLowerInvariant()
-                        .Normalize(NormalizationForm.FormD)
-                        .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-                        .Aggregate("", (current, c) => current + c)
-                        .Replace(" ", "").Replace(".", "").Replace(",", "");
-
-                    // Cambia esto:
                     query = query.Where(v => EF.Functions.ILike(
                         EF.Functions.Unaccent(v.NombreEmpleadoRegistrado ?? ""),
-                        $"%{nombreEmpleado.Trim()}%" // Busca el nombre con espacios
+                        $"%{nombreEmpleado.Trim()}%"
                     ));
                 }
 
-                // 2. Filtro por fechas (Recibiendo strings desde JS)
+                // 2. Filtro por fechas
                 if (!string.IsNullOrEmpty(fechaDesde) && !string.IsNullOrEmpty(fechaHasta))
                 {
                     if (DateTime.TryParse(fechaDesde, out DateTime inicio) &&
@@ -269,12 +261,11 @@ namespace FarmaciaSantaRita.Controllers
                     {
                         var fechaInicioUtc = DateTime.SpecifyKind(inicio.Date, DateTimeKind.Utc);
                         var fechaFinUtc = DateTime.SpecifyKind(fin.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
-
                         query = query.Where(v => v.FechaInicio >= fechaInicioUtc && v.FechaFin <= fechaFinUtc);
                     }
                 }
 
-                // 3. Ejecución de la consulta
+                // 3. Ejecución de la consulta (TRAEMOS EL CAMPO DiasFavor de la BD)
                 var datosCrudos = await query
                     .OrderByDescending(v => v.FechaInicio)
                     .Select(v => new
@@ -283,11 +274,12 @@ namespace FarmaciaSantaRita.Controllers
                         v.NombreEmpleadoRegistrado,
                         v.DiasVacaciones,
                         v.FechaInicio,
-                        v.FechaFin
+                        v.FechaFin,
+                        v.DiasFavor // ← Traemos el valor real guardado
                     })
                     .ToListAsync();
 
-                // 4. Mapeo final para el Frontend
+                // 4. Mapeo final para el Frontend (SIN CÁLCULOS EXTRAS)
                 var resultados = datosCrudos.Select(v => new
                 {
                     v.IdVacaciones,
@@ -295,7 +287,7 @@ namespace FarmaciaSantaRita.Controllers
                     v.DiasVacaciones,
                     fechaInicio = v.FechaInicio.ToString("dd/MM/yyyy"),
                     fechaFin = v.FechaFin.ToString("dd/MM/yyyy"),
-                    diasFavor = Math.Abs(v.DiasVacaciones - ((v.FechaFin - v.FechaInicio).Days + 1))
+                    diasFavor = Math.Abs(v.DiasFavor)
                 }).ToList();
 
                 return Json(resultados);

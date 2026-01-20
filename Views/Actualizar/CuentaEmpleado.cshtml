@@ -247,28 +247,29 @@
 
             /* 💡 ASIGNACIÓN DE ANCHOS PARA LAS 6 COLUMNAS SOLICITADAS (ORDEN CORREGIDO) */
             .table th:nth-child(1), .table td:nth-child(1) {
-                width: 17%; /* Nombre */
+                width: 25%;
             }
-
+            /* Nombre Completo - más ancho */
             .table th:nth-child(2), .table td:nth-child(2) {
-                width: 17%; /* Apellido */
+                width: 12%;
             }
-
+            /* DNI - más angosto */
             .table th:nth-child(3), .table td:nth-child(3) {
-                width: 17%; /* F.Nacimiento */
+                width: 15%;
             }
-
+            /* F. Nacimiento */
             .table th:nth-child(4), .table td:nth-child(4) {
-                width: 17%; /* Teléfono */
+                width: 15%;
             }
-
+            /* Teléfono */
             .table th:nth-child(5), .table td:nth-child(5) {
-                width: 27%; /* Dirección */
+                width: 28%;
             }
-
+            /* Dirección */
             .table th:nth-child(6), .table td:nth-child(6) {
-                width: 5%; /* Checkbox (Última columna) */
+                width: 5%;
             }
+    /* Checkbox */
 
 
     .tabla-encabezado {
@@ -452,14 +453,15 @@
                                 <table class="table table-bordered table-hover align-middle tabla-congelada" id="tablaRegistro">
                                     <thead class="table-primary">
                                         <tr>
-                                            <th translate="no">Nombre</th>
-                                            <th translate="no">Apellido </th>
-                                            <th translate="no">F.Nacimiento </th>
-                                            <th translate="no">Teléfono </th>
+                                            <th translate="no">Nombre Completo</th>   <!-- ← Nueva columna única -->
+                                            <th translate="no">DNI</th>               <!-- ← Nueva columna DNI -->
+                                            <th translate="no">F. Nacimiento</th>
+                                            <th translate="no">Teléfono</th>
                                             <th translate="no">Dirección</th>
                                             <th style="text-align: center;">
                                                 <input type="checkbox" id="selectAllCheckbox" />
                                             </th>
+                                        </tr>
                                     </thead>
                                     <tbody id="tablaCuerpo">
                                         @if (Model != null && Model.Any())
@@ -467,13 +469,12 @@
                                             @foreach (var empleado in Model)
                                             {
                                                 <tr data-id="@empleado.Idusuario" class="empleado-fila">
-                                                    <td class="col-nombre">@empleado.Nombre</td>
-                                                    <td class="col-apellido">@empleado.Apellido</td>
+                                                    <td class="col-nombre-completo">@($"{empleado.Nombre} {empleado.Apellido}")</td>
+                                                    <td class="col-dni">@empleado.Dni</td>
                                                     <td>@(empleado.FechaNacimiento.ToString("dd/MM/yyyy"))</td>
                                                     <td>@empleado.Telefono</td>
                                                     <td>@empleado.Direccion</td>
                                                     <td>
-                                                        @* ⬅️ Columna de Checkbox al final *@
                                                         <input type="checkbox" class="select-empleado" value="@empleado.Idusuario" />
                                                     </td>
                                                 </tr>
@@ -536,31 +537,20 @@
             // ----------------------------------------------------
             // ⭐ 1. BÚSQUEDA (Sin cambios, solo validación de existencia)
             // ----------------------------------------------------
-            function filtrarTabla() {
-                // ... (Lógica de filtrado)
-                const termino = buscadorInput.value.trim().toLowerCase();
-                const filas = tablaCuerpo.querySelectorAll('.empleado-fila');
-
-                filas.forEach(fila => {
-                    const nombre = fila.querySelector('.col-nombre').textContent.trim().toLowerCase();
-                    const apellido = fila.querySelector('.col-apellido').textContent.trim().toLowerCase();
-                    const nombreCompleto = `${nombre} ${apellido}`;
-
-                    const debeMostrar =
-                        termino === "" ||
-                        nombre.includes(termino) ||
-                        apellido.includes(termino) ||
-                        nombreCompleto.includes(termino);
-
-                    fila.style.display = debeMostrar ? '' : 'none';
-                });
-                // Al filtrar, actualizamos el estado del 'Seleccionar Todo' 
-                // ya que las filas ocultas no deben contarse como seleccionadas (aunque sí lo estén)
-                // y el usuario podría esperarlo. 
-                // Por simplicidad, mantendremos la lógica de selección en todas las filas, 
-                // pero si solo quieres contar las visibles, la lógica de conteo debería cambiar.
-                actualizarSelectAllState(); 
-            }
+                    function filtrarTabla() {
+            const termino = buscadorInput.value.trim().toLowerCase();
+            const filas = tablaCuerpo.querySelectorAll('.empleado-fila');
+            filas.forEach(fila => {
+                const nombreCompleto = fila.querySelector('.col-nombre-completo').textContent.trim().toLowerCase();
+                const dni = fila.querySelector('.col-dni')?.textContent.trim().toLowerCase() || '';
+                const debeMostrar =
+                    termino === "" ||
+                    nombreCompleto.includes(termino) ||
+                    dni.includes(termino);
+                fila.style.display = debeMostrar ? '' : 'none';
+            });
+            actualizarSelectAllState();
+        }
 
             if (buscadorInput) {
                 buscadorInput.addEventListener('input', filtrarTabla);

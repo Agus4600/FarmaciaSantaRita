@@ -55,7 +55,9 @@ namespace FarmaciaSantaRita.Controllers
 
 
 
-        [HttpGet("GetDiasPermitidos")]
+        [HttpGet]
+        [Route("Vacaciones/GetDiasPermitidos")]          // Ruta explícita 1
+        [Route("api/Vacaciones/GetDiasPermitidos")]
         public async Task<IActionResult> GetDiasPermitidos(int idUsuario)
         {
             var empleado = await _context.Usuarios
@@ -162,6 +164,11 @@ namespace FarmaciaSantaRita.Controllers
                 {
                     return Json(new { success = false, message = "Usuario no autenticado." });
                 }
+
+                if (!User.Identity.IsAuthenticated)
+                {
+                    return Json(new { success = false, message = "Sesión expirada." });
+                }
                 vacacion.Idusuario = idUsuarioLogueado;
                 vacacion.FechaInicio = DateTime.SpecifyKind(vacacion.FechaInicio, DateTimeKind.Utc);
                 vacacion.FechaFin = DateTime.SpecifyKind(vacacion.FechaFin, DateTimeKind.Utc);
@@ -242,12 +249,11 @@ namespace FarmaciaSantaRita.Controllers
                         .Aggregate("", (current, c) => current + c)
                         .Replace(" ", "").Replace(".", "").Replace(",", "");
 
-                    query = query.Where(v =>
-                        EF.Functions.ILike(
-                            EF.Functions.Unaccent(v.NombreEmpleadoRegistrado ?? ""),
-                            $"%{textoBuscado}%"
-                        )
-                    );
+                    // Cambia esto:
+                    query = query.Where(v => EF.Functions.ILike(
+                        EF.Functions.Unaccent(v.NombreEmpleadoRegistrado ?? ""),
+                        $"%{nombreEmpleado.Trim()}%" // Busca el nombre con espacios
+                    ));
                 }
 
                 // 2. Filtro por fechas (Recibiendo strings desde JS)

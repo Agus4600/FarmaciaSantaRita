@@ -832,35 +832,40 @@
                     throw new Error(`Error ${response.status}: ${errorText}`);
                 }
 
-                const result = await response.json();
+                        const result = await response.json();
 
-                if (result.success) {
-                    // Días favor = máximo legal - días reales tomados
-                    const valorDiasFavor = result.diasFavor;
-                    const tbody = document.querySelector('#tablaVacaciones tbody');
-                    const nuevaFila = document.createElement('tr');
-                    nuevaFila.setAttribute('data-vacacion-id', result.id);
-                    nuevaFila.innerHTML = `
-                        <td class="empleado-clickable">${empleadoNombre}</td>
-                        <td class="text-center">${diasSolicitados}</td>
-                        <td class="text-center">${desde} - ${hasta}</td>
-                        <td class="text-center">${diasFavor}</td>
-                        <td><input type="checkbox" class="form-check-input fila-check" /></td>
-                    `;
-                    tbody.insertBefore(nuevaFila, tbody.firstChild);
+        if (result.success) {
+            // Definimos la variable correctamente desde la respuesta del servidor
+            const valorDiasFavor = result.diasFavor;
 
-                    elEmpleado.value = '';
-                    elDias.value = '0'; // ← Vuelve a 0
-                    btnPeriodo.textContent = 'dd/mm/yyyy - dd/mm/yyyy';
-                    agregarFilasVacias();
+            const tbody = document.querySelector('#tablaVacaciones tbody');
+            const nuevaFila = document.createElement('tr');
+            nuevaFila.setAttribute('data-vacacion-id', result.id);
 
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Agregado!',
-                        text: `Vacación registrada. Días a favor restantes: ${diasFavor}`,
-                        timer: 2500,
-                        showConfirmButton: false
-                    });
+            nuevaFila.innerHTML = `
+                <td class="empleado-clickable">${empleadoNombre}</td>
+                <td class="text-center">${diasSolicitados}</td>
+                <td class="text-center">${desde} - ${hasta}</td>
+                <td class="text-center">${valorDiasFavor}</td>
+                <td><input type="checkbox" class="form-check-input fila-check" /></td>
+            `;
+            // USAR valorDiasFavor arriba ^ corrige el error de "not defined"
+
+            tbody.insertBefore(nuevaFila, tbody.firstChild);
+
+            // Limpiar campos
+            elEmpleado.value = '';
+            elDias.value = '0';
+            btnPeriodo.textContent = 'dd/mm/yyyy - dd/mm/yyyy';
+            agregarFilasVacias();
+
+            Swal.fire({
+                icon: 'success',
+                title: '¡Agregado!',
+                text: `Vacación registrada. Días a favor restantes: ${valorDiasFavor}`,
+                timer: 2500,
+                showConfirmButton: false
+            });
                 } else {
                     Swal.fire('Error', result.message || 'No se pudo guardar', 'error');
                 }

@@ -1636,24 +1636,33 @@
 
 
 
-				document.getElementById("btnBuscarFiltro").addEventListener("click", async function () {
+					document.getElementById("btnBuscarFiltro").addEventListener("click", async function () {
 			const fechaDesde = document.getElementById('fechaDesdeOculto').value.trim();
 			const fechaHasta = document.getElementById('fechaHastaOculto').value.trim();
 			const textoEmpleado = document.getElementById('buscarEmpleadoInput').value.trim();
 			const turnoFiltro = document.getElementById('buscarTurnoSelect').value.trim();
 
-			// Validación de fechas
+			// Validación de fechas (ya existe)
 			if (fechaDesde && fechaHasta && new Date(fechaDesde) > new Date(fechaHasta)) {
 				Swal.fire('Error', "La fecha 'Desde' no puede ser posterior a la fecha 'Hasta'.", 'error');
 				return;
 			}
 
-			// === DETECTAR SI REALMENTE HAY UN FILTRO ACTIVO ===
+			// === NUEVA VALIDACIÓN: si NO hay ningún filtro ===
 			const hayFecha = fechaDesde !== '' && fechaHasta !== '';
-			const hayEmpleado = textoEmpleado !== '';
+			const hayEmpleado = textoEmpleado.trim() !== '';
 			const hayTurno = turnoFiltro !== '';
-
 			const hayAlgunFiltro = hayFecha || hayEmpleado || hayTurno;
+
+			if (!hayAlgunFiltro) {
+				Swal.fire({
+					title: 'Atención',
+					text: 'Ingrese al menos un filtro (nombre o rango de fechas)',
+					confirmButtonText: 'Entendido',
+					confirmButtonColor: '#007bff'
+				});
+				return;  // ← importante: salir si no hay filtro
+			}
 
 			try {
 				let url = '/Inasistencia/BuscarInasistencias?';
@@ -1677,21 +1686,19 @@
 				llenarTablaInasistencias(filtradosFinal);
 
 				// === MOSTRAR MENSAJE SOLO SI REALMENTE HUBO UN FILTRO ===
-				if (hayAlgunFiltro) {
-					const total = filtradosFinal.length;
-					const mensaje = total === 0
-						? 'No se encontraron registros con los filtros aplicados.'
-						: `Se encontraron ${total} registro${total === 1 ? '' : 's'}.`;
+				const total = filtradosFinal.length;
+				const mensaje = total === 0
+					? 'No se encontraron registros con los filtros aplicados.'
+					: `Se encontraron ${total} registro${total === 1 ? '' : 's'}.`;
 
-					Swal.fire({
-						icon: total > 0 ? 'success' : null,
-						title: total > 0 ? 'Búsqueda exitosa' : 'Sin resultados',
-						text: mensaje,
-						timer: 2500,
-						showConfirmButton: false
-					});
-				}
-				// Si no hay ningún filtro activo → no muestra mensaje (solo actualiza la tabla)
+				Swal.fire({
+					icon: total > 0 ? 'success' : null,
+					title: total > 0 ? 'Búsqueda exitosa' : 'Sin resultados',
+					text: mensaje,
+					timer: 2500,
+					showConfirmButton: false
+				});
+
 			} catch (error) {
 				console.error(error);
 				Swal.fire('Error', 'Ocurrió un problema al buscar los registros.', 'error');

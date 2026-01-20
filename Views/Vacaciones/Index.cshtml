@@ -1016,7 +1016,7 @@
             });
 
             // Selección de filas y check all
-                    document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function (e) {
+            document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function (e) {
             const td = e.target.closest('td');
             // Si el click fue en la columna del nombre (primera celda), NO hacemos nada aquí
             if (td && td.cellIndex === 0) return;

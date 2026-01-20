@@ -509,7 +509,7 @@
                             </div>
                             <div class="campo" style="flex: 0 0 150px; max-width: 150px;">
                                 <label for="diasInput">Días Solicitados</label>
-                                <input type="number" id="diasInput" class="form-control shadow-sm" min="1" max="60" value="1" />
+                                <input type="number" id="diasInput" class="form-control shadow-sm" min="0" max="60" value="0" />
                             </div>
                         </div>
                         <!-- Fila 2: Fecha Inicio y Fecha Fin -->
@@ -1097,12 +1097,12 @@
 
 
                 // Evento al seleccionar empleado
-        document.getElementById('empleadoSelect').addEventListener('change', async function () {
+                document.getElementById('empleadoSelect').addEventListener('change', async function () {
                 const empleadoId = this.value;
                 const diasInput = document.getElementById('diasInput');
                 if (!empleadoId || empleadoId === "") {
                     diasInput.max = 60;
-                    diasInput.value = 15;
+                    diasInput.value = 0;
                     diasInput.disabled = false;
                     return;
                 }
@@ -1127,10 +1127,10 @@
                         diasInput.value = 15;
                     }
                 } catch (err) {
-                    console.error('Error al consultar días:', err);
+                    console.error('Error al consultar días permitidos:', err);
                     Swal.fire('Error', 'No se pudo consultar los días permitidos.', 'error');
                     diasInput.max = 60;
-                    diasInput.value = 15;
+                    diasInput.value = 0;
                 }
             });
         });

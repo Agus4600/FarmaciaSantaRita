@@ -836,8 +836,7 @@
 
                 if (result.success) {
                     // Días favor = máximo legal - días reales tomados
-                    const diasFavor = maxLegal - diasReales;
-
+                    const valorDiasFavor = result.diasFavor;
                     const tbody = document.querySelector('#tablaVacaciones tbody');
                     const nuevaFila = document.createElement('tr');
                     nuevaFila.setAttribute('data-vacacion-id', result.id);
@@ -1126,7 +1125,7 @@
                     } else {
                         Swal.fire('Atención', data.message || 'No se pudo calcular la antigüedad.', 'warning');
                         diasInput.max = 60;
-                        diasInput.value = 15;
+                        diasInput.value = 0;
                     }
                 } catch (err) {
                         console.error('Error completo al consultar GetDiasPermitidos:', err);

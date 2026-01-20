@@ -57,6 +57,8 @@ namespace FarmaciaSantaRita.Models
            ErrorMessage = "Solo se permiten correos de los dominios: gmail, outlook, hotmail, yahoo, mail, empresa.org, universidad.edu, pais.co.uk")]
         public string CorreoUsuario { get; set; } = null!;
 
+        public DateTime? FechaIngreso { get; set; }
+
         public virtual ICollection<Boletum> Boleta { get; set; } = new List<Boletum>();
         public virtual ICollection<Compra> Compras { get; set; } = new List<Compra>();
         public virtual ICollection<Inasistencium> Inasistencia { get; set; } = new List<Inasistencium>();

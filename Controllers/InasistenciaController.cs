@@ -62,16 +62,16 @@ public class InasistenciaController : Controller
 
 
     [HttpGet]
-    public async Task<IActionResult> GetDatosEmpleado(string nombre)
+    public async Task<IActionResult> GetDatosEmpleado(int id) // Cambiado de string nombre a int id
     {
-        if (string.IsNullOrWhiteSpace(nombre))
-            return Json(new { success = false, message = "Nombre requerido" });
+        if (id <= 0)
+            return Json(new { exito = false, message = "ID no válido" });
 
         var empleado = await _context.Usuarios
-            .Where(u => EF.Functions.ILike(u.Nombre + " " + u.Apellido, $"%{nombre.Trim()}%"))
+            .Where(u => u.Idusuario == id)
             .Select(u => new
             {
-                success = true,
+                exito = true, // Agregamos esta propiedad para que el JS la reconozca
                 nombreCompleto = u.Nombre + " " + u.Apellido,
                 dni = u.Dni,
                 telefono = u.Telefono,
@@ -80,7 +80,7 @@ public class InasistenciaController : Controller
             .FirstOrDefaultAsync();
 
         if (empleado == null)
-            return Json(new { success = false, message = "Empleado no encontrado" });
+            return Json(new { exito = false, message = "Empleado no encontrado" });
 
         return Json(empleado);
     }

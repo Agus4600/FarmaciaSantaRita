@@ -328,6 +328,9 @@ namespace FarmaciaSantaRita.Migrations
                     b.Property<bool>("Eliminado")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime?>("FechaIngreso")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("FechaNacimiento")
                         .HasColumnType("timestamp with time zone");
 

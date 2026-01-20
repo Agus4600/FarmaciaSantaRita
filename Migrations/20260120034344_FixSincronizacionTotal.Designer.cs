@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FarmaciaSantaRita.Migrations
 {
     [DbContext(typeof(FarmaciabdContext))]
-    [Migration("20260118212037_Create_Vacaciones_Table_Only")]
-    partial class Create_Vacaciones_Table_Only
+    [Migration("20260120034344_FixSincronizacionTotal")]
+    partial class FixSincronizacionTotal
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -330,6 +330,9 @@ namespace FarmaciaSantaRita.Migrations
 
                     b.Property<bool>("Eliminado")
                         .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("FechaIngreso")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("FechaNacimiento")
                         .HasColumnType("timestamp with time zone");

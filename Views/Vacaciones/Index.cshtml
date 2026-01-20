@@ -583,9 +583,8 @@
 
     <script>
          // Calendarios con jQuery
-       $(document).ready(function () {
-            // Calendario FILTROS
-            $('#btnAbrirCalendario').daterangepicker({
+        $(document).ready(function () {
+            const commonOptions = {
                 autoUpdateInput: false,
                 opens: 'left',
                 locale: {
@@ -595,53 +594,43 @@
                     daysOfWeek: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'],
                     monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
                 }
-            });
+            };
 
-            $('#btnAbrirCalendario').on('apply.daterangepicker', function(ev, picker) {
+            // Calendario para FILTROS (Rango de Fechas)
+            $('#btnAbrirCalendario').daterangepicker(commonOptions);
+            $('#btnAbrirCalendario').on('apply.daterangepicker', function (ev, picker) {
                 $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
             });
-            $('#btnAbrirCalendario').on('cancel.daterangepicker', function(ev, picker) {
+            $('#btnAbrirCalendario').on('cancel.daterangepicker', function () {
                 $(this).text('dd/mm/yyyy - dd/mm/yyyy');
             });
 
-            // Calendario PERÍODO
-            $('#btnPeriodo').daterangepicker({
-                autoUpdateInput: false,
-                opens: 'left',
-                locale: {
-                    format: 'DD/MM/YYYY',
-                    applyLabel: 'Aplicar',
-                    cancelLabel: 'Limpiar',
-                    daysOfWeek: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'],
-                    monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-                }
-            });
-
-            $('#btnPeriodo').on('apply.daterangepicker', function(ev, picker) {
+            // Calendario para REGISTRO (Período de Vacaciones)
+            $('#btnPeriodo').daterangepicker(commonOptions);
+            $('#btnPeriodo').on('apply.daterangepicker', function (ev, picker) {
                 $(this).text(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
             });
-            $('#btnPeriodo').on('cancel.daterangepicker', function(ev, picker) {
+            $('#btnPeriodo').on('cancel.daterangepicker', function () {
                 $(this).text('dd/mm/yyyy - dd/mm/yyyy');
             });
 
-            // FIX: Apertura forzada y estable
-            $('#btnAbrirCalendario, #btnPeriodo').on('click', function(e) {
+            // Forzar apertura al hacer click (más confiable)
+            $('#btnAbrirCalendario, #btnPeriodo').on('click', function (e) {
                 e.preventDefault();
-                e.stopPropagation(); // Crucial: evita que el click se propague y cierre el picker
-                const picker = $(this).data('daterangepicker');
+                e.stopPropagation();
+                const $this = $(this);
+                const picker = $this.data('daterangepicker');
                 if (picker) {
                     picker.show();
+                } else {
+                    console.warn('Daterangepicker no inicializado para:', $this.attr('id'));
                 }
             });
 
-            // Extra: Mantener abierto al volver a la pestaña
-            $(window).on('focus', function () {
-                if ($('#btnAbrirCalendario').data('daterangepicker')?.element.is(':focus') ||
-                    $('#btnPeriodo').data('daterangepicker')?.element.is(':focus')) {
-                    $('#btnAbrirCalendario, #btnPeriodo').each(function () {
-                        $(this).data('daterangepicker')?.show();
-                    });
-                }
+            // Reintento al enfocar (por si falla el click)
+            $('#btnAbrirCalendario, #btnPeriodo').on('focus', function () {
+                const picker = $(this).data('daterangepicker');
+                if (picker) picker.show();
             });
         });
 

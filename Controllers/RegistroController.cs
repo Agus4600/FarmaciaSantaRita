@@ -37,7 +37,15 @@ namespace FarmaciaSantaRita.Controllers
                 try
                 {
                     // Fix para PostgreSQL (sin el .Value porque FechaNacimiento no es nullable)
-                    nuevoUsuario.FechaNacimiento = DateTime.SpecifyKind(nuevoUsuario.FechaNacimiento, DateTimeKind.Utc);
+                    if (nuevoUsuario.FechaNacimiento != default(DateTime))
+                    {
+                        nuevoUsuario.FechaNacimiento = DateTime.SpecifyKind(nuevoUsuario.FechaNacimiento, DateTimeKind.Utc);
+                    }
+
+                    if (nuevoUsuario.FechaIngreso.HasValue)
+                    {
+                        nuevoUsuario.FechaIngreso = DateTime.SpecifyKind(nuevoUsuario.FechaIngreso.Value, DateTimeKind.Utc);
+                    }
 
                     // Encriptación segura
                     if (!string.IsNullOrEmpty(nuevoUsuario.ContraseñaPlana))

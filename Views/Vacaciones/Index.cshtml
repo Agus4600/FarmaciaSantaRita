@@ -1168,10 +1168,30 @@
                     tbody.appendChild(filaVacia);
 
                 }
+                        const hoy = new Date();
+        const en30Dias = new Date(hoy);
+        en30Dias.setDate(hoy.getDate() + 30);  // Avanza 30 días
+
+        const formatoFecha = (date) => {
+            const d = date.getDate().toString().padStart(2, '0');
+            const m = (date.getMonth() + 1).toString().padStart(2, '0');
+            const y = date.getFullYear();
+            return `${d}/${m}/${y}`;
+        };
+
+        const textoInicial = `${formatoFecha(hoy)} - ${formatoFecha(en30Dias)}`;
+        document.getElementById('btnPeriodo').textContent = textoInicial;
 
             }
 
             agregarFilasVacias();
+
+
+
+
+
+
+
 
             // Buscar Filtro
 

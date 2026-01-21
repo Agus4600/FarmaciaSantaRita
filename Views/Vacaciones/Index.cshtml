@@ -1175,156 +1175,91 @@
 
             // Buscar Filtro
 
-                 document.getElementById('btnBuscarFiltro').addEventListener('click', async function () {
-
+             document.getElementById('btnBuscarFiltro').addEventListener('click', async function () {
             const nombre = document.getElementById('buscarEmpleadoInput').value.trim();
-
             const rangoBtn = document.getElementById('btnAbrirCalendario');
-
             const rangoTexto = rangoBtn.textContent.trim();
 
-            // 1. Definimos las variables con el mismo nombre que usaremos abajo
-
             let fDesde = null;
-
             let fHasta = null;
-
             if (rangoTexto !== 'dd/mm/yyyy - dd/mm/yyyy') {
-
                 const partes = rangoTexto.split(' - ');
-
                 if (partes.length === 2) {
-
                     try {
-
                         const desdeParts = partes[0].split('/');
-
                         const hastaParts = partes[1].split('/');
-
-                        // Asignamos a fDesde y fHasta
-
                         fDesde = `${desdeParts[2]}-${desdeParts[1]}-${desdeParts[0]}`;
-
                         fHasta = `${hastaParts[2]}-${hastaParts[1]}-${hastaParts[0]}`;
-
                     } catch (e) {
-
                         Swal.fire('Error', 'Formato de fecha inválido', 'error');
-
                         return;
-
                     }
-
                 }
-
             }
 
             const hayNombre = nombre !== '';
-
             const hayRango = fDesde !== null && fHasta !== null;
 
             if (!hayNombre && !hayRango) {
-
                 Swal.fire({
-
                     title: 'Atención',
-
                     text: 'Ingrese al menos un filtro (nombre o rango de fechas)',
-
                     confirmButtonText: 'Entendido',
-
                     confirmButtonColor: '#007bff'
-
                 });
-
                 return;
-
             }
 
             try {
-
-                // 2. Construcción de la URL usando fDesde y fHasta (lo que definimos arriba)
-
                 const url = `/Vacaciones/BuscarVacaciones?nombreEmpleado=${encodeURIComponent(nombre)}&fechaDesde=${fDesde || ''}&fechaHasta=${fHasta || ''}`;
-
-                console.log("URL enviada:", url); // <--- Muy importante revisar esto en F12
+                console.log("URL enviada:", url);
 
                 const response = await fetch(url);
-
                 if (!response.ok) throw new Error(`Error ${response.status}`);
 
                 const data = await response.json();
 
                 const tbody = document.querySelector('#tablaVacaciones tbody');
 
-                tbody.innerHTML = '';
-
-                data.forEach(v => {
-
-                    const fila = document.createElement('tr');
-
-                    fila.setAttribute('data-vacacion-id', v.idVacaciones);
-
-                    fila.innerHTML = `
-
-                        <td class="empleado-clickable">${v.nombreEmpleado}</td>
-
-                        <td class="text-center">${v.diasVacaciones}</td>
-
-                        <td class="text-center">${v.fechaInicio} - ${v.fechaFin}</td>
-
-                        <td class="text-center">${v.diasFavor}</td>
-
-                        <td><input type="checkbox" class="form-check-input fila-check" /></td>
-
-                    `;
-
-                    tbody.appendChild(fila);
-
-                });
-
-                if (typeof agregarFilasVacias === "function") agregarFilasVacias();
-
+                // Solo limpiamos y actualizamos si hay resultados
                 if (data.length > 0) {
+                    tbody.innerHTML = '';  // Limpiamos SOLO si hay data
+
+                    data.forEach(v => {
+                        const fila = document.createElement('tr');
+                        fila.setAttribute('data-vacacion-id', v.idVacaciones);
+                        fila.innerHTML = `
+                            <td class="empleado-clickable">${v.nombreEmpleado}</td>
+                            <td class="text-center">${v.diasVacaciones}</td>
+                            <td class="text-center">${v.fechaInicio} - ${v.fechaFin}</td>
+                            <td class="text-center">${v.diasFavor}</td>
+                            <td><input type="checkbox" class="form-check-input fila-check" /></td>
+                        `;
+                        tbody.appendChild(fila);
+                    });
 
                     Swal.fire({
-
                         icon: 'success',
-
                         title: 'Búsqueda exitosa',
-
                         text: `Se encontraron ${data.length} registros.`,
-
                         timer: 2000,
-
                         showConfirmButton: false
-
                     });
-
                 } else {
-
+                    // No hay resultados → NO limpiamos la tabla
                     Swal.fire({
-
                         title: 'Sin resultados',
-
                         text: 'No se encontraron vacaciones con esos filtros.',
-
                         confirmButtonText: 'Entendido',
-
                         confirmButtonColor: '#007bff'
-
                     });
-
                 }
 
+                if (typeof agregarFilasVacias === "function") agregarFilasVacias();
             } catch (err) {
-
                 console.error('Error:', err);
-
                 Swal.fire('Error', 'No se pudo realizar la búsqueda.', 'error');
-
             }
-
         });
 
                 // Validación y lógica completa de Agregar

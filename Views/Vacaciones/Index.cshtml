@@ -1320,237 +1320,139 @@
 
                 // Validación y lógica completa de Agregar
 
-                document.getElementById('btnAgregar').addEventListener('click', async function (e) {
-
+                    document.getElementById('btnAgregar').addEventListener('click', async function (e) {
             const elEmpleado = document.getElementById('empleadoSelect');
-
             const elDias = document.getElementById('diasInput');
-
             const btnPeriodo = document.getElementById('btnPeriodo');
 
             if (!elEmpleado || !elDias || !btnPeriodo) {
-
                 Swal.fire('Error', 'No se encontraron los campos necesarios.', 'error');
-
                 return;
-
             }
 
             const empleadoId = elEmpleado.value?.trim() || '';
-
             const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.getAttribute('data-nombre') || '';
-
             const diasSolicitados = parseInt(elDias.value) || 0;
-
             const periodoTexto = btnPeriodo.textContent.trim();
 
             // Validaciones básicas
-
             if (!empleadoId || empleadoId === '') {
-
                 Swal.fire('Error', 'Seleccione un empleado', 'error');
-
                 return;
-
             }
 
             if (periodoTexto === 'dd/mm/yyyy - dd/mm/yyyy') {
-
                 Swal.fire('Error', 'Seleccione el período de vacaciones', 'error');
-
                 return;
-
             }
 
             const [desde, hasta] = periodoTexto.split(' - ');
-
             const inicioDate = new Date(desde.split('/').reverse().join('-'));
-
             const finDate = new Date(hasta.split('/').reverse().join('-'));
 
             if (isNaN(inicioDate) || isNaN(finDate) || finDate < inicioDate) {
-
                 Swal.fire('Error', 'Fechas inválidas o fin anterior al inicio', 'error');
-
                 return;
-
             }
 
             // Calcular días reales del período (corridos)
-
             const diasReales = Math.floor((finDate - inicioDate) / (1000 * 60 * 60 * 24)) + 1;
 
             // Validación 1: días solicitados ≤ máximo legal
-
             const maxLegal = parseInt(elDias.max) || 60;
-
             if (diasSolicitados > maxLegal) {
-
                 e.preventDefault();
-
                 Swal.fire({
-
-                    icon: 'error',
-
                     title: 'Exceso de días solicitados',
-
                     html: `No se pueden solicitar más de <b>${maxLegal} días</b> según la antigüedad del empleado (LCT).<br>
-
                            Días solicitados: ${diasSolicitados} (máximo permitido: ${maxLegal})`,
-
                     confirmButtonText: 'Entendido',
-
                     confirmButtonColor: '#007bff'
-
                 });
-
                 elDias.focus();
-
                 return;
-
             }
 
             // Validación 2: días reales del período ≤ máximo legal
-
             if (diasReales > maxLegal) {
-
                 e.preventDefault();
 
-
-                    // --- CERRAR CALENDARIO MANUALMENTE ---
-        const picker = $('#btnPeriodo').data('daterangepicker');
-        if (picker) {
-            picker.hide(); // Esto oculta el calendario inmediatamente
-        }
-        // -------------------------------------
-
-
+                // Mostrar Swal SIN abrir el calendario
                 Swal.fire({
-
                     title: 'Período demasiado largo',
-
                     html: `El período seleccionado tiene <b>${diasReales} días corridos</b>, pero solo corresponden <b>${maxLegal} días</b> por ley.<br>
-
                            Reduce el rango de fechas o ajusta los días solicitados.`,
-
                     confirmButtonText: 'Entendido',
-
                     confirmButtonColor: '#007bff'
-
+                }).then(() => {
+                    // Después de cerrar el Swal, enfocar el botón para que pueda corregir
+                    btnPeriodo.focus();
                 });
 
+                // Enfocar el botón (sin abrir el calendario)
                 btnPeriodo.focus();
-
                 return;
-
             }
 
             // Todo OK → proceder con el guardado
-
             const datos = {
-
                 Idusuario: parseInt(empleadoId),
-
                 DiasVacaciones: diasSolicitados,
-
                 FechaInicio: inicioDate.toISOString(),
-
                 FechaFin: finDate.toISOString(),
-
                 NombreEmpleadoFrontend: empleadoNombre
-
             };
 
             try {
-
                 const response = await fetch('/Vacaciones/ApiCreate', {
-
                     method: 'POST',
-
                     headers: {
-
                         'Content-Type': 'application/json',
-
                         'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-
                     },
-
                     body: JSON.stringify(datos)
-
                 });
 
                 if (!response.ok) {
-
                     const errorText = await response.text();
-
                     throw new Error(`Error ${response.status}: ${errorText}`);
-
                 }
 
-        const result = await response.json();
+                const result = await response.json();
 
-        if (result.success) {
+                if (result.success) {
+                    const valorDiasFavor = result.diasFavor;
+                    const tbody = document.querySelector('#tablaVacaciones tbody');
+                    const nuevaFila = document.createElement('tr');
+                    nuevaFila.setAttribute('data-vacacion-id', result.id);
+                    nuevaFila.innerHTML = `
+                        <td class="empleado-clickable">${empleadoNombre}</td>
+                        <td class="text-center">${diasSolicitados}</td>
+                        <td class="text-center">${desde} - ${hasta}</td>
+                        <td class="text-center">${valorDiasFavor}</td>
+                        <td><input type="checkbox" class="form-check-input fila-check" /></td>
+                    `;
+                    tbody.insertBefore(nuevaFila, tbody.firstChild);
 
-            const valorDiasFavor = result.diasFavor;
+                    elEmpleado.value = '';
+                    elDias.value = '0';
+                    btnPeriodo.textContent = 'dd/mm/yyyy - dd/mm/yyyy';
+                    agregarFilasVacias();
 
-            const tbody = document.querySelector('#tablaVacaciones tbody');
-
-            const nuevaFila = document.createElement('tr');
-
-            nuevaFila.setAttribute('data-vacacion-id', result.id);
-
-            nuevaFila.innerHTML = `
-
-                <td class="empleado-clickable">${empleadoNombre}</td>
-
-                <td class="text-center">${diasSolicitados}</td>
-
-                <td class="text-center">${desde} - ${hasta}</td>
-
-                <td class="text-center">${valorDiasFavor}</td>
-
-                <td><input type="checkbox" class="form-check-input fila-check" /></td>
-
-            `;
-
-            tbody.insertBefore(nuevaFila, tbody.firstChild);
-
-            elEmpleado.value = '';
-
-            elDias.value = '0';
-
-            btnPeriodo.textContent = 'dd/mm/yyyy - dd/mm/yyyy';
-
-            agregarFilasVacias();
-
-            Swal.fire({
-
-                icon: 'success',
-
-                title: '¡Agregado!',
-
-                text: `Vacación registrada. Días a favor restantes: ${valorDiasFavor}`,
-
-                timer: 2500,
-
-                showConfirmButton: false
-
-            });
-
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Agregado!',
+                        text: `Vacación registrada. Días a favor restantes: ${valorDiasFavor}`,
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
                 } else {
-
                     Swal.fire('Error', result.message || 'No se pudo guardar', 'error');
-
                 }
-
             } catch (err) {
-
                 console.error('Error en ApiCreate:', err);
-
                 Swal.fire('Error', 'No se pudo conectar con el servidor.', 'error');
-
             }
-
         });
 
             // btnNuevoRegistro

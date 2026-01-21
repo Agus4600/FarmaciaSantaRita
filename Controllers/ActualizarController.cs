@@ -109,7 +109,8 @@ namespace FarmaciaSantaRita.Controllers
 
                 _context.SaveChanges();
                 TempData["ResultadoActualizacion"] = "Exito";
-                return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
+                ViewBag.ContraseñaActualDesencriptada = _encryptionService.Decrypt(usuarioParaActualizar.Contraseña);
+                return View("ActualizarCuenta", usuarioParaActualizar);
             }
             catch (Exception ex)
             {

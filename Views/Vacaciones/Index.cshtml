@@ -1416,6 +1416,15 @@
 
                 e.preventDefault();
 
+
+                    // --- CERRAR CALENDARIO MANUALMENTE ---
+        const picker = $('#btnPeriodo').data('daterangepicker');
+        if (picker) {
+            picker.hide(); // Esto oculta el calendario inmediatamente
+        }
+        // -------------------------------------
+
+
                 Swal.fire({
 
                     title: 'Período demasiado largo',

@@ -675,10 +675,8 @@
                     }
                 }
             }
-
             const hayNombre = nombre !== '';
             const hayRango = fDesde !== null && fHasta !== null;
-
             if (!hayNombre && !hayRango) {
                 Swal.fire({
                     title: 'Atención',
@@ -692,14 +690,10 @@
             try {
                 // 2. Construcción de la URL usando fDesde y fHasta (lo que definimos arriba)
                 const url = `/Vacaciones/BuscarVacaciones?nombreEmpleado=${encodeURIComponent(nombre)}&fechaDesde=${fDesde || ''}&fechaHasta=${fHasta || ''}`;
-
-                console.log("URL enviada:", url); // <--- Muy importante revisar esto en F12
-
+                console.log("URL enviada:", url);
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`Error ${response.status}`);
-
                 const data = await response.json();
-
                 const tbody = document.querySelector('#tablaVacaciones tbody');
                 tbody.innerHTML = '';
 
@@ -794,6 +788,20 @@
                 return;
             }
 
+        const diasFavorCalculado = maxLegal - diasSolicitados;
+        if (diasFavorCalculado < 0) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Exceso de días solicitados',
+                html: `Los <b>${diasSolicitados} días solicitados</b> exceden los <b>${maxLegal} días permitidos</b> por antigüedad.<br>
+                       No se puede registrar.,
+                confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+            });
+            elDias.focus();
+            return;
+        }
+
             // Validación 2: días reales del período ≤ máximo legal
             if (diasReales > maxLegal) {
                 e.preventDefault();
@@ -806,8 +814,7 @@
                 });
                 btnPeriodo.focus();
                 return;
-            }
-
+            
             // Todo OK → proceder con el guardado
             const datos = {
                 Idusuario: parseInt(empleadoId),

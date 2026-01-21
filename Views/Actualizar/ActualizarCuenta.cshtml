@@ -329,6 +329,16 @@
                                        value="@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")" />
                             </div>
                             <div class="grupo-campo">
+                                <label asp-for="FechaIngreso">Fecha de Ingreso</label>
+                                <input asp-for="FechaIngreso"
+                                       type="date"
+                                       id="FechaIngreso"
+                                       class="form-control"
+                                       value="@(Model?.FechaIngreso?.ToString("yyyy-MM-dd") ?? "")"
+                                       disabled
+                                       style="background-color: #e9ecef; opacity: 0.7;" />
+                            </div>
+                            <div class="grupo-campo">
                                 <label>Contraseña Actual</label>
                                 <div class="password-wrapper" id="wrapperContrasenaActual">
                                     <input type="password" id="contrasenaActual" class="form-control" value="@ViewBag.ContraseñaActualDesencriptada" readonly />

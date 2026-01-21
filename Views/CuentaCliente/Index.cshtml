@@ -421,7 +421,7 @@
                                         @* Solo mostramos la opción si el DNI existe y no es una cadena vacía *@
                                         if (c.dni != null && !string.IsNullOrWhiteSpace(c.dni.ToString()))
                                         {
-                                            <option value="@c.nombre"></option>
+                                            <option value="@c.nombre">@c.dni</option>
                                         }
                                     }
                                 </datalist>

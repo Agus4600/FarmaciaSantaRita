@@ -163,43 +163,43 @@ namespace FarmaciaSantaRita.Controllers
         }
 
         [HttpGet]
-
         public async Task<IActionResult> GetDatosEmpleado(string nombre)
-
         {
-
             if (string.IsNullOrWhiteSpace(nombre))
-
                 return Json(new { success = false, message = "Nombre requerido" });
 
             var empleado = await _context.Usuarios
-
                 .Where(u => EF.Functions.ILike(u.Nombre + " " + u.Apellido, $"%{nombre.Trim()}%"))
-
-                .Select(u => new
-
-                {
-
-                    success = true,
-
-                    nombreCompleto = u.Nombre + " " + u.Apellido,
-
-                    dni = u.Dni,
-
-                    telefono = u.Telefono,
-
-                    direccion = u.Direccion
-
-                })
-
                 .FirstOrDefaultAsync();
 
             if (empleado == null)
-
                 return Json(new { success = false, message = "Empleado no encontrado" });
 
-            return Json(empleado);
+            // Calcular días de vacaciones legales según antigüedad
+            int diasVacacionesLegales = 14; // default
+            if (empleado.FechaIngreso.HasValue)
+            {
+                var hoy = DateOnly.FromDateTime(DateTime.Today);
+                var ingreso = DateOnly.FromDateTime(empleado.FechaIngreso.Value);
+                int antiguedadAnios = hoy.Year - ingreso.Year;
+                if (hoy.Month < ingreso.Month || (hoy.Month == ingreso.Month && hoy.Day < ingreso.Day))
+                    antiguedadAnios--;
 
+                if (antiguedadAnios <= 5) diasVacacionesLegales = 14;
+                else if (antiguedadAnios <= 10) diasVacacionesLegales = 21;
+                else if (antiguedadAnios <= 20) diasVacacionesLegales = 28;
+                else diasVacacionesLegales = 35;
+            }
+
+            return Json(new
+            {
+                success = true,
+                nombreCompleto = empleado.Nombre + " " + empleado.Apellido,
+                dni = empleado.Dni,
+                telefono = empleado.Telefono,
+                direccion = empleado.Direccion,
+                diasVacacionesLegales  // ← Campo agregado
+            });
         }
 
         [HttpPost]

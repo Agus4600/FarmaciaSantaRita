@@ -520,67 +520,89 @@
                                 </tr>
                             </thead>
                                 <tbody>
-                                    @foreach (var compra in Model)
+                                    @if (Model == null || !Model.Any(c =>
+                                                                        c.IdclienteNavigation != null &&
+                                                                        !string.IsNullOrWhiteSpace(c.IdclienteNavigation.DNI)))
                                     {
-                                        var nombreCliente = compra.IdclienteNavigation?.NombreCliente ?? "Desconocido";
-                                        var telefonoCliente = compra.IdclienteNavigation?.TelefonoCliente ?? "Sin teléfono";
-                                        var direccionCliente = compra.IdclienteNavigation?.DireccionCliente ?? "Sin dirección";
-                                        var dniCliente = compra.IdclienteNavigation?.DNI ?? "Sin DNI";
-
-                                        // Tomamos la PRIMERA línea de compra (asumiendo que por ahora hay solo una por compra)
-                                        var linea = compra.LineaDeCompras?.FirstOrDefault();
-
-                                        <tr data-id="@compra.Idcompras"
-                                            data-nombre="@(nombreCliente.ToLower())"
-                                            data-telefono="@telefonoCliente"
-                                            data-direccion="@direccionCliente"
-                                            data-dni="@dniCliente">
-                                            <td class="fw-bold">
-                                                <span class="nombre-cliente-link"
-                                                      style="cursor: pointer; text-decoration: underline; color: #007bff;">
-                                                    @nombreCliente
-                                                </span>
-                                            </td>
-                                            <td>@(linea?.IdproductoNavigation?.NombreProducto ?? "Sin producto")</td>
-                                            <td contenteditable="true" class="edit-cant">@(linea?.Cantidad ?? 0)</td>
-                                            <td contenteditable="true" class="edit-precio"
-                                                data-precio-raw="@(linea?.IdproductoNavigation?.PrecioUnitario ?? 0)">
-                                                $@string.Format("{0:N2}", linea?.IdproductoNavigation?.PrecioUnitario ?? 0)
-                                                .Replace(",", "X").Replace(".", ",").Replace("X", ".")
-                                            </td>
-                                            <td>@compra.FechaCompra.ToString("dd/MM/yyyy")</td>
-                                            <td class="text-primary fw-bold">$ @compra.MontoCompra.ToString("N2")</td>
-                                            <td>
-                                                @{
-                                                    var pg = compra.EstadoDePago == "pagado";
-                                                }
-                                                <select class="sel-estado @(pg ? "pagado" : "pendiente")" onchange="actualizarEstadoStyle(this)">
-                                                    <option value="pendiente" selected="@(!pg)">Pendiente</option>
-                                                    <option value="pagado" selected="@pg">Pagado</option>
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <button class="btn-accion btn-tilde" title="Actualizar" onclick="enviarActualizacion(this)">
-                                                    <i class="bi bi-check-circle-fill"></i>
-                                                </button>
-                                                <button class="btn-accion btn-cruz" title="Eliminar" onclick="eliminarFila(this)">
-                                                    <i class="bi bi-x-circle-fill"></i>
-                                                </button>
-                                            </td>
+                                        <tr class="text-center text-muted">
+                                            <td colspan="8">No hay compras registradas con clientes válidos (con DNI).</td>
                                         </tr>
                                     }
-                                    @for (int i = Model.Count; i < 5; i++)
+                                    else
                                     {
-                                        <tr class="fila-vacia">
-                                            <td>&nbsp;</td>
-                                            <td>&nbsp;</td>
-                                            <td>&nbsp;</td>
-                                            <td>&nbsp;</td>
-                                            <td>&nbsp;</td>
-                                            <td>&nbsp;</td>
-                                            <td>&nbsp;</td>
-                                            <td>&nbsp;</td>
-                                        </tr>
+                                        @foreach (var compra in Model.Where(c =>
+                                                                            c.IdclienteNavigation != null &&
+                                                                            !string.IsNullOrWhiteSpace(c.IdclienteNavigation.DNI) &&  // ← SOLO clientes con DNI
+                                                                            c.LineaDeCompras?.Any() == true))  // ← Y que tengan producto
+                                        {
+                                            var cliente = compra.IdclienteNavigation;
+                                            var linea = compra.LineaDeCompras.FirstOrDefault();
+
+                                            if (linea == null) continue; // Saltear si no hay línea de producto
+
+                                            <tr data-id="@compra.Idcompras"
+                                                data-nombre="@(cliente.NombreCliente?.ToLower() ?? "")"
+                                                data-telefono="@(cliente.TelefonoCliente ?? "")"
+                                                data-direccion="@(cliente.DireccionCliente ?? "")"
+                                                data-dni="@(cliente.DNI)">
+                                                <td class="fw-bold">
+                                                    <span class="nombre-cliente-link"
+                                                          style="cursor: pointer; text-decoration: underline; color: #007bff;">
+                                                        @cliente.NombreCliente
+                                                    </span>
+                                                </td>
+                                                <td>@(linea.IdproductoNavigation?.NombreProducto ?? "Sin producto")</td>
+                                                <td contenteditable="true" class="edit-cant">@(linea?.Cantidad ?? 0)</td>
+                                                <td contenteditable="true" class="edit-precio"
+                                                    data-precio-raw="@(linea.IdproductoNavigation?.PrecioUnitario ?? 0)">
+                                                    $@string.Format("{0:N2}", linea.IdproductoNavigation?.PrecioUnitario ?? 0)
+                                                    .Replace(",", "X").Replace(".", ",").Replace("X", ".")
+                                                </td>
+                                                <td>@compra.FechaCompra.ToString("dd/MM/yyyy")</td>
+                                                <td class="text-primary fw-bold">$ @compra.MontoCompra.ToString("N2")</td>
+                                                <td>
+                                                    @{
+                                                        var pg = compra.EstadoDePago == "pagado";
+                                                    }
+                                                    <select class="sel-estado @(pg ? "pagado" : "pendiente")" onchange="actualizarEstadoStyle(this)">
+                                                        <option value="pendiente" selected="@(!pg)">Pendiente</option>
+                                                        <option value="pagado" selected="@pg">Pagado</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <button class="btn-accion btn-tilde" title="Actualizar" onclick="enviarActualizacion(this)">
+                                                        <i class="bi bi-check-circle-fill"></i>
+                                                    </button>
+                                                    <button class="btn-accion btn-cruz" title="Eliminar" onclick="eliminarFila(this)">
+                                                        <i class="bi bi-x-circle-fill"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+
+                                    <!-- Filas vacías de relleno (sin nombres ni DNI) -->
+                                    @{
+                                        int filasValidas = Model?.Count(c =>
+                                        c.IdclienteNavigation != null &&
+                                        !string.IsNullOrWhiteSpace(c.IdclienteNavigation.DNI) &&
+                                        c.LineaDeCompras?.Any() == true) ?? 0;
+
+                                        int filasRelleno = Math.Max(0, 5 - filasValidas);
+
+                                        for (int i = 0; i < filasRelleno; i++)
+                                        {
+                                            <tr class="fila-vacia">
+                                                <td>&nbsp;</td>
+                                                <td>&nbsp;</td>
+                                                <td>&nbsp;</td>
+                                                <td>&nbsp;</td>
+                                                <td>&nbsp;</td>
+                                                <td>&nbsp;</td>
+                                                <td>&nbsp;</td>
+                                                <td>&nbsp;</td>
+                                            </tr>
+                                        }
                                     }
                                 </tbody>
                             </table>

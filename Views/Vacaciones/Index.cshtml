@@ -915,7 +915,7 @@
 
                                 <label for="diasInput">Días Solicitados</label>
 
-                                <input type="number" id="diasInput" class="form-control shadow-sm" min="0" max="60" value="0" readonly />
+                                <input type="number" id="diasInput" class="form-control shadow-sm" min="0" max="60" value="0" />
 
                             </div>
 
@@ -1915,6 +1915,32 @@
                 }
 
             });
+
+
+
+
+
+                    // Bloquear escritura directa en Días Solicitados, permitir solo flechas
+        document.getElementById('diasInput').addEventListener('keydown', function(e) {
+            // Permitir flechas arriba (38) y abajo (40)
+            if (e.keyCode === 38 || e.keyCode === 40) {
+                return; // Dejar que las flechas funcionen normalmente
+            }
+
+            // Permitir teclas de control básicas (Tab, Backspace, Delete, flechas laterales para mover cursor si querés)
+            if ([9, 8, 46, 37, 39].includes(e.keyCode)) {
+                return;
+            }
+
+            // Bloquear todo lo demás (números, letras, etc.)
+            e.preventDefault();
+        });
+
+        // Opcional: bloquear también pegado (paste) para evitar escribir con Ctrl+V
+        document.getElementById('diasInput').addEventListener('paste', function(e) {
+            e.preventDefault();
+        });
+
 
         });
 

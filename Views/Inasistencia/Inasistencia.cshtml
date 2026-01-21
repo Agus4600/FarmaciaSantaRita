@@ -1642,13 +1642,13 @@
 			const textoEmpleado = document.getElementById('buscarEmpleadoInput').value.trim();
 			const turnoFiltro = document.getElementById('buscarTurnoSelect').value.trim();
 
-			// Validación de fechas (ya existe)
+			// Validación de fechas
 			if (fechaDesde && fechaHasta && new Date(fechaDesde) > new Date(fechaHasta)) {
 				Swal.fire('Error', "La fecha 'Desde' no puede ser posterior a la fecha 'Hasta'.", 'error');
 				return;
 			}
 
-			// === NUEVA VALIDACIÓN: si NO hay ningún filtro ===
+			// Validación: si NO hay ningún filtro
 			const hayFecha = fechaDesde !== '' && fechaHasta !== '';
 			const hayEmpleado = textoEmpleado.trim() !== '';
 			const hayTurno = turnoFiltro !== '';
@@ -1657,11 +1657,11 @@
 			if (!hayAlgunFiltro) {
 				Swal.fire({
 					title: 'Atención',
-					text: 'Ingrese al menos un filtro (nombre o rango de fechas)',
+					text: 'Ingrese al menos un filtro (nombre, rango de fechas o turno)',
 					confirmButtonText: 'Entendido',
 					confirmButtonColor: '#007bff'
 				});
-				return;  // ← importante: salir si no hay filtro
+				return;
 			}
 
 			try {
@@ -1675,35 +1675,49 @@
 
 				const response = await fetch(url);
 				if (!response.ok) throw new Error('Error en la búsqueda');
+
 				const registros = await response.json();
 
-				// Filtro adicional en cliente para acentos
-				const filtradosFinal = registros.filter(r => {
-					const nombreCompleto = quitarAcentos((r.nombreEmpleado || "").toLowerCase());
-					return !textoEmpleado || nombreCompleto.includes(quitarAcentos(textoEmpleado.toLowerCase()));
-				});
+				const tbody = document.querySelector('#tablaInasistencias tbody');
 
-				llenarTablaInasistencias(filtradosFinal);
+				// Solo limpiamos y actualizamos si hay resultados
+				if (registros.length > 0) {
+					tbody.innerHTML = '';  // ← Limpiar SOLO si hay data
 
-				// === MOSTRAR MENSAJE SOLO SI REALMENTE HUBO UN FILTRO ===
-				const total = filtradosFinal.length;
-				const mensaje = total === 0
-					? 'No se encontraron registros con los filtros aplicados.'
-					: `Se encontraron ${total} registro${total === 1 ? '' : 's'}.`;
+					registros.forEach(item => {
+						const fila = document.createElement('tr');
+						const fechaDisplay = item.fecha ? item.fecha.split('-').reverse().join('/') : '';
+						fila.innerHTML = `
+							<td>${fechaDisplay}</td>
+							<td class="columna-empleado">${item.nombreEmpleado || ''}</td>
+							<td>${item.turno || ''}</td>
+							<td>${item.motivo || ''}</td>
+							<td><input type="checkbox" class="form-check-input fila-check" data-id="${item.idInasistencia || '0'}" /></td>
+						`;
+						tbody.appendChild(fila);
+					});
 
-				Swal.fire({
-					icon: total > 0 ? 'success' : null,
-					title: total > 0 ? 'Búsqueda exitosa' : 'Sin resultados',
-					text: mensaje,
-					timer: 2500,
-					showConfirmButton: false
-				});
+					Swal.fire({
+						icon: 'success',
+						title: 'Búsqueda exitosa',
+						text: `Se encontraron ${registros.length} registro${registros.length === 1 ? '' : 's'}.`,
+						timer: 2500,
+						showConfirmButton: false
+					});
+				} else {
+					// No hay resultados → NO limpiamos la tabla
+					Swal.fire({
+						title: 'Sin resultados',
+						text: 'No se encontraron registros con los filtros aplicados.',
+						confirmButtonText: 'Entendido',
+						confirmButtonColor: '#007bff'
+					});
+				}
 
+				ajustarFilasVacias();  // Mantenemos las filas vacías si corresponde
 			} catch (error) {
 				console.error(error);
 				Swal.fire('Error', 'Ocurrió un problema al buscar los registros.', 'error');
-				llenarTablaInasistencias([]);
-				crearFilasVacias(MIN_FILAS_VISIBLE);
 			}
 		});
 

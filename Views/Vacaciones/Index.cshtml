@@ -33,6 +33,15 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
+    /* Prioridad visual: Swal encima del datepicker y todo lo demás */
+    .swal2-container, .swal2-popup {
+        z-index: 99999 !important;
+    }
+
+    /* Bajar ligeramente el datepicker si interfiere */
+    .daterangepicker {
+        z-index: 1050 !important;
+    }
 
     /* Nombre del empleado siempre subrayado, color azul, cursor pointer */
 

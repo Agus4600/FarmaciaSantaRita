@@ -980,34 +980,31 @@
 			tbody.appendChild(fragment);
 		}
 
-					function llenarTablaInasistencias(registros) {
+			function llenarTablaInasistencias(registros) {
 			const tbody = document.querySelector(`#${TABLA_ID} tbody`);
 			if (!tbody) return;
-			tbody.innerHTML = "";
 
+			// Ordenar por fecha descendente (más reciente arriba)
+			registros.sort((a, b) => {
+				const fechaA = new Date(a.fecha || '1900-01-01');
+				const fechaB = new Date(b.fecha || '1900-01-01');
+				return fechaB - fechaA; // descendente
+			});
+
+			tbody.innerHTML = "";
 			registros.forEach(item => {
 				const idRegistro = item.idInasistencia || "0";
-
-				// Aquí extraemos el ID del objeto que viene del servidor
 				const idEmpleado = item.idusuario || item.idUsuario || item.idEmpleado || "0";
-
 				const fechaInasistencia = item.fecha || '';
 				const fechaDisplay = fechaInasistencia ? fechaInasistencia.split('-').reverse().join('/') : '';
-
 				const nombreEmpleado = item.nombreEmpleado || '';
 				const turno = item.turno || '';
 				const motivo = item.motivo || '';
-
 				if (!fechaInasistencia && !nombreEmpleado && !turno && !motivo) return;
 
 				const fila = document.createElement("tr");
-
-				// 1. Atributo para identificar la inasistencia (para borrar/editar)
 				fila.setAttribute("data-inasistencia-id", idRegistro);
-
-				// ⭐ 2. AQUÍ COLOCAS LA LÍNEA (Atributo para el modal de datos)
 				fila.setAttribute("data-id-empleado", idEmpleado);
-
 				fila.innerHTML = `
 					<td title="${fechaDisplay}">${fechaDisplay}</td>
 					<td title="${nombreEmpleado}" class="columna-empleado">${nombreEmpleado}</td>

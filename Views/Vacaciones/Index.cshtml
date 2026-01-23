@@ -1232,7 +1232,7 @@
                 // Solo limpiamos y actualizamos si hay resultados
                 if (data.length > 0) {
                     tbody.innerHTML = '';  // Limpiamos SOLO si hay data
-
+                    data.sort((a, b) => parseInt(b.idVacaciones) - parseInt(a.idVacaciones));
                     data.forEach(v => {
                         const fila = document.createElement('tr');
                         fila.setAttribute('data-vacacion-id', v.idVacaciones);

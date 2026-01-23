@@ -980,15 +980,15 @@
 			tbody.appendChild(fragment);
 		}
 
-			function llenarTablaInasistencias(registros) {
+					function llenarTablaInasistencias(registros) {
 			const tbody = document.querySelector(`#${TABLA_ID} tbody`);
 			if (!tbody) return;
 
-			// Ordenar por fecha descendente (más reciente arriba)
+			// Ordenar por ID descendente (el ID más alto = el más recientemente agregado)
 			registros.sort((a, b) => {
-				const fechaA = new Date(a.fecha || '1900-01-01');
-				const fechaB = new Date(b.fecha || '1900-01-01');
-				return fechaB - fechaA; // descendente
+				const idA = parseInt(a.idInasistencia || 0);
+				const idB = parseInt(b.idInasistencia || 0);
+				return idB - idA; // descendente: más nuevo arriba
 			});
 
 			tbody.innerHTML = "";

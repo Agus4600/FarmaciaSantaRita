@@ -1227,24 +1227,24 @@
 
                 const data = await response.json();
 
-                const tbody = document.querySelector('#tablaVacaciones tbody');
+                        const tbody = document.querySelector('#tablaVacaciones tbody');
+        tbody.innerHTML = ''; // Limpiar
 
-                // Solo limpiamos y actualizamos si hay resultados
-                if (data.length > 0) {
-                    tbody.innerHTML = '';  // Limpiamos SOLO si hay data
+        // Ordenar por ID descendente (más alto = más reciente)
+        data.sort((a, b) => parseInt(b.idVacaciones) - parseInt(a.idVacaciones));
 
-                    data.forEach(v => {
-                        const fila = document.createElement('tr');
-                        fila.setAttribute('data-vacacion-id', v.idVacaciones);
-                        fila.innerHTML = `
-                            <td class="empleado-clickable">${v.nombreEmpleado}</td>
-                            <td class="text-center">${v.diasVacaciones}</td>
-                            <td class="text-center">${v.fechaInicio} - ${v.fechaFin}</td>
-                            <td class="text-center">${v.diasFavor}</td>
-                            <td><input type="checkbox" class="form-check-input fila-check" /></td>
-                        `;
-                        tbody.appendChild(fila);
-                    });
+        data.forEach(v => {
+            const fila = document.createElement('tr');
+            fila.setAttribute('data-vacacion-id', v.idVacaciones);
+            fila.innerHTML = `
+                <td class="empleado-clickable">${v.nombreEmpleado}</td>
+                <td class="text-center">${v.diasVacaciones}</td>
+                <td class="text-center">${v.fechaInicio} - ${v.fechaFin}</td>
+                <td class="text-center">${v.diasFavor}</td>
+                <td><input type="checkbox" class="form-check-input fila-check" /></td>
+            `;
+            tbody.appendChild(fila);
+        });
 
                     Swal.fire({
                         icon: 'success',

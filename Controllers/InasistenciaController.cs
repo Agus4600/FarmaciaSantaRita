@@ -163,7 +163,7 @@ public class InasistenciaController : Controller
     public IActionResult GetDbInfo(int idProveedor)
     {
         var lista = _context.Inasistencia
-            
+            .OrderByDescending(x => x.FechaInasistencia)
             .Select(x => new {
                 idInasistencia = x.Idinasistencias,
                 fecha = x.FechaInasistencia.ToString("yyyy-MM-dd"),

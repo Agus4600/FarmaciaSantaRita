@@ -61,18 +61,30 @@ namespace FarmaciaSantaRita.Controllers
     .ToListAsync();
 
             var vacaciones = await _context.Vacaciones
-    .AsNoTracking()
-    .OrderByDescending(v => v.IdVacaciones)  // ← CAMBIO: por ID descendente
-    .Select(v => new Vacacion
-    {
-        IdVacaciones = v.IdVacaciones,
-        DiasVacaciones = v.DiasVacaciones,
-        FechaInicio = v.FechaInicio,
-        FechaFin = v.FechaFin,
-        DiasFavor = v.DiasFavor,
-        NombreEmpleadoRegistrado = v.NombreEmpleadoRegistrado ?? "Sin nombre"
-    })
-    .ToListAsync();
+
+                .AsNoTracking()
+
+                .OrderByDescending(v => v.FechaInicio)
+
+                .Select(v => new Vacacion
+
+                {
+
+                    IdVacaciones = v.IdVacaciones,
+
+                    DiasVacaciones = v.DiasVacaciones,
+
+                    FechaInicio = v.FechaInicio,
+
+                    FechaFin = v.FechaFin,
+
+                    DiasFavor = v.DiasFavor,
+
+                    NombreEmpleadoRegistrado = v.NombreEmpleadoRegistrado ?? "Sin nombre"
+
+                })
+
+                .ToListAsync();
 
             return View(vacaciones);
 
@@ -343,7 +355,7 @@ namespace FarmaciaSantaRita.Controllers
 
                 var datosCrudos = await query
 
-                    .OrderByDescending(v => v.IdVacaciones)
+                    .OrderByDescending(v => v.FechaInicio)
 
                     .Select(v => new
 

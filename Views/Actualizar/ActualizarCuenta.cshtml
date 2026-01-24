@@ -322,12 +322,7 @@
                         <div class="tres-columnas">
                             <div class="grupo-campo">
                                 <label asp-for="FechaNacimiento">Fecha de Nacimiento</label>
-                                <input asp-for="FechaNacimiento"
-                                       type="date"
-                                       id="FechaNacimiento"
-                                       class="form-control"
-                                       value="@(Model?.FechaNacimiento?.ToString("yyyy-MM-dd") ?? "")" />
-                                <span asp-validation-for="FechaNacimiento" class="text-danger"></span>
+                                <input asp-for="FechaNacimiento" class="form-control" id="FechaNacimiento" />
                             </div>
                             <div class="grupo-campo">
                                 <label asp-for="FechaIngreso">Fecha de Ingreso</label>
@@ -400,6 +395,11 @@
                 if (inputNuevaPass) inputNuevaPass.value = "";
             }, 10);
 
+            // Cargar valor inicial de fecha en formato correcto
+            const fechaInput = document.getElementById('FechaNacimiento');
+            if (fechaInput && fechaInput.value === "") {
+                fechaInput.value = "@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")";
+            }//
         });
 
         // Toggle de visibilidad de contraseñas
@@ -519,7 +519,7 @@
                 dni: "@(Model?.Dni?.Trim() ?? "")",
                 direccion: "@(Model?.Direccion?.Trim() ?? "")",
                 telefono: "@(Model?.Telefono?.Trim() ?? "")",
-                fechaNacimiento: "@(Model.FechaNacimiento?.ToString("yyyy-MM-dd") ?? "")",
+                fechaNacimiento: "@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")",
                 nuevaPass: ""
             };
 

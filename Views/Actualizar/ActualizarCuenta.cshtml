@@ -517,7 +517,7 @@
                 dni: "@(Model?.Dni?.Trim() ?? "")",
                 direccion: "@(Model?.Direccion?.Trim() ?? "")",
                 telefono: "@(Model?.Telefono?.Trim() ?? "")",
-                fechaNacimiento: "@Model?.FechaNacimiento?.ToString("yyyy-MM-dd")",
+                fechaNacimiento: "@(Model?.FechaNacimiento?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? "")",
                 nuevaPass: ""
             };
 

@@ -322,7 +322,13 @@
                         <div class="tres-columnas">
                             <div class="grupo-campo">
                                 <label asp-for="FechaNacimiento">Fecha de Nacimiento</label>
-                                <input asp-for="FechaNacimiento" class="form-control" id="FechaNacimiento" />
+                                <input asp-for="FechaNacimiento"
+                                       type="date"
+                                       id="FechaNacimiento"
+                                       class="form-control"
+                                       value="@(Model?.FechaNacimiento?.ToString("yyyy-MM-dd") ?? "")"
+                                       disabled
+                                       style="background-color: #e9ecef; opacity: 0.7; cursor: not-allowed;" />
                             </div>
                             <div class="grupo-campo">
                                 <label asp-for="FechaIngreso">Fecha de Ingreso</label>
@@ -394,12 +400,6 @@
                 const inputNuevaPass = document.getElementById('nuevaContraseña');
                 if (inputNuevaPass) inputNuevaPass.value = "";
             }, 10);
-
-            // Cargar valor inicial de fecha en formato correcto
-            const fechaInput = document.getElementById('FechaNacimiento');
-            if (fechaInput && fechaInput.value === "") {
-                fechaInput.value = "@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")";
-            }//
         });
 
         // Toggle de visibilidad de contraseñas
@@ -442,7 +442,6 @@
                 dni: document.getElementById('Dni'),
                 direccion: document.getElementById('DireccionInput'),
                 telefono: document.getElementById('Telefono'),
-                fechaNacimiento: document.getElementById('FechaNacimiento'),
                 nuevaPass: document.getElementById('nuevaContraseña'),
                 wrapNuevaPass: document.getElementById('wrapperNuevaContrasena')
             };
@@ -519,7 +518,6 @@
                 dni: "@(Model?.Dni?.Trim() ?? "")",
                 direccion: "@(Model?.Direccion?.Trim() ?? "")",
                 telefono: "@(Model?.Telefono?.Trim() ?? "")",
-                fechaNacimiento: "@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")",
                 nuevaPass: ""
             };
 

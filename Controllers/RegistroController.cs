@@ -24,6 +24,8 @@ namespace FarmaciaSantaRita.Controllers
             return View();
         }
 
+
+
         [HttpPost]
         public async Task<IActionResult> Index(Usuario nuevoUsuario)
         {
@@ -36,15 +38,28 @@ namespace FarmaciaSantaRita.Controllers
             {
                 try
                 {
-                    // Fix para PostgreSQL (sin el .Value porque FechaNacimiento no es nullable)
-                    if (nuevoUsuario.FechaNacimiento != default(DateTime))
+                    // Validación explícita: Fecha de nacimiento obligatoria
+                    if (!nuevoUsuario.FechaNacimiento.HasValue || nuevoUsuario.FechaNacimiento.Value == default(DateTime))
                     {
-                        nuevoUsuario.FechaNacimiento = DateTime.SpecifyKind(nuevoUsuario.FechaNacimiento, DateTimeKind.Utc);
+                        ModelState.AddModelError("FechaNacimiento", "La fecha de nacimiento es obligatoria y debe ser válida.");
+                        // Forzamos que ModelState no sea válido para que muestre los errores en la vista
+                        ModelState.AddModelError(string.Empty, "Hay errores en el formulario.");
+                        return View(nuevoUsuario);
                     }
 
+                    // FechaNacimiento válida → ajustamos a UTC y quitamos hora
+                    nuevoUsuario.FechaNacimiento = DateTime.SpecifyKind(
+                        nuevoUsuario.FechaNacimiento.Value.Date,
+                        DateTimeKind.Utc
+                    );
+
+                    // FechaIngreso (opcional, pero si viene la ajustamos)
                     if (nuevoUsuario.FechaIngreso.HasValue)
                     {
-                        nuevoUsuario.FechaIngreso = DateTime.SpecifyKind(nuevoUsuario.FechaIngreso.Value, DateTimeKind.Utc);
+                        nuevoUsuario.FechaIngreso = DateTime.SpecifyKind(
+                            nuevoUsuario.FechaIngreso.Value.Date,  // también quitamos hora si aplica
+                            DateTimeKind.Utc
+                        );
                     }
 
                     // Encriptación segura
@@ -67,8 +82,7 @@ namespace FarmaciaSantaRita.Controllers
                 }
                 catch (Exception ex)
                 {
-                    // Captura el error real de la base de datos (por si el DNI está duplicado, etc.)
-                    var errorReal = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                    var errorReal = ex.InnerException?.Message ?? ex.Message;
                     ViewBag.Error = "Error en la base de datos: " + errorReal;
                     return View(nuevoUsuario);
                 }
@@ -77,8 +91,8 @@ namespace FarmaciaSantaRita.Controllers
             // Si hay errores de validación en el formulario
             var errores = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             ViewBag.Error = "No se pudo crear la cuenta: " + string.Join(" | ", errores);
-
             return View(nuevoUsuario);
         }
-    }
+
+    }    
 }

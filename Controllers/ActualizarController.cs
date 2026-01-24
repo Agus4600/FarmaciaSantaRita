@@ -83,8 +83,8 @@ namespace FarmaciaSantaRita.Controllers
                 // (puedes usar ILogger en producción, por ahora Console)
                 Console.WriteLine("───────────────────────────────────────────────");
                 Console.WriteLine($"FechaNacimiento recibida del formulario: {modeloActualizado.FechaNacimiento:yyyy-MM-dd}");
-                Console.WriteLine($"Es valor default?           {(modeloActualizado.FechaNacimiento == default(DateTime) ? "SÍ → binding falló" : "NO")}");
-                Console.WriteLine($"Valor crudo (ToString):     {modeloActualizado.FechaNacimiento}");
+                Console.WriteLine($"Es valor default? {(modeloActualizado.FechaNacimiento == default(DateTime) ? "SÍ → binding falló" : "NO")}");
+                Console.WriteLine($"Valor crudo (ToString): {modeloActualizado.FechaNacimiento}");
                 Console.WriteLine("───────────────────────────────────────────────");
                 // ────────────────────────────────────────────────
 
@@ -96,15 +96,13 @@ namespace FarmaciaSantaRita.Controllers
                     string.IsNullOrWhiteSpace(modeloActualizado.Dni) ||
                     string.IsNullOrWhiteSpace(modeloActualizado.Direccion) ||
                     string.IsNullOrWhiteSpace(modeloActualizado.Telefono) ||
-                    modeloActualizado.FechaNacimiento == default(DateTime))
+                    !modeloActualizado.FechaNacimiento.HasValue ||   // ← Mejora: usar HasValue es más claro
+                    modeloActualizado.FechaNacimiento.Value == default)
                 {
                     TempData["ResultadoActualizacion"] = "Error";
                     ViewBag.ErrorMessage = "Todos los campos obligatorios deben estar completos.";
                     ViewBag.ContraseñaActualDesencriptada = _encryptionService.Decrypt(usuarioParaActualizar.Contraseña);
-
-                    // Opcional: mostrar también el error específico de fecha en la vista
                     ModelState.AddModelError("FechaNacimiento", "La fecha de nacimiento no fue recibida correctamente o está vacía.");
-
                     return View(usuarioParaActualizar);
                 }
 
@@ -117,8 +115,8 @@ namespace FarmaciaSantaRita.Controllers
                 usuarioParaActualizar.Dni = modeloActualizado.Dni.Trim();
                 usuarioParaActualizar.Direccion = modeloActualizado.Direccion.Trim();
 
-                // Aquí ya debería venir con valor correcto
-                usuarioParaActualizar.FechaNacimiento = modeloActualizado.FechaNacimiento?.Date;
+                // Asignación de la fecha → versión segura y explícita
+                usuarioParaActualizar.FechaNacimiento = modeloActualizado.FechaNacimiento.Value.Date;
 
                 if (!string.IsNullOrWhiteSpace(modeloActualizado.Rol) &&
                     modeloActualizado.Rol != usuarioParaActualizar.Rol)

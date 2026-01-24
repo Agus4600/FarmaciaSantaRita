@@ -26,7 +26,7 @@ namespace FarmaciaSantaRita.Models
         [Required]
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}")]
-        public DateTime FechaNacimiento { get; set; }
+        public DateTime? FechaNacimiento { get; set; }
 
         [Required]
         public string Direccion { get; set; } = null!;

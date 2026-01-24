@@ -322,7 +322,11 @@
                         <div class="tres-columnas">
                             <div class="grupo-campo">
                                 <label asp-for="FechaNacimiento">Fecha de Nacimiento</label>
-                                <input asp-for="FechaNacimiento" class="form-control" id="FechaNacimiento" />
+                                <input asp-for="FechaNacimiento"
+                                       type="date"
+                                       id="FechaNacimiento"
+                                       class="form-control"
+                                       value="@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")" />
                             </div>
                             <div class="grupo-campo">
                                 <label asp-for="FechaIngreso">Fecha de Ingreso</label>

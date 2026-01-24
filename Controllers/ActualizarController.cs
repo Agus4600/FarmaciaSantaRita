@@ -21,6 +21,10 @@ namespace FarmaciaSantaRita.Controllers
             _encryptionService = encryptionService;
         }
 
+
+
+
+
         [HttpGet]
         public IActionResult ActualizarCuenta(int idProveedor, string vista)
         {
@@ -41,6 +45,9 @@ namespace FarmaciaSantaRita.Controllers
             ViewBag.ContraseñaActualDesencriptada = _encryptionService.Decrypt(usuario.Contraseña);
             return View(usuario);
         }
+
+
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -69,6 +76,14 @@ namespace FarmaciaSantaRita.Controllers
                 {
                     TempData["ResultadoActualizacion"] = "Error: Usuario no encontrado.";
                     return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
+                }
+
+                if (modeloActualizado.FechaNacimiento == default(DateTime) || modeloActualizado.FechaNacimiento > DateTime.Today)
+                {
+                    TempData["ResultadoActualizacion"] = "Error";
+                    ViewBag.ErrorMessage = "La fecha de nacimiento es obligatoria y no puede ser una fecha futura.";
+                    ViewBag.ContraseñaActualDesencriptada = _encryptionService.Decrypt(usuarioParaActualizar.Contraseña);
+                    return View(usuarioParaActualizar);
                 }
 
                 // Validación: TODOS obligatorios
@@ -119,6 +134,9 @@ namespace FarmaciaSantaRita.Controllers
                 return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
             }
         }
+
+
+
 
         [HttpGet]
         public IActionResult GestionarEmpleados(int idProveedor)

@@ -394,6 +394,7 @@
                 const inputNuevaPass = document.getElementById('nuevaContraseña');
                 if (inputNuevaPass) inputNuevaPass.value = "";
             }, 10);
+
         });
 
         // Toggle de visibilidad de contraseñas
@@ -427,34 +428,31 @@
 
         // Botón Guardar Cambios
         document.getElementById('btnGuardarCambios').addEventListener('click', function() {
-    const form = document.getElementById('formCuenta');
-    
-    // 1. Captura de elementos
-    const campos = {
-        nombre: document.getElementById('Nombre'),
-        apellido: document.getElementById('Apellido'),
-        usuario: document.getElementById('NombreUsuario'),
-        correo: document.getElementById('CorreoUsuario'),
-        dni: document.getElementById('Dni'),
-        direccion: document.getElementById('DireccionInput'),
-        telefono: document.getElementById('Telefono'),
-        fechaNacimiento: document.getElementById('FechaNacimiento'),
-        nuevaPass: document.getElementById('nuevaContraseña'),
-        wrapNuevaPass: document.getElementById('wrapperNuevaContrasena')
-    };
+            const form = document.getElementById('formCuenta');
+            const campos = {
+                nombre: document.getElementById('Nombre'),
+                apellido: document.getElementById('Apellido'),
+                usuario: document.getElementById('NombreUsuario'),
+                correo: document.getElementById('CorreoUsuario'),
+                dni: document.getElementById('Dni'),
+                direccion: document.getElementById('DireccionInput'),
+                telefono: document.getElementById('Telefono'),
+                fechaNacimiento: document.getElementById('FechaNacimiento'),
+                nuevaPass: document.getElementById('nuevaContraseña'),
+                wrapNuevaPass: document.getElementById('wrapperNuevaContrasena')
+            };
 
-    // 2. Limpiar estados de error previos
-    Object.values(campos).forEach(c => {
-        if (c) c.classList.remove('invalid-glow');
-    });
-    if (campos.wrapNuevaPass) campos.wrapNuevaPass.classList.remove('invalid-glow');
+            // Limpiar glows
+            Object.values(campos).forEach(c => {
+                if (c) c.classList.remove('invalid-glow');
+                if (c?.closest('.password-wrapper')) c.closest('.password-wrapper').classList.remove('invalid-glow');
+            });
 
-    // 3. Validaciones de formato
-    let errores = [];
-    const regexLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
-    const regexMail = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    const regexDni = /^\d{7,10}$/;
-        const regexTelefono = /^\d{7,15}$/;
+            let errores = [];
+            const regexLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+            const regexMail = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            const regexDni = /^\d{7,8}$/;
+            const regexTelefono = /^\d{7,15}$/;
 
             // Validaciones obligatorias + formatos
             if (!campos.nombre.value.trim() || !regexLetras.test(campos.nombre.value.trim())) {
@@ -507,40 +505,59 @@
                 return;
             }
 
-           
+            // Detección de cambios (comparación limpia)
+            const valoresOriginales = {
+                nombre: "@(Model?.Nombre?.Trim() ?? "")",
+                apellido: "@(Model?.Apellido?.Trim() ?? "")",
+                usuario: "@(Model?.NombreUsuario?.Trim() ?? "")",
+                correo: "@(Model?.CorreoUsuario?.Trim() ?? "")",
+                dni: "@(Model?.Dni?.Trim() ?? "")",
+                direccion: "@(Model?.Direccion?.Trim() ?? "")",
+                telefono: "@(Model?.Telefono?.Trim() ?? "")",
+                fechaNacimiento: "@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")",
+                nuevaPass: ""
+            };
 
-                const cambioNombre = campos.nombre.value.trim() !== "@Html.Raw(Model?.Nombre)";
-        const cambioApellido = campos.apellido.value.trim() !== "@Html.Raw(Model?.Apellido)";
-        const cambioEmail = campos.correo.value.trim() !== "@Html.Raw(Model?.CorreoUsuario)";
-        const cambioDni = campos.dni.value.trim() !== "@Html.Raw(Model?.Dni)";
-        const cambioDir = campos.direccion.value.trim() !== "@Html.Raw(Model?.Direccion)";
-        const cambioTel = campos.telefono.value.trim() !== "@Html.Raw(Model?.Telefono)";
-        const cambioUser = campos.usuario.value.trim() !== "@Html.Raw(Model?.NombreUsuario)";
-        const cambioFecha = campos.fechaNacimiento.value !== "@(Model?.FechaNacimiento.ToString("yyyy-MM-dd"))";
-        const cambioPass = campos.nuevaPass.value.trim() !== "";
+            const valoresActuales = {
+                nombre: campos.nombre.value.trim(),
+                apellido: campos.apellido.value.trim(),
+                usuario: campos.usuario.value.trim(),
+                correo: campos.correo.value.trim(),
+                dni: campos.dni.value.trim(),
+                direccion: campos.direccion.value.trim(),
+                telefono: campos.telefono.value.trim(),
+                fechaNacimiento: campos.fechaNacimiento.value.trim(),
+                nuevaPass: campos.nuevaPass.value.trim()
+            };
 
-        if (!(cambioNombre || cambioApellido || cambioEmail || cambioDni || cambioDir || cambioTel || cambioUser || cambioFecha || cambioPass)) {
-            Swal.fire({
-                title: 'Sin cambios',
-                text: 'No has modificado ningún dato.',
-                confirmButtonColor: '#007bff'
-            });
-            return;
-        }
+            const hayCambios = Object.keys(valoresOriginales).some(key => 
+                valoresActuales[key] !== valoresOriginales[key]
+            );
 
-        // 5. Si hay cambios, preguntar y enviar
-        Swal.fire({
-            title: '¿Guardar cambios?',
-            text: "Se actualizará tu información.",
-            showCancelButton: true,
-            confirmButtonColor: '#007bff',
-                cancelButtonColor: '#007bff',
-            confirmButtonText: 'Sí, guardar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                form.submit(); // <-- ESTO ES LO QUE ENVÍA AL CONTROLLER
+            if (!hayCambios) {
+                Swal.fire({
+                    title: 'Sin cambios',
+                    text: 'No has modificado ningún dato.',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+                });
+                return;
             }
+
+            // Confirmación final
+            Swal.fire({
+                title: '¿Guardar cambios?',
+                text: "Se actualizará la información de tu cuenta.",
+                showCancelButton: true,
+                confirmButtonColor: '#007bff',
+                cancelButtonColor: '#007bff',
+                confirmButtonText: 'Sí, guardar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
         });
 
         // Quitar glow al escribir

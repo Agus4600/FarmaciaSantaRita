@@ -321,13 +321,12 @@
 
                         <div class="tres-columnas">
                             <div class="grupo-campo">
-                                <label asp-for="FechaNacimiento">Fecha de Nacimiento</label>
-                                <input asp-for="FechaNacimiento"
-                                       type="date"
-                                       id="FechaNacimiento"
-                                       class="form-control"
-                                       value="@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")" />
-                            </div>
+    <label asp-for="FechaNacimiento">Fecha de Nacimiento</label>
+    <input asp-for="FechaNacimiento" 
+           type="date" 
+           id="FechaNacimiento" 
+           class="form-control" />
+</div>
                             <div class="grupo-campo">
                                 <label asp-for="FechaIngreso">Fecha de Ingreso</label>
                                 <input asp-for="FechaIngreso"
@@ -518,7 +517,7 @@
                 dni: "@(Model?.Dni?.Trim() ?? "")",
                 direccion: "@(Model?.Direccion?.Trim() ?? "")",
                 telefono: "@(Model?.Telefono?.Trim() ?? "")",
-                fechaNacimiento: "@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")",
+                fechaNacimiento: "@Model?.FechaNacimiento?.ToString("yyyy-MM-dd")",
                 nuevaPass: ""
             };
 

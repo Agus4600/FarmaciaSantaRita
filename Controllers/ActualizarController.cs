@@ -78,13 +78,6 @@ namespace FarmaciaSantaRita.Controllers
                     return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
                 }
 
-                if (modeloActualizado.FechaNacimiento == default(DateTime) || modeloActualizado.FechaNacimiento > DateTime.Today)
-                {
-                    TempData["ResultadoActualizacion"] = "Error";
-                    ViewBag.ErrorMessage = "La fecha de nacimiento es obligatoria y no puede ser una fecha futura.";
-                    ViewBag.ContraseñaActualDesencriptada = _encryptionService.Decrypt(usuarioParaActualizar.Contraseña);
-                    return View(usuarioParaActualizar);
-                }
 
                 // Validación: TODOS obligatorios
                 if (string.IsNullOrWhiteSpace(modeloActualizado.Nombre) ||
@@ -94,7 +87,7 @@ namespace FarmaciaSantaRita.Controllers
                     string.IsNullOrWhiteSpace(modeloActualizado.Dni) ||
                     string.IsNullOrWhiteSpace(modeloActualizado.Direccion) ||
                     string.IsNullOrWhiteSpace(modeloActualizado.Telefono) ||
-                    modeloActualizado.FechaNacimiento == default(DateTime))
+                    !modeloActualizado.FechaNacimiento.HasValue)
                 {
                     TempData["ResultadoActualizacion"] = "Error";
                     ViewBag.ErrorMessage = "Todos los campos obligatorios deben estar completos.";
@@ -110,7 +103,7 @@ namespace FarmaciaSantaRita.Controllers
                 usuarioParaActualizar.CorreoUsuario = modeloActualizado.CorreoUsuario.Trim();
                 usuarioParaActualizar.Dni = modeloActualizado.Dni.Trim();
                 usuarioParaActualizar.Direccion = modeloActualizado.Direccion.Trim();
-                usuarioParaActualizar.FechaNacimiento = modeloActualizado.FechaNacimiento.Date;
+                usuarioParaActualizar.FechaNacimiento = modeloActualizado.FechaNacimiento.Value.Date;
 
                 if (!string.IsNullOrWhiteSpace(modeloActualizado.Rol) && modeloActualizado.Rol != usuarioParaActualizar.Rol)
                 {

@@ -322,11 +322,7 @@
                         <div class="tres-columnas">
                             <div class="grupo-campo">
                                 <label asp-for="FechaNacimiento">Fecha de Nacimiento</label>
-                                <input asp-for="FechaNacimiento"
-                                       type="date"
-                                       id="FechaNacimiento"
-                                       class="form-control"
-                                       value="@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")" />
+                                <input asp-for="FechaNacimiento" class="form-control" id="FechaNacimiento" />
                             </div>
                             <div class="grupo-campo">
                                 <label asp-for="FechaIngreso">Fecha de Ingreso</label>
@@ -398,12 +394,6 @@
                 const inputNuevaPass = document.getElementById('nuevaContraseña');
                 if (inputNuevaPass) inputNuevaPass.value = "";
             }, 10);
-
-            // Cargar valor inicial de fecha en formato correcto
-            const fechaInput = document.getElementById('FechaNacimiento');
-            if (fechaInput && fechaInput.value === "") {
-                fechaInput.value = "@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")";
-            }
         });
 
         // Toggle de visibilidad de contraseñas
@@ -539,8 +529,16 @@
                 nuevaPass: campos.nuevaPass.value.trim()
             };
 
-            const hayCambios = Object.keys(valoresOriginales).some(key => 
-                valoresActuales[key] !== valoresOriginales[key]
+            const hayCambios =
+                campos.nombre.value.trim() !== "@Html.Raw(Model?.Nombre?.Trim())" ||
+                campos.apellido.value.trim() !== "@Html.Raw(Model?.Apellido?.Trim())" ||
+                campos.usuario.value.trim() !== "@Html.Raw(Model?.NombreUsuario?.Trim())" ||
+                campos.correo.value.trim() !== "@Html.Raw(Model?.CorreoUsuario?.Trim())" ||
+                campos.dni.value.trim() !== "@Html.Raw(Model?.Dni?.Trim())" ||
+                campos.direccion.value.trim() !== "@Html.Raw(Model?.Direccion?.Trim())" ||
+                campos.telefono.value.trim() !== "@Html.Raw(Model?.Telefono?.Trim())" ||
+                campos.fechaNacimiento.value !== "@(Model?.FechaNacimiento.ToString("yyyy-MM-dd"))" ||
+                campos.nuevaPass.value.trim() !== "";
             );
 
             if (!hayCambios) {

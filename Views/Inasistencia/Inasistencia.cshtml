@@ -1366,12 +1366,22 @@
 						const res = resultados[i];
 						const id = idsParaEliminarEnDB[i];
 
-						if (res.status === 'fulfilled' && res.value && res.value.success) {
-							const fila = document.querySelector(`#${TABLA_ID} tr[data-inasistencia-id='${id}']`);
-							if (fila) fila.remove();
+							if (res.status === 'fulfilled' && res.value && res.value.success) {
+		// 1. Buscamos la fila por el atributo data-inasistencia-id
+		// Usamos el ID que enviamos originalmente a la DB
+		const fila = document.querySelector(`#${TABLA_ID} tr[data-inasistencia-id='${id}']`);
 
-							registrosInasistenciaIniciales = registrosInasistenciaIniciales.filter(r => String(r.IdInasistencia) !== String(id));
-							exitosos++;
+		if (fila) {
+			fila.remove(); // 2. ELIMINACIÓN FÍSICA DEL DOM
+			console.log(`[ELIMINAR] Fila con ID ${id} removida visualmente.`);
+		}
+
+		// 3. Limpiar también de la memoria local para que no reaparezca al ajustar filas
+		registrosInasistenciaIniciales = registrosInasistenciaIniciales.filter(r =>
+			String(r.idInasistencia || r.IdInasistencia) !== String(id)
+		);
+
+		exitosos++;
 						} else {
 							let msg = (res.status === 'fulfilled' && res.value && res.value.mensaje) ? res.value.mensaje : (res.reason ? res.reason.message : 'Error desconocido de red/servidor');
 							errores.push({ id, msg });

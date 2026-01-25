@@ -1006,11 +1006,15 @@
 				fila.setAttribute("data-inasistencia-id", idRegistro);
 				fila.setAttribute("data-id-empleado", idEmpleado);
 				fila.innerHTML = `
-					<td title="${fechaDisplay}">${fechaDisplay}</td>
-					<td title="${nombreEmpleado}" class="columna-empleado">${nombreEmpleado}</td>
-					<td title="${turno}">${turno}</td>
-					<td title="${motivo}">${motivo}</td>
-					<td><input type="checkbox" class="form-check-input fila-check" data-id="${idRegistro}" /></td>
+				<td title="${fechaDisplay}">${fechaDisplay}</td>
+				<td title="${nombreEmpleado}"
+				class="columna-empleado"
+				data-id-empleado="${item.idusuario || item.IdEmpleado || item.idEmpleado || 0}">
+				${nombreEmpleado}
+				</td>
+				<td title="${turno}">${turno}</td>
+				<td title="${motivo}">${motivo}</td>
+				<td><input type="checkbox" class="form-check-input fila-check" data-id="${item.idInasistencia || '0'}" /></td>
 				`;
 				tbody.appendChild(fila);
 			});
@@ -1430,27 +1434,34 @@
 
 		// Función que hace la llamada al servidor y abre el modal
 		async function mostrarModalDatosEmpleado(id) {
-			try {
+					try {
 				const response = await fetch(`/Inasistencia/GetDatosEmpleado?id=${id}`);
+				if (!response.ok) throw new Error(`HTTP ${response.status}`);
 				const data = await response.json();
-
 				if (data.exito) {
-					// Llenar los campos del modal (Asegúrate de que los IDs coincidan con tu HTML)
-					document.getElementById("modalNombre").innerText = data.nombreCompleto || "No disponible";
-					document.getElementById("modalDni").innerText = data.dni || "No disponible";
-					document.getElementById("modalTelefono").innerText = data.telefono || "No disponible";
-					document.getElementById("modalDireccion").innerText = data.direccion || "No disponible";
-
-					// Mostrar modal usando Bootstrap 5
-					var modalEl = document.getElementById('modalDatosEmpleado');
-					var modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-					modalInstance.show();
+					Swal.fire({
+						title: data.nombreCompleto || 'Datos del empleado',
+						html: `
+							<div class="text-center mt-3">
+								<p class="mb-2"><strong>DNI:</strong> ${data.dni || 'No disponible'}</p>
+								<p class="mb-2"><strong>Teléfono:</strong> ${data.telefono || 'No disponible'}</p>
+								<p class="mb-3"><strong>Dirección:</strong> ${data.direccion || 'No disponible'}</p>
+							</div>
+						`,
+						confirmButtonText: 'Entendido',
+						confirmButtonColor: '#007bff',
+						customClass: {
+							popup: 'border border-primary shadow-lg rounded-3',
+							title: 'fs-4 fw-bold text-primary mb-4',
+							htmlContainer: 'text-center fs-5'
+						}
+					});
 				} else {
-					Swal.fire('Error', data.message || 'No se pudieron obtener los datos', 'error');
+					Swal.fire('No encontrado', data.message || 'No se encontraron datos', 'warning');
 				}
 			} catch (error) {
-				console.error("Error:", error);
-				Swal.fire('Error', 'Error de conexión con el servidor', 'error');
+				console.error("Error al cargar datos del empleado:", error);
+				Swal.fire('Error', 'No se pudo conectar con el servidor.', 'error');
 			}
 		}
 
@@ -1562,76 +1573,10 @@
 		});
 
 
-
-
-				// Listener de click en nombre del empleado (funciona como en Vacaciones)
-		document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function (e) {
-			const td = e.target.closest('td');
-			if (!td) return;
-
-			// Solo actuamos si el click fue en la columna del EMPLEADO (segunda columna → cellIndex === 1)
-			if (td.cellIndex !== 1) return;   // 0 = Fecha, 1 = Empleado, 2 = Turno, etc.
-
-			e.stopPropagation();              // Impide que marque checkbox o seleccione fila
-			e.preventDefault();               // Seguridad extra
-
-			const nombreCompleto = td.innerText.trim();
-			if (!nombreCompleto || nombreCompleto === 'Sin nombre') return;
-
-			console.log('[NOMBRE CLICK] Detectado:', nombreCompleto);
-
-			fetch(`/Inasistencia/GetDatosEmpleado?nombre=${encodeURIComponent(nombreCompleto)}`)
-				.then(response => {
-					console.log('[NOMBRE CLICK] Status:', response.status);
-					if (!response.ok) throw new Error(`HTTP ${response.status}`);
-					return response.json();
-				})
-				.then(data => {
-					console.log('[NOMBRE CLICK] Datos recibidos:', data);
-					if (data.success || data.exito) {
-						Swal.fire({
-							title: data.nombreCompleto || data.nombre || 'Datos del empleado',
-							html: `
-								<div class="text-center mt-3">
-									<p class="mb-2"><strong>DNI:</strong> ${data.dni || 'No disponible'}</p>
-									<p class="mb-2"><strong>Teléfono:</strong> ${data.telefono || 'No disponible'}</p>
-									<p class="mb-3"><strong>Dirección:</strong> ${data.direccion || 'No disponible'}</p>
-								</div>
-							`,
-							confirmButtonText: 'Entendido',
-							confirmButtonColor: '#007bff',
-							customClass: {
-								popup: 'border border-primary shadow-lg rounded-3',
-								title: 'fs-4 fw-bold text-primary mb-4',
-								htmlContainer: 'text-center fs-5'
-							}
-						});
-					} else {
-						Swal.fire('No encontrado', data.message || 'No se encontraron datos', 'warning');
-					}
-				})
-				.catch(err => {
-					console.error('[NOMBRE CLICK] Error:', err);
-					Swal.fire('Error', 'No se pudo cargar los datos del empleado', 'error');
-				});
-		});
-
-
-
-
-
-
-
-
-
 		function quitarAcentos(str) {
 			if (!str) return "";
 			return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 		}
-
-
-
-
 
 					document.getElementById("btnBuscarFiltro").addEventListener("click", async function () {
 			const fechaDesde = document.getElementById('fechaDesdeOculto').value.trim();

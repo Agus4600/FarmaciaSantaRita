@@ -1433,27 +1433,44 @@
 		});
 
 		// Función que hace la llamada al servidor y abre el modal
-		async function mostrarModalDatosEmpleado(id) {
-					try {
+				async function mostrarModalDatosEmpleado(id) {
+			try {
 				const response = await fetch(`/Inasistencia/GetDatosEmpleado?id=${id}`);
 				if (!response.ok) throw new Error(`HTTP ${response.status}`);
 				const data = await response.json();
+
 				if (data.exito) {
 					Swal.fire({
 						title: data.nombreCompleto || 'Datos del empleado',
 						html: `
-							<div class="text-center mt-3">
-								<p class="mb-2"><strong>DNI:</strong> ${data.dni || 'No disponible'}</p>
-								<p class="mb-2"><strong>Teléfono:</strong> ${data.telefono || 'No disponible'}</p>
-								<p class="mb-3"><strong>Dirección:</strong> ${data.direccion || 'No disponible'}</p>
+							<div style="margin-top: 20px; color: #555;">
+								<p style="margin-bottom: 12px; font-size: 1.2rem;">
+									<strong>DNI:</strong> ${data.dni || 'No disponible'}
+								</p>
+								<p style="margin-bottom: 12px; font-size: 1.2rem;">
+									<strong>Teléfono:</strong> ${data.telefono || 'No disponible'}
+								</p>
+								<p style="margin-bottom: 10px; font-size: 1.2rem;">
+									<strong>Dirección:</strong> ${data.direccion || 'No disponible'}
+								</p>
 							</div>
 						`,
 						confirmButtonText: 'Entendido',
 						confirmButtonColor: '#007bff',
+						showCloseButton: false,
 						customClass: {
-							popup: 'border border-primary shadow-lg rounded-3',
-							title: 'fs-4 fw-bold text-primary mb-4',
-							htmlContainer: 'text-center fs-5'
+							popup: 'rounded-4 shadow-lg border border-primary',
+							title: 'custom-swal-title fs-4 fw-bold text-primary mb-4',
+							htmlContainer: 'text-center fs-5',
+							confirmButton: 'px-5 py-2 fs-5 fw-bold'
+						},
+						didOpen: () => {
+							const title = Swal.getTitle();
+							if (title) {
+								title.style.color = '#007bff';
+								title.style.fontSize = '1.8rem';
+								title.style.fontWeight = 'bold';
+							}
 						}
 					});
 				} else {

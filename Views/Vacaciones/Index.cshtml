@@ -1699,51 +1699,67 @@
 
             // Selección de filas y check all
 
-            document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function (e) {
+                    // ────────────────────────────────────────────────
+        // SELECCIÓN DE FILAS + COLOR AZUL (igual que Inasistencias)
+        // ────────────────────────────────────────────────
 
-            const td = e.target.closest('td');
-
-            // Si el click fue en la columna del nombre (primera celda), NO hacemos nada aquí
-
-            if (td && td.cellIndex === 0) return;
-
+        // 1. Listener de clic en toda la tabla (para toggle checkbox y color)
+        document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function (e) {
             const fila = e.target.closest('tr');
+            if (!fila || fila.getAttribute('data-vacacion-id') === '0') return;
 
-            if (!fila || !fila.hasAttribute('data-vacacion-id')) return;
+            // Si se hizo clic en el nombre del empleado → no hacemos nada aquí (ya lo maneja otro listener)
+            if (e.target.closest('.empleado-clickable')) return;
 
             const checkbox = fila.querySelector('.fila-check');
-
             if (checkbox) {
+                // Si el clic fue directamente en el checkbox → dejamos que el navegador lo maneje
+                if (e.target.tagName !== 'INPUT' || e.target.type !== 'checkbox') {
+                    checkbox.checked = !checkbox.checked;
+                }
 
-                if (e.target !== checkbox) checkbox.checked = !checkbox.checked;
-
+                // Siempre actualizar el color azul según el estado del checkbox
                 fila.classList.toggle('fila-seleccionada', checkbox.checked);
-
             }
 
+            // Sincronizar el checkbox "Seleccionar todo"
             const checkAll = document.getElementById('checkAll');
-
-            const totalFilas = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id]`).length;
-
-            const marcadas = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id] .fila-check:checked`).length;
-
-            checkAll.checked = marcadas > 0 && marcadas === totalFilas;
-
+            if (checkAll) {
+                const filasConDatos = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id]:not([data-vacacion-id='0'])`);
+                const checksMarcados = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id]:not([data-vacacion-id='0']) .fila-check:checked`);
+                checkAll.checked = (checksMarcados.length > 0 && checksMarcados.length === filasConDatos.length);
+            }
         });
 
-            document.getElementById('checkAll').addEventListener('change', function () {
+        // 2. Checkbox "Seleccionar todo" (solo afecta filas visibles)
+        document.getElementById('checkAll').addEventListener('change', function () {
+            const isChecked = this.checked;
 
-                const checked = this.checked;
+            // Solo las filas que están actualmente en el DOM (visibles después de filtro)
+            const filasVisibles = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id]:not([data-vacacion-id='0'])`);
 
-                document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id] .fila-check`).forEach(chk => {
-
-                    chk.checked = checked;
-
-                    chk.closest('tr').classList.toggle('fila-seleccionada', checked);
-
-                });
-
+            filasVisibles.forEach(fila => {
+                const checkbox = fila.querySelector('.fila-check');
+                if (checkbox) {
+                    checkbox.checked = isChecked;
+                    fila.classList.toggle('fila-seleccionada', isChecked);
+                }
             });
+        });
+
+        // 3. Asegurarse de que al filtrar o cargar se mantenga la lógica (opcional, pero recomendado)
+        function actualizarSeleccionVisual() {
+            document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id]:not([data-vacacion-id='0'])`).forEach(fila => {
+                const checkbox = fila.querySelector('.fila-check');
+                if (checkbox) {
+                    fila.classList.toggle('fila-seleccionada', checkbox.checked);
+                }
+            });
+        }
+        actualizarSeleccionVisual();
+
+
+
 
                     // Al hacer click en el nombre del empleado en la tabla
 

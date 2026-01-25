@@ -1196,14 +1196,18 @@
 			// Añadir fila temporal de inmediato (color amarillo para indicar guardado pendiente)
 			const filaTemporalId = `temp-${Date.now()}`;
 			const filaTemporalHTML = `
-				<tr data-inasistencia-id="${filaTemporalId}">
-					<td title="${fechaFormateada}">${fechaFormateada}</td>
-					<td title="${empleadoNombre}">${empleadoNombre}</td>
-					<td title="${turno}">${turno}</td>
-					<td title="${motivo}">${motivo}</td>
-					<td><input type="checkbox" class="form-check-input fila-check" data-id="${filaTemporalId}" disabled /></td>
-				</tr>
-			`;
+		<tr data-inasistencia-id="${filaTemporalId}">
+			<td title="${fechaFormateada}">${fechaFormateada}</td>
+			<td title="${empleadoNombre}"
+				class="columna-empleado"
+				data-id-empleado="${empleadoId}">  <!-- ← AGREGÁ ESTO -->
+				${empleadoNombre}
+			</td>
+			<td title="${turno}">${turno}</td>
+			<td title="${motivo}">${motivo}</td>
+			<td><input type="checkbox" class="form-check-input fila-check" data-id="${filaTemporalId}" disabled /></td>
+		</tr>
+		`;
 			tbody.insertAdjacentHTML("afterbegin", filaTemporalHTML);
 
 			// Limpiar formulario y ajustar filas vacías
@@ -1394,14 +1398,13 @@
 
 		// 🎯 Lógica para alternar la selección de filas
 				// 🎯 Lógica corregida para clics en la tabla
-		document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function(e) {
+				document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function(e) {
 			const fila = e.target.closest('tr');
 			if (!fila || fila.getAttribute('data-inasistencia-id') === '0') return;
 
 			// --- CASO A: CLIC EN EL NOMBRE (Abrir Modal) ---
 			if (e.target.classList.contains('columna-empleado')) {
-				e.stopPropagation(); // ✋ EVITA QUE SE SELECCIONE EL CHECKBOX
-
+				e.stopPropagation();
 				const idEmpleado = fila.getAttribute('data-id-empleado');
 				if (idEmpleado && idEmpleado !== "0") {
 					mostrarModalDatosEmpleado(idEmpleado);
@@ -1415,7 +1418,6 @@
 				if (e.target.tagName !== 'INPUT' || e.target.type !== 'checkbox') {
 					checkbox.checked = !checkbox.checked;
 				}
-
 				if (checkbox.checked) {
 					fila.classList.add('fila-seleccionada');
 				} else {

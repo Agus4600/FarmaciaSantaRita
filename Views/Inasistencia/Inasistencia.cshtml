@@ -1300,121 +1300,97 @@
 
 
 		// 🎯 BOTÓN ELIMINAR (Lógica completa y corregida)
-				document.getElementById("btnEliminarFila").addEventListener("click", async function() {
+					document.getElementById("btnEliminarFila").addEventListener("click", async function() {
 			const checkboxesSeleccionados = document.querySelectorAll(`#${TABLA_ID} .fila-check:checked`);
-
-			if (!checkboxesSeleccionados || checkboxesSeleccionados.length === 0) {
-				alert("Debe seleccionar un registro de inasistencia para eliminar."); // Validación MANTENIDA
+			if (!checkboxesSeleccionados.length) {
+				alert("Debe seleccionar al menos un registro.");
 				return;
 			}
 
-			// Preparar listas
 			const idsParaEliminarEnDB = [];
-			const filasLocalesAEliminar = [];
+			const filasALimpiarDelDOM = [];
 
 			checkboxesSeleccionados.forEach(chk => {
-				// Obtenemos el ID de la fila
-				const tr = chk.closest("tr");
-				const dataId = chk.getAttribute('data-id') ?? tr?.getAttribute('data-inasistencia-id') ?? "0";
-
-				// Determinamos si el ID es un número real de DB
-				const idEsValidoDB = !isNaN(parseInt(dataId)) && parseInt(dataId) > 0;
-
-				if (idEsValidoDB) {
-					idsParaEliminarEnDB.push(String(dataId));
-				} else {
-					// Filas locales
-					filasLocalesAEliminar.push(tr);
+				const fila = chk.closest("tr");
+				const id = chk.getAttribute('data-id') || fila?.getAttribute('data-inasistencia-id') || "0";
+				if (id !== "0" && !isNaN(parseInt(id))) {
+					idsParaEliminarEnDB.push(id);
+					filasALimpiarDelDOM.push(fila);
 				}
 			});
 
-			// 1. Eliminar filas locales del DOM
-			if (filasLocalesAEliminar.length > 0) {
-				filasLocalesAEliminar.forEach(tr => {
-					if (tr) tr.remove();
-				});
-				ajustarFilasVacias();
+			if (!idsParaEliminarEnDB.length) {
+				alert("No hay registros válidos seleccionados para eliminar en la base de datos.");
+				return;
 			}
 
-			// 2. Eliminar en DB (si hay IDs válidos)
-			if (idsParaEliminarEnDB.length > 0) {
+			const resultadoConfirmacion = await Swal.fire({
+				title: 'Confirmar eliminación',
+				html: `¿Eliminar <b>${idsParaEliminarEnDB.length} registro(s)</b> seleccionado(s)?`,
+				showCancelButton: true,
+				confirmButtonColor: '#007bff',
+				cancelButtonColor: '#007bff',
+				confirmButtonText: 'Sí, eliminar',
+				cancelButtonText: 'Cancelar'
+			});
 
-				// ⭐ CONFIGURACIÓN DEL MODAL DE CONFIRMACIÓN (ANTES DE ELIMINAR)
-				const resultadoConfirmacion = await Swal.fire({
-					title: 'Confirmación de Eliminación',
-					html: `¿Está seguro de que desea eliminar <b>${idsParaEliminarEnDB.length} registro(s)</b>?`,
-					showCancelButton: true,
-					confirmButtonColor: '#007bff',
-					cancelButtonColor: '#007bff',
-					confirmButtonText: 'Si, Eliminar',
-					cancelButtonText: 'Cancelar'
-				});
+			if (!resultadoConfirmacion.isConfirmed) return;
 
-				// Verificamos si el usuario confirmó
-				if (resultadoConfirmacion.isConfirmed) {
+			let exitosos = 0;
+			let errores = 0;
 
-					// Si el usuario confirma, procedemos con la eliminación en la DB
-					const resultados = await Promise.allSettled(idsParaEliminarEnDB.map(id =>
-						fetch(`/Inasistencia/EliminarInasistencia?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
-							.then(r => r.json())
-					));
+			for (const id of idsParaEliminarEnDB) {
+				try {
+					const res = await fetch(`/Inasistencia/EliminarInasistencia?id=${id}`, { method: 'DELETE' });
+					const data = await res.json();
 
-					let exitosos = 0;
-					let errores = [];
-
-					for (let i = 0; i < resultados.length; i++) {
-						const res = resultados[i];
-						const id = idsParaEliminarEnDB[i];
-
-							if (res.status === 'fulfilled' && res.value && res.value.success) {
-		// 1. Buscamos la fila por el atributo data-inasistencia-id
-		// Usamos el ID que enviamos originalmente a la DB
-		const fila = document.querySelector(`#${TABLA_ID} tr[data-inasistencia-id='${id}']`);
-
-		if (fila) {
-			fila.remove(); // 2. ELIMINACIÓN FÍSICA DEL DOM
-			console.log(`[ELIMINAR] Fila con ID ${id} removida visualmente.`);
-		}
-
-		// 3. Limpiar también de la memoria local para que no reaparezca al ajustar filas
-		registrosInasistenciaIniciales = registrosInasistenciaIniciales.filter(r =>
-			String(r.idInasistencia || r.IdInasistencia) !== String(id)
-		);
-
-		exitosos++;
-						} else {
-							let msg = (res.status === 'fulfilled' && res.value && res.value.mensaje) ? res.value.mensaje : (res.reason ? res.reason.message : 'Error desconocido de red/servidor');
-							errores.push({ id, msg });
+					if (data.success) {
+						// 1. Eliminar del DOM
+						const fila = document.querySelector(`#${TABLA_ID} tr[data-inasistencia-id="${id}"]`);
+						if (fila) {
+							fila.remove();
 						}
+
+						// 2. Limpiar de la lista en memoria
+						registrosInasistenciaIniciales = registrosInasistenciaIniciales.filter(r =>
+							String(r.idInasistencia || r.IdInasistencia) !== String(id)
+						);
+
+						// 3. Limpiar también del mapa temporal si existía
+						mapaTemporalEmpleadoId.delete(id);
+
+						exitosos++;
+					} else {
+						errores++;
+						console.error(`Fallo al eliminar ID ${id}:`, data.mensaje);
 					}
-
-					// Registro de resultados en consola (mantenemos la lógica anterior)
-					if (exitosos > 0) console.log(`[ELIMINAR] ${exitosos} registro(s) eliminados de la DB correctamente.`);
-					if (errores.length > 0) console.error(`[ELIMINAR] Error(es) de DB: ${errores.map(e => `ID ${e.id}: ${e.msg}`).join(' / ')}`);
-
-					// ⭐ OPCIONAL: Mostrar un mensaje de resultado final (de éxito o error) centrado
-					if (exitosos > 0) {
-						// ⭐ CAMBIO CLAVE: Agregamos confirmButtonColor para cambiar el color del botón "OK"
-						Swal.fire({
-							title: '¡Eliminado!',
-							text: 'Los registros seleccionados han sido eliminados.',
-							icon: 'success',
-							confirmButtonText: 'Entendido',
-							confirmButtonColor: '#007bff' // Color azul del botón OK, para que coincida con tus otros botones.
-						});
-					} else if (errores.length > 0) {
-						 Swal.fire('Error de Eliminación', 'Algunos registros no pudieron ser eliminados', 'error');
-					}
-
-				} else {
-					 // El usuario canceló la eliminación en la DB.
-					 console.log("[ELIMINAR] Operación de eliminación cancelada por el usuario.");
+				} catch (err) {
+					errores++;
+					console.error(`Error de red al eliminar ID ${id}:`, err);
 				}
 			}
 
-			// 3. Ajustes finales y guardado local
-			ajustarFilasVacias();
-			guardarTablaLocal();
+			// Mensaje final
+			if (exitosos > 0) {
+				Swal.fire({
+					title: 'Eliminado con éxito',
+					text: `Se eliminaron ${exitosos} registro(s).`,
+					icon: 'success',
+					confirmButtonColor: '#007bff'
+				});
+
+				// Asegurar que la tabla quede consistente
+				ajustarFilasVacias();
+				guardarTablaLocal();
+			}
+
+			if (errores > 0) {
+				Swal.fire({
+					title: 'Algunos fallaron',
+					text: `Se eliminaron ${exitosos}, pero ${errores} fallaron.`,
+					confirmButtonColor: '#007bff'
+				});
+			}
 		});
 
 

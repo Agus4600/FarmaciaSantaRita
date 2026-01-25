@@ -128,7 +128,8 @@ public class InasistenciaController : Controller
                     Fecha = i.FechaInasistencia.ToString("yyyy-MM-dd"),
                     NombreEmpleado = i.NombreEmpleado,
                     Turno = i.Turno,
-                    Motivo = i.Motivo
+                    Motivo = i.Motivo,
+                    IdEmpleado = i.Idusuario
                 })
                 .ToList(); // Aquí ya está en memoria → podemos usar cualquier función
 
@@ -169,7 +170,8 @@ public class InasistenciaController : Controller
                 fecha = x.FechaInasistencia.ToString("yyyy-MM-dd"),
                 nombreEmpleado = x.NombreEmpleado,
                 turno = x.Turno,
-                motivo = x.Motivo
+                motivo = x.Motivo,
+                idEmpleado = x.Idusuario
             })
             .ToList();
 

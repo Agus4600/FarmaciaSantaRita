@@ -1420,20 +1420,27 @@
 		}
 
 			// Caso 2: Clic en cualquier parte de la fila (seleccionar checkbox)
-			const checkbox = fila.querySelector('.fila-check');
-			if (checkbox) {
-				// Solo toggle si no se hizo clic directamente en el checkbox
-				if (e.target.tagName !== 'INPUT' || e.target.type !== 'checkbox') {
-					checkbox.checked = !checkbox.checked;
+		const checkbox = fila.querySelector('.fila-check');
+		if (checkbox) {
+			// Si se hizo clic directamente en el checkbox → no hacemos nada extra (deja que el navegador lo maneje)
+			if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') {
+				// Solo actualizamos el estilo visual
+				if (checkbox.checked) {
+					fila.classList.add('fila-seleccionada');
+				} else {
+					fila.classList.remove('fila-seleccionada');
 				}
+			} else {
+				// Si se hizo clic en cualquier otra parte de la fila → toggle el checkbox
+				checkbox.checked = !checkbox.checked;
 
-				// Actualizar estilo visual
 				if (checkbox.checked) {
 					fila.classList.add('fila-seleccionada');
 				} else {
 					fila.classList.remove('fila-seleccionada');
 				}
 			}
+		}
 
 			// Sincronizar checkbox "Seleccionar todo"
 			const checkAll = document.getElementById('checkAll');
@@ -1498,22 +1505,21 @@
 		// ----------------------------------------------------
 		// ⭐ LÓGICA DE CHECKBOX MAESTRO
 		// ----------------------------------------------------
-		function configurarCheckAll() {
-			// Asumiendo que el Checkbox Maestro tiene el ID 'checkAll' y se encuentra en el <thead>
+				function configurarCheckAll() {
 			const checkAll = document.getElementById('checkAll');
 			if (!checkAll) return;
 
-			checkAll.addEventListener('change', function() {
+			checkAll.addEventListener('change', function () {
 				const isChecked = this.checked;
 
-				// Seleccionar solo los checkboxes de las filas con DATOS (id != '0')
-				const checkboxesFila = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-inasistencia-id]:not([data-inasistencia-id='0']) .fila-check`);
+				// Solo seleccionamos las filas que están actualmente en el DOM (visibles después de filtro)
+				const filasVisibles = document.querySelectorAll(`#${TABLA_ID} tbody tr:not([data-inasistencia-id='0'])`);
 
-				checkboxesFila.forEach(checkbox => {
-					checkbox.checked = isChecked;
+				filasVisibles.forEach(fila => {
+					const checkbox = fila.querySelector('.fila-check');
+					if (checkbox) {
+						checkbox.checked = isChecked;
 
-					const fila = checkbox.closest('tr');
-					if (fila) {
 						if (isChecked) {
 							fila.classList.add('fila-seleccionada');
 						} else {

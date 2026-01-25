@@ -1661,40 +1661,48 @@
 				const tbody = document.querySelector('#tablaInasistencias tbody');
 
 				// Solo limpiamos y actualizamos si hay resultados
-				if (registros.length > 0) {
-					tbody.innerHTML = '';  // ← Limpiar SOLO si hay data
+		if (registros.length > 0) {
+			tbody.innerHTML = ''; // ← Limpiar SOLO si hay data
 
-					registros.forEach(item => {
-						const fila = document.createElement('tr');
-						const fechaDisplay = item.fecha ? item.fecha.split('-').reverse().join('/') : '';
-						fila.innerHTML = `
-							<td>${fechaDisplay}</td>
-							<td class="columna-empleado">${item.nombreEmpleado || ''}</td>
-							<td>${item.turno || ''}</td>
-							<td>${item.motivo || ''}</td>
-							<td><input type="checkbox" class="form-check-input fila-check" data-id="${item.idInasistencia || '0'}" /></td>
-						`;
-						tbody.appendChild(fila);
-					});
+			registros.forEach(item => {
+				const fila = document.createElement('tr');
 
-					Swal.fire({
-						icon: 'success',
-						title: 'Búsqueda exitosa',
-						text: `Se encontraron ${registros.length} registro${registros.length === 1 ? '' : 's'}.`,
-						timer: 2500,
-						showConfirmButton: false
-					});
-				} else {
-					// No hay resultados → NO limpiamos la tabla
-					Swal.fire({
-						title: 'Sin resultados',
-						text: 'No se encontraron registros con los filtros aplicados.',
-						confirmButtonText: 'Entendido',
-						confirmButtonColor: '#007bff'
-					});
-				}
+				// Agregamos los atributos importantes en la fila (como en las filas originales)
+				fila.setAttribute('data-inasistencia-id', item.idInasistencia || '0');
+				fila.setAttribute('data-id-empleado', item.IdEmpleado || item.idEmpleado || item.idusuario || '0');
 
-				ajustarFilasVacias();  // Mantenemos las filas vacías si corresponde
+				const fechaDisplay = item.fecha ? item.fecha.split('-').reverse().join('/') : '';
+
+				fila.innerHTML = `
+					<td>${fechaDisplay}</td>
+					<td title="${item.nombreEmpleado || ''}" class="columna-empleado">
+						${item.nombreEmpleado || ''}
+					</td>
+					<td>${item.turno || ''}</td>
+					<td>${item.motivo || ''}</td>
+					<td><input type="checkbox" class="form-check-input fila-check" data-id="${item.idInasistencia || '0'}" /></td>
+				`;
+
+				tbody.appendChild(fila);
+			});
+
+			Swal.fire({
+				icon: 'success',
+				title: 'Búsqueda exitosa',
+				text: `Se encontraron ${registros.length} registro${registros.length === 1 ? '' : 's'}.`,
+				timer: 2500,
+				showConfirmButton: false
+			});
+		} else {
+			// No hay resultados → NO limpiamos la tabla
+			Swal.fire({
+				title: 'Sin resultados',
+				text: 'No se encontraron registros con los filtros aplicados.',
+				confirmButtonText: 'Entendido',
+				confirmButtonColor: '#007bff'
+			});
+		}
+		ajustarFilasVacias(); // Mantenemos las filas vacías si corresponde  // Mantenemos las filas vacías si corresponde
 			} catch (error) {
 				console.error(error);
 				Swal.fire('Error', 'Ocurrió un problema al buscar los registros.', 'error');

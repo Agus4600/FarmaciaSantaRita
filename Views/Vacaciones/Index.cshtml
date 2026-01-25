@@ -1704,25 +1704,30 @@
         // ────────────────────────────────────────────────
 
         // 1. Listener de clic en toda la tabla (para toggle checkbox y color)
+                // Listener de clic en la tabla (selección + color azul)
         document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function (e) {
             const fila = e.target.closest('tr');
             if (!fila || fila.getAttribute('data-vacacion-id') === '0') return;
 
-            // Si se hizo clic en el nombre del empleado → no hacemos nada aquí (ya lo maneja otro listener)
+            // Evitar interferir con clic en nombre del empleado
             if (e.target.closest('.empleado-clickable')) return;
 
             const checkbox = fila.querySelector('.fila-check');
             if (checkbox) {
-                // Si el clic fue directamente en el checkbox → dejamos que el navegador lo maneje
-                if (e.target.tagName !== 'INPUT' || e.target.type !== 'checkbox') {
+                // Caso 1: Clic directo en el checkbox → navegador maneja checked, nosotros solo color
+                if (e.target === checkbox || e.target.type === 'checkbox') {
+                    // Usamos setTimeout(0) para que se ejecute después del cambio del navegador
+                    setTimeout(() => {
+                        fila.classList.toggle('fila-seleccionada', checkbox.checked);
+                    }, 0);
+                } else {
+                    // Caso 2: Clic en cualquier otra parte de la fila → toggleamos manualmente
                     checkbox.checked = !checkbox.checked;
+                    fila.classList.toggle('fila-seleccionada', checkbox.checked);
                 }
-
-                // Siempre actualizar el color azul según el estado del checkbox
-                fila.classList.toggle('fila-seleccionada', checkbox.checked);
             }
 
-            // Sincronizar el checkbox "Seleccionar todo"
+            // Sincronizar checkbox maestro
             const checkAll = document.getElementById('checkAll');
             if (checkAll) {
                 const filasConDatos = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id]:not([data-vacacion-id='0'])`);
@@ -1731,11 +1736,9 @@
             }
         });
 
-        // 2. Checkbox "Seleccionar todo" (solo afecta filas visibles)
+        // Checkbox maestro (seleccionar todo)
         document.getElementById('checkAll').addEventListener('change', function () {
             const isChecked = this.checked;
-
-            // Solo las filas que están actualmente en el DOM (visibles después de filtro)
             const filasVisibles = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id]:not([data-vacacion-id='0'])`);
 
             filasVisibles.forEach(fila => {

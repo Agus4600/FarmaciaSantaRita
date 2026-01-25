@@ -1303,7 +1303,12 @@
 					document.getElementById("btnEliminarFila").addEventListener("click", async function () {
 			const checkboxesSeleccionados = document.querySelectorAll(`#${TABLA_ID} .fila-check:checked`);
 			if (!checkboxesSeleccionados.length) {
-				Swal.fire('Atención', 'Debe seleccionar al menos un registro para eliminar.', 'warning');
+				Swal.fire({
+					title: 'Atención',
+					text: 'Debe seleccionar al menos un registro para eliminar.',
+					confirmButtonColor: '#007bff',
+					confirmButtonText: 'Entendido'
+				});
 				return;
 			}
 
@@ -1317,17 +1322,21 @@
 			});
 
 			if (!idsParaEliminar.length) {
-				Swal.fire('Atención', 'No hay registros válidos seleccionados para eliminar.', 'warning');
+				Swal.fire({
+					title: 'Atención',
+					text: 'No hay registros válidos seleccionados para eliminar.',
+					confirmButtonColor: '#007bff',
+					confirmButtonText: 'Entendido'
+				});
 				return;
 			}
 
 			const confirm = await Swal.fire({
 				title: '¿Confirmar eliminación?',
 				html: `Se eliminarán <b>${idsParaEliminar.length} registro(s)</b>.<br>Esta acción no se puede deshacer.`,
-				icon: 'warning',
 				showCancelButton: true,
-				confirmButtonColor: '#dc3545',
-				cancelButtonColor: '#6c757d',
+				confirmButtonColor: '#007bff',
+				cancelButtonColor: '#007bff',
 				confirmButtonText: 'Sí, eliminar',
 				cancelButtonText: 'Cancelar'
 			});
@@ -1342,23 +1351,16 @@
 					const response = await fetch(`/Inasistencia/EliminarInasistencia?id=${encodeURIComponent(id)}`, {
 						method: 'DELETE'
 					});
-
 					const data = await response.json();
 
 					if (data.success) {
-						// Eliminación exitosa → remover del DOM inmediatamente
 						if (fila) fila.remove();
 						exitosos++;
-
-						// Limpiar también de la lista en memoria
 						registrosInasistenciaIniciales = registrosInasistenciaIniciales.filter(r =>
 							String(r.idInasistencia || r.IdInasistencia) !== String(id)
 						);
-
-						// Limpiar mapa temporal si existía
 						mapaTemporalEmpleadoId.delete(id);
 					} else {
-						// El servidor dijo que falló → mostramos el motivo
 						fallidos.push({ id, motivo: data.mensaje || 'Error desconocido del servidor' });
 					}
 				} catch (err) {
@@ -1367,6 +1369,7 @@
 				}
 			}
 
+			// Mensaje final
 			if (exitosos > 0 || fallidos.length > 0) {
 				let texto = '';
 
@@ -1385,12 +1388,12 @@
 				Swal.fire({
 					title: exitosos > 0 ? 'Operación completada' : 'Atención',
 					html: texto,
-					icon: exitosos > 0 ? 'success' : 'warning',
-					confirmButtonColor: '#007bff'
+					icon: exitosos > 0 ? 'success' : 'none',  // ← Solo success cuando hay al menos un éxito, ninguno en los demás casos
+					confirmButtonColor: '#007bff',
+					confirmButtonText: 'Entendido'
 				});
 			}
 
-			// Siempre ajustar la tabla al final
 			ajustarFilasVacias();
 			guardarTablaLocal();
 		});

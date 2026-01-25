@@ -1233,22 +1233,29 @@
 				const data = await response.json();
 				const filaTemporal = document.querySelector(`tr[data-inasistencia-id='${filaTemporalId}']`);
 
-				if (data.exito) {
-					if (filaTemporal) {
-						// Actualizar la fila temporal con el ID real de la base de datos
-						filaTemporal.setAttribute("data-inasistencia-id", data.idInasistencia);
-						filaTemporal.querySelector('.fila-check').removeAttribute('disabled');
-						filaTemporal.querySelector('.fila-check').setAttribute('data-id', data.idInasistencia); // Asegurar que el checkbox tenga el ID de DB
-						filaTemporal.querySelector('.columna-empleado').setAttribute('data-id-empleado', empleadoId);
-						// Actualizamos los registros iniciales para futuras búsquedas o recargas
-						registrosInasistenciaIniciales.unshift({
-							IdInasistencia: data.idInasistencia,
-							Fecha: fechaValue, // YYYY-MM-DD
-							NombreEmpleado: empleadoNombre,
-							Turno: turno,
-							Motivo: motivo
-						});
-					}
+					if (data.exito) {
+		if (filaTemporal) {
+			// Actualizar la fila temporal con el ID real de la base de datos
+			filaTemporal.setAttribute("data-inasistencia-id", data.idInasistencia);
+			filaTemporal.querySelector('.fila-check').removeAttribute('disabled');
+			filaTemporal.querySelector('.fila-check').setAttribute('data-id', data.idInasistencia);
+
+			// ← AGREGAR ESTAS LÍNEAS AQUÍ ↓↓↓
+			const celdaEmpleado = filaTemporal.querySelector('.columna-empleado');
+			if (celdaEmpleado) {
+				celdaEmpleado.setAttribute('data-id-empleado', empleadoId);
+				console.log('[POST ÉXITO] Forzado data-id-empleado:', empleadoId);
+			}
+
+			// Actualizamos los registros iniciales...
+			registrosInasistenciaIniciales.unshift({
+				IdInasistencia: data.idInasistencia,
+				Fecha: fechaValue,
+				NombreEmpleado: empleadoNombre,
+				Turno: turno,
+				Motivo: motivo
+			});
+		}
 				} else {
 					// Muestra el mensaje de error del servidor
 					console.error("Error del Servidor:", data.mensaje); // Error a consola

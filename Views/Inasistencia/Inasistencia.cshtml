@@ -1195,6 +1195,7 @@
 
 			// Añadir fila temporal de inmediato (color amarillo para indicar guardado pendiente)
 			const filaTemporalId = `temp-${Date.now()}`;
+			console.log('[AGREGAR] empleadoId seleccionado:', empleadoId);
 			const filaTemporalHTML = `
 		<tr data-inasistencia-id="${filaTemporalId}">
 			<td title="${fechaFormateada}">${fechaFormateada}</td>
@@ -1210,10 +1211,17 @@
 		`;
 			tbody.insertAdjacentHTML("afterbegin", filaTemporalHTML);
 
-			// Limpiar formulario y ajustar filas vacías
-			document.getElementById("formInasistencia").reset();
-			// document.getElementById("empleadoIdOculto").value = empleadoId; // Ya no es necesario
-			ajustarFilasVacias();
+					const filaNueva = tbody.querySelector(`tr[data-inasistencia-id="${filaTemporalId}"]`);
+		if (filaNueva) {
+			const idEnFila = filaNueva.querySelector('td.columna-empleado')?.getAttribute('data-id-empleado');
+			console.log('[DEBUG] data-id-empleado en fila nueva:', idEnFila || 'NO ENCONTRADO');
+		} else {
+			console.warn('[DEBUG] No se encontró la fila temporal recién creada');
+		}
+
+		// Limpiar formulario y ajustar filas vacías
+		document.getElementById("formInasistencia").reset();
+		ajustarFilasVacias();
 
 			try {
 				const response = await fetch('/Inasistencia/RegistrarInasistencia', {

@@ -1398,26 +1398,40 @@
 
 		// 🎯 Lógica para alternar la selección de filas
 				// 🎯 Lógica corregida para clics en la tabla
-				document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function(e) {
+					// Listener único y robusto para clics en el tbody (captura filas nuevas)
+		document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function(e) {
+			// Encontrar la fila más cercana (funciona aunque la fila sea nueva)
 			const fila = e.target.closest('tr');
-			if (!fila || fila.getAttribute('data-inasistencia-id') === '0') return;
+			if (!fila || fila.getAttribute('data-inasistencia-id') === '0') {
+				return; // Ignorar filas vacías o sin ID
+			}
 
-			// --- CASO A: CLIC EN EL NOMBRE (Abrir Modal) ---
-			if (e.target.classList.contains('columna-empleado')) {
-				e.stopPropagation();
+			// Caso 1: Clic directo en la celda del nombre (columna-empleado)
+			if (e.target.classList.contains('columna-empleado') ||
+				e.target.closest('.columna-empleado')) {
+				e.stopPropagation(); // Evita que también seleccione la fila
+				e.preventDefault();  // Seguridad extra
+
+				// Obtener el ID del empleado desde el atributo de la fila
 				const idEmpleado = fila.getAttribute('data-id-empleado');
 				if (idEmpleado && idEmpleado !== "0") {
+					console.log('[CLICK NOMBRE] ID encontrado:', idEmpleado); // Para debug
 					mostrarModalDatosEmpleado(idEmpleado);
+				} else {
+					console.warn('[CLICK NOMBRE] No se encontró data-id-empleado en la fila');
 				}
 				return;
 			}
 
-			// --- CASO B: CLIC EN LA FILA (Seleccionar Checkbox) ---
+			// Caso 2: Clic en cualquier parte de la fila (seleccionar checkbox)
 			const checkbox = fila.querySelector('.fila-check');
 			if (checkbox) {
+				// Solo toggle si no se hizo clic directamente en el checkbox
 				if (e.target.tagName !== 'INPUT' || e.target.type !== 'checkbox') {
 					checkbox.checked = !checkbox.checked;
 				}
+
+				// Actualizar estilo visual
 				if (checkbox.checked) {
 					fila.classList.add('fila-seleccionada');
 				} else {
@@ -1425,7 +1439,7 @@
 				}
 			}
 
-			// Sincronizar Checkbox Maestro
+			// Sincronizar checkbox "Seleccionar todo"
 			const checkAll = document.getElementById('checkAll');
 			if (checkAll) {
 				const filasConDatos = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-inasistencia-id]:not([data-inasistencia-id='0'])`);

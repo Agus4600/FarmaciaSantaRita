@@ -928,6 +928,7 @@
 		// ----------------------------------------------------
 		// 1. CONSTANTES GLOBALES Y FUNCIONES DE TABLA
 		// ----------------------------------------------------
+		const mapaTemporalEmpleadoId = new Map();
 		const idUsuarioActual = @(Context.Session.GetInt32("IDUsuario") ?? 1);
 
 		// ⭐ AL INICIO ya NO cargamos desde ViewBag, pero lo dejamos como respaldo por si falla la API
@@ -1196,12 +1197,10 @@
 			// Añadir fila temporal de inmediato (color amarillo para indicar guardado pendiente)
 			const filaTemporalId = `temp-${Date.now()}`;
 			console.log('[AGREGAR] empleadoId seleccionado:', empleadoId);
-			const filaTemporalHTML = `
-		<tr data-inasistencia-id="${filaTemporalId}">
+					const filaTemporalHTML = `
+		<tr data-inasistencia-id="${filaTemporalId}" data-id-empleado="${empleadoId}">
 			<td title="${fechaFormateada}">${fechaFormateada}</td>
-			<td title="${empleadoNombre}"
-				class="columna-empleado"
-				data-id-empleado="${empleadoId}">  <!-- ← AGREGÁ ESTO -->
+			<td title="${empleadoNombre}" class="columna-empleado">
 				${empleadoNombre}
 			</td>
 			<td title="${turno}">${turno}</td>
@@ -1411,32 +1410,26 @@
 
 
 
-		// 🎯 Lógica para alternar la selección de filas
-				// 🎯 Lógica corregida para clics en la tabla
-					// Listener único y robusto para clics en el tbody (captura filas nuevas)
 		document.querySelector(`#${TABLA_ID} tbody`).addEventListener('click', function(e) {
-			// Encontrar la fila más cercana (funciona aunque la fila sea nueva)
-			const fila = e.target.closest('tr');
-			if (!fila || fila.getAttribute('data-inasistencia-id') === '0') {
-				return; // Ignorar filas vacías o sin ID
-			}
+		const fila = e.target.closest('tr');
+		if (!fila || fila.getAttribute('data-inasistencia-id') === '0') return;
 
-			// Caso 1: Clic directo en la celda del nombre (columna-empleado)
-			if (e.target.classList.contains('columna-empleado') ||
-				e.target.closest('.columna-empleado')) {
-				e.stopPropagation(); // Evita que también seleccione la fila
-				e.preventDefault();  // Seguridad extra
+		// Detectar si el clic fue en la celda del nombre
+		const celdaNombre = e.target.closest('.columna-empleado');
 
-				// Obtener el ID del empleado desde el atributo de la fila
-				const idEmpleado = fila.getAttribute('data-id-empleado');
-				if (idEmpleado && idEmpleado !== "0") {
-					console.log('[CLICK NOMBRE] ID encontrado:', idEmpleado); // Para debug
-					mostrarModalDatosEmpleado(idEmpleado);
-				} else {
-					console.warn('[CLICK NOMBRE] No se encontró data-id-empleado en la fila');
-				}
-				return;
+		if (celdaNombre) {
+			e.stopPropagation();
+
+			// BUSCAMOS EL ID: Primero en la celda, si no está, en la fila (TR)
+			const idEmpleado = celdaNombre.getAttribute('data-id-empleado') || fila.getAttribute('data-id-empleado');
+
+			if (idEmpleado && idEmpleado !== "0") {
+				mostrarModalDatosEmpleado(idEmpleado);
+			} else {
+				console.warn('No se encontró ID para este empleado en la fila nueva');
 			}
+			return;
+		}
 
 			// Caso 2: Clic en cualquier parte de la fila (seleccionar checkbox)
 			const checkbox = fila.querySelector('.fila-check');

@@ -1239,7 +1239,7 @@
 						filaTemporal.setAttribute("data-inasistencia-id", data.idInasistencia);
 						filaTemporal.querySelector('.fila-check').removeAttribute('disabled');
 						filaTemporal.querySelector('.fila-check').setAttribute('data-id', data.idInasistencia); // Asegurar que el checkbox tenga el ID de DB
-
+						filaTemporal.querySelector('.columna-empleado').setAttribute('data-id-empleado', empleadoId);
 						// Actualizamos los registros iniciales para futuras búsquedas o recargas
 						registrosInasistenciaIniciales.unshift({
 							IdInasistencia: data.idInasistencia,

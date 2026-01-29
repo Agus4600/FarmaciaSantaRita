@@ -54,7 +54,6 @@
             .main-wrapper::-webkit-scrollbar {
                 display: none;
             }
-
         /* Contenedor universal para centrar contenido en todas las vistas */
         main {
             width: 100%;
@@ -62,42 +61,83 @@
             padding: 0 15px;
             margin: 0 auto; /* Centrado horizontal */
         }
-
         /* Ajustes responsivos para pantallas pequeñas */
         @@media (max-width: 768px) {
-            .main-wrapper
+            .main-wrapper {
+                padding-top: 30px;
+                padding-bottom: 30px;
+                padding-left: 10px;
+                padding-right: 10px;
+            }
 
-        {
-            padding-top: 30px;
-            padding-bottom: 30px;
-            padding-left: 10px;
-            padding-right: 10px;
-        }
-
-        main {
-            padding: 0 10px;
-        }
-
-        /* Evita que los cards se vean demasiado anchos en móviles */
-        .card {
-            margin: 0 auto;
-            max-width: 100%;
-        }
-
+            main {
+                padding: 0 10px;
+            }
+            /* Evita que los cards se vean demasiado anchos en móviles */
+            .card {
+                margin: 0 auto;
+                max-width: 100%;
+            }
         }
 
         @@media (max-width: 576px) {
-            .main-wrapper
-
-        {
-            padding-top: 20px;
-            padding-bottom: 20px;
+            .main-wrapper {
+                padding-top: 20px;
+                padding-bottom: 20px;
+            }
         }
 
+        /* ────────────────────────────────────────────────
+                   RESTRICCIÓN: Solo computadoras (ocultar en móviles/tablets)
+                ──────────────────────────────────────────────── */
+        @@media (max-width: 991px) {
+            .main-wrapper,
+            main,
+            #content-wrapper,
+            #video-background,
+            #intro-overlay {
+                display: none !important;
+            }
+
+            body {
+                background: #f8f9fa !important;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+                font-family: system-ui, -apple-system, sans-serif;
+            }
+
+            .mensaje-solo-pc {
+                max-width: 500px;
+                text-align: center;
+                padding: 30px;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            }
+
+                .mensaje-solo-pc h1 {
+                    color: #007bff;
+                    margin-bottom: 20px;
+                }
+
+                .mensaje-solo-pc p {
+                    font-size: 1.1rem;
+                    color: #555;
+                }
         }
     </style>
 </head>
 <body>
+    <!-- Mensaje solo para móviles/tablets -->
+    <div class="mensaje-solo-pc">
+        <h1>¡Solo disponible en computadoras!</h1>
+        <p>Por favor, accede desde una PC o laptop para usar la aplicación.</p>
+        <p>En móviles y tablets no está habilitada la funcionalidad completa.</p>
+    </div>
+
     <!-- VIDEO DE INTRO -->
     <div id="intro-overlay" style="position: fixed; inset: 0; z-index: 9999; background: transparent;">
         <video id="introVideo"
@@ -109,13 +149,11 @@
             Tu navegador no soporta video.
         </video>
     </div>
-
     <!-- VIDEO DE FONDO CONTINUO -->
     <video autoplay muted loop playsinline id="video-background" preload="auto">
         <source src="/videos/fondo-optimizado.mp4" type="video/mp4">
         <source src="~/videos/fondo-optimizado.mp4" type="video/mp4">
     </video>
-
     <div id="content-wrapper" class="main-wrapper">
         <main role="main" class="pb-3">
             @RenderBody()
@@ -132,12 +170,10 @@
         const introOverlay = document.getElementById('intro-overlay');
         const mainWrapper = document.getElementById('content-wrapper');
         const introVideo = document.getElementById('introVideo');
-
         // Solo reproducir intro la primera vez en esta sesión
         if (!sessionStorage.getItem('introShownThisSession')) {
             // Intro visible, contenido oculto (ya lo está desde CSS)
             introOverlay.style.display = 'block';
-
             introVideo.addEventListener('ended', function() {
                 introOverlay.style.opacity = '0';
                 introOverlay.style.transition = 'opacity 1s ease';
@@ -147,7 +183,6 @@
                 }, 1000);
                 sessionStorage.setItem('introShownThisSession', 'true');
             });
-
             // Fallback
             setTimeout(() => {
                 if (introOverlay.style.display !== 'none') {

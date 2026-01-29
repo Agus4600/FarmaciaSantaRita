@@ -86,7 +86,6 @@
                 padding-bottom: 20px;
             }
         }
-
         /* ────────────────────────────────────────────────
                    RESTRICCIÓN: Solo computadoras (ocultar en móviles/tablets)
                 ──────────────────────────────────────────────── */
@@ -128,6 +127,105 @@
                     color: #555;
                 }
         }
+
+        /* Ícono flotante de info (esquina inferior derecha) */
+        .info-flotante {
+            position: fixed;
+            bottom: 25px;
+            left: 25px;
+            z-index: 2000;
+        }
+
+        .btn-info-flotante {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .btn-info-flotante:hover {
+                background-color: #0056b3;
+                transform: scale(1.1);
+            }
+
+        .panel-info {
+            position: absolute;
+            bottom: 90px;
+            left: 0;
+            width: 320px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.3);
+            padding: 20px;
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease;
+        }
+
+            .panel-info.mostrar {
+                display: block;
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            .panel-info h5 {
+                margin: 0 0 18px;
+                color: #007bff;
+                text-align: center;
+                font-weight: 600;
+            }
+
+            .panel-info ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            .panel-info li {
+                margin: 14px 0;
+                font-size: 15px;
+            }
+
+                .panel-info li i {
+                    margin-right: 12px;
+                    color: #007bff;
+                    font-size: 20px;
+                }
+
+            .panel-info a {
+                color: #333;
+                text-decoration: none;
+            }
+
+                .panel-info a:hover {
+                    color: #007bff;
+                    text-decoration: underline;
+                }
+
+        .btn-cerrar-panel {
+            display: block;
+            margin: 15px auto 0;
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+            .btn-cerrar-panel:hover {
+                background: #5a6268;
+            }
     </style>
 </head>
 <body>
@@ -151,6 +249,44 @@
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
+    </div>
+
+    <!-- Ícono flotante de información (esquina inferior derecha) -->
+    <div class="info-flotante">
+        <button id="btnInfo" class="btn-info-flotante" title="Información de contacto">
+            <i class="bi bi-info-circle-fill"></i>
+        </button>
+
+        <div id="panelInfo" class="panel-info">
+            <h5>Contacto - Farmacia Santa Rita</h5>
+            <ul>
+                <li>
+                    <i class="bi bi-whatsapp"></i>
+                    <a href="https://wa.me/543863512906" target="_blank" rel="noopener">
+                        +54 386 351-2906
+                    </a>
+                </li>
+                <li>
+                    <i class="bi bi-instagram"></i>
+                    <a href="https://www.instagram.com/farmacia.santa.rita.rioseco?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener">
+                        @@farmacia.santa.rita.rioseco
+                    </a>
+                </li>
+                <li>
+                    <i class="bi bi-envelope-fill"></i>
+                    <a href="mailto:FarmaciaSantaRita@gmail.com">
+                        FarmaciaSantaRita@gmail.com
+                    </a>
+                </li>
+                <li>
+                    <i class="bi bi-geo-alt-fill"></i>
+                    Av. Himno Patrio, T4145 Río Seco, Tucumán
+                    <br>
+                    <small><a href="https://maps.app.goo.gl/XXXXX" target="_blank" rel="noopener">(ver en Google Maps)</a></small>
+                </li>
+            </ul>
+            <button id="cerrarPanel" class="btn-cerrar-panel">Cerrar</button>
+        </div>
     </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
@@ -193,6 +329,35 @@
             introOverlay.style.display = 'none';
             mainWrapper.style.opacity = '1 !important';
         }
+    </script>
+
+    <!-- SCRIPT PARA EL PANEL DE INFO FLOTANTE -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const btnInfo = document.getElementById('btnInfo');
+            const panelInfo = document.getElementById('panelInfo');
+            const cerrarPanel = document.getElementById('cerrarPanel');
+
+            if (btnInfo && panelInfo) {
+                btnInfo.addEventListener('click', function () {
+                    panelInfo.classList.toggle('mostrar');
+                });
+
+                // Cerrar al hacer clic fuera del panel
+                document.addEventListener('click', function (e) {
+                    if (!panelInfo.contains(e.target) && !btnInfo.contains(e.target)) {
+                        panelInfo.classList.remove('mostrar');
+                    }
+                });
+
+                // Botón cerrar
+                if (cerrarPanel) {
+                    cerrarPanel.addEventListener('click', function () {
+                        panelInfo.classList.remove('mostrar');
+                    });
+                }
+            }
+        });
     </script>
 </body>
 </html>

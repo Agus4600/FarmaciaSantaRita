@@ -274,9 +274,14 @@
                 </li>
                 <li>
                     <i class="bi bi-envelope-fill"></i>
-                    <a href="mailto:santaritafarma@yahoo.com?subject=Consulta%20desde%20la%20web" target="_blank">
+                    <span style="color: #007bff; cursor: pointer; text-decoration: underline;"
+                          onclick="navigator.clipboard.writeText('santaritafarma@yahoo.com');
+                   alert('Correo copiado al portapapeles: santaritafarma@yahoo.com\n\nPegalo en tu cliente de correo (Gmail, Outlook, etc.) y envíanos tu mensaje.')">
                         santaritafarma@yahoo.com
-                    </a>
+                    </span>
+                    <small style="display: block; color: #666; font-size: 12px; margin-top: 4px;">
+                        (Clic para copiar y pegar en tu correo)
+                    </small>
                 </li>
                 <li>
                     <i class="bi bi-geo-alt-fill"></i>

@@ -43,12 +43,13 @@ namespace FarmaciaSantaRita.Controllers
             // Desencriptamos la contraseña actual
             ViewBag.ContraseñaActualDesencriptada = _encryptionService.Decrypt(usuario.Contraseña);
 
-            // Formateo seguro de fechas (sin error de compilación)
-            ViewBag.FechaNacimientoFormatted = usuario.FechaNacimiento.HasValue
-                ? usuario.FechaNacimiento.Value.ToString("yyyy-MM-dd")
+            // Formateo de FechaNacimiento (DateTime normal, no nullable)
+            ViewBag.FechaNacimientoFormatted = usuario.FechaNacimiento != default(DateTime)
+                ? usuario.FechaNacimiento.ToString("yyyy-MM-dd")
                 : "";
 
-            ViewBag.FechaIngresoFormatted = usuario.FechaIngreso.HasValue
+            // Formateo de FechaIngreso (DateTime?, sí nullable)
+            ViewBag.FechaIngresoFormatted = usuario.FechaIngreso.HasValue && usuario.FechaIngreso.Value != default(DateTime)
                 ? usuario.FechaIngreso.Value.ToString("yyyy-MM-dd")
                 : "";
 

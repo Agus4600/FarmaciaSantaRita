@@ -401,7 +401,6 @@
                 if (inputNuevaPass) inputNuevaPass.value = "";
             }, 10);
         });
-
         // Toggle de visibilidad de contraseñas
         document.querySelectorAll('.btn-toggle-view').forEach(btn => {
             btn.addEventListener('click', function() {
@@ -416,7 +415,6 @@
                 }
             });
         });
-
         // Swal de éxito desde TempData (si viene de redirect)
         @if (TempData["ResultadoActualizacion"]?.ToString() == "Exito")
         {
@@ -430,7 +428,6 @@
             });
             </text>
         }
-
         // Botón Guardar Cambios
         document.getElementById('btnGuardarCambios').addEventListener('click', function() {
             console.log("[DEBUG] Botón GUARDAR CAMBIOS presionado");
@@ -514,48 +511,9 @@
                 return;
             }
 
-            console.log("[VALIDACIÓN] Pasó OK → detectando cambios");
+            console.log("[VALIDACIÓN] Pasó OK → mostrando confirmación");
 
-            // Detección de cambios
-            const valoresOriginales = {
-                nombre: "@(Model?.Nombre?.Trim() ?? "")",
-                apellido: "@(Model?.Apellido?.Trim() ?? "")",
-                usuario: "@(Model?.NombreUsuario?.Trim() ?? "")",
-                correo: "@(Model?.CorreoUsuario?.Trim() ?? "")",
-                dni: "@(Model?.Dni?.Trim() ?? "")",
-                direccion: "@(Model?.Direccion?.Trim() ?? "")",
-                telefono: "@(Model?.Telefono?.Trim() ?? "")",
-                nuevaPass: ""
-            };
-
-            const valoresActuales = {
-                nombre: campos.nombre?.value.trim() || "",
-                apellido: campos.apellido?.value.trim() || "",
-                usuario: campos.usuario?.value.trim() || "",
-                correo: campos.correo?.value.trim() || "",
-                dni: campos.dni?.value.trim() || "",
-                direccion: campos.direccion?.value.trim() || "",
-                telefono: campos.telefono?.value.trim() || "",
-                nuevaPass: campos.nuevaPass?.value.trim() || ""
-            };
-
-            const hayCambios = Object.keys(valoresOriginales).some(key => 
-                valoresActuales[key] !== valoresOriginales[key]
-            );
-
-            if (!hayCambios) {
-                console.log("[SIN CAMBIOS] No se detectaron modificaciones");
-                Swal.fire({
-                    title: 'Sin cambios',
-                    text: 'No has modificado ningún dato.',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
-                });
-                return;
-            }
-
-            console.log("[HAY CAMBIOS] Mostrando confirmación");
-
+            // Siempre mostrar confirmación (quitamos detección de cambios por ahora)
             Swal.fire({
                 title: '¿Guardar cambios?',
                 text: "Se actualizará la información de tu cuenta.",

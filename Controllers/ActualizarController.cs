@@ -70,6 +70,7 @@ namespace FarmaciaSantaRita.Controllers
 
             try
             {
+                // Buscar el usuario en la BD (tracked por EF)
                 var usuarioParaActualizar = _context.Usuarios.Find(idUsuarioAutenticado);
                 if (usuarioParaActualizar == null)
                 {
@@ -77,7 +78,7 @@ namespace FarmaciaSantaRita.Controllers
                     return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
                 }
 
-                // Validación de campos obligatorios
+                // Validación manual
                 if (string.IsNullOrWhiteSpace(modeloActualizado.Nombre) ||
                     string.IsNullOrWhiteSpace(modeloActualizado.Apellido) ||
                     string.IsNullOrWhiteSpace(modeloActualizado.NombreUsuario) ||
@@ -93,13 +94,7 @@ namespace FarmaciaSantaRita.Controllers
                     return View(usuarioParaActualizar);
                 }
 
-                // --- INICIO DE ACTUALIZACIÓN ---
-
-                // 1. Asignamos la fecha y forzamos la marca de modificación para Entity Framework
-                usuarioParaActualizar.FechaNacimiento = modeloActualizado.FechaNacimiento;
-                _context.Entry(usuarioParaActualizar).Property(u => u.FechaNacimiento).IsModified = true;
-
-                // 2. Actualizamos el resto de los campos
+                // Actualizar TODOS los campos directamente
                 usuarioParaActualizar.Nombre = modeloActualizado.Nombre.Trim();
                 usuarioParaActualizar.Apellido = modeloActualizado.Apellido.Trim();
                 usuarioParaActualizar.NombreUsuario = modeloActualizado.NombreUsuario.Trim();
@@ -107,18 +102,20 @@ namespace FarmaciaSantaRita.Controllers
                 usuarioParaActualizar.CorreoUsuario = modeloActualizado.CorreoUsuario.Trim();
                 usuarioParaActualizar.Dni = modeloActualizado.Dni.Trim();
                 usuarioParaActualizar.Direccion = modeloActualizado.Direccion.Trim();
+                usuarioParaActualizar.FechaNacimiento = modeloActualizado.FechaNacimiento;
 
                 if (!string.IsNullOrWhiteSpace(modeloActualizado.Rol) && modeloActualizado.Rol != usuarioParaActualizar.Rol)
                 {
                     usuarioParaActualizar.Rol = modeloActualizado.Rol;
                 }
 
+                // Contraseña nueva (solo si se ingresó)
                 if (!string.IsNullOrWhiteSpace(modeloActualizado.NuevaContraseña))
                 {
                     usuarioParaActualizar.Contraseña = _encryptionService.Encrypt(modeloActualizado.NuevaContraseña.Trim());
                 }
 
-                // 3. Guardamos los cambios en la base de datos
+                // Guardar
                 _context.SaveChanges();
 
                 TempData["ResultadoActualizacion"] = "Exito";
@@ -126,10 +123,20 @@ namespace FarmaciaSantaRita.Controllers
             }
             catch (Exception ex)
             {
-                // ESTO ES LO QUE FALTABA: Cerrar el bloque try y manejar la excepción
+                // Loguear error para debug (puede verse en consola del servidor o logs)
+                Console.WriteLine($"Error al actualizar cuenta: {ex.Message} | Inner: {ex.InnerException?.Message}");
+
                 TempData["ResultadoActualizacion"] = "Error";
                 ViewBag.ErrorMessage = "Error al guardar cambios: " + ex.Message;
-                return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
+
+                // Aquí NO usamos usuarioParaActualizar (porque puede ser null si la excepción ocurrió antes)
+                // Si querés mostrar la contraseña actual, podés volver a buscarla
+                var usuarioTemp = _context.Usuarios.Find(idUsuarioAutenticado);
+                ViewBag.ContraseñaActualDesencriptada = usuarioTemp != null
+                    ? _encryptionService.Decrypt(usuarioTemp.Contraseña)
+                    : "";
+
+                return View(modeloActualizado);  // Devolvemos el modelo enviado para que se vean los valores
             }
         }
 

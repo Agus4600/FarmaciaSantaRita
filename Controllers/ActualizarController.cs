@@ -87,11 +87,11 @@ namespace FarmaciaSantaRita.Controllers
                 if (usuarioParaActualizar == null)
                 {
                     TempData["ResultadoActualizacion"] = "Error";
-                    TempData["MensajeError"] = "Usuario no encontrado en la base de datos.";
+                    TempData["MensajeError"] = "Usuario no encontrado.";
                     return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
                 }
 
-                // Actualizar SOLO los campos editables
+                // Actualizar campos editables
                 usuarioParaActualizar.Nombre = modeloActualizado.Nombre?.Trim();
                 usuarioParaActualizar.Apellido = modeloActualizado.Apellido?.Trim();
                 usuarioParaActualizar.NombreUsuario = modeloActualizado.NombreUsuario?.Trim();
@@ -110,20 +110,29 @@ namespace FarmaciaSantaRita.Controllers
                     usuarioParaActualizar.Contraseña = _encryptionService.Encrypt(modeloActualizado.NuevaContraseña.Trim());
                 }
 
-                // FORZAR que EF guarde los cambios (clave para que funcione)
+                // Convertir fechas a UTC para PostgreSQL timestamptz
+                if (usuarioParaActualizar.FechaNacimiento != default(DateTime))
+                {
+                    usuarioParaActualizar.FechaNacimiento = DateTime.SpecifyKind(usuarioParaActualizar.FechaNacimiento, DateTimeKind.Utc);
+                }
+
+                if (usuarioParaActualizar.FechaIngreso.HasValue)
+                {
+                    usuarioParaActualizar.FechaIngreso = DateTime.SpecifyKind(usuarioParaActualizar.FechaIngreso.Value, DateTimeKind.Utc);
+                }
+
                 _context.Entry(usuarioParaActualizar).State = EntityState.Modified;
+                int cambios = _context.SaveChanges();
 
-                int cambiosGuardados = _context.SaveChanges();
-
-                if (cambiosGuardados > 0)
+                if (cambios > 0)
                 {
                     TempData["ResultadoActualizacion"] = "Exito";
-                    TempData["MensajeExito"] = "Los cambios se guardaron correctamente en la base de datos.";
+                    TempData["MensajeExito"] = "Los cambios se guardaron correctamente.";
                 }
                 else
                 {
                     TempData["ResultadoActualizacion"] = "SinCambios";
-                    TempData["MensajeError"] = "No se guardó nada: los datos son idénticos a los actuales.";
+                    TempData["MensajeError"] = "No se detectaron cambios para guardar.";
                 }
 
                 return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });

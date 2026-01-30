@@ -233,6 +233,30 @@
 <div class="container mt-5">
     <div class="card shadow-lg p-4 card-principal">
         <h2 class="text-center mb-4 fw-bold text-primary" translate="no">CUENTA DE USUARIO: @nombreUsuario</h2>
+        @if (TempData["ResultadoActualizacion"] != null)
+        {
+            if (TempData["ResultadoActualizacion"].ToString() == "Exito")
+            {
+                <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                    <strong>¡Éxito!</strong> @TempData["MensajeExito"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            else if (TempData["ResultadoActualizacion"].ToString() == "Error")
+            {
+                <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                    <strong>Error al guardar:</strong> @TempData["MensajeError"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            else if (TempData["ResultadoActualizacion"].ToString() == "SinCambios")
+            {
+                <div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+                    @TempData["MensajeError"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+        }
         <div class="row">
             <div class="col-md-2 d-flex flex-column align-items-start">
                 <div id="logoContainer">
@@ -326,7 +350,7 @@
                                        type="date"
                                        id="FechaNacimiento"
                                        class="form-control"
-                                       value="@(Model?.FechaNacimiento.ToString("yyyy-MM-dd") ?? "")"
+                                       value="@ViewBag.FechaNacimientoFormatted"
                                        disabled
                                        readonly
                                        style="background-color: #e9ecef; opacity: 0.7; cursor: not-allowed;" />
@@ -337,7 +361,7 @@
                                        type="date"
                                        id="FechaIngreso"
                                        class="form-control"
-                                       value="@(Model?.FechaIngreso?.ToString("yyyy-MM-dd") ?? "")"
+                                       value="@ViewBag.FechaIngresoFormatted"
                                        disabled
                                        readonly
                                        style="background-color: #e9ecef; opacity: 0.7;" />

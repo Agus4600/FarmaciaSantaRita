@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using System.Web;
 
 namespace FarmaciaSantaRita.Controllers
 {
@@ -86,11 +87,11 @@ namespace FarmaciaSantaRita.Controllers
                 if (usuarioParaActualizar == null)
                 {
                     TempData["ResultadoActualizacion"] = "Error";
-                    TempData["MensajeError"] = "Usuario no encontrado.";
+                    TempData["MensajeError"] = "Usuario no encontrado en la base de datos.";
                     return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
                 }
 
-                // Actualizar SOLO campos editables
+                // Actualizar SOLO los campos editables
                 usuarioParaActualizar.Nombre = modeloActualizado.Nombre?.Trim();
                 usuarioParaActualizar.Apellido = modeloActualizado.Apellido?.Trim();
                 usuarioParaActualizar.NombreUsuario = modeloActualizado.NombreUsuario?.Trim();
@@ -109,20 +110,20 @@ namespace FarmaciaSantaRita.Controllers
                     usuarioParaActualizar.Contraseña = _encryptionService.Encrypt(modeloActualizado.NuevaContraseña.Trim());
                 }
 
-                // FORZAR que EF detecte los cambios y los guarde
+                // FORZAR que EF guarde los cambios (clave para que funcione)
                 _context.Entry(usuarioParaActualizar).State = EntityState.Modified;
 
-                int cambios = _context.SaveChanges();
+                int cambiosGuardados = _context.SaveChanges();
 
-                if (cambios > 0)
+                if (cambiosGuardados > 0)
                 {
                     TempData["ResultadoActualizacion"] = "Exito";
-                    TempData["MensajeExito"] = "Los cambios se guardaron correctamente.";
+                    TempData["MensajeExito"] = "Los cambios se guardaron correctamente en la base de datos.";
                 }
                 else
                 {
                     TempData["ResultadoActualizacion"] = "SinCambios";
-                    TempData["MensajeError"] = "No se detectaron cambios para guardar (los datos son iguales a los actuales).";
+                    TempData["MensajeError"] = "No se guardó nada: los datos son idénticos a los actuales.";
                 }
 
                 return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
@@ -130,7 +131,7 @@ namespace FarmaciaSantaRita.Controllers
             catch (DbUpdateException dbEx)
             {
                 TempData["ResultadoActualizacion"] = "Error";
-                TempData["MensajeError"] = "Error al guardar en la base de datos: " + (dbEx.InnerException?.Message ?? dbEx.Message);
+                TempData["MensajeError"] = "Error en la base de datos: " + (dbEx.InnerException?.Message ?? dbEx.Message);
                 return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
             }
             catch (Exception ex)

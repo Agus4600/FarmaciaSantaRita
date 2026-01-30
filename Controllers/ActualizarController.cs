@@ -68,9 +68,17 @@ namespace FarmaciaSantaRita.Controllers
                 return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
             }
 
+            if (!ModelState.IsValid)
+            {
+                TempData["ResultadoActualizacion"] = "Error";
+                ViewBag.ErrorMessage = "Hay errores en el formulario.";
+                ViewBag.ContraseñaActualDesencriptada = _encryptionService.Decrypt(_context.Usuarios.Find(idUsuarioAutenticado)?.Contraseña ?? "");
+                return View(modeloActualizado);
+            }
+
             try
             {
-                // Buscar el usuario en la BD (tracked por EF)
+                // Buscar entidad tracked
                 var usuarioParaActualizar = _context.Usuarios.Find(idUsuarioAutenticado);
                 if (usuarioParaActualizar == null)
                 {
@@ -78,30 +86,14 @@ namespace FarmaciaSantaRita.Controllers
                     return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
                 }
 
-                // Validación manual
-                if (string.IsNullOrWhiteSpace(modeloActualizado.Nombre) ||
-                    string.IsNullOrWhiteSpace(modeloActualizado.Apellido) ||
-                    string.IsNullOrWhiteSpace(modeloActualizado.NombreUsuario) ||
-                    string.IsNullOrWhiteSpace(modeloActualizado.CorreoUsuario) ||
-                    string.IsNullOrWhiteSpace(modeloActualizado.Dni) ||
-                    string.IsNullOrWhiteSpace(modeloActualizado.Direccion) ||
-                    string.IsNullOrWhiteSpace(modeloActualizado.Telefono) ||
-                    modeloActualizado.FechaNacimiento == default(DateTime))
-                {
-                    TempData["ResultadoActualizacion"] = "Error";
-                    ViewBag.ErrorMessage = "Todos los campos obligatorios deben estar completos.";
-                    ViewBag.ContraseñaActualDesencriptada = _encryptionService.Decrypt(usuarioParaActualizar.Contraseña);
-                    return View(usuarioParaActualizar);
-                }
-
-                // Actualizar TODOS los campos directamente
-                usuarioParaActualizar.Nombre = modeloActualizado.Nombre.Trim();
-                usuarioParaActualizar.Apellido = modeloActualizado.Apellido.Trim();
-                usuarioParaActualizar.NombreUsuario = modeloActualizado.NombreUsuario.Trim();
-                usuarioParaActualizar.Telefono = modeloActualizado.Telefono.Trim();
-                usuarioParaActualizar.CorreoUsuario = modeloActualizado.CorreoUsuario.Trim();
-                usuarioParaActualizar.Dni = modeloActualizado.Dni.Trim();
-                usuarioParaActualizar.Direccion = modeloActualizado.Direccion.Trim();
+                // Actualizar TODOS los campos (EF detectará cambios automáticamente)
+                usuarioParaActualizar.Nombre = modeloActualizado.Nombre?.Trim();
+                usuarioParaActualizar.Apellido = modeloActualizado.Apellido?.Trim();
+                usuarioParaActualizar.NombreUsuario = modeloActualizado.NombreUsuario?.Trim();
+                usuarioParaActualizar.Telefono = modeloActualizado.Telefono?.Trim();
+                usuarioParaActualizar.CorreoUsuario = modeloActualizado.CorreoUsuario?.Trim();
+                usuarioParaActualizar.Dni = modeloActualizado.Dni?.Trim();
+                usuarioParaActualizar.Direccion = modeloActualizado.Direccion?.Trim();
                 usuarioParaActualizar.FechaNacimiento = modeloActualizado.FechaNacimiento;
 
                 if (!string.IsNullOrWhiteSpace(modeloActualizado.Rol) && modeloActualizado.Rol != usuarioParaActualizar.Rol)
@@ -109,34 +101,40 @@ namespace FarmaciaSantaRita.Controllers
                     usuarioParaActualizar.Rol = modeloActualizado.Rol;
                 }
 
-                // Contraseña nueva (solo si se ingresó)
+                // Contraseña nueva (solo si se ingresó algo)
                 if (!string.IsNullOrWhiteSpace(modeloActualizado.NuevaContraseña))
                 {
                     usuarioParaActualizar.Contraseña = _encryptionService.Encrypt(modeloActualizado.NuevaContraseña.Trim());
                 }
 
-                // Guardar
-                _context.SaveChanges();
+                // Guardar cambios (EF ya sabe qué cambió)
+                int cambiosGuardados = _context.SaveChanges();
 
-                TempData["ResultadoActualizacion"] = "Exito";
+                if (cambiosGuardados > 0)
+                {
+                    TempData["ResultadoActualizacion"] = "Exito";
+                }
+                else
+                {
+                    TempData["ResultadoActualizacion"] = "SinCambios";
+                }
+
                 return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
+            }
+            catch (DbUpdateException dbEx)
+            {
+                // Loguear error real (ej: violación de unique, constraint)
+                Console.WriteLine($"DbUpdateException: {dbEx.InnerException?.Message ?? dbEx.Message}");
+                TempData["ResultadoActualizacion"] = "Error";
+                ViewBag.ErrorMessage = "Error al guardar en la base de datos: " + (dbEx.InnerException?.Message ?? dbEx.Message);
+                return View(modeloActualizado);
             }
             catch (Exception ex)
             {
-                // Loguear error para debug (puede verse en consola del servidor o logs)
-                Console.WriteLine($"Error al actualizar cuenta: {ex.Message} | Inner: {ex.InnerException?.Message}");
-
+                Console.WriteLine($"Excepción general: {ex.Message} | Inner: {ex.InnerException?.Message}");
                 TempData["ResultadoActualizacion"] = "Error";
-                ViewBag.ErrorMessage = "Error al guardar cambios: " + ex.Message;
-
-                // Aquí NO usamos usuarioParaActualizar (porque puede ser null si la excepción ocurrió antes)
-                // Si querés mostrar la contraseña actual, podés volver a buscarla
-                var usuarioTemp = _context.Usuarios.Find(idUsuarioAutenticado);
-                ViewBag.ContraseñaActualDesencriptada = usuarioTemp != null
-                    ? _encryptionService.Decrypt(usuarioTemp.Contraseña)
-                    : "";
-
-                return View(modeloActualizado);  // Devolvemos el modelo enviado para que se vean los valores
+                ViewBag.ErrorMessage = "Error inesperado: " + ex.Message;
+                return View(modeloActualizado);
             }
         }
 

@@ -433,11 +433,11 @@
 
         // Botón Guardar Cambios
         document.getElementById('btnGuardarCambios').addEventListener('click', function() {
-            console.log("Botón GUARDAR CAMBIOS presionado"); // ← LOG para debug
+            console.log("[DEBUG] Botón GUARDAR CAMBIOS presionado");
 
             const form = document.getElementById('formCuenta');
             if (!form) {
-                console.error("Formulario no encontrado");
+                console.error("[ERROR] Formulario #formCuenta no encontrado");
                 Swal.fire('Error', 'No se encontró el formulario.', 'error');
                 return;
             }
@@ -466,45 +466,45 @@
             const regexDni = /^\d{7,8}$/;
             const regexTelefono = /^\d{7,15}$/;
 
-            // Validaciones (igual que antes, pero con logs)
-            if (!campos.nombre?.value.trim() || !regexLetras.test(campos.nombre.value.trim())) {
+            // Validaciones (con chequeo de null)
+            if (!campos.nombre?.value?.trim() || !regexLetras.test(campos.nombre.value.trim())) {
                 errores.push("El <b>Nombre</b> es obligatorio y solo puede contener letras.");
                 campos.nombre?.classList.add('invalid-glow');
             }
-            if (!campos.apellido?.value.trim() || !regexLetras.test(campos.apellido.value.trim())) {
+            if (!campos.apellido?.value?.trim() || !regexLetras.test(campos.apellido.value.trim())) {
                 errores.push("El <b>Apellido</b> es obligatorio y solo puede contener letras.");
                 campos.apellido?.classList.add('invalid-glow');
             }
-            if (!campos.usuario?.value.trim()) {
+            if (!campos.usuario?.value?.trim()) {
                 errores.push("El <b>Nombre de Usuario</b> es obligatorio.");
                 campos.usuario?.classList.add('invalid-glow');
             }
-            if (!campos.correo?.value.trim() || !regexMail.test(campos.correo.value.trim())) {
+            if (!campos.correo?.value?.trim() || !regexMail.test(campos.correo.value.trim())) {
                 errores.push("Ingresa un <b>Correo</b> válido.");
                 campos.correo?.classList.add('invalid-glow');
             }
-            if (!campos.dni?.value.trim() || !regexDni.test(campos.dni.value.trim())) {
+            if (!campos.dni?.value?.trim() || !regexDni.test(campos.dni.value.trim())) {
                 errores.push("El <b>DNI</b> es obligatorio y debe tener 7 u 8 números.");
                 campos.dni?.classList.add('invalid-glow');
             }
-            if (!campos.direccion?.value.trim() || !campos.direccion.value.includes(",") || campos.direccion.value.split(",")[1].trim().length < 2) {
+            if (!campos.direccion?.value?.trim() || !campos.direccion.value.includes(",") || campos.direccion.value.split(",")[1].trim().length < 2) {
                 errores.push("La <b>Dirección</b> es obligatoria y debe incluir coma + localidad.");
                 campos.direccion?.classList.add('invalid-glow');
             }
-            if (!campos.telefono?.value.trim() || !regexTelefono.test(campos.telefono.value.trim())) {
+            if (!campos.telefono?.value?.trim() || !regexTelefono.test(campos.telefono.value.trim())) {
                 errores.push("El <b>Teléfono</b> es obligatorio y debe tener 7-15 números.");
                 campos.telefono?.classList.add('invalid-glow');
             }
 
             // Contraseña nueva (opcional)
             const passActual = document.getElementById('contrasenaActual')?.value || "";
-            if (campos.nuevaPass?.value.trim() !== "" && campos.nuevaPass.value.trim() === passActual) {
+            if (campos.nuevaPass?.value?.trim() && campos.nuevaPass.value.trim() === passActual) {
                 errores.push("La <b>Nueva Contraseña</b> no puede ser igual a la anterior.");
                 campos.wrapNuevaPass?.classList.add('invalid-glow');
             }
 
             if (errores.length > 0) {
-                console.log("Errores de validación encontrados:", errores);
+                console.log("[VALIDACIÓN] Errores encontrados:", errores);
                 Swal.fire({
                     title: 'Campos inválidos o vacíos',
                     html: `<ul style="text-align:left">${errores.map(e => `<li>${e}</li>`).join('')}</ul>`,
@@ -514,7 +514,7 @@
                 return;
             }
 
-            console.log("Validación pasada → hay cambios?");
+            console.log("[VALIDACIÓN] Pasó OK → detectando cambios");
 
             // Detección de cambios
             const valoresOriginales = {
@@ -544,7 +544,7 @@
             );
 
             if (!hayCambios) {
-                console.log("No se detectaron cambios");
+                console.log("[SIN CAMBIOS] No se detectaron modificaciones");
                 Swal.fire({
                     title: 'Sin cambios',
                     text: 'No has modificado ningún dato.',
@@ -554,23 +554,25 @@
                 return;
             }
 
-            console.log("Hay cambios → mostrando confirmación");
+            console.log("[HAY CAMBIOS] Mostrando confirmación");
 
             Swal.fire({
                 title: '¿Guardar cambios?',
                 text: "Se actualizará la información de tu cuenta.",
                 showCancelButton: true,
                 confirmButtonColor: '#007bff',
-                cancelButtonColor: '#007bff'',
+                cancelButtonColor: '#007bff',
                 confirmButtonText: 'Sí, guardar',
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    console.log("Usuario confirmó → enviando formulario");
-                    form.submit(); // ← Esto envía el POST al action ActualizarCuenta
+                    console.log("[CONFIRMACIÓN] Usuario confirmó → enviando formulario");
+                    form.submit(); // Envía el POST
                 } else {
-                    console.log("Usuario canceló");
+                    console.log("[CONFIRMACIÓN] Usuario canceló");
                 }
+            }).catch(err => {
+                console.error("[ERROR EN SWAL]", err);
             });
         });
 

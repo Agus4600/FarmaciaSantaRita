@@ -12,23 +12,18 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 <style>
-    /* Estilo para el nuevo icono de cuenta */
-    .user-icon-container {
+    .user-icon-side {
         display: flex;
         justify-content: flex-start;
-        align-items: center;
-        align-self: flex-start;
-        width: 80px;
-        height: 80px;
-        margin: 20px 0 0 15px;
-        color: #007bff; /* Color azul igual que tus botones */
+        width: 100%;
+        padding-left: 20px; /* Alineado con el logo */
+        margin-top: 10px;
+        color: #007bff;
     }
 
-        .user-icon-container i {
-            font-size: 70px; /* Tamaño del icono */
-            opacity: 0.8;
+        .user-icon-side i {
+            font-size: 60px; /* Tamaño mediano */
         }
-
 
     .card-principal {
         width: 1200px !important;
@@ -114,10 +109,7 @@
     .col-md-2 a.btn:not(.btn-volver),
     .col-md-2 button:not(.btn-volver) {
         display: none !important;
-        visibility: hidden !important;
-        height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
+        position: absolute
     }
 
 
@@ -289,10 +281,50 @@
                 <div id="logoContainer">
                     <img src="/images/file_0000000079e461fd8636559665695d530001.png" alt="Logo Farmacia Santa Rita" id="farmaciaLogo" />
                 </div>
-            </div>
-            <div class="user-icon-container">
-                <i class="bi bi-person-circle"></i>
-            </div>
+                <div class="user-icon-side">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                @{
+                    // Tu lógica existente se mantiene igual...
+                    var idProv = (ViewData["IdProveedor"] ?? Context.Request.Query["idProveedor"].FirstOrDefault() ?? "0").ToString();
+                    var nombreProv = ViewData["NombreProveedor"]?.ToString() ?? Context.Request.Query["nombreMostrar"].ToString() ?? "Proveedor";
+
+                    string vistaActual = "";
+                    var actionName = ViewContext.RouteData.Values["action"]?.ToString();
+
+                    if (actionName == "VistaDrogueriaSuiza" || actionName == "Drogueria")
+                    {
+                        vistaActual = "Drogueria";
+                    }
+                    else if (actionName == "ProveedorSecundario")
+                    {
+                        vistaActual = "ProveedorSecundario";
+                    }
+                    else
+                    {
+                        // Leemos de la URL para no perder el rastro
+                        vistaActual = !string.IsNullOrEmpty(Context.Request.Query["vista"])
+                        ? Context.Request.Query["vista"].ToString()
+                        : !string.IsNullOrEmpty(Context.Request.Query["vistaOrigen"])
+                        ? Context.Request.Query["vistaOrigen"].ToString()
+                        : "ProveedorSecundario";
+                    }
+                }
+
+                <a href="/Actualizar/ActualizarCuenta?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary" translate="no">Cuenta</a>
+
+                <a href="/Proveedores/IngresarProveedor?idProveedorSeleccionado=@idProv&vista=@vistaActual" class="btn btn-primary" translate="no">Boletas</a>
+
+                <a href="/CuentaCliente/Index?idProveedor=@idProv&vistaOrigen=@vistaActual&nombreMostrar=@nombreProv" class="btn btn-primary" translate="no">Cuentas de Clientes</a>
+
+                <a asp-action="Inasistencia"
+                   asp-controller="Proveedores"
+                   asp-route-origen="@vistaActual"
+                   asp-route-idProveedor="@idProv"
+                   class="btn btn-primary" translate="no">Inasistencia</a>
+
+                <a href="/Vacaciones?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary ">Vacaciones</a>
+
                 <a href="@Url.Action("Index", "PanelSeleccion")" class="btn btn-primary btn-volver" translate="no">Volver</a>
             </div>
             <div class="col-md-10 d-flex justify-content-center">

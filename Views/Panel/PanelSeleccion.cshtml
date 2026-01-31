@@ -17,10 +17,10 @@
                     <div class="card-panel shadow border-0 h-100 text-center">
                         <div class="card-body-panel">
                             <i class="bi bi-person-circle icon-panel"></i>
-                            <h4 class="title-panel">Cuentas</h4>
+                            <h3 class="title-panel">Cuentas</h3>
                             <p class="text-panel">Gestión de cuentas propias, empleados y restauración</p>
                             <a href="@Url.Action("ActualizarCuenta", "Actualizar")" class="btn-panel-custom">
-                                Cuenta Personal
+                                Ingresar
                             </a>
                         </div>
                     </div>
@@ -31,7 +31,7 @@
                     <div class="card-panel shadow border-0 h-100 text-center">
                         <div class="card-body-panel">
                             <i class="bi bi-people-fill icon-panel"></i>
-                            <h4 class="title-panel">Cuentas de Clientes</h4>
+                            <h3 class="title-panel">Cuentas de Clientes</h3>
                             <p class="text-panel">Gestión de deudores, saldos y cobranzas</p>
                             <a href="@Url.Action("Index", "CuentaCliente")" class="btn-panel-custom">
                                 Ingresar
@@ -45,13 +45,11 @@
                     <div class="card-panel shadow border-0 h-100 text-center">
                         <div class="card-body-panel">
                             <i class="bi bi-person-badge-fill icon-panel"></i>
-                            <h4 class="title-panel">Gestión de Empleados</h4>
+                            <h3 class="title-panel">Gestión de Empleados</h3>
                             <p class="text-panel">Inasistencias, vacaciones y registro</p>
-                            <div class="d-grid gap-2">
-                                <a href="@Url.Action("Inasistencia", "Inasistencia")" class="btn-panel-custom">
-                                    Inasistencias / Vacaciones
-                                </a>
-                            </div>
+                            <a href="@Url.Action("Inasistencia", "Inasistencia")" class="btn-panel-custom">
+                                Ingresar
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -61,7 +59,7 @@
                     <div class="card-panel shadow border-0 h-100 text-center">
                         <div class="card-body-panel">
                             <i class="bi bi-receipt icon-panel"></i>
-                            <h4 class="title-panel">Proveedores</h4>
+                            <h3 class="title-panel">Proveedores</h3>
                             <p class="text-panel">Gestión de proveedores y compras</p>
                             <a href="@Url.Action("Index", "Proveedores")" class="btn-panel-custom">
                                 Ingresar
@@ -71,8 +69,9 @@
                 </div>
             </div>
 
+            <!-- Botón Volver al Inicio - mismo estilo que los otros -->
             <div class="text-center mt-5">
-                <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary btn-lg px-5 py-3 rounded-pill">
+                <a href="@Url.Action("Index", "Home")" class="btn-panel-custom">
                     Volver al Inicio
                 </a>
             </div>
@@ -87,7 +86,7 @@
         overflow: hidden;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
         background: white;
-        min-height: 240px; /* más corto que antes */
+        min-height: 240px; /* más corto */
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
 
@@ -106,7 +105,7 @@
     }
 
     .icon-panel {
-        font-size: 3.5rem; /* ícono un poco más pequeño */
+        font-size: 3.5rem;
         color: #007bff;
         margin-bottom: 15px;
     }

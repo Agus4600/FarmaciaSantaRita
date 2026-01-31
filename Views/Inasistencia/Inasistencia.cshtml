@@ -19,6 +19,46 @@
 }
 
 <style>
+	/* Estilo del botón Volver tipo Píldora */
+	.seccion-icono-container {
+		display: flex;
+		justify-content: center;
+		width: 100%;
+	}
+
+	.btn-volver-estilizado {
+		background-color: #007bff;
+		color: white !important;
+		border-radius: 50px;
+		padding: 10px 20px;
+		font-weight: 600;
+		width: 100%;
+		max-width: 180px;
+		text-align: center;
+		text-decoration: none;
+		box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.3s ease;
+		margin-top: 60px; /* Separación de los botones de arriba */
+	}
+
+		.btn-volver-estilizado:hover {
+			background-color: #0056b3 !important;
+			transform: translateY(-2px);
+			box-shadow: 0 8px 15px rgba(0,123,255,0.25);
+		}
+
+	/* Ajuste del contenedor del logo para iconos */
+	#logoContainer {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: 150px;
+		margin-bottom: 20px;
+	}
+
 	/* Estilo para el nombre en la tabla de Inasistencias */
 	#tablaInasistencias tbody td:nth-child(2) {
 		font-weight: bold !important;
@@ -762,29 +802,13 @@
 					<img src="/images/file_0000000079e461fd8636559665695d530001.png" alt="Logo" id="farmaciaLogo" />
 				</div>
 
-				<a href="/Actualizar/ActualizarCuenta?idProveedor=@idProv&vista=@vistaActual"
-				   class="btn btn-primary" style=" border:none;" translate="no">Cuenta</a>
-
-				<a asp-action="IngresarProveedor"
-				   asp-controller="Proveedores"
-				   asp-route-idProveedorSeleccionado="@idProv"
-				   asp-route-vista="@vistaActual"
-				   class="btn btn-primary" style="border:none;">Boletas</a>
-
-				<a href="/CuentaCliente/Index?idProveedor=@idProv&vistaOrigen=@vistaActual"
-				   class="btn btn-primary" style="border:none;">Cuentas de Clientes</a>
-
-				<a asp-action="Inasistencia"
-				   asp-controller="Proveedores"
-				   asp-route-origen="@vistaActual"
-				   asp-route-idProveedor="@idProv"
-				   class="btn btn-primary">
-					Inasistencia
-				</a>
+				<div class="seccion-icono-container mb-4">
+					<i class="bi bi-person-badge-fill" style="font-size: 4rem; color: #007bff;"></i>
+				</div>
 
 				<a href="/Vacaciones?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary">Vacaciones</a>
 
-				<a href="/Proveedores/Index" class="btn btn-primary" style="border:none;" translate="no">Volver</a>
+				<a href="@Url.Action("Index", "PanelSeleccion")" class="btn btn-primary btn-volver-estilizado mt-auto" style="border:none;" translate="no">Volver</a>
 			</div>
 
 			<div class="col-md-10 d-flex justify-content-start">

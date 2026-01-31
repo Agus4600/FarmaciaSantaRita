@@ -231,16 +231,20 @@
 </style>
 
 <div class="container mt-5">
-    <div class="card shadow-lg p-4 card-principal">
-        <h2 class="text-center mb-4 fw-bold text-primary" translate="no">CUENTA DE USUARIO: @nombreUsuario</h2>
-        <div class="row">
-            <div class="col-md-2 d-flex flex-column align-items-start">
-                <div id="logoContainer">
-                    <img src="/images/file_0000000079e461fd8636559665695d530001.png" alt="Logo Farmacia Santa Rita" id="farmaciaLogo" />
-                </div>
+    <div class="card-principal shadow-lg">
+        <!-- Logo en esquina superior izquierda -->
+        <div id="logoContainer">
+            <img src="/images/file_0000000079e461fd8636559665695d530001.png" alt="Logo Farmacia Santa Rita" id="farmaciaLogo" />
+        </div>
 
-                <a href="@Url.Action("Index", "PanelSeleccion")" class="btn btn-primary" translate="no">Volver</a>
-            </div>
+        <!-- Botón Volver en esquina inferior izquierda -->
+        <a href="@Url.Action("Index", "PanelSeleccion")" class="btn-volver">
+            Volver
+        </a>
+
+        <!-- Contenido principal -->
+        <div class="bloque-principal">
+            <h2 class="text-center mb-5 fw-bold text-primary">CUENTA DE USUARIO: @nombreUsuario</h2
             <div class="col-md-10 d-flex justify-content-center">
                 <div class="bloque-principal">
                     <form asp-action="ActualizarCuenta" id="formCuenta" asp-controller="Actualizar" method="post" class="campos-cuenta" novalidate>

@@ -2,9 +2,10 @@
     ViewData["Title"] = "Panel de Selección";
 }
 
-<div class="container mt-5 mb-5">
-    <!-- Cuadro blanco exterior grande -->
-    <div class="card shadow-xl border-0 bg-white rounded-4 overflow-hidden" style="max-width: 1200px; margin: auto; background: linear-gradient(135deg, #ffffff, #f8fcff);">
+<div class="container mt-3 mb-5">
+    <!-- Cambié mt-5 a mt-3 para subir todo el contenido -->
+    <!-- Cuadro blanco exterior grande - subido con margin-top negativo -->
+    <div class="card shadow-xl border-0 bg-white rounded-4 overflow-hidden" style="max-width: 1200px; margin: -40px auto 0 auto; background: linear-gradient(135deg, #ffffff, #f8fcff);">
         <div class="card-body p-5">
             <div class="text-center mb-5">
                 <h1 class="fw-bold text-primary mb-2">Panel de Selección</h1>
@@ -12,7 +13,7 @@
             </div>
 
             <div class="row g-4 justify-content-center">
-                <!-- 1. Cuentas (solo un botón) -->
+                <!-- 1. Cuentas -->
                 <div class="col-md-6 col-lg-3">
                     <div class="card-panel shadow border-0 h-100 text-center">
                         <div class="card-body-panel">
@@ -44,7 +45,7 @@
                     </div>
                 </div>
 
-                <!-- 3. Gestión de Empleados (un solo botón) -->
+                <!-- 3. Gestión de Empleados -->
                 <div class="col-md-6 col-lg-3">
                     <div class="card-panel shadow border-0 h-100 text-center">
                         <div class="card-body-panel">
@@ -53,14 +54,14 @@
                             <div class="content-aligner">
                                 <p class="text-panel">Inasistencias, vacaciones y registro</p>
                                 <a href="@Url.Action("Inasistencia", "Inasistencia")" class="btn-panel-custom">
-                                    Inasistencias / Vacaciones
+                                    Ingresar
                                 </a>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 4. Proveedores (ícono de boletas) -->
+                <!-- 4. Proveedores -->
                 <div class="col-md-6 col-lg-3">
                     <div class="card-panel shadow border-0 h-100 text-center">
                         <div class="card-body-panel">
@@ -77,7 +78,7 @@
                 </div>
             </div>
 
-            <!-- Botón Volver al Inicio - mismo estilo que los demás -->
+            <!-- Botón Volver al Inicio -->
             <div class="text-center mt-5">
                 <a href="@Url.Action("Index", "Home")" class="btn-panel-custom">
                     Volver al Inicio
@@ -88,7 +89,7 @@
 </div>
 
 <style>
-    /* Estilo consistente + alineación perfecta de descripciones y botones */
+    /* Estilo consistente + alineación perfecta */
     .card-panel {
         border-radius: 16px;
         overflow: hidden;
@@ -125,15 +126,15 @@
         min-height: 50px;
         line-height: 1.2;
     }
-    /* Alineador de descripción + botón (clave para que queden a la misma altura) */
+
     .content-aligner {
         flex-grow: 1;
         display: flex;
         flex-direction: column;
-        justify-content: flex-end; /* empuja botones hacia abajo para alinearlos */
+        justify-content: flex-end;
         align-items: center;
         width: 100%;
-        min-height: 140px; /* altura fija para descripciones + botones */
+        min-height: 140px;
     }
 
     .text-panel {
@@ -141,7 +142,7 @@
         color: #6c757d;
         margin-bottom: 20px;
         line-height: 1.4;
-        flex-grow: 1; /* permite que el texto ocupe espacio sin desalinear */
+        flex-grow: 1;
     }
 
     .btn-panel-custom {

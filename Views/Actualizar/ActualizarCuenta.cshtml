@@ -73,6 +73,7 @@
 
 
     .btn-volver {
+        margin-top: auto; /* Lo empuja hacia la parte inferior */
         background-color: #007bff;
         color: white;
         border: none;
@@ -305,9 +306,9 @@
                    asp-route-idProveedor="@idProv"
                    class="btn btn-primary" translate="no">Inasistencia</a>
 
-                <a href="/Vacaciones?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary btn-volver">Vacaciones</a>
+                <a href="/Vacaciones?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary ">Vacaciones</a>
 
-                <a href="@Url.Action("Index", "PanelSeleccion")" class="btn btn-primary" translate="no">Volver</a>
+                <a href="@Url.Action("Index", "PanelSeleccion")" class="btn btn-primary btn-volver" translate="no">Volver</a>
             </div>
             <div class="col-md-10 d-flex justify-content-center">
                 <div class="bloque-principal">

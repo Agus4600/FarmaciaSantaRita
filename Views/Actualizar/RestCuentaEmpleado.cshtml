@@ -20,6 +20,31 @@
 
 
 <style>
+    .user-icon-side {
+        display: flex;
+        justify-content: flex-start;
+        width: 100%;
+        padding-left: 20px;
+        color: #007bff;
+    }
+
+        .user-icon-side i {
+            font-size: 140px; /* Tamaño igual a la otra vista */
+        }
+
+    /* Ajuste para el botón Volver */
+    .btn-volver {
+        margin-top: 65px !important; /* El valor que nos funcionó antes */
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 12px 24px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: all 0.25s ease;
+    }
 
     /* 🔹 Cuadro blanco principal */
 
@@ -524,7 +549,7 @@
 
                 </div>
 
-                <a href="@Url.Action("Index", "PanelSeleccion")" class="btn btn-primary" translate="no">Volver</a>
+                <a href="@Url.Action("Index", "PanelSeleccion")" class="btn btn-primary btn-volver" translate="no">Volver</a>
 
             </div>
 

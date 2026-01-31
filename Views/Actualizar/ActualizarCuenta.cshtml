@@ -12,40 +12,15 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 <style>
-    /* Cuadro blanco exterior principal */
     .card-principal {
-        width: 100%;
-        max-width: 1200px;
+        width: 1200px !important;
+        max-width: none;
         margin: 0 auto;
+        transition: width 0.3s ease;
         position: relative;
         border-radius: 16px;
-        background: white;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-        overflow: hidden;
     }
 
-    /* Contenedor del contenido principal (formulario) */
-    .bloque-principal {
-        padding: 40px 40px 80px 40px; /* más espacio abajo para no tapar el botón Volver */
-        background: white;
-    }
-
-    /* Logo - esquina superior izquierda */
-    #logoContainer {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        width: 180px;
-        height: 180px;
-        z-index: 10;
-    }
-    #farmaciaLogo {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
-
-    /* Botón Volver - esquina inferior izquierda */
     .btn-volver {
         position: absolute;
         bottom: 20px;
@@ -62,63 +37,203 @@
         z-index: 10;
         text-decoration: none;
     }
-    .btn-volver:hover {
-        background-color: #0056b3;
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0,123,255,0.3);
+
+        .btn-volver:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,123,255,0.3);
+        }
+
+
+    .bloque-principal {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: space-between;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 20px;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        overflow: visible;
     }
 
-    /* Campos del formulario */
+    .row > .col-md-2 {
+        margin-top: -115px;
+        height: 420px;
+        display: flex;
+        top: 0;
+        z-index: 10;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center !important;
+        padding-top: 50px;
+    }
+    /* ESTILO EXACTO COMO DROGUERÍA SUIZA */
+    /* Contenedor del logo */
+    #logoContainer {
+        min-width: 140px;
+        width: 100%;
+        max-width: 180px;
+        height: 200px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: transparent;
+        border-radius: 8px;
+        border: none;
+        padding: 5px;
+    }
+
+    #farmaciaLogo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+    /* Botones del menú izquierdo */
+    .col-md-2 button,
+    .col-md-2 a.btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-weight: 600;
+        min-width: 140px;
+        width: 100%;
+        max-width: 180px;
+        margin-bottom: 10px;
+        text-align: center;
+        transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        ;
+        text-decoration: none;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 40px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        white-space: nowrap;
+    }
+
+        .col-md-2 button:hover,
+        .col-md-2 a.btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-3px); /* ← Se "levanta" 3px */
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2); /* ← Sombra más fuerte y grande */
+        }
+    /* Botones de abajo (GUARDAR CAMBIOS y CUENTAS DE EMPLEADOS) */
+    .btn-igual {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        margin: 0 5px;
+        white-space: nowrap;
+        text-decoration: none;
+        outline: none !important;
+    }
+
+        .btn-igual:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            color: white;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+        }
+
     .campos-cuenta {
         display: flex;
         flex-direction: column;
-        gap: 15px;
+        gap: 10px;
+        width: 100%;
         max-width: 900px;
-        margin: 0 auto;
+        margin-top: 10px;
+        padding: 0 10px;
     }
+
     .tres-columnas {
         display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
+        gap: 10px;
+        flex-grow: 1;
+        flex-shrink: 1;
     }
+
     .grupo-campo {
-        flex: 1;
-        min-width: 280px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        flex-grow: 1;
+        flex-basis: 0;
     }
-    .grupo-campo label {
-        font-weight: 600;
-        margin-bottom: 6px;
-        display: block;
-    }
-    .grupo-campo input,
-    .grupo-campo select {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ced4da;
-        border-radius: 8px;
-        font-size: 1rem;
-    }
+
+        .grupo-campo label {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .grupo-campo input,
+        .grupo-campo select,
+        .grupo-campo .input-group {
+            width: 100%;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+            .grupo-campo input.form-control,
+            .grupo-campo select.form-control {
+                padding: 6px 8px;
+                border: 1px solid #ccc;
+                width: 100%;
+            }
+
+                .grupo-campo select.form-control:disabled {
+                    background-color: #e9ecef;
+                    opacity: 0.7;
+                }
+
     .password-wrapper {
         display: flex;
         border: 1px solid #ced4da;
-        border-radius: 8px;
+        border-radius: 10px;
         overflow: hidden;
         background: white;
+        height: 38px; /* ← Mismo alto que los otros inputs */
+        width: 100%;
     }
-    .password-wrapper .form-control {
-        border: none;
-        flex: 1;
-        border-radius: 0;
-    }
+
+        .password-wrapper .form-control {
+            border: none !important;
+            border-radius: 10px 0 0 10px;
+            height: 100%;
+            padding: 6px 8px;
+            flex: 1;
+        }
+
     .btn-toggle-view {
         background: #f8f9fa;
         border: none;
-        padding: 0 15px;
+        border-left: 1px solid #ced4da;
+        padding: 0 12px;
         color: #6c757d;
         cursor: pointer;
+        height: 100%;
+        border-radius: 0 10px 10px 0;
     }
-
-    /* OUTER GLOW ROJO PARA CAMPOS INVÁLIDOS (RESTAURODO) */
+    /* OUTER GLOW ROJO PARA CAMPOS INVÁLIDOS */
     .form-control.invalid-glow,
     .password-wrapper.invalid-glow {
         border-color: #ff0000 !important;
@@ -126,33 +241,16 @@
         animation: pulse-glow 1.5s infinite alternate;
     }
     @@keyframes pulse-glow {
-        from {
-            box-shadow: 0 0 10px 2px rgba(255, 0, 0, 0.6);
-        }
-        to {
-            box-shadow: 0 0 20px 8px rgba(255, 0, 0, 0.9);
-        }
+        from
+
+    {
+        box-shadow: 0 0 10px 2px rgba(255, 0, 0, 0.6);
     }
 
-    .d-flex.justify-content-center {
-        gap: 15px;
+    to {
+        box-shadow: 0 0 20px 8px rgba(255, 0, 0, 0.9);
     }
-    .btn-igual {
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 50px;
-        padding: 12px 30px;
-        font-weight: 600;
-        font-size: 1rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        transition: all 0.25s ease;
-        min-width: 180px;
-    }
-    .btn-igual:hover {
-        background-color: #0056b3;
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0,123,255,0.3);
+
     }
 </style>
 
@@ -170,7 +268,7 @@
 
         <!-- Contenido principal -->
         <div class="bloque-principal">
-            <h2 class="text-center mb-5 fw-bold text-primary">CUENTA DE USUARIO: @nombreUsuario</h2
+            <h2 class="text-center mb-5 fw-bold text-primary">CUENTA DE USUARIO: @nombreUsuario</h2>
             <div class="col-md-10 d-flex justify-content-center">
                 <div class="bloque-principal">
                     <form asp-action="ActualizarCuenta" id="formCuenta" asp-controller="Actualizar" method="post" class="campos-cuenta" novalidate>

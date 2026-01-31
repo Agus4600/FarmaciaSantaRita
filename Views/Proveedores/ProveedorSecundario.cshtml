@@ -11,6 +11,28 @@
 }
 
 <style>
+    .boleta-icon-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        color: #007bff;
+        margin-bottom: 65px;
+    }
+
+        .boleta-icon-container i {
+            font-size: 140px; /* Tamaño grande para mantener la estética */
+        }
+
+    /* Ajuste del botón Volver para que mantenga la distancia */
+    .col-md-2 a.btn-volver-estilizado {
+        margin-top: 110px !important; /* Espacio para que el icono respire */
+        background-color: #007bff;
+        color: white;
+        border-radius: 50px;
+        padding: 10px 20px;
+        font-weight: 600;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
 
     /* 🔹 Cuadro blanco principal */
     .card-principal {
@@ -429,6 +451,9 @@
                 <div id="logoContainer">
                     <img src="/images/file_0000000079e461fd8636559665695d530001.png" alt="Logo Droguería Suiza" id="farmaciaLogo" />
                 </div>
+                <div class="boleta-icon-container">
+                    <i class="bi bi-receipt"></i>
+                </div>
                 @{
                     var idProv = (ViewData["IdProveedor"] ?? Context.Request.Query["idProveedor"].FirstOrDefault() ?? "0").ToString();
 
@@ -444,26 +469,6 @@
                         action == "ProveedorSecundario" ? "ProveedorSecundario" : "ProveedorSecundario";
                     }
                 }
-
-                <a href="/Actualizar/ActualizarCuenta?idProveedor=@idProv&vista=@vistaActual"
-                   class="btn btn-primary" style="background-color:#007bff; border:none;" translate="no">Cuenta</a>
-
-                <a href="/Proveedores/IngresarProveedor?idProveedorSeleccionado=@idProv&vista=@vistaActual"
-                   class="btn">Boletas</a>
-
-                <a href="/CuentaCliente/Index?idProveedor=@idProv&vistaOrigen=@vistaActual"
-                   class="btn">Cuentas de Clientes</a>
-
-                <a asp-action="Inasistencia"
-                   asp-controller="Proveedores"
-                   asp-route-origen="@vistaActual"
-                   asp-route-idProveedor="@idProv"
-                   class="btn btn-primary">
-                    Inasistencia
-                </a>
-
-                <a href="/Vacaciones?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary">Vacaciones</a>
-
                 <a href="/Proveedores/Index" class="btn btn-primary" style="background-color:#007bff; border:none;" translate="no">Volver</a>
             </div>
 

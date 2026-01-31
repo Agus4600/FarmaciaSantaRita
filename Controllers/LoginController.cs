@@ -81,7 +81,7 @@ namespace FarmaciaSantaRita.Controllers
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
                         new ClaimsPrincipal(claimsIdentity), authProperties);
 
-                    return RedirectToAction("Index", "Proveedores");
+                    return RedirectToAction("Index", "PanelSeleccion");
                 }
             }
 

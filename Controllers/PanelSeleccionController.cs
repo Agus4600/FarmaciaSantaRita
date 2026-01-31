@@ -6,7 +6,7 @@ namespace FarmaciaSantaRita.Controllers
     {
         public IActionResult Index()
         {
-            return View();
+            return View("~/Views/Panel/PanelSeleccion.cshtml");
         }
     }
 }

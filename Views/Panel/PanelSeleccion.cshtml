@@ -3,8 +3,8 @@
 }
 
 <div class="container mt-3 mb-5">
-    <!-- Cambié mt-5 a mt-3 para subir todo el contenido -->
-    <!-- Cuadro blanco exterior grande - subido con margin-top negativo -->
+    <!-- mt-3 para subir todo el contenido general -->
+    <!-- Cuadro blanco exterior grande - subido con margin negativo -->
     <div class="card shadow-xl border-0 bg-white rounded-4 overflow-hidden" style="max-width: 1200px; margin: -40px auto 0 auto; background: linear-gradient(135deg, #ffffff, #f8fcff);">
         <div class="card-body p-5">
             <div class="text-center mb-5">
@@ -78,8 +78,9 @@
                 </div>
             </div>
 
-            <!-- Botón Volver al Inicio -->
-            <div class="text-center mt-5">
+            <!-- Botón Volver al Inicio - subido más arriba (mt-3 en lugar de mt-5) -->
+            <div class="text-center mt-3">
+                <!-- ← Cambiado de mt-5 a mt-3 para levantarlo -->
                 <a href="@Url.Action("Index", "Home")" class="btn-panel-custom">
                     Volver al Inicio
                 </a>

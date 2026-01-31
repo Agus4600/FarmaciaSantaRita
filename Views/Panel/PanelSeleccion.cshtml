@@ -2,169 +2,155 @@
     ViewData["Title"] = "Panel de Selección";
 }
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<div class="container mt-5 mb-5">
+    <!-- Cuadro blanco exterior grande -->
+    <div class="card shadow-xl border-0 bg-white rounded-4 overflow-hidden" style="max-width: 1200px; margin: auto; background: linear-gradient(135deg, #ffffff, #f8fcff);">
+        <div class="card-body p-5">
+            <div class="text-center mb-5">
+                <h1 class="fw-bold text-primary mb-2">Panel de Selección</h1>
+                <p class="lead text-muted">Elija la sección que desea gestionar</p>
+            </div>
+
+            <div class="row g-4 justify-content-center">
+                <!-- 1. Cuentas (solo un botón) -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="card-panel shadow border-0 h-100 text-center">
+                        <div class="card-body-panel">
+                            <i class="bi bi-person-circle icon-panel"></i>
+                            <h4 class="title-panel">Cuentas</h4>
+                            <p class="text-panel">Gestión de cuentas propias, empleados y restauración</p>
+                            <a href="@Url.Action("ActualizarCuenta", "Actualizar")" class="btn-panel-custom">
+                                Cuenta Personal
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Cuentas de Clientes -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="card-panel shadow border-0 h-100 text-center">
+                        <div class="card-body-panel">
+                            <i class="bi bi-people-fill icon-panel"></i>
+                            <h4 class="title-panel">Cuentas de Clientes</h4>
+                            <p class="text-panel">Gestión de deudores, saldos y cobranzas</p>
+                            <a href="@Url.Action("Index", "CuentaCliente")" class="btn-panel-custom">
+                                Ingresar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Gestión de Empleados (un solo botón) -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="card-panel shadow border-0 h-100 text-center">
+                        <div class="card-body-panel">
+                            <i class="bi bi-person-badge-fill icon-panel"></i>
+                            <h4 class="title-panel">Gestión de Empleados</h4>
+                            <p class="text-panel">Inasistencias, vacaciones y registro</p>
+                            <div class="d-grid gap-2">
+                                <a href="@Url.Action("Inasistencia", "Inasistencia")" class="btn-panel-custom">
+                                    Inasistencias / Vacaciones
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Proveedores (ícono de boletas) -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="card-panel shadow border-0 h-100 text-center">
+                        <div class="card-body-panel">
+                            <i class="bi bi-receipt icon-panel"></i>
+                            <h4 class="title-panel">Proveedores</h4>
+                            <p class="text-panel">Gestión de proveedores y compras</p>
+                            <a href="@Url.Action("Index", "Proveedores")" class="btn-panel-custom">
+                                Ingresar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-5">
+                <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary btn-lg px-5 py-3 rounded-pill">
+                    Volver al Inicio
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
-    /* Estilo base de los botones (igual que login) */
+    /* Estilo consistente con tu login + ajustes pedidos */
+    .card-panel {
+        border-radius: 16px;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        background: white;
+        min-height: 240px; /* más corto que antes */
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+        .card-panel:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 32px rgba(0,123,255,0.18);
+        }
+
+    .card-body-panel {
+        padding: 30px 20px; /* menos padding para acortar altura */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .icon-panel {
+        font-size: 3.5rem; /* ícono un poco más pequeño */
+        color: #007bff;
+        margin-bottom: 15px;
+    }
+
+    .title-panel {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .text-panel {
+        font-size: 0.95rem;
+        color: #6c757d;
+        margin-bottom: 20px;
+        line-height: 1.4;
+    }
+
     .btn-panel-custom {
         background-color: #007bff;
         color: white !important;
         border: none;
-        border-radius: 12px;
-        font-size: 16px;
+        border-radius: 50px;
+        font-size: 14px;
         font-weight: 600;
-        height: 55px;
+        height: 48px;
         display: flex;
         align-items: center;
         justify-content: center;
-        text-align: center;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        transition: all 0.25s ease;
         text-decoration: none !important;
-        cursor: pointer;
-        padding: 0 20px;
-        width: 100%;
-        max-width: 300px;
+        width: 90%;
+        max-width: 240px;
         margin: 0 auto;
     }
 
         .btn-panel-custom:hover {
             background-color: #0056b3;
-            transform: translateY(-4px);
-            box-shadow: 0 8px 20px rgba(0,123,255,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(0,123,255,0.3);
         }
-
-    .card-panel {
-        border: none;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-        transition: all 0.3s ease;
-        background: linear-gradient(135deg, #ffffff, #f8f9fa);
-        height: 100%;
-        min-height: 280px;
-    }
-
-        .card-panel:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,123,255,0.25);
-        }
-
-    .card-body-panel {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 40px 20px;
-        text-align: center;
-    }
-
-    .icon-panel {
-        font-size: 4rem;
-        color: #007bff;
-        margin-bottom: 20px;
-    }
-
-    .title-panel {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #333;
-        margin-bottom: 12px;
-    }
-
-    .text-panel {
-        font-size: 1rem;
-        color: #6c757d;
-        margin-bottom: 25px;
+    /* Cuadro exterior grande */
+    .shadow-xl {
+        box-shadow: 0 20px 40px rgba(0,0,0,0.12) !important;
     }
 </style>
-
-@{
-    ViewData["Title"] = "Panel de Selección";
-}
-
-<div class="container mt-5 mb-5">
-    <div class="text-center mb-5">
-        <h1 class="fw-bold text-primary">Panel de Selección</h1>
-        <p class="lead text-muted">Elija la sección que desea gestionar</p>
-    </div>
-
-    <div class="row g-4 justify-content-center">
-        <!-- 1. Botón CUENTAS -->
-        <div class="col-md-6 col-lg-3">
-            <div class="card shadow-lg border-0 h-100 text-center" style="border-radius: 16px; overflow: hidden;">
-                <div class="card-body d-flex flex-column align-items-center justify-content-center p-5">
-                    <i class="bi bi-bank2 display-1 text-primary mb-3"></i>
-                    <h4 class="card-title fw-bold">Cuentas</h4>
-                    <p class="text-muted mb-4">Gestión de cuentas propias, empleados y restauración</p>
-                    <div class="d-grid gap-2 w-100">
-                        <a href="@Url.Action("ActualizarCuenta", "Actualizar")" class="btn btn-primary rounded-pill py-3">
-                            Cuenta Personal
-                        </a>
-                        <a href="@Url.Action("CuentaEmpleado", "CuentaEmpleado")" class="btn btn-primary rounded-pill py-3">
-                            Cuentas de Empleados
-                        </a>
-                        <a href="@Url.Action("RestCuentaEmpleado", "RestCuentaEmpleado")" class="btn btn-primary rounded-pill py-3">
-                            Restaurar Cuenta Empleado
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 2. Botón CUENTAS DE CLIENTES -->
-        <div class="col-md-6 col-lg-3">
-            <div class="card shadow-lg border-0 h-100 text-center" style="border-radius: 16px; overflow: hidden;">
-                <div class="card-body d-flex flex-column align-items-center justify-content-center p-5">
-                    <i class="bi bi-people-fill display-1 text-primary mb-3"></i>
-                    <h4 class="card-title fw-bold">Cuentas de Clientes</h4>
-                    <p class="text-muted mb-4">Gestión de deudores, saldos y cobranzas</p>
-                    <a href="@Url.Action("Index", "CuentaCliente")" class="btn btn-primary btn-lg rounded-pill py-3 w-100">
-                        Ingresar
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- 3. Botón GESTIÓN DE EMPLEADOS -->
-        <div class="col-md-6 col-lg-3">
-            <div class="card shadow-lg border-0 h-100 text-center" style="border-radius: 16px; overflow: hidden;">
-                <div class="card-body d-flex flex-column align-items-center justify-content-center p-5">
-                    <i class="bi bi-person-badge-fill display-1 text-primary mb-3"></i>
-                    <h4 class="card-title fw-bold">Gestión de Empleados</h4>
-                    <p class="text-muted mb-4">Inasistencias, vacaciones y registro</p>
-                    <div class="d-grid gap-2 w-100">
-                        <a href="@Url.Action("Inasistencia", "Inasistencia")" class="btn btn-primary rounded-pill py-3">
-                            Inasistencias
-                        </a>
-                        <a href="@Url.Action("Index", "Vacaciones")" class="btn btn-primary rounded-pill py-3">
-                            Vacaciones
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 4. Botón PROVEEDORES -->
-        <div class="col-md-6 col-lg-3">
-            <div class="card shadow-lg border-0 h-100 text-center" style="border-radius: 16px; overflow: hidden;">
-                <div class="card-body d-flex flex-column align-items-center justify-content-center p-5">
-                    <i class="bi bi-truck display-1 text-primary mb-3"></i>
-                    <h4 class="card-title fw-bold">Proveedores</h4>
-                    <p class="text-muted mb-4">Gestión de proveedores y compras</p>
-                    <a href="@Url.Action("Index", "Proveedores")" class="btn btn-primary btn-lg rounded-pill py-3 w-100">
-                        Ingresar
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="text-center mt-5">
-        <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary btn-lg px-5 py-3 rounded-pill">
-            Volver al Inicio
-        </a>
-    </div>
-</div>
-
-

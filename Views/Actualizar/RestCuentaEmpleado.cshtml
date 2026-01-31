@@ -524,31 +524,7 @@
 
                 </div>
 
-
-
-                <a href="/Actualizar/ActualizarCuenta?idProveedor=@idProv&vista=@vistaActual"
-                   class="btn btn-primary" translate="no">Cuenta</a>
-
-                <a asp-action="IngresarProveedor"
-                   asp-controller="Proveedores"
-                   asp-route-idProveedorSeleccionado="@idProv"
-                   asp-route-vista="@vistaActual"
-                   class="btn btn-primary">Boletas</a>
-
-                <a href="/CuentaCliente/Index?idProveedor=@idProv&vistaOrigen=@vistaActual"
-                   class="btn btn-primary">Cuentas de Clientes</a>
-
-                <a asp-action="Inasistencia"
-                   asp-controller="Proveedores"
-                   asp-route-origen="@vistaActual"
-                   asp-route-idProveedor="@idProv"
-                   class="btn btn-primary">
-                    Inasistencia
-                </a>
-
-                <a href="/Vacaciones?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary">Vacaciones</a>
-
-                <a href="/Proveedores/Index" class="btn btn-primary" translate="no">Volver</a>
+                <a href="@Url.Action("Index", "PanelSeleccion")" class="btn btn-primary" translate="no">Volver</a>
 
             </div>
 

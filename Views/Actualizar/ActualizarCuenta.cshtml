@@ -38,31 +38,22 @@
     }
 
     .row > .col-md-2 {
-        margin-top: -115px;
-        height: 420px;
+        margin-top: 0px; /* Quitamos el margen negativo que tenías */
+        height: 500px; /* Ajusta este alto según el tamaño de tu formulario */
         display: flex;
-        top: 0;
-        z-index: 10;
+        position: relative; /* IMPORTANTE: Para que el logo y botón se anclen aquí */
         flex-direction: column;
-        justify-content: flex-start;
+        justify-content: space-between; /* Empuja el logo arriba y el botón abajo */
         align-items: center !important;
-        padding-top: 50px;
+        padding: 20px 0;
     }
     /* ESTILO EXACTO COMO DROGUERÍA SUIZA */
     /* Contenedor del logo */
     #logoContainer {
-        min-width: 140px;
         width: 100%;
-        max-width: 180px;
-        height: 200px;
-        margin-bottom: 10px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: transparent;
-        border-radius: 8px;
-        border: none;
-        padding: 5px;
+        max-width: 150px; /* Un poco más pequeño para que no sature */
+        height: auto;
+        margin-bottom: auto;
     }
 
     #farmaciaLogo {
@@ -70,7 +61,30 @@
         height: 100%;
         object-fit: contain;
     }
-    /* Botones del menú izquierdo */
+    
+    .btn-volver-fondo {
+        background-color: #007bff;
+        color: white;
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-weight: 600;
+        text-align: center;
+        text-decoration: none;
+        width: 140px;
+        margin-top: auto; /* Se asegura de ir al fondo */
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+        .btn-volver-fondo:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            color: white;
+        }
+
+
+
+
     .col-md-2 button,
     .col-md-2 a.btn {
         background-color: #007bff;
@@ -234,7 +248,7 @@
     <div class="card shadow-lg p-4 card-principal">
         <h2 class="text-center mb-4 fw-bold text-primary" translate="no">CUENTA DE USUARIO: @nombreUsuario</h2>
         <div class="row">
-            <div class="col-md-2 d-flex flex-column align-items-start">
+            <div class="col-md-2">
                 <div id="logoContainer">
                     <img src="/images/file_0000000079e461fd8636559665695d530001.png" alt="Logo Farmacia Santa Rita" id="farmaciaLogo" />
                 </div>

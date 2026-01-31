@@ -38,22 +38,31 @@
     }
 
     .row > .col-md-2 {
-        margin-top: 0px; /* Quitamos el margen negativo que tenías */
-        height: 500px; /* Ajusta este alto según el tamaño de tu formulario */
+        margin-top: -115px;
+        height: 420px;
         display: flex;
-        position: relative; /* IMPORTANTE: Para que el logo y botón se anclen aquí */
+        top: 0;
+        z-index: 10;
         flex-direction: column;
-        justify-content: space-between; /* Empuja el logo arriba y el botón abajo */
+        justify-content: flex-start;
         align-items: center !important;
-        padding: 20px 0;
+        padding-top: 50px;
     }
     /* ESTILO EXACTO COMO DROGUERÍA SUIZA */
     /* Contenedor del logo */
     #logoContainer {
+        min-width: 140px;
         width: 100%;
-        max-width: 150px; /* Un poco más pequeño para que no sature */
-        height: auto;
-        margin-bottom: auto;
+        max-width: 180px;
+        height: 200px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: transparent;
+        border-radius: 8px;
+        border: none;
+        padding: 5px;
     }
 
     #farmaciaLogo {
@@ -61,27 +70,11 @@
         height: 100%;
         object-fit: contain;
     }
-    
-    .btn-volver-fondo {
-        background-color: #007bff;
-        color: white;
-        border-radius: 8px;
-        padding: 10px 15px;
-        font-weight: 600;
-        text-align: center;
-        text-decoration: none;
-        width: 140px;
-        margin-top: auto; /* Se asegura de ir al fondo */
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    /* Botones del menú izquierdo */
+    .col-md-2 a.btn:not(.btn-volver),
+    .col-md-2 button:not(.btn-volver) {
+        display: none !important;
     }
-
-        .btn-volver-fondo:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
-            color: white;
-        }
-
 
 
 
@@ -248,10 +241,51 @@
     <div class="card shadow-lg p-4 card-principal">
         <h2 class="text-center mb-4 fw-bold text-primary" translate="no">CUENTA DE USUARIO: @nombreUsuario</h2>
         <div class="row">
-            <div class="col-md-2">
+            <div class="col-md-2 d-flex flex-column align-items-start">
                 <div id="logoContainer">
                     <img src="/images/file_0000000079e461fd8636559665695d530001.png" alt="Logo Farmacia Santa Rita" id="farmaciaLogo" />
                 </div>
+                @{
+                    // Tu lógica existente se mantiene igual...
+                    var idProv = (ViewData["IdProveedor"] ?? Context.Request.Query["idProveedor"].FirstOrDefault() ?? "0").ToString();
+                    var nombreProv = ViewData["NombreProveedor"]?.ToString() ?? Context.Request.Query["nombreMostrar"].ToString() ?? "Proveedor";
+
+                    string vistaActual = "";
+                    var actionName = ViewContext.RouteData.Values["action"]?.ToString();
+
+                    if (actionName == "VistaDrogueriaSuiza" || actionName == "Drogueria")
+                    {
+                        vistaActual = "Drogueria";
+                    }
+                    else if (actionName == "ProveedorSecundario")
+                    {
+                        vistaActual = "ProveedorSecundario";
+                    }
+                    else
+                    {
+                        // Leemos de la URL para no perder el rastro
+                        vistaActual = !string.IsNullOrEmpty(Context.Request.Query["vista"])
+                        ? Context.Request.Query["vista"].ToString()
+                        : !string.IsNullOrEmpty(Context.Request.Query["vistaOrigen"])
+                        ? Context.Request.Query["vistaOrigen"].ToString()
+                        : "ProveedorSecundario";
+                    }
+                }
+
+                <a href="/Actualizar/ActualizarCuenta?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary" translate="no">Cuenta</a>
+
+                <a href="/Proveedores/IngresarProveedor?idProveedorSeleccionado=@idProv&vista=@vistaActual" class="btn btn-primary" translate="no">Boletas</a>
+
+                <a href="/CuentaCliente/Index?idProveedor=@idProv&vistaOrigen=@vistaActual&nombreMostrar=@nombreProv" class="btn btn-primary" translate="no">Cuentas de Clientes</a>
+
+                <a asp-action="Inasistencia"
+                   asp-controller="Proveedores"
+                   asp-route-origen="@vistaActual"
+                   asp-route-idProveedor="@idProv"
+                   class="btn btn-primary" translate="no">Inasistencia</a>
+
+                <a href="/Vacaciones?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary">Vacaciones</a>
+
                 <a href="@Url.Action("Index", "PanelSeleccion")" class="btn btn-primary" translate="no">Volver</a>
             </div>
             <div class="col-md-10 d-flex justify-content-center">

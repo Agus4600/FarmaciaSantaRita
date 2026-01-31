@@ -35,8 +35,19 @@
 		}
 
 	/* Ajuste del botón Volver para mantener la estética de píldora */
-	.col-md-2 a.btn-volver-estilizado {
-		margin-top: 110px !important;
+	/* Contenedor que empuja ambos botones hacia abajo */
+	.botones-inferiores-container {
+		margin-top: 100px !important; /* Aquí controlas la altura de AMBOS botones */
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 10px; /* Espacio entre Vacaciones y Volver */
+	}
+
+	/* Estilo unificado para los botones de abajo (tipo píldora) */
+	.col-md-2 a.btn-volver-estilizado,
+	.col-md-2 a.btn-vacaciones-estilizado {
 		background-color: #007bff;
 		color: white !important;
 		border-radius: 50px;
@@ -49,15 +60,24 @@
 		align-items: center;
 		width: 100%;
 		max-width: 180px;
+		height: 45px;
 		box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 		transition: all 0.3s ease;
+		border: none;
 	}
 
-		.col-md-2 a.btn-volver-estilizado:hover {
+		/* Efecto Hover para ambos */
+		.col-md-2 a.btn-volver-estilizado:hover,
+		.col-md-2 a.btn-vacaciones-estilizado:hover {
 			background-color: #0056b3 !important;
 			transform: translateY(-3px) !important;
 			box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important;
 		}
+
+	/* Eliminamos el margin-top individual que tenías antes para que no se sumen */
+	.col-md-2 a.btn-volver-estilizado {
+		margin-top: 0 !important;
+	}
 
 	/* Ajuste del contenedor del logo para iconos */
 	#logoContainer {
@@ -814,10 +834,11 @@
 				<div class="empleado-icon-container">
 					<i class="bi bi-person-badge-fill"></i>
 				</div>
-
-				<a href="/Vacaciones?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary">Vacaciones</a>
+				<div class="botones-inferiores-container">
+				<a href="/Vacaciones?idProveedor=@idProv&vista=@vistaActual" class="btn btn-primary btn-vacaciones-estilizado">Vacaciones</a>
 
 				<a href="@Url.Action("Index", "PanelSeleccion")" class="btn btn-primary btn-volver-estilizado" style="border:none;" translate="no">Volver</a>
+				</div>
 			</div>
 
 			<div class="col-md-10 d-flex justify-content-start">

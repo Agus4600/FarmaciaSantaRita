@@ -1767,14 +1767,14 @@
 
 		// BOTON GUARDAR//
 					document.getElementById("btnGuardar").addEventListener("click", async () => {
-			// 1. Nombre del archivo
+			// 1. Nombre del archivo (Usando el carácter especial ∶ para los dos puntos)
 			const ahora = new Date();
 			const dia = String(ahora.getDate()).padStart(2, '0');
 			const mes = String(ahora.getMonth() + 1).padStart(2, '0');
 			const anio = ahora.getFullYear();
 			const hora = String(ahora.getHours()).padStart(2, '0');
 			const minutos = String(ahora.getMinutes()).padStart(2, '0');
-			const nombreArchivo = `Registro Inasistencia ${dia}-${mes}-${anio} ${hora}:${minutos}.xlsx`;
+			const nombreArchivo = `Registro Inasistencia ${dia}-${mes}-${anio} ${hora}∶${minutos}.xlsx`;
 
 			// 2. Datos de la tabla actual
 			const datosTabla = [];
@@ -1790,39 +1790,32 @@
 				}
 			});
 
-			// 3. Faltas por empleado
+			// 3. Obtener datos de resumen desde las APIs
 			let faltasPorEmpleado = [];
-			try {
-				const response = await fetch('/Inasistencia/GetFaltasTotalesPorEmpleado');
-				if (response.ok) {
-					faltasPorEmpleado = await response.json();
-				}
-			} catch (err) {
-				console.error('Error al obtener faltas por empleado:', err);
-			}
-
-			// 4. Faltas por turno
 			let faltasPorTurno = [];
 			try {
-				const response = await fetch('/Inasistencia/GetFaltasPorTurno');
-				if (response.ok) {
-					faltasPorTurno = await response.json();
-				}
-			} catch (err) {
-				console.error('Error al obtener faltas por turno:', err);
-			}
+				const [resEmp, resTur] = await Promise.all([
+					fetch('/Inasistencia/GetFaltasTotalesPorEmpleado'), // Asegúrate de que este endpoint exista en tu controlador
+					fetch('/Inasistencia/GetFaltasPorTurno')
+				]);
+				if (resEmp.ok) faltasPorEmpleado = await resEmp.json();
+				if (resTur.ok) faltasPorTurno = await resTur.json();
+			} catch (err) { console.error('Error al obtener resúmenes:', err); }
 
-			// 5. Crear Workbook y Worksheet
+			// 4. Crear Workbook y Worksheet
 			const workbook = new ExcelJS.Workbook();
 			const worksheet = workbook.addWorksheet('REGISTRO DE INASISTENCIAS');
-			const borderNegro = { style: 'thin', color: { argb: 'FF000000' } };
+			const borderNegro = {
+				top: { style: 'thin' }, left: { style: 'thin' },
+				bottom: { style: 'thin' }, right: { style: 'thin' }
+			};
 			const verde = 'FF33CC99';
 
-			// Función helper para aplicar bordes a un rango (más visible)
+			// Función helper para aplicar bordes (Corregida para que funcione siempre)
 			const aplicarBordesRango = (minRow, maxRow, minCol, maxCol) => {
-				for (let row = minRow; row <= maxRow; row++) {
-					for (let col = minCol; col <= maxCol; col++) {
-						const cell = worksheet.getCell(row, col);
+				for (let r = minRow; r <= maxRow; r++) {
+					for (let c = minCol; c <= maxCol; c++) {
+						const cell = worksheet.getCell(r, c);
 						cell.border = borderNegro;
 					}
 				}
@@ -1835,7 +1828,7 @@
 			titleCell.font = { size: 14, bold: true };
 			titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
 			titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5DC' } };
-			aplicarBordesRango(1, 1, 1, 4); // Bordes en título principal
+			titleCell.border = borderNegro;
 
 			// 7. Encabezados tabla (A2:D2)
 			const headers = ["FECHA", "EMPLEADO", "TURNO", "MOTIVO"];
@@ -1844,8 +1837,8 @@
 				cell.font = { bold: true };
 				cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC080' } };
 				cell.alignment = { horizontal: 'center', vertical: 'middle' };
+				cell.border = borderNegro;
 			});
-			aplicarBordesRango(2, 2, 1, 4); // Bordes en encabezados
 
 			// 8. Datos de la tabla (A3:D...)
 			datosTabla.forEach((rowData, index) => {
@@ -1853,66 +1846,70 @@
 				row.eachCell(cell => {
 					cell.alignment = { horizontal: 'center', vertical: 'middle' };
 					cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: index % 2 === 0 ? 'FFDDEEFF' : 'FFCCFFFF' } };
+					cell.border = borderNegro; // Bordes aplicados directamente por celda
 				});
 			});
-			aplicarBordesRango(3, 2 + datosTabla.length, 1, 4); // Bordes en todos los datos
 
 			// 9. RESUMEN POR EMPLEADO (F1:G...)
 			worksheet.getCell('F1').value = 'FALTAS EN TOTAL';
 			worksheet.mergeCells('F1:G1');
-			const resumenEmpleado = worksheet.getCell('F1');
-			resumenEmpleado.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-			resumenEmpleado.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
-			resumenEmpleado.alignment = { horizontal: 'center', vertical: 'middle' };
+			const resumenEmpleadoHeader = worksheet.getCell('F1');
+			resumenEmpleadoHeader.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+			resumenEmpleadoHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
+			resumenEmpleadoHeader.alignment = { horizontal: 'center', vertical: 'middle' };
+			resumenEmpleadoHeader.border = borderNegro;
 
-			let filaEmpleado = 2;
+			let filaEmp = 2;
 			faltasPorEmpleado.forEach(item => {
-				worksheet.getCell(`F${filaEmpleado}`).value = item.nombre || 'Sin nombre';
-				worksheet.getCell(`G${filaEmpleado}`).value = item.faltas || 0;
-				['F', 'G'].forEach(col => {
-					const cell = worksheet.getCell(`${col}${filaEmpleado}`);
-					cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-					cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
-					cell.alignment = { horizontal: 'center', vertical: 'middle' };
+				// Ajuste de nombres de propiedades según tu API
+				const cellNombre = worksheet.getCell(`F${filaEmp}`);
+				const cellTotal = worksheet.getCell(`G${filaEmp}`);
+
+				cellNombre.value = item.nombreEmpleado || item.nombre || 'Sin nombre';
+				cellTotal.value = item.totalFaltas || item.total || 0;
+
+				[cellNombre, cellTotal].forEach(c => {
+					c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+					c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
+					c.alignment = { horizontal: 'center', vertical: 'middle' };
+					c.border = borderNegro;
 				});
-				filaEmpleado++;
+				filaEmp++;
 			});
-			aplicarBordesRango(1, filaEmpleado - 1, 6, 7); // Bordes en todo el bloque F:G
 
 			// 10. RESUMEN POR TURNO (I1:J...)
 			worksheet.getCell('I1').value = 'FALTAS POR TURNO';
 			worksheet.mergeCells('I1:J1');
-			const resumenTurno = worksheet.getCell('I1');
-			resumenTurno.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-			resumenTurno.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
-			resumenTurno.alignment = { horizontal: 'center', vertical: 'middle' };
+			const resumenTurnoHeader = worksheet.getCell('I1');
+			resumenTurnoHeader.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+			resumenTurnoHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
+			resumenTurnoHeader.alignment = { horizontal: 'center', vertical: 'middle' };
+			resumenTurnoHeader.border = borderNegro;
 
-					// Turnos fijos con normalización (ignorar mayúsculas y espacios)
-		const turnosOrdenados = [
-			{ turno: 'Mañana', total: faltasPorTurno.find(t => (t.turno || '').trim().toLowerCase().includes('mañana'))?.total || 0 },
-			{ turno: 'Tarde', total: faltasPorTurno.find(t => (t.turno || '').trim().toLowerCase().includes('tarde'))?.total || 0 },
-			{ turno: 'Completo', total: faltasPorTurno.find(t => (t.turno || '').trim().toLowerCase().includes('completo'))?.total || 0 }
-		];
+			// Normalización de turnos para el Excel
+			const turnosFijos = ['Mañana', 'Tarde', 'Completo'];
+			turnosFijos.forEach((nombreTurno, i) => {
+				const filaT = i + 2;
+				const infoTurno = faltasPorTurno.find(t => (t.turno || '').trim().toLowerCase() === nombreTurno.toLowerCase());
 
-		let filaTurno = 2;
-		turnosOrdenados.forEach(item => {
-			worksheet.getCell(`I${filaTurno}`).value = item.turno;
-			worksheet.getCell(`J${filaTurno}`).value = item.total;
-			['I', 'J'].forEach(col => {
-				const cell = worksheet.getCell(`${col}${filaTurno}`);
-				cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-				cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
-				cell.alignment = { horizontal: 'center', vertical: 'middle' };
-				cell.border = borderNegro;
+				const cellT = worksheet.getCell(`I${filaT}`);
+				const cellV = worksheet.getCell(`J${filaT}`);
+
+				cellT.value = nombreTurno;
+				cellV.value = infoTurno ? infoTurno.total : 0;
+
+				[cellT, cellV].forEach(c => {
+					c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+					c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
+					c.alignment = { horizontal: 'center', vertical: 'middle' };
+					c.border = borderNegro;
+				});
 			});
-			filaTurno++;
-		});
-			aplicarBordesRango(1, filaTurno - 1, 9, 10); // Bordes en todo el bloque I:J
 
 			// 11. Anchos de columnas
 			worksheet.columns = [
-				{ width: 15 }, { width: 25 }, { width: 15 }, { width: 30 }, { width: 10 },
-				{ width: 30 }, { width: 15 }, { width: 10 }, { width: 20 }, { width: 15 }
+				{ width: 15 }, { width: 30 }, { width: 15 }, { width: 35 }, { width: 5 },
+				{ width: 30 }, { width: 15 }, { width: 5 }, { width: 20 }, { width: 15 }
 			];
 
 			// 12. Descarga
@@ -1921,7 +1918,9 @@
 			const link = document.createElement('a');
 			link.href = URL.createObjectURL(blob);
 			link.download = nombreArchivo;
+			document.body.appendChild(link);
 			link.click();
+			document.body.removeChild(link);
 		});
 	</script>
 }

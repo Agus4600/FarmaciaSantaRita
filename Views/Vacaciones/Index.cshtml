@@ -1382,7 +1382,46 @@
                 return;
             }
 
-            // Todo OK → proceder con el guardado
+
+
+
+
+
+
+         const fechaInicioStr = inicioDate.toISOString().split('T')[0];
+        const fechaFinStr = finDate.toISOString().split('T')[0];
+
+        try {
+            const respSolapa = await fetch(`/Vacaciones/CheckSolapamiento?idEmpleado=${empleadoId}&fechaInicio=${fechaInicioStr}&fechaFin=${fechaFinStr}`);
+            const dataSolapa = await respSolapa.json();
+
+            if (dataSolapa.solapamiento) {
+                Swal.fire({
+                    title: '¡Solapamiento detectado!',
+                    html: dataSolapa.mensaje || 'El período elegido se superpone con otra vacación del empleado.',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+                });
+                document.getElementById('btnPeriodo').focus();
+                return; // No guarda
+            }
+            } catch (err) {
+            console.error('Error chequeando solapamiento:', err);
+            const continuar = await Swal.fire({
+                title: 'Error al verificar solapamiento',
+                text: 'No se pudo comprobar si hay superposiciones. ¿Querés guardar de todos modos?',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, guardar',
+                cancelButtonText: 'No, revisar',
+                confirmButtonColor: '#007bff',
+                cancelButtonColor: '#007bff'
+            });
+
+            if (!continuar.isConfirmed) {
+                btnPeriodo.focus();
+                return;
+            }
+        }
             const datos = {
                 Idusuario: parseInt(empleadoId),
                 DiasVacaciones: diasSolicitados,
@@ -1573,165 +1612,109 @@
 
             // btnGuardar
 
-            document.getElementById('btnGuardar').addEventListener('click', async function () {
-
-                const filas = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id]:not([data-vacacion-id='0'])`);
-
-                if (filas.length === 0) {
-
-                    Swal.fire({
-
-                        title: 'Sin datos',
-
-                        text: 'No hay registros para exportar.',
-
-                        confirmButtonText: 'Entendido',
-
-                        confirmButtonColor: '#007bff'
-
-                    });
-
-                    return;
-
-                }
-
-                const datos = [];
-
-                filas.forEach(f => {
-
-                    const celdas = f.querySelectorAll('td');
-
-                    datos.push([
-
-                        celdas[0].innerText.trim(),
-
-                        celdas[1].innerText.trim(),
-
-                        celdas[2].innerText.trim(),
-
-                        celdas[3].innerText.trim()
-
-                    ]);
-
-                });
-
-                const now = new Date();
-
-                const datePart = now.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
-
-                const timePart = now.getHours().toString().padStart(2, '0') + '∶' + now.getMinutes().toString().padStart(2, '0');
-
-                const fileName = `Registro Vacaciones ${datePart} ${timePart}.xlsx`;
-
-                const workbook = new ExcelJS.Workbook();
-
-                const sheet = workbook.addWorksheet('VACACIONES');
-
-                sheet.addRow(['REGISTRO DE VACACIONES']);
-
-                sheet.mergeCells('A1:D1');
-
-                const titleCell = sheet.getCell('A1');
-
-                titleCell.font = { size: 14, bold: true };
-
-                titleCell.alignment = { horizontal: 'center' };
-
-                titleCell.border = {
-
-                    top: { style: 'thin' },
-
-                    left: { style: 'thin' },
-
-                    bottom: { style: 'thin' },
-
-                    right: { style: 'thin' }
-
-                };
-
-                const headers = ['EMPLEADO', 'DÍAS', 'PERÍODO', 'DÍAS FAVOR'];
-
-                sheet.addRow(headers);
-
-                const headerRow = sheet.lastRow;
-
-                headerRow.eachCell(cell => {
-
-                    cell.font = { bold: true, color: { argb: 'FF000000' } };
-
-                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC080' } };
-
-                    cell.alignment = { horizontal: 'center', vertical: 'middle' };
-
-                    cell.border = {
-
-                        top: { style: 'thin' },
-
-                        left: { style: 'thin' },
-
-                        bottom: { style: 'thin' },
-
-                        right: { style: 'thin' }
-
-                    };
-
-                });
-
-                datos.forEach((row, i) => {
-
-                    sheet.addRow(row);
-
-                    const dataRow = sheet.lastRow;
-
-                    dataRow.eachCell(cell => {
-
-                        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-
-                        cell.fill = {
-
-                            type: 'pattern',
-
-                            pattern: 'solid',
-
-                            fgColor: { argb: i % 2 === 0 ? 'FFDDEEFF' : 'FFCCFFFF' }
-
-                        };
-
-                        cell.border = {
-
-                            top: { style: 'thin' },
-
-                            left: { style: 'thin' },
-
-                            bottom: { style: 'thin' },
-
-                            right: { style: 'thin' }
-
-                        };
-
-                    });
-
-                });
-
-                sheet.columns = [
-
-                    { width: 28 }, { width: 10 }, { width: 35 }, { width: 15 }
-
-                ];
-
-                const buffer = await workbook.xlsx.writeBuffer();
-
-                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-                const link = document.createElement('a');
-
-                link.href = URL.createObjectURL(blob);
-
-                link.download = fileName;
-
-                link.click();
-
+                    document.getElementById('btnGuardar').addEventListener('click', async function () {
+            const filas = document.querySelectorAll(`#${TABLA_ID} tbody tr[data-vacacion-id]:not([data-vacacion-id='0'])`);
+            if (filas.length === 0) {
+                Swal.fire('Sin datos', 'No hay registros para exportar.', 'warning');
+                return;
+            }
+
+            // 1. Recolectar datos + calcular totales
+            const datos = [];
+            let totalSolicitados = 0;
+            let totalReales = 0;
+            let totalFavor = 0;
+            const porEmpleado = {}; // { "Nerea Loza": { solicitados: 0, reales: 0, favor: 0 } }
+
+            filas.forEach(f => {
+                const celdas = f.querySelectorAll('td');
+                const empleado = celdas[0].innerText.trim();
+                const solicitados = parseInt(celdas[1].innerText.trim()) || 0;
+                const periodo = celdas[2].innerText.trim();
+                const favor = parseInt(celdas[3].innerText.trim()) || 0;
+
+                datos.push([empleado, solicitados, periodo, favor]);
+
+                totalSolicitados += solicitados;
+                // Calcular días reales del período (simplificado)
+                const [inicioStr, finStr] = periodo.split(' - ');
+                const inicio = new Date(inicioStr.split('/').reverse().join('-'));
+                const fin = new Date(finStr.split('/').reverse().join('-'));
+                const reales = Math.floor((fin - inicio) / (1000*60*60*24)) + 1 || solicitados;
+                totalReales += reales;
+                totalFavor += favor;
+
+                if (!porEmpleado[empleado]) porEmpleado[empleado] = { solicitados: 0, reales: 0, favor: 0 };
+                porEmpleado[empleado].solicitados += solicitados;
+                porEmpleado[empleado].reales += reales;
+                porEmpleado[empleado].favor += favor;
             });
+
+            // 2. Generar Excel con resumen
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet('VACACIONES');
+
+            // Título
+            sheet.addRow(['REGISTRO DE VACACIONES']);
+            sheet.mergeCells('A1:D1');
+            const titleCell = sheet.getCell('A1');
+            titleCell.font = { size: 16, bold: true };
+            titleCell.alignment = { horizontal: 'center' };
+            titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5DC' } };
+
+            // Encabezados
+            const headers = ['EMPLEADO', 'DÍAS SOLICITADOS', 'PERÍODO', 'DÍAS FAVOR'];
+            sheet.addRow(headers);
+            const headerRow = sheet.lastRow;
+            headerRow.eachCell(cell => {
+                cell.font = { bold: true };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC080' } };
+                cell.alignment = { horizontal: 'center' };
+            });
+
+            // Datos
+            datos.forEach((row, i) => {
+                const dataRow = sheet.addRow(row);
+                dataRow.eachCell(cell => {
+                    cell.alignment = { horizontal: 'center' };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: i % 2 === 0 ? 'FFDDEEFF' : 'FFCCFFFF' } };
+                });
+            });
+
+            // Resumen general
+            sheet.addRow([]); // línea en blanco
+            sheet.addRow(['RESUMEN GENERAL']);
+            sheet.mergeCells('A' + sheet.rowCount + ':D' + sheet.rowCount);
+            sheet.getCell('A' + sheet.rowCount).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            sheet.getCell('A' + sheet.rowCount).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF006400' } }; // verde oscuro
+
+            sheet.addRow(['Total días solicitados:', totalSolicitados]);
+            sheet.addRow(['Total días reales tomados:', totalReales]);
+            sheet.addRow(['Total días favor (suma):', totalFavor]);
+
+            // Resumen por empleado
+            sheet.addRow([]); // línea en blanco
+            sheet.addRow(['RESUMEN POR EMPLEADO']);
+            sheet.mergeCells('A' + sheet.rowCount + ':D' + sheet.rowCount);
+            sheet.getCell('A' + sheet.rowCount).font = { bold: true };
+
+            for (const [empleado, vals] of Object.entries(porEmpleado)) {
+                sheet.addRow([empleado, vals.solicitados, vals.reales, vals.favor]);
+            }
+
+            // Anchos de columnas
+            sheet.columns = [
+                { width: 30 }, { width: 18 }, { width: 35 }, { width: 15 }
+            ];
+
+            // Descarga
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Registro Vacaciones ${new Date().toLocaleDateString('es-AR')} ${new Date().toLocaleTimeString('es-AR')}.xlsx`;
+            link.click();
+        });
 
             // Selección de filas y check all
 

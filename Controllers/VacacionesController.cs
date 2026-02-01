@@ -150,6 +150,59 @@ namespace FarmaciaSantaRita.Controllers
 
         }
 
+
+
+
+
+
+        [HttpGet("CheckSolapamiento")]
+        public async Task<IActionResult> CheckSolapamiento(int idEmpleado, string fechaInicio, string fechaFin)
+        {
+            if (idEmpleado <= 0 || string.IsNullOrEmpty(fechaInicio) || string.IsNullOrEmpty(fechaFin))
+                return Json(new { solapamiento = false, mensaje = "Datos incompletos" });
+
+            if (!DateTime.TryParse(fechaInicio, out DateTime inicioNuevo) ||
+                !DateTime.TryParse(fechaFin, out DateTime finNuevo))
+                return Json(new { solapamiento = false, mensaje = "Formato de fecha inválido" });
+
+            inicioNuevo = DateTime.SpecifyKind(inicioNuevo.Date, DateTimeKind.Utc);
+            finNuevo = DateTime.SpecifyKind(finNuevo.Date, DateTimeKind.Utc);
+
+            var existe = await _context.Vacaciones
+                .AnyAsync(v => v.Idusuario == idEmpleado &&
+                               v.FechaInicio <= finNuevo &&
+                               v.FechaFin >= inicioNuevo);
+
+            if (existe)
+            {
+                var conflicto = await _context.Vacaciones
+                    .Where(v => v.Idusuario == idEmpleado &&
+                                v.FechaInicio <= finNuevo &&
+                                v.FechaFin >= inicioNuevo)
+                    .OrderBy(v => v.FechaInicio)
+                    .Select(v => new
+                    {
+                        FechaInicio = v.FechaInicio.ToString("dd/MM/yyyy"),
+                        FechaFin = v.FechaFin.ToString("dd/MM/yyyy")
+                    })
+                    .FirstOrDefaultAsync();
+
+                return Json(new
+                {
+                    solapamiento = true,
+                    mensaje = $"¡Atención! {conflicto?.FechaInicio} al {conflicto?.FechaFin}. Este período se superpone."
+                });
+            }
+
+            return Json(new { solapamiento = false });
+        }
+
+
+
+
+
+
+
         [HttpGet]
         public async Task<IActionResult> GetDatosEmpleado(string nombre)
         {

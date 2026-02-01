@@ -33,6 +33,56 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
+    /* --- ESTILO PARA EL ICONO (IGUAL A INASISTENCIAS) --- */
+    .empleado-icon-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        color: #007bff;
+        margin-bottom: 10px;
+    }
+
+        .empleado-icon-container i {
+            font-size: 140px;
+        }
+
+    /* --- CONTENEDOR DE BOTONES INFERIORES --- */
+    .botones-inferiores-container {
+        margin-top: 70px !important;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Estilo Píldora unificado */
+    .col-md-2 a.btn-pildora {
+        background-color: #007bff;
+        color: white !important;
+        border-radius: 50px;
+        padding: 10px 20px;
+        font-weight: 600;
+        text-align: center;
+        text-decoration: none;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        max-width: 180px;
+        height: 45px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+        .col-md-2 a.btn-pildora:hover {
+            background-color: #0056b3 !important;
+            transform: translateY(-3px) !important;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important;
+        }
+
+
     .fila-seleccionada {
         background-color: #cce5ff !important; /* Azul claro como en Inasistencias */
     }
@@ -777,13 +827,15 @@
                     <i class="bi bi-person-badge-fill"></i>
                 </div>
 
-                <div class="botones-inferiores-container">
-                    @* Inasistencia *@
+                @* Inasistencia *@
 
-                    <a href="/Proveedores/Inasistencia?origen=@vistaActual&idProveedor=@idProv"
+                <div class="botones-inferiores-container">
+                <a href="/Proveedores/Inasistencia?origen=@vistaActual&idProveedor=@idProv"
                        class="btn btn-primary btn-pildora">Inasistencia</a>
 
-                    <a href="@Url.Action("Index", "PanelSeleccion")" class="btn btn-primary btn-pildora">Volver</a>
+                @* Volver al Index de Proveedores (usa la lista de origen) *@
+
+                    <a href="/Proveedores/Index?vista=@vistaActual" class="btn btn-primary btn-pildora">Volver</a>
                 </div>
             </div>
 
@@ -1032,53 +1084,6 @@
     <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
 
     <script>
-                /* --- ESTILO PARA EL ICONO (IGUAL A INASISTENCIAS) --- */
-        .empleado-icon-container {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            color: #007bff;
-            margin-bottom: 10px;
-        }
-
-        .empleado-icon-container i {
-            font-size: 140px;
-        }
-
-        /* --- CONTENEDOR DE BOTONES INFERIORES --- */
-        .botones-inferiores-container {
-            margin-top: 70px !important;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* Estilo Píldora unificado */
-        .col-md-2 a.btn-pildora {
-            background-color: #007bff;
-            color: white !important;
-            border-radius: 50px;
-            padding: 10px 20px;
-            font-weight: 600;
-            text-align: center;
-            text-decoration: none;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            max-width: 180px;
-            height: 45px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            border: none;
-        }
-
-        .col-md-2 a.btn-pildora:hover {
-            background-color: #0056b3 !important;
-            transform: translateY(-3px) !important;
-            box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important;
-        }
 
 
         // Inicialización de calendarios (más robusta)

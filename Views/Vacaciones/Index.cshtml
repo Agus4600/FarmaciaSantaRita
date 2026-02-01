@@ -1784,11 +1784,15 @@
                 { width: 30 }, { width: 18 }, { width: 18 }, { width: 15 }
             ];
 
-            // Nombre del archivo con formato exacto: Registro Vacaciones dd-MM-yyyy HH:mm
+        // Nombre del archivo corregido
             const ahora = new Date();
-            const fecha = ahora.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
-            const hora = ahora.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
-            const nombreArchivo = `Registro Vacaciones ${fecha} ${hora}.xlsx`;
+            const dia = String(ahora.getDate()).padStart(2, '0');
+            const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+            const anio = ahora.getFullYear();
+            const hora = String(ahora.getHours()).padStart(2, '0');
+            const minutos = String(ahora.getMinutes()).padStart(2, '0');
+
+            const nombreArchivo = `Registro Vacaciones ${dia}-${mes}-${anio} ${hora}:${minutos}.xlsx`;
 
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -1796,7 +1800,7 @@
             link.href = URL.createObjectURL(blob);
             link.download = nombreArchivo;
             link.click();
-        });
+            });
 
             // Selección de filas y check all
 

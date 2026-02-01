@@ -1656,28 +1656,41 @@
             const workbook = new ExcelJS.Workbook();
             const sheet = workbook.addWorksheet('VACACIONES');
 
-            // Título principal (izquierda)
+            const borderNegro = { style: 'thin', color: { argb: 'FF000000' } };
+
+            // Título principal con borde negro
             sheet.getCell('A1').value = 'REGISTRO DE VACACIONES';
             sheet.mergeCells('A1:D1');
             sheet.getCell('A1').font = { size: 16, bold: true };
             sheet.getCell('A1').alignment = { horizontal: 'center' };
             sheet.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5DC' } };
+            sheet.getCell('A1').border = {
+                top: borderNegro,
+                left: borderNegro,
+                bottom: borderNegro,
+                right: borderNegro
+            };
 
-            // Encabezados registros (izquierda)
+            // Encabezados de la tabla con bordes negros
             const headers = ['EMPLEADO', 'DÍAS SOLICITADOS', 'PERÍODO', 'DÍAS FAVOR'];
             sheet.getRow(2).values = headers;
-            sheet.getRow(2).eachCell(cell => {
+            sheet.getRow(2).eachCell((cell, colNumber) => {
                 cell.font = { bold: true };
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC080' } };
                 cell.alignment = { horizontal: 'center' };
+                cell.border = {
+                    top: borderNegro,
+                    left: borderNegro,
+                    bottom: borderNegro,
+                    right: borderNegro
+                };
             });
 
-            // Datos registros (A3:D...) + bordes negros
-            const borderNegro = { style: 'thin', color: { argb: 'FF000000' } };
+            // Datos de registros con bordes negros
             datos.forEach((row, i) => {
                 const rowNumber = 3 + i;
                 sheet.getRow(rowNumber).values = row;
-                sheet.getRow(rowNumber).eachCell((cell, colNumber) => {
+                sheet.getRow(rowNumber).eachCell(cell => {
                     cell.alignment = { horizontal: 'center' };
                     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: i % 2 === 0 ? 'FFDDEEFF' : 'FFCCFFFF' } };
                     cell.border = {
@@ -1690,22 +1703,30 @@
             });
 
             // === RESUMEN GENERAL (F1:G4) ===
-            const verde = 'FF33CC99'; // #33cc99
+            const verde = 'FF33CC99';
 
             sheet.getCell('F1').value = 'RESUMEN GENERAL';
             sheet.mergeCells('F1:G1');
             sheet.getCell('F1').font = { bold: true, color: { argb: 'FFFFFFFF' } };
             sheet.getCell('F1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
             sheet.getCell('F1').alignment = { horizontal: 'center', vertical: 'middle' };
+            sheet.getCell('F1').border = {
+                top: borderNegro,
+                left: borderNegro,
+                bottom: borderNegro,
+                right: borderNegro
+            };
 
             sheet.getCell('F2').value = 'Total días solicitados:';
             sheet.getCell('G2').value = totalSolicitados;
+
             sheet.getCell('F3').value = 'Total días reales tomados:';
             sheet.getCell('G3').value = totalReales;
+
             sheet.getCell('F4').value = 'Total días favor (suma):';
             sheet.getCell('G4').value = totalFavor;
 
-            // Estilo verde + blanco + negrita + centrado + bordes negros a F1:G4
+            // Estilo + bordes negros en F1:G4
             for (let row = 1; row <= 4; row++) {
                 ['F', 'G'].forEach(col => {
                     const cell = sheet.getCell(`${col}${row}`);
@@ -1759,22 +1780,15 @@
 
             // Anchos de columnas
             sheet.columns = [
-                { width: 30 }, // A
-                { width: 18 }, // B
-                { width: 35 }, // C
-                { width: 15 }, // D
-                { width: 10 }, // E separador
-                { width: 30 }, // F
-                { width: 18 }, // G
-                { width: 18 }, // H
-                { width: 15 }  // I
+                { width: 30 }, { width: 18 }, { width: 35 }, { width: 15 }, { width: 10 },
+                { width: 30 }, { width: 18 }, { width: 18 }, { width: 15 }
             ];
 
-            // Descarga con nombre exacto como en tu imagen (dd-MM-yyyy HH:mm)
+            // Nombre del archivo con formato exacto: Registro Vacaciones dd-MM-yyyy HH:mm
             const ahora = new Date();
-            const fechaFormateada = ahora.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
-            const horaFormateada = ahora.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
-            const nombreArchivo = `Registro Vacaciones ${fechaFormateada} ${horaFormateada}.xlsx`;
+            const fecha = ahora.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
+            const hora = ahora.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const nombreArchivo = `Registro Vacaciones ${fecha} ${hora}.xlsx`;
 
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

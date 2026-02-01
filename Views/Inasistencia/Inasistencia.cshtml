@@ -1766,129 +1766,146 @@
 
 
 		// BOTON GUARDAR//
-		document.getElementById("btnGuardar").addEventListener("click", async () => {
-			// 1. Obtención de fecha/hora y fileName
-			const now = new Date();
-			const datePart = now.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
-			const hours = now.getHours().toString().padStart(2, '0');
-			const minutes = now.getMinutes().toString().padStart(2, '0');
-			const timePart = `${hours}∶${minutes}`;
-			// Usamos la extensión .xlsx
-			const fileName = `Registro Inasistencia  ${datePart}  ${timePart}.xlsx`;
+				document.getElementById("btnGuardar").addEventListener("click", async () => {
+			// 1. Obtener fecha/hora y nombre del archivo (con dos puntos en la hora)
+			const ahora = new Date();
+			const dia = String(ahora.getDate()).padStart(2, '0');
+			const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+			const anio = ahora.getFullYear();
+			const hora = String(ahora.getHours()).padStart(2, '0');
+			const minutos = String(ahora.getMinutes()).padStart(2, '0');
+			const nombreArchivo = `Registro Inasistencia ${dia}-${mes}-${anio} ${hora}:${minutos}.xlsx`;
 
-			// 2. Preparar los datos de la tabla
+			// 2. Preparar datos de la tabla actual (solo para mostrar registros visibles)
 			const datosTabla = [];
 			const filasDatos = document.querySelectorAll("#tablaInasistencias tbody tr[data-inasistencia-id]:not([data-inasistencia-id='0'])");
-
 			if (filasDatos.length === 0) {
-				alert("No hay registros para exportar. La tabla está vacía."); // Validación MANTENIDA
+				Swal.fire('Sin datos', 'No hay registros para exportar.', 'warning');
 				return;
 			}
 
 			filasDatos.forEach(fila => {
 				const celdas = fila.querySelectorAll("td");
 				if (celdas.length >= 4) {
-					// Empujar solo las 4 celdas de datos (Fecha, Empleado, Turno, Motivo)
 					datosTabla.push(Array.from(celdas).slice(0, 4).map(td => td.innerText.trim()));
 				}
 			});
 
-			// 3. Crear el Workbook y la Worksheet
+			// 3. Obtener faltas totales por empleado desde el servidor
+					let faltasPorEmpleado = [];
+		try {
+			console.log('Intentando obtener faltas totales... URL: /Inasistencia/GetFaltasTotalesPorEmpleado');
+			const response = await fetch('/Inasistencia/GetFaltasTotalesPorEmpleado');
+			console.log('Respuesta HTTP:', response.status, response.statusText);
+
+			if (response.ok) {
+				faltasPorEmpleado = await response.json();
+				console.log('Faltas recibidas del servidor:', faltasPorEmpleado);
+			} else {
+				const errorText = await response.text();
+				console.error('Error en respuesta:', response.status, errorText);
+				Swal.fire('Advertencia', 'No se pudieron cargar las faltas totales (error ' + response.status + ')', 'warning');
+			}
+		} catch (err) {
+			console.error('Error en fetch de faltas totales:', err);
+			Swal.fire('Error', 'No se pudo conectar al servidor para obtener faltas totales.', 'error');
+		}
+
+		// Si está vacío, mostramos mensaje en consola también
+		if (faltasPorEmpleado.length === 0) {
+			console.warn('No se recibieron faltas totales (array vacío)');
+		}
+
+			// 4. Crear Workbook y Worksheet
 			const workbook = new ExcelJS.Workbook();
 			const worksheet = workbook.addWorksheet('REGISTRO DE INASISTENCIAS');
 
+			const borderNegro = { style: 'thin', color: { argb: 'FF000000' } };
+			const verde = 'FF33CC99'; // #33cc99
 
-			// 4. APLICACIÓN DE FORMATO Y ESTILOS AVANZADOS
+			// 5. Título principal (A1:D1) con borde
+			worksheet.addRow(['REGISTRO DE INASISTENCIAS']);
+			worksheet.mergeCells('A1:D1');
+			const titleCell = worksheet.getCell('A1');
+			titleCell.font = { size: 14, bold: true };
+			titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+			titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5DC' } };
+			titleCell.border = borderNegro;
 
-			// Título (Fila 1)
-				const headers = ["FECHA", "EMPLEADO", "TURNO", "MOTIVO"];
-		const titulo = 'REGISTRO DE INASISTENCIAS';
-
-		// Definición de estilo de borde
-		const thinBorder = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-
-
-		// 4.1. TÍTULO (Fila 1: A1 a D1)
-
-		// 1. Insertar el título en la primera fila
-		worksheet.addRow([titulo]);
-
-		// 2. Fusionar celdas A1 a D1 para el título
-		worksheet.mergeCells('A1:D1');
-
-		// 3. Obtener la celda fusionada (A1) y reafirmar el valor
-		const titleCell = worksheet.getCell('A1');
-		titleCell.value = titulo;
-
-		// 4. Aplicar estilos al título
-		titleCell.font = { size: 14, bold: true, color: { argb: 'FF000000' } };
-		titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
-		titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5DC' } };
-
-		// Aplicar bordes al título (Solo A1 necesita borde después de la fusión)
-		titleCell.border = thinBorder;
-
-
-		// 4.2. ENCABEZADOS (Fila 2: A2 a D2)
-		const headerRow = worksheet.addRow(headers);
-
-		// Aplicar estilos a los encabezados
-		headerRow.eachCell((cell, colNumber) => {
-			cell.font = { size: 11, bold: true, color: { argb: 'FF000000' } };
-			cell.alignment = { vertical: 'middle', horizontal: 'center' };
-			cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC080' } };
-			cell.border = thinBorder;
-		});
-
-		// 5. Añadir los datos de las filas (Ahora inician en la Fila 3: A3:D3)
-		datosTabla.forEach((rowData, index) => { // Añadir 'index' para la alternancia
-			const row = worksheet.addRow(rowData);
-
-			// ⭐ FONDO DE FILAS: Alternancia
-			const colorFondo = index % 2 === 0 ? 'FFDDEEFF' : 'FFCCFFFF'; // ddeeff y ccffff
-
-			// Aplicar formato, centrado y bordes
-			row.eachCell((cell, colIndex) => {
-				 // Aplicar formato de fecha (solo a la primera columna)
-				 if (colIndex === 1) {
-					 cell.numFmt = 'DD/MM/YYYY';
-				 }
-
-				 cell.alignment = { vertical: 'middle', horizontal: 'center' };
-				 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colorFondo } }; // ⭐ FONDO ALTERNANTE
-				 cell.border = thinBorder; // ⭐ BORDER: thin
+			// 6. Encabezados tabla (A2:D2) con bordes
+			const headers = ["FECHA", "EMPLEADO", "TURNO", "MOTIVO"];
+			const headerRow = worksheet.addRow(headers);
+			headerRow.eachCell((cell, colNumber) => {
+				cell.font = { bold: true };
+				cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC080' } };
+				cell.alignment = { horizontal: 'center', vertical: 'middle' };
+				cell.border = borderNegro;
 			});
-		});
 
-		// 6. AJUSTAR ANCHO DE COLUMNAS
-		worksheet.columns = [
-			{ key: 'fecha', width: 15 },
-			{ key: 'empleado', width: 25 },
-			{ key: 'turno', width: 15 },
-			{ key: 'motivo', width: 20 }
-		];
+			// 7. Datos de la tabla (A3:D...) con bordes y alternancia
+			datosTabla.forEach((rowData, index) => {
+				const row = worksheet.addRow(rowData);
+				row.eachCell(cell => {
+					cell.alignment = { horizontal: 'center', vertical: 'middle' };
+					cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: index % 2 === 0 ? 'FFDDEEFF' : 'FFCCFFFF' } };
+					cell.border = borderNegro;
+				});
+			});
 
-			// 7. DESCARGA
-			// ExcelJS usa 'writeBuffer' que devuelve un ArrayBuffer de forma asíncrona
-			try {
-				const buffer = await workbook.xlsx.writeBuffer();
-				const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+			// 8. RESUMEN DE FALTAS TOTALES (F1:G...)
+			worksheet.getCell('F1').value = 'FALTAS EN TOTAL';
+			worksheet.mergeCells('F1:G1');
+			const resumenTitle = worksheet.getCell('F1');
+			resumenTitle.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+			resumenTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
+			resumenTitle.alignment = { horizontal: 'center', vertical: 'middle' };
+			resumenTitle.border = borderNegro;
 
-				// Simular la descarga
-				const link = document.createElement("a");
-				link.href = URL.createObjectURL(blob);
-				link.download = fileName;
-				document.body.appendChild(link);
-				link.click();
-				document.body.removeChild(link);
+			// Lista de empleados y faltas (F2:G...)
+			let filaFaltas = 2;
+			faltasPorEmpleado.forEach(item => {
+				worksheet.getCell(`F${filaFaltas}`).value = item.nombre || 'Sin nombre';
+				worksheet.getCell(`G${filaFaltas}`).value = item.faltas || 0;
 
-				// MENSAJE ELIMINADO: alert(`Archivo "${fileName}" generado correctamente.`);
-				console.log(`[EXCEL] Archivo "${fileName}" generado y descargado correctamente.`);
+				['F', 'G'].forEach(col => {
+					const cell = worksheet.getCell(`${col}${filaFaltas}`);
+					cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+					cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
+					cell.alignment = { horizontal: 'center', vertical: 'middle' };
+					cell.border = borderNegro;
+				});
 
-			} catch (error) {
-				console.error("Error al generar o descargar el archivo Excel:", error); // Error a consola
-				// MENSAJE ELIMINADO: alert("Ocurrió un error al generar el archivo. Por favor, revise la consola.");
+				filaFaltas++;
+			});
+
+			// Si no hay faltas totales, mensaje informativo
+			if (faltasPorEmpleado.length === 0) {
+				worksheet.getCell('F2').value = 'No hay faltas registradas aún';
+				worksheet.mergeCells('F2:G2');
+				worksheet.getCell('F2').font = { italic: true };
+				worksheet.getCell('F2').alignment = { horizontal: 'center' };
+				worksheet.getCell('F2').border = borderNegro;
 			}
+
+			// 9. Anchos de columnas
+			worksheet.columns = [
+				{ width: 15 }, // A - Fecha
+				{ width: 25 }, // B - Empleado
+				{ width: 15 }, // C - Turno
+				{ width: 30 }, // D - Motivo
+				{ width: 10  }, // E - separador
+				{ width: 30 }, // F - Nombre empleado (faltas)
+				{ width: 15 }  // G - Cantidad faltas
+			];
+
+			// 10. Descarga
+			const buffer = await workbook.xlsx.writeBuffer();
+			const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+			const link = document.createElement('a');
+			link.href = URL.createObjectURL(blob);
+			link.download = nombreArchivo;
+			link.click();
 		});
+		}
 	</script>
 }

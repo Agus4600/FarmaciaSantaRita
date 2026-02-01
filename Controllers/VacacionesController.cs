@@ -157,7 +157,7 @@ namespace FarmaciaSantaRita.Controllers
 
 
         // Ruta EXACTA que debe coincidir con el fetch en JS: /Vacaciones/CheckVacacionesSolapadas
-        [HttpGet("CheckVacacionesSolapadas")]  // ← Correcto, con la "a"
+        [HttpGet]  // ← Correcto, con la "a"
         public async Task<IActionResult> CheckVacacionesSolapadas(int idEmpleadoNuevo, string fechaInicio, string fechaFin)
         {
             Console.WriteLine($"CheckVacacionesSolapadas llamado: id={idEmpleadoNuevo}, inicio={fechaInicio}, fin={fechaFin}");
@@ -283,6 +283,24 @@ namespace FarmaciaSantaRita.Controllers
             if (vacacion.FechaFin < vacacion.FechaInicio)
             {
                 return Json(new { success = false, message = "La fecha de fin no puede ser anterior a la de inicio." });
+            }
+            // Normalizamos las fechas a UTC para la validación de solapamiento
+            var inicioUtc = DateTime.SpecifyKind(vacacion.FechaInicio.Date, DateTimeKind.Utc);
+            var finUtc = DateTime.SpecifyKind(vacacion.FechaFin.Date, DateTimeKind.Utc);
+
+            // VALIDACIÓN DE SOLAPAMIENTO (No permite que nadie más esté de vacaciones en este rango)
+            var solapamiento = await _context.Vacaciones
+                .Where(v => inicioUtc <= v.FechaFin && finUtc >= v.FechaInicio)
+                .Select(v => new { v.NombreEmpleadoRegistrado, v.FechaInicio, v.FechaFin })
+                .FirstOrDefaultAsync();
+
+            if (solapamiento != null)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = $"No se puede registrar: {solapamiento.NombreEmpleadoRegistrado} ya tiene vacaciones asignadas del {solapamiento.FechaInicio:dd/MM/yyyy} al {solapamiento.FechaFin:dd/MM/yyyy}."
+                });
             }
             try
             {

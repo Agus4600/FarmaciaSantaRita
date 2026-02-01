@@ -1785,21 +1785,27 @@
             ];
 
         // Nombre del archivo corregido
-            const ahora = new Date();
-            const dia = String(ahora.getDate()).padStart(2, '0');
-            const mes = String(ahora.getMonth() + 1).padStart(2, '0');
-            const anio = ahora.getFullYear();
-            const hora = String(ahora.getHours()).padStart(2, '0');
-            const minutos = String(ahora.getMinutes()).padStart(2, '0');
+        const ahora = new Date();
 
-            const nombreArchivo = `Registro Vacaciones ${dia}-${mes}-${anio} ${hora}:${minutos}.xlsx`;
+        // Formateamos los componentes con ceros a la izquierda si es necesario
+        const dia = String(ahora.getDate()).padStart(2, '0');
+        const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+        const anio = ahora.getFullYear();
+        const hora = String(ahora.getHours()).padStart(2, '0');
+        const minutos = String(ahora.getMinutes()).padStart(2, '0');
 
-            const buffer = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = nombreArchivo;
-            link.click();
+        // Construimos el nombre exacto: Registro Vacaciones DD-MM-YYYY HH:mm
+        const nombreArchivo = `Registro Vacaciones ${dia}-${mes}-${anio} ${hora}:${minutos}.xlsx`;
+
+        // Generación y descarga del archivo
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = nombreArchivo;
+        document.body.appendChild(link); // Agregado por seguridad para navegadores modernos
+        link.click();
+        document.body.removeChild(link); // Limpieza
             });
 
             // Selección de filas y check all

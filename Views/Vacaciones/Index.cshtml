@@ -1329,6 +1329,23 @@
             // Calcular días reales del período (corridos)
             const diasReales = Math.floor((finDate - inicioDate) / (1000 * 60 * 60 * 24)) + 1;
 
+            if (diasReales > diasSolicitados) {
+            Swal.fire({
+                title: 'Período mayor al solicitado',
+                html: `Solicitaste <b>${diasSolicitados} días</b>, pero el período elegido tiene <b>${diasReales} días reales</b>.<br><br>
+                       El período no puede ser mayor a los días solicitados.<br>
+                       Ajusta el rango de fechas o aumenta los días solicitados.`,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
+            });
+            document.getElementById('btnPeriodo').focus();
+            return; 
+            }
+
+
+
+
+
             // Validación 1: días solicitados ≤ máximo legal
             const maxLegal = parseInt(elDias.max) || 60;
             if (diasSolicitados > maxLegal) {

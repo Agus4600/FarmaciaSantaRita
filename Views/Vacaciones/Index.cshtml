@@ -1392,65 +1392,37 @@
         const fechaInicioStr = inicioDate.toISOString().split('T')[0];
         const fechaFinStr = finDate.toISOString().split('T')[0];
 
-        let debugMensaje = '';
-        let debugColor = 'success';  // verde por default
-
         try {
             const url = `/Vacaciones/CheckVacacionesSolapadas?idEmpleadoNuevo=${empleadoIdNum}&fechaInicio=${fechaInicioStr}&fechaFin=${fechaFinStr}`;
-            console.log('Intentando llamar:', url);
+            console.log('Verificando solapamiento:', url); // ← podés dejarlo para debug futuro o quitarlo
 
             const response = await fetch(url);
-
             if (!response.ok) {
-                debugMensaje = `Error HTTP: ${response.status} - ${response.statusText}`;
-                debugColor = 'danger';
-                throw new Error(debugMensaje);
+                throw new Error(`HTTP ${response.status}`);
             }
 
             const data = await response.json();
 
             if (!data.permitido) {
-                // Solapamiento real → Swal rojo normal (como ya tenías)
                 Swal.fire({
                     title: '¡Período no permitido!',
                     html: data.mensaje || 'El período se superpone con otra vacación.',
-                    icon: 'error',
                     confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#dc3545'
+                    confirmButtonColor: '#007bff'
                 });
                 btnPeriodo.focus();
                 return;
             }
-
-            // Todo OK → mensaje verde temporal
-            debugMensaje = 'Chequeo OK: No hay solapamientos. Procediendo...';
-            debugColor = 'success';
-
         } catch (err) {
-            console.error('Fallo en chequeo:', err);
-            debugMensaje = `Error al verificar solapamiento: ${err.message || 'Desconocido'}. No se guardó.`;
-            debugColor = 'danger';
-        }
-
-        // Mostrar mensaje temporal (verde o rojo) arriba del formulario
-        const alertDebug = document.createElement('div');
-        alertDebug.className = `alert alert-${debugColor} alert-dismissible fade show mt-3`;
-        alertDebug.innerHTML = `
-            <strong>DEBUG - Verificación:</strong> ${debugMensaje}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        document.querySelector('.bloque-principal').prepend(alertDebug);
-
-        // Desaparece solo después de 8 segundos (opcional)
-        setTimeout(() => {
-            alertDebug.classList.remove('show');
-            alertDebug.classList.add('fade');
-        }, 8000);
-
-        // Si hubo error técnico → no continuar (ya mostramos rojo)
-        if (debugColor === 'danger') {
+            console.error('Error al verificar solapamiento:', err);
+            Swal.fire({
+                title: 'Error al verificar cobertura',
+                text: 'No se pudo comprobar solapamientos. No se guardó el registro.',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
+            });
             btnPeriodo.focus();
-            return;
+            return;  // ← No guardar si falla el chequeo
         }
 
             const datos = {

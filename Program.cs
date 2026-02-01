@@ -58,7 +58,7 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 app.UseSession(); // Mover UseSession después de UseAuthorization o usar solo el mínimo necesario
-
+app.MapControllers();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Login}/{action=Index}/{id?}");

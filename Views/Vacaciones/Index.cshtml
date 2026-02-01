@@ -1627,7 +1627,7 @@
             let totalSolicitados = 0;
             let totalReales = 0;
             let totalFavor = 0;
-            const porEmpleado = {}; // { "Nerea Loza": { solicitados: 0, reales: 0, favor: 0 } }
+            const porEmpleado = {};
 
             filas.forEach(f => {
                 const celdas = f.querySelectorAll('td');
@@ -1656,14 +1656,14 @@
             const workbook = new ExcelJS.Workbook();
             const sheet = workbook.addWorksheet('VACACIONES');
 
-            // Título
+            // Título principal (izquierda)
             sheet.getCell('A1').value = 'REGISTRO DE VACACIONES';
             sheet.mergeCells('A1:D1');
             sheet.getCell('A1').font = { size: 16, bold: true };
             sheet.getCell('A1').alignment = { horizontal: 'center' };
             sheet.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5DC' } };
 
-            // Encabezados de registros
+            // Encabezados registros (izquierda)
             const headers = ['EMPLEADO', 'DÍAS SOLICITADOS', 'PERÍODO', 'DÍAS FAVOR'];
             sheet.getRow(2).values = headers;
             sheet.getRow(2).eachCell(cell => {
@@ -1672,7 +1672,7 @@
                 cell.alignment = { horizontal: 'center' };
             });
 
-            // Datos de registros (columnas A-D)
+            // Datos registros (A3:D...)
             datos.forEach((row, i) => {
                 const rowNumber = 3 + i;
                 sheet.getRow(rowNumber).values = row;
@@ -1682,41 +1682,41 @@
                 });
             });
 
-            // === RESUMEN GENERAL Y POR EMPLEADO EN LA COLUMNA DERECHA (a partir de columna F) ===
+            // === RESUMEN GENERAL Y POR EMPLEADO EN COLUMNA DERECHA (F1 en adelante) ===
 
-            // Fila inicial del resumen general (empezamos en F6)
-            const filaInicioResumen = 6;
-            sheet.getCell(`F${filaInicioResumen}`).value = 'RESUMEN GENERAL';
-            sheet.mergeCells(`F${filaInicioResumen}:I${filaInicioResumen}`);
-            sheet.getCell(`F${filaInicioResumen}`).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-            sheet.getCell(`F${filaInicioResumen}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF006400' } };
-            sheet.getCell(`F${filaInicioResumen}`).alignment = { horizontal: 'center' };
+            // Título RESUMEN GENERAL (F1)
+            sheet.getCell('F1').value = 'RESUMEN GENERAL';
+            sheet.mergeCells('F1:I1');
+            sheet.getCell('F1').font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            sheet.getCell('F1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF33CC99' } }; // tu color #33cc99
+            sheet.getCell('F1').alignment = { horizontal: 'center' };
 
-            // Totales generales (F7:I9)
-            sheet.getCell(`F7`).value = 'Total días solicitados:';
-            sheet.getCell(`G7`).value = totalSolicitados;
-            sheet.getCell(`F8`).value = 'Total días reales tomados:';
-            sheet.getCell(`G8`).value = totalReales;
-            sheet.getCell(`F9`).value = 'Total días favor (suma):';
-            sheet.getCell(`G9`).value = totalFavor;
+            // Totales generales (F2:F4)
+            sheet.getCell('F2').value = 'Total días solicitados:';
+            sheet.getCell('G2').value = totalSolicitados;
+            sheet.getCell('F3').value = 'Total días reales tomados:';
+            sheet.getCell('G3').value = totalReales;
+            sheet.getCell('F4').value = 'Total días favor (suma):';
+            sheet.getCell('G4').value = totalFavor;
 
-            // Formato para totales
-            ['F7', 'F8', 'F9'].forEach(cell => {
+            // Formato totales
+            ['F2', 'F3', 'F4'].forEach(cell => {
                 sheet.getCell(cell).font = { bold: true };
                 sheet.getCell(cell).alignment = { horizontal: 'right' };
             });
-            ['G7', 'G8', 'G9'].forEach(cell => {
+            ['G2', 'G3', 'G4'].forEach(cell => {
                 sheet.getCell(cell).numFmt = '#,##0';
                 sheet.getCell(cell).alignment = { horizontal: 'center' };
             });
 
-            // Resumen por empleado (empieza en F11)
-            sheet.getCell(`F11`).value = 'RESUMEN POR EMPLEADO';
-            sheet.mergeCells(`F11:I11`);
-            sheet.getCell(`F11`).font = { bold: true };
-            sheet.getCell(`F11`).alignment = { horizontal: 'center' };
+            // Título RESUMEN POR EMPLEADO (F6)
+            sheet.getCell('F6').value = 'RESUMEN POR EMPLEADO';
+            sheet.mergeCells('F6:I6');
+            sheet.getCell('F6').font = { bold: true };
+            sheet.getCell('F6').alignment = { horizontal: 'center' };
 
-            let filaActual = 12;
+            // Datos por empleado (F7 en adelante)
+            let filaActual = 7;
             for (const [empleado, vals] of Object.entries(porEmpleado)) {
                 sheet.getCell(`F${filaActual}`).value = empleado;
                 sheet.getCell(`G${filaActual}`).value = vals.solicitados;
@@ -1725,22 +1725,23 @@
                 filaActual++;
             }
 
-            // Formato resumen por empleado
-            for (let i = 12; i < filaActual; i++) {
+            // Formato por empleado
+            for (let i = 7; i < filaActual; i++) {
                 sheet.getCell(`F${i}`).alignment = { horizontal: 'left' };
                 ['G${i}', 'H${i}', 'I${i}'].forEach(c => {
-                    sheet.getCell(c.replace('${i}', i)).numFmt = '#,##0';
-                    sheet.getCell(c.replace('${i}', i)).alignment = { horizontal: 'center' };
+                    const col = c.replace('${i}', i);
+                    sheet.getCell(col).numFmt = '#,##0';
+                    sheet.getCell(col).alignment = { horizontal: 'center' };
                 });
             }
 
-            // Anchos de columnas (izquierda: registros, derecha: resumen)
+            // Anchos de columnas (izquierda registros, derecha resumen)
             sheet.columns = [
                 { width: 30 }, // A - Empleado
                 { width: 18 }, // B - Solicitados
                 { width: 35 }, // C - Período
                 { width: 15 }, // D - Favor
-                { width: 5  }, // E - vacío (separador)
+                { width: 10  }, // E - separador vacío
                 { width: 30 }, // F - Resumen empleado
                 { width: 18 }, // G - Solicitados
                 { width: 18 }, // H - Reales

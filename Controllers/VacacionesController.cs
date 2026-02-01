@@ -160,6 +160,7 @@ namespace FarmaciaSantaRita.Controllers
         [HttpGet("CheckVacacionesSolapadas")]  // ← Este nombre debe coincidir con el fetch en JS
         public async Task<IActionResult> CheckVacacionesSolapadas(int idEmpleadoNuevo, string fechaInicio, string fechaFin)
         {
+            Console.WriteLine($"CheckVacacionesSolapadas llamado: id={idEmpleadoNuevo}, inicio={fechaInicio}, fin={fechaFin}");
             if (idEmpleadoNuevo <= 0 || string.IsNullOrEmpty(fechaInicio) || string.IsNullOrEmpty(fechaFin))
                 return Json(new { permitido = false, mensaje = "Datos incompletos" });
 

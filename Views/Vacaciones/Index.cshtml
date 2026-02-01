@@ -1682,38 +1682,51 @@
                 });
             });
 
-            // === RESUMEN GENERAL Y POR EMPLEADO EN COLUMNA DERECHA (desde F1) ===
+            // === RESUMEN GENERAL (F1:G4) ===
+            const verde = 'FF33CC99'; // #33cc99
 
-            const verde = 'FF33CC99';  // #33cc99 en formato ARGB (sin #)
-
-            // RESUMEN GENERAL (F1:I4)
+            // Título RESUMEN GENERAL (F1:G1)
             sheet.getCell('F1').value = 'RESUMEN GENERAL';
             sheet.mergeCells('F1:G1');
-            sheet.getCell('F1').font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            sheet.getCell('F1').font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
             sheet.getCell('F1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
             sheet.getCell('F1').alignment = { horizontal: 'center', vertical: 'middle' };
 
-            // Totales (F2:I4)
+            // Etiquetas y valores (F2:G4)
             sheet.getCell('F2').value = 'Total días solicitados:';
             sheet.getCell('G2').value = totalSolicitados;
+
             sheet.getCell('F3').value = 'Total días reales tomados:';
             sheet.getCell('G3').value = totalReales;
+
             sheet.getCell('F4').value = 'Total días favor (suma):';
             sheet.getCell('G4').value = totalFavor;
 
-            // Aplicar estilo verde + blanco + negrita + centrado a todo F2:I4
-            for (let row = 2; row <= 4; row++) {
+            // Aplicar estilo verde + blanco + negrita + centrado a F1:G4
+            for (let row = 1; row <= 4; row++) {
                 ['F', 'G'].forEach(col => {
                     const cell = sheet.getCell(`${col}${row}`);
                     cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
                     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
                     cell.alignment = { horizontal: 'center', vertical: 'middle' };
                 });
-                // Fusionar G con I para que quede más ancho el valor
-                sheet.mergeCells(`G${row}:I${row}`);
             }
 
-            // RESUMEN POR EMPLEADO (F6:I...)
+            // Opcional: bordes blancos alrededor del bloque verde
+            const borderStyle = { style: 'thin', color: { argb: 'FFFFFFFF' } };
+            for (let row = 1; row <= 4; row++) {
+                ['F', 'G'].forEach(col => {
+                    const cell = sheet.getCell(`${col}${row}`);
+                    cell.border = {
+                        top: borderStyle,
+                        left: borderStyle,
+                        bottom: borderStyle,
+                        right: borderStyle
+                    };
+                });
+            }
+
+            // === RESUMEN POR EMPLEADO (F6:I...) ===
             sheet.getCell('F6').value = 'RESUMEN POR EMPLEADO';
             sheet.mergeCells('F6:I6');
             sheet.getCell('F6').font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -1727,7 +1740,7 @@
                 sheet.getCell(`H${filaActual}`).value = vals.reales;
                 sheet.getCell(`I${filaActual}`).value = vals.favor;
 
-                // Aplicar estilo verde + blanco + negrita + centrado a toda la fila
+                // Estilo verde + blanco + negrita + centrado a toda la fila
                 ['F', 'G', 'H', 'I'].forEach(col => {
                     const cell = sheet.getCell(`${col}${filaActual}`);
                     cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -1746,9 +1759,9 @@
                 { width: 15 }, // D - Favor
                 { width: 10  }, // E - separador
                 { width: 30 }, // F - Resumen empleado
-                { width: 18 }, // G - Solicitados
+                { width: 18 }, // G - Solicitados / Totales
                 { width: 18 }, // H - Reales
-                { width: 15 }  // I - Favor
+                { width: 15 }  // I - Favor (por empleado)
             ];
 
             // Descarga

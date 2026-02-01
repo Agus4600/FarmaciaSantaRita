@@ -1766,8 +1766,8 @@
 
 
 		// BOTON GUARDAR//
-				document.getElementById("btnGuardar").addEventListener("click", async () => {
-			// 1. Obtener fecha/hora y nombre del archivo (con dos puntos en la hora)
+					document.getElementById("btnGuardar").addEventListener("click", async () => {
+			// 1. Nombre del archivo
 			const ahora = new Date();
 			const dia = String(ahora.getDate()).padStart(2, '0');
 			const mes = String(ahora.getMonth() + 1).padStart(2, '0');
@@ -1776,14 +1776,13 @@
 			const minutos = String(ahora.getMinutes()).padStart(2, '0');
 			const nombreArchivo = `Registro Inasistencia ${dia}-${mes}-${anio} ${hora}:${minutos}.xlsx`;
 
-			// 2. Preparar datos de la tabla actual (solo para mostrar registros visibles)
+			// 2. Datos de la tabla actual
 			const datosTabla = [];
 			const filasDatos = document.querySelectorAll("#tablaInasistencias tbody tr[data-inasistencia-id]:not([data-inasistencia-id='0'])");
 			if (filasDatos.length === 0) {
 				Swal.fire('Sin datos', 'No hay registros para exportar.', 'warning');
 				return;
 			}
-
 			filasDatos.forEach(fila => {
 				const celdas = fila.querySelectorAll("td");
 				if (celdas.length >= 4) {
@@ -1791,39 +1790,35 @@
 				}
 			});
 
-			// 3. Obtener faltas totales por empleado desde el servidor
-					let faltasPorEmpleado = [];
-		try {
-			console.log('Intentando obtener faltas totales... URL: /Inasistencia/GetFaltasTotalesPorEmpleado');
-			const response = await fetch('/Inasistencia/GetFaltasTotalesPorEmpleado');
-			console.log('Respuesta HTTP:', response.status, response.statusText);
-
-			if (response.ok) {
-				faltasPorEmpleado = await response.json();
-				console.log('Faltas recibidas del servidor:', faltasPorEmpleado);
-			} else {
-				const errorText = await response.text();
-				console.error('Error en respuesta:', response.status, errorText);
-				Swal.fire('Advertencia', 'No se pudieron cargar las faltas totales (error ' + response.status + ')', 'warning');
+			// 3. Faltas totales por empleado
+			let faltasPorEmpleado = [];
+			try {
+				const response = await fetch('/Inasistencia/GetFaltasTotalesPorEmpleado');
+				if (response.ok) {
+					faltasPorEmpleado = await response.json();
+				}
+			} catch (err) {
+				console.error('Error al obtener faltas por empleado:', err);
 			}
-		} catch (err) {
-			console.error('Error en fetch de faltas totales:', err);
-			Swal.fire('Error', 'No se pudo conectar al servidor para obtener faltas totales.', 'error');
-		}
 
-		// Si está vacío, mostramos mensaje en consola también
-		if (faltasPorEmpleado.length === 0) {
-			console.warn('No se recibieron faltas totales (array vacío)');
-		}
+			// 4. Faltas totales por turno (nuevo)
+			let faltasPorTurno = [];
+			try {
+				const response = await fetch('/Inasistencia/GetFaltasPorTurno');
+				if (response.ok) {
+					faltasPorTurno = await response.json();
+				}
+			} catch (err) {
+				console.error('Error al obtener faltas por turno:', err);
+			}
 
-			// 4. Crear Workbook y Worksheet
+			// 5. Crear Workbook y Worksheet
 			const workbook = new ExcelJS.Workbook();
 			const worksheet = workbook.addWorksheet('REGISTRO DE INASISTENCIAS');
-
 			const borderNegro = { style: 'thin', color: { argb: 'FF000000' } };
-			const verde = 'FF33CC99'; // #33cc99
+			const verde = 'FF33CC99';
 
-			// 5. Título principal (A1:D1) con borde
+			// 6. Título principal (A1:D1)
 			worksheet.addRow(['REGISTRO DE INASISTENCIAS']);
 			worksheet.mergeCells('A1:D1');
 			const titleCell = worksheet.getCell('A1');
@@ -1832,17 +1827,17 @@
 			titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5DC' } };
 			titleCell.border = borderNegro;
 
-			// 6. Encabezados tabla (A2:D2) con bordes
+			// 7. Encabezados tabla (A2:D2)
 			const headers = ["FECHA", "EMPLEADO", "TURNO", "MOTIVO"];
 			const headerRow = worksheet.addRow(headers);
-			headerRow.eachCell((cell, colNumber) => {
+			headerRow.eachCell(cell => {
 				cell.font = { bold: true };
 				cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC080' } };
 				cell.alignment = { horizontal: 'center', vertical: 'middle' };
 				cell.border = borderNegro;
 			});
 
-			// 7. Datos de la tabla (A3:D...) con bordes y alternancia
+			// 8. Datos de la tabla (A3:D...)
 			datosTabla.forEach((rowData, index) => {
 				const row = worksheet.addRow(rowData);
 				row.eachCell(cell => {
@@ -1852,53 +1847,74 @@
 				});
 			});
 
-			// 8. RESUMEN DE FALTAS TOTALES (F1:G...)
+			// 9. RESUMEN POR EMPLEADO (F1:G...)
 			worksheet.getCell('F1').value = 'FALTAS EN TOTAL';
 			worksheet.mergeCells('F1:G1');
-			const resumenTitle = worksheet.getCell('F1');
-			resumenTitle.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-			resumenTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
-			resumenTitle.alignment = { horizontal: 'center', vertical: 'middle' };
-			resumenTitle.border = borderNegro;
+			const resumenEmpleado = worksheet.getCell('F1');
+			resumenEmpleado.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+			resumenEmpleado.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
+			resumenEmpleado.alignment = { horizontal: 'center', vertical: 'middle' };
+			resumenEmpleado.border = borderNegro;
 
-			// Lista de empleados y faltas (F2:G...)
-			let filaFaltas = 2;
+			let filaEmpleado = 2;
 			faltasPorEmpleado.forEach(item => {
-				worksheet.getCell(`F${filaFaltas}`).value = item.nombre || 'Sin nombre';
-				worksheet.getCell(`G${filaFaltas}`).value = item.faltas || 0;
-
+				worksheet.getCell(`F${filaEmpleado}`).value = item.nombre || 'Sin nombre';
+				worksheet.getCell(`G${filaEmpleado}`).value = item.faltas || 0;
 				['F', 'G'].forEach(col => {
-					const cell = worksheet.getCell(`${col}${filaFaltas}`);
+					const cell = worksheet.getCell(`${col}${filaEmpleado}`);
 					cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
 					cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
 					cell.alignment = { horizontal: 'center', vertical: 'middle' };
 					cell.border = borderNegro;
 				});
-
-				filaFaltas++;
+				filaEmpleado++;
 			});
 
-			// Si no hay faltas totales, mensaje informativo
-			if (faltasPorEmpleado.length === 0) {
-				worksheet.getCell('F2').value = 'No hay faltas registradas aún';
-				worksheet.mergeCells('F2:G2');
-				worksheet.getCell('F2').font = { italic: true };
-				worksheet.getCell('F2').alignment = { horizontal: 'center' };
-				worksheet.getCell('F2').border = borderNegro;
-			}
+			// 10. RESUMEN POR TURNO (I1:J...) - ¡Nuevo bloque!
+			worksheet.getCell('I1').value = 'FALTAS POR TURNO';
+			worksheet.mergeCells('I1:J1');
+			const resumenTurno = worksheet.getCell('I1');
+			resumenTurno.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+			resumenTurno.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
+			resumenTurno.alignment = { horizontal: 'center', vertical: 'middle' };
+			resumenTurno.border = borderNegro;
 
-			// 9. Anchos de columnas
+			// Turnos fijos (siempre en este orden)
+			const turnosOrdenados = [
+				{ turno: 'Mañana', total: faltasPorTurno.find(t => t.turno === 'Mañana')?.total || 0 },
+				{ turno: 'Tarde', total: faltasPorTurno.find(t => t.turno === 'Tarde')?.total || 0 },
+				{ turno: 'Completo', total: faltasPorTurno.find(t => t.turno === 'Completo')?.total || 0 }
+			];
+
+			let filaTurno = 2;
+			turnosOrdenados.forEach(item => {
+				worksheet.getCell(`I${filaTurno}`).value = item.turno;
+				worksheet.getCell(`J${filaTurno}`).value = item.total;
+				['I', 'J'].forEach(col => {
+					const cell = worksheet.getCell(`${col}${filaTurno}`);
+					cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+					cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
+					cell.alignment = { horizontal: 'center', vertical: 'middle' };
+					cell.border = borderNegro;
+				});
+				filaTurno++;
+			});
+
+			// 11. Anchos de columnas (ajustados para el nuevo bloque)
 			worksheet.columns = [
 				{ width: 15 }, // A - Fecha
 				{ width: 25 }, // B - Empleado
 				{ width: 15 }, // C - Turno
 				{ width: 30 }, // D - Motivo
-				{ width: 10  }, // E - separador
-				{ width: 30 }, // F - Nombre empleado (faltas)
-				{ width: 15 }  // G - Cantidad faltas
+				{ width: 10 }, // E - separador
+				{ width: 30 }, // F - Nombre empleado
+				{ width: 15 }, // G - Faltas empleado
+				{ width: 10 }, // H - separador
+				{ width: 20 }, // I - Turno
+				{ width: 15 }  // J - Total faltas por turno
 			];
 
-			// 10. Descarga
+			// 12. Descarga
 			const buffer = await workbook.xlsx.writeBuffer();
 			const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 			const link = document.createElement('a');

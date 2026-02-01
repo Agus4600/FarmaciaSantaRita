@@ -157,7 +157,7 @@ namespace FarmaciaSantaRita.Controllers
 
 
 
-        [HttpGet("CheckVacacionesSolapadas")]
+        [HttpGet("CheckVacacionesSolapadas")]  // ← Este nombre debe coincidir con el fetch en JS
         public async Task<IActionResult> CheckVacacionesSolapadas(int idEmpleadoNuevo, string fechaInicio, string fechaFin)
         {
             if (idEmpleadoNuevo <= 0 || string.IsNullOrEmpty(fechaInicio) || string.IsNullOrEmpty(fechaFin))
@@ -170,7 +170,7 @@ namespace FarmaciaSantaRita.Controllers
             inicioNuevo = DateTime.SpecifyKind(inicioNuevo.Date, DateTimeKind.Utc);
             finNuevo = DateTime.SpecifyKind(finNuevo.Date, DateTimeKind.Utc);
 
-            // 1. Solapamiento con vacaciones DEL MISMO empleado
+            // 1. Solapamiento con el MISMO empleado
             var solapaMismo = await _context.Vacaciones
                 .AnyAsync(v => v.Idusuario == idEmpleadoNuevo &&
                                v.FechaInicio <= finNuevo &&
@@ -182,19 +182,17 @@ namespace FarmaciaSantaRita.Controllers
                     .Where(v => v.Idusuario == idEmpleadoNuevo &&
                                 v.FechaInicio <= finNuevo &&
                                 v.FechaFin >= inicioNuevo)
-                    .OrderBy(v => v.FechaInicio)
-                    .Select(v => new { v.NombreEmpleadoRegistrado, Inicio = v.FechaInicio.ToString("dd/MM/yyyy"), Fin = v.FechaFin.ToString("dd/MM/yyyy") })
+                    .Select(v => new { Inicio = v.FechaInicio.ToString("dd/MM/yyyy"), Fin = v.FechaFin.ToString("dd/MM/yyyy") })
                     .FirstOrDefaultAsync();
 
                 return Json(new
                 {
                     permitido = false,
-                    tipo = "mismo_empleado",
-                    mensaje = $"¡Atención! {conflicto?.NombreEmpleadoRegistrado} ya tiene vacaciones del {conflicto?.Inicio} al {conflicto?.Fin}. No se puede superponer."
+                    mensaje = $"¡Atención! Ya tiene vacaciones del {conflicto?.Inicio} al {conflicto?.Fin}. No se puede superponer."
                 });
             }
 
-            // 2. Solapamiento con vacaciones de OTRO empleado (cobertura total)
+            // 2. Solapamiento con CUALQUIER OTRO empleado (cobertura total)
             var solapaOtro = await _context.Vacaciones
                 .AnyAsync(v => v.Idusuario != idEmpleadoNuevo &&
                                v.FechaInicio <= finNuevo &&
@@ -206,15 +204,13 @@ namespace FarmaciaSantaRita.Controllers
                     .Where(v => v.Idusuario != idEmpleadoNuevo &&
                                 v.FechaInicio <= finNuevo &&
                                 v.FechaFin >= inicioNuevo)
-                    .OrderBy(v => v.FechaInicio)
-                    .Select(v => new { v.NombreEmpleadoRegistrado, Inicio = v.FechaInicio.ToString("dd/MM/yyyy"), Fin = v.FechaFin.ToString("dd/MM/yyyy") })
+                    .Select(v => new { Nombre = v.NombreEmpleadoRegistrado, Inicio = v.FechaInicio.ToString("dd/MM/yyyy"), Fin = v.FechaFin.ToString("dd/MM/yyyy") })
                     .FirstOrDefaultAsync();
 
                 return Json(new
                 {
                     permitido = false,
-                    tipo = "otro_empleado",
-                    mensaje = $"¡Atención! {conflictoOtro?.NombreEmpleadoRegistrado} ya tiene vacaciones del {conflictoOtro?.Inicio} al {conflictoOtro?.Fin}. No se puede registrar otro empleado en este período."
+                    mensaje = $"¡Atención! {conflictoOtro?.Nombre} ya tiene vacaciones del {conflictoOtro?.Inicio} al {conflictoOtro?.Fin}. No se puede registrar otro empleado en este período."
                 });
             }
 

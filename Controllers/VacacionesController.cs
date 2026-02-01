@@ -156,8 +156,8 @@ namespace FarmaciaSantaRita.Controllers
 
 
 
-
-        [HttpGet("CheckVacacionesSolapadas")]  // ← Este nombre debe coincidir con el fetch en JS
+        // Ruta EXACTA que debe coincidir con el fetch en JS: /Vacaciones/CheckVacacionesSolapadas
+        [HttpGet("CheckVacacionesSolapadas")]  // ← Correcto, con la "a"
         public async Task<IActionResult> CheckVacacionesSolapadas(int idEmpleadoNuevo, string fechaInicio, string fechaFin)
         {
             Console.WriteLine($"CheckVacacionesSolapadas llamado: id={idEmpleadoNuevo}, inicio={fechaInicio}, fin={fechaFin}");

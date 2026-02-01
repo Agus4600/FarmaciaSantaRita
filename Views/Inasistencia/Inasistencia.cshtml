@@ -1865,8 +1865,8 @@
 				const cellNombre = worksheet.getCell(`F${filaEmp}`);
 				const cellTotal = worksheet.getCell(`G${filaEmp}`);
 
-				cellNombre.value = item.nombreEmpleado || item.nombre || 'Sin nombre';
-				cellTotal.value = item.totalFaltas || item.total || 0;
+				cellN.value = item.nombreEmpleado || item.nombre;
+				cellT.value = item.total || 0;
 
 				[cellNombre, cellTotal].forEach(c => {
 					c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -1887,16 +1887,16 @@
 			resumenTurnoHeader.border = borderNegro;
 
 			// Normalización de turnos para el Excel
-			const turnosFijos = ['Mañana', 'Tarde', 'Completo'];
-			turnosFijos.forEach((nombreTurno, i) => {
+			const turnosParaExcel = ['Mañana', 'Tarde', 'Completo'];
+			turnosParaExcel.forEach((tNom, index) => {
 				const filaT = i + 2;
-				const infoTurno = faltasPorTurno.find(t => (t.turno || '').trim().toLowerCase() === nombreTurno.toLowerCase());
+				const info = faltasPorTurno.find(x => x.turno === tNom);
 
 				const cellT = worksheet.getCell(`I${filaT}`);
 				const cellV = worksheet.getCell(`J${filaT}`);
 
-				cellT.value = nombreTurno;
-				cellV.value = infoTurno ? infoTurno.total : 0;
+				cellT.value = tNom;
+				cellV.value = info ? info.total : 0; // Usamos 'total'
 
 				[cellT, cellV].forEach(c => {
 					c.font = { bold: true, color: { argb: 'FFFFFFFF' } };

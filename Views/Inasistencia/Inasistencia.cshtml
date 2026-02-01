@@ -1790,7 +1790,7 @@
 				}
 			});
 
-			// 3. Faltas totales por empleado
+			// 3. Faltas por empleado
 			let faltasPorEmpleado = [];
 			try {
 				const response = await fetch('/Inasistencia/GetFaltasTotalesPorEmpleado');
@@ -1801,7 +1801,7 @@
 				console.error('Error al obtener faltas por empleado:', err);
 			}
 
-			// 4. Faltas totales por turno (nuevo)
+			// 4. Faltas por turno
 			let faltasPorTurno = [];
 			try {
 				const response = await fetch('/Inasistencia/GetFaltasPorTurno');
@@ -1818,6 +1818,16 @@
 			const borderNegro = { style: 'thin', color: { argb: 'FF000000' } };
 			const verde = 'FF33CC99';
 
+			// Función helper para aplicar bordes a un rango (más visible)
+			const aplicarBordesRango = (minRow, maxRow, minCol, maxCol) => {
+				for (let row = minRow; row <= maxRow; row++) {
+					for (let col = minCol; col <= maxCol; col++) {
+						const cell = worksheet.getCell(row, col);
+						cell.border = borderNegro;
+					}
+				}
+			};
+
 			// 6. Título principal (A1:D1)
 			worksheet.addRow(['REGISTRO DE INASISTENCIAS']);
 			worksheet.mergeCells('A1:D1');
@@ -1825,7 +1835,7 @@
 			titleCell.font = { size: 14, bold: true };
 			titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
 			titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5DC' } };
-			titleCell.border = borderNegro;
+			aplicarBordesRango(1, 1, 1, 4); // Bordes en título principal
 
 			// 7. Encabezados tabla (A2:D2)
 			const headers = ["FECHA", "EMPLEADO", "TURNO", "MOTIVO"];
@@ -1834,8 +1844,8 @@
 				cell.font = { bold: true };
 				cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC080' } };
 				cell.alignment = { horizontal: 'center', vertical: 'middle' };
-				cell.border = borderNegro;
 			});
+			aplicarBordesRango(2, 2, 1, 4); // Bordes en encabezados
 
 			// 8. Datos de la tabla (A3:D...)
 			datosTabla.forEach((rowData, index) => {
@@ -1843,9 +1853,9 @@
 				row.eachCell(cell => {
 					cell.alignment = { horizontal: 'center', vertical: 'middle' };
 					cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: index % 2 === 0 ? 'FFDDEEFF' : 'FFCCFFFF' } };
-					cell.border = borderNegro;
 				});
 			});
+			aplicarBordesRango(3, 2 + datosTabla.length, 1, 4); // Bordes en todos los datos
 
 			// 9. RESUMEN POR EMPLEADO (F1:G...)
 			worksheet.getCell('F1').value = 'FALTAS EN TOTAL';
@@ -1854,7 +1864,6 @@
 			resumenEmpleado.font = { bold: true, color: { argb: 'FFFFFFFF' } };
 			resumenEmpleado.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
 			resumenEmpleado.alignment = { horizontal: 'center', vertical: 'middle' };
-			resumenEmpleado.border = borderNegro;
 
 			let filaEmpleado = 2;
 			faltasPorEmpleado.forEach(item => {
@@ -1865,53 +1874,45 @@
 					cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
 					cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
 					cell.alignment = { horizontal: 'center', vertical: 'middle' };
-					cell.border = borderNegro;
 				});
 				filaEmpleado++;
 			});
+			aplicarBordesRango(1, filaEmpleado - 1, 6, 7); // Bordes en todo el bloque F:G
 
-			// 10. RESUMEN POR TURNO (I1:J...) - ¡Nuevo bloque!
+			// 10. RESUMEN POR TURNO (I1:J...)
 			worksheet.getCell('I1').value = 'FALTAS POR TURNO';
 			worksheet.mergeCells('I1:J1');
 			const resumenTurno = worksheet.getCell('I1');
 			resumenTurno.font = { bold: true, color: { argb: 'FFFFFFFF' } };
 			resumenTurno.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
 			resumenTurno.alignment = { horizontal: 'center', vertical: 'middle' };
-			resumenTurno.border = borderNegro;
 
-			// Turnos fijos (siempre en este orden)
-			const turnosOrdenados = [
-				{ turno: 'Mañana', total: faltasPorTurno.find(t => t.turno === 'Mañana')?.total || 0 },
-				{ turno: 'Tarde', total: faltasPorTurno.find(t => t.turno === 'Tarde')?.total || 0 },
-				{ turno: 'Completo', total: faltasPorTurno.find(t => t.turno === 'Completo')?.total || 0 }
-			];
+					// Turnos fijos con normalización (ignorar mayúsculas y espacios)
+		const turnosOrdenados = [
+			{ turno: 'Mañana', total: faltasPorTurno.find(t => (t.turno || '').trim().toLowerCase().includes('mañana'))?.total || 0 },
+			{ turno: 'Tarde', total: faltasPorTurno.find(t => (t.turno || '').trim().toLowerCase().includes('tarde'))?.total || 0 },
+			{ turno: 'Completo', total: faltasPorTurno.find(t => (t.turno || '').trim().toLowerCase().includes('completo'))?.total || 0 }
+		];
 
-			let filaTurno = 2;
-			turnosOrdenados.forEach(item => {
-				worksheet.getCell(`I${filaTurno}`).value = item.turno;
-				worksheet.getCell(`J${filaTurno}`).value = item.total;
-				['I', 'J'].forEach(col => {
-					const cell = worksheet.getCell(`${col}${filaTurno}`);
-					cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-					cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
-					cell.alignment = { horizontal: 'center', vertical: 'middle' };
-					cell.border = borderNegro;
-				});
-				filaTurno++;
+		let filaTurno = 2;
+		turnosOrdenados.forEach(item => {
+			worksheet.getCell(`I${filaTurno}`).value = item.turno;
+			worksheet.getCell(`J${filaTurno}`).value = item.total;
+			['I', 'J'].forEach(col => {
+				const cell = worksheet.getCell(`${col}${filaTurno}`);
+				cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+				cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
+				cell.alignment = { horizontal: 'center', vertical: 'middle' };
+				cell.border = borderNegro;
 			});
+			filaTurno++;
+		});
+			aplicarBordesRango(1, filaTurno - 1, 9, 10); // Bordes en todo el bloque I:J
 
-			// 11. Anchos de columnas (ajustados para el nuevo bloque)
+			// 11. Anchos de columnas
 			worksheet.columns = [
-				{ width: 15 }, // A - Fecha
-				{ width: 25 }, // B - Empleado
-				{ width: 15 }, // C - Turno
-				{ width: 30 }, // D - Motivo
-				{ width: 10 }, // E - separador
-				{ width: 30 }, // F - Nombre empleado
-				{ width: 15 }, // G - Faltas empleado
-				{ width: 10 }, // H - separador
-				{ width: 20 }, // I - Turno
-				{ width: 15 }  // J - Total faltas por turno
+				{ width: 15 }, { width: 25 }, { width: 15 }, { width: 30 }, { width: 10 },
+				{ width: 30 }, { width: 15 }, { width: 10 }, { width: 20 }, { width: 15 }
 			];
 
 			// 12. Descarga

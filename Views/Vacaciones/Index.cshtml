@@ -1367,22 +1367,45 @@
                     return;
                 }
 
+
+                const empleadoIdNum = parseInt(empleadoId);
+                if (isNaN(empleadoIdNum) || empleadoIdNum <= 0) {
+                Swal.fire('Error', 'ID de empleado inválido. Selecciona nuevamente.', 'error');
+                elEmpleado.focus();
+                return;
+                }
+
+
+
                 // 4. Chequeo de solapamiento
                 const fechaInicioStr = inicioDate.toISOString().split('T')[0];
                 const fechaFinStr = finDate.toISOString().split('T')[0];
 
+                let solapamientoDetectado = false;
+
                 try {
                     const respSolapa = await fetch(`/Vacaciones/CheckSolapamiento?idEmpleado=${empleadoId}&fechaInicio=${fechaInicioStr}&fechaFin=${fechaFinStr}`);
-                    const dataSolapa = await respSolapa.json();
+                    
+                    console.log('Llamando a:', url);
+                    const respSolapa = await fetch(url);
 
+                    if (!respSolapa.ok) {
+                    console.warn('Respuesta no OK:', respSolapa.status, respSolapa.statusText);
+                    throw new Error(`HTTP ${respSolapa.status}`);
+                    }
+
+
+
+                    const dataSolapa = await respSolapa.json();
                     if (dataSolapa.solapamiento) {
+                        solapamientoDetectado = true;
                         Swal.fire({
                             title: '¡Solapamiento detectado!',
                             html: dataSolapa.mensaje || 'El período se superpone con otra vacación del empleado.',
                             confirmButtonText: 'Entendido',
                             confirmButtonColor: '#dc3545'
                         });
-                        btnPeriodo.focus();
+                        document.getElementById('btnPeriodo').focus();
                         return;
                     }
                 } catch (err) {
@@ -1397,7 +1420,7 @@
                         cancelButtonColor: '#007bff'
                     });
                     if (!continuar.isConfirmed) {
-                        btnPeriodo.focus();
+                        document.getElementById('btnPeriodo').focus();
                         return;
                     }
                 }

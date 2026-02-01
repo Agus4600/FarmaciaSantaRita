@@ -1291,194 +1291,192 @@
 
                 // Validación y lógica completa de Agregar
 
-            document.getElementById('btnAgregar').addEventListener('click', async function () {
-                const elEmpleado = document.getElementById('empleadoSelect');
-                const elDias = document.getElementById('diasInput');
-                const btnPeriodo = document.getElementById('btnPeriodo');
+            document.getElementById('btnAgregar').addEventListener('click', async function (e) {
+            const elEmpleado = document.getElementById('empleadoSelect');
+            const elDias = document.getElementById('diasInput');
+            const btnPeriodo = document.getElementById('btnPeriodo');
 
-                if (!elEmpleado || !elDias || !btnPeriodo) {
-                    Swal.fire('Error', 'No se encontraron los campos necesarios.', 'error');
-                    return;
-                }
-
-                const empleadoId = elEmpleado.value?.trim() || '';
-                const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.getAttribute('data-nombre') || '';
-                const diasSolicitados = parseInt(elDias.value) || 0;
-                const periodoTexto = btnPeriodo.textContent.trim();
-
-                if (!empleadoId) {
-                    Swal.fire('Error', 'Seleccione un empleado', 'error');
-                    elEmpleado.focus();
-                    return;
-                }
-
-                if (periodoTexto === 'dd/mm/yyyy - dd/mm/yyyy') {
-                    Swal.fire('Error', 'Seleccione el período de vacaciones', 'error');
-                    btnPeriodo.focus();
-                    return;
-                }
-
-                const [desde, hasta] = periodoTexto.split(' - ');
-                const inicioDate = new Date(desde.split('/').reverse().join('-'));
-                const finDate = new Date(hasta.split('/').reverse().join('-'));
-
-                if (isNaN(inicioDate) || isNaN(finDate) || finDate < inicioDate) {
-                    Swal.fire('Error', 'Fechas inválidas o fin anterior al inicio', 'error');
-                    btnPeriodo.focus();
-                    return;
-                }
-
-                const diasReales = Math.floor((finDate - inicioDate) / (1000 * 60 * 60 * 24)) + 1;
-
-                // 1. Días solicitados ≤ máximo legal
-                const maxLegal = parseInt(elDias.max) || 60;
-                if (diasSolicitados > maxLegal) {
-                    Swal.fire({
-                        title: 'Exceso de días solicitados',
-                        html: `No se pueden solicitar más de <b>${maxLegal} días</b> según antigüedad (LCT).<br>Días solicitados: ${diasSolicitados}`,
-                        confirmButtonText: 'Entendido',
-                        confirmButtonColor: '#007bff'
-                    });
-                    elDias.focus();
-                    return;
-                }
-
-                // 2. Días reales ≤ máximo legal
-                if (diasReales > maxLegal) {
-                    Swal.fire({
-                        title: 'Período demasiado largo',
-                        html: `El período tiene <b>${diasReales} días corridos</b>, pero solo corresponden <b>${maxLegal} días</b>.<br>Reduce el rango.`,
-                        confirmButtonText: 'Entendido',
-                        confirmButtonColor: '#007bff'
-                    });
-                    btnPeriodo.focus();
-                    return;
-                }
-
-                // 3. Días reales ≤ días solicitados (tu nueva regla)
-                if (diasReales > diasSolicitados) {
-                    Swal.fire({
-                        title: 'Período mayor al solicitado',
-                        html: `Solicitaste <b>${diasSolicitados} días</b>, pero el período tiene <b>${diasReales} días reales</b>.<br>Ajusta el rango o los días.`,
-                        confirmButtonText: 'Entendido',
-                        confirmButtonColor: '#007bff'
-                    });
-                    btnPeriodo.focus();
-                    return;
-                }
-
-
-                const empleadoIdNum = parseInt(empleadoId);
-                if (isNaN(empleadoIdNum) || empleadoIdNum <= 0) {
-                Swal.fire('Error', 'ID de empleado inválido. Selecciona nuevamente.', 'error');
-                elEmpleado.focus();
+            if (!elEmpleado || !elDias || !btnPeriodo) {
+                Swal.fire('Error', 'No se encontraron los campos necesarios.', 'error');
                 return;
-                }
+            }
 
+            const empleadoId = elEmpleado.value?.trim() || '';
+            const empleadoNombre = elEmpleado.options[elEmpleado.selectedIndex]?.getAttribute('data-nombre') || '';
+            const diasSolicitados = parseInt(elDias.value) || 0;
+            const periodoTexto = btnPeriodo.textContent.trim();
 
+            // Validaciones básicas
+            if (!empleadoId || empleadoId === '') {
+                Swal.fire('Error', 'Seleccione un empleado', 'error');
+                return;
+            }
 
-                // 4. Chequeo de solapamiento
-                const fechaInicioStr = inicioDate.toISOString().split('T')[0];
-                const fechaFinStr = finDate.toISOString().split('T')[0];
+            if (periodoTexto === 'dd/mm/yyyy - dd/mm/yyyy') {
+                Swal.fire('Error', 'Seleccione el período de vacaciones', 'error');
+                return;
+            }
 
-                let solapamientoDetectado = false;
+            const [desde, hasta] = periodoTexto.split(' - ');
+            const inicioDate = new Date(desde.split('/').reverse().join('-'));
+            const finDate = new Date(hasta.split('/').reverse().join('-'));
 
-                try {
-                    const respSolapa = await fetch(`/Vacaciones/CheckSolapamiento?idEmpleado=${empleadoId}&fechaInicio=${fechaInicioStr}&fechaFin=${fechaFinStr}`);
-                    
-                    console.log('Llamando a:', url);
-                    const respSolapa = await fetch(url);
+            if (isNaN(inicioDate) || isNaN(finDate) || finDate < inicioDate) {
+                Swal.fire('Error', 'Fechas inválidas o fin anterior al inicio', 'error');
+                return;
+            }
 
-                    if (!respSolapa.ok) {
-                    console.warn('Respuesta no OK:', respSolapa.status, respSolapa.statusText);
-                    throw new Error(`HTTP ${respSolapa.status}`);
-                    }
+            // Calcular días reales del período (corridos)
+            const diasReales = Math.floor((finDate - inicioDate) / (1000 * 60 * 60 * 24)) + 1;
 
-
-
-                    const dataSolapa = await respSolapa.json();
-                    if (dataSolapa.solapamiento) {
-                        solapamientoDetectado = true;
-                        Swal.fire({
-                            title: '¡Solapamiento detectado!',
-                            html: dataSolapa.mensaje || 'El período se superpone con otra vacación del empleado.',
-                            confirmButtonText: 'Entendido',
-                            confirmButtonColor: '#dc3545'
-                        });
-                        document.getElementById('btnPeriodo').focus();
-                        return;
-                    }
-                } catch (err) {
-                    console.error('Error chequeando solapamiento:', err);
-                    const continuar = await Swal.fire({
-                        title: 'Error al verificar solapamiento',
-                        text: 'No se pudo comprobar superposiciones. ¿Querés guardar de todos modos?',
-                        showCancelButton: true,
-                        confirmButtonText: 'Sí, guardar',
-                        cancelButtonText: 'No, revisar',
-                        confirmButtonColor: '#007bff',
-                        cancelButtonColor: '#007bff'
-                    });
-                    if (!continuar.isConfirmed) {
-                        document.getElementById('btnPeriodo').focus();
-                        return;
-                    }
-                }
-
-                // Todo OK → guardar
-                const datos = {
-                    Idusuario: parseInt(empleadoId),
-                    DiasVacaciones: diasSolicitados,
-                    FechaInicio: inicioDate.toISOString(),
-                    FechaFin: finDate.toISOString(),
-                    NombreEmpleadoFrontend: empleadoNombre
-                };
-
-                try {
-                    const response = await fetch('/Vacaciones/ApiCreate', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                        },
-                        body: JSON.stringify(datos)
-                    });
-
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-                    const result = await response.json();
-                    if (result.success) {
-                        const valorDiasFavor = result.diasFavor;
-                        const tbody = document.querySelector('#tablaVacaciones tbody');
-                        const nuevaFila = document.createElement('tr');
-                        nuevaFila.setAttribute('data-vacacion-id', result.id);
-                        nuevaFila.innerHTML = `
-                            <td class="empleado-clickable">${empleadoNombre}</td>
-                            <td class="text-center">${diasSolicitados}</td>
-                            <td class="text-center">${desde} - ${hasta}</td>
-                            <td class="text-center">${valorDiasFavor}</td>
-                            <td><input type="checkbox" class="form-check-input fila-check" /></td>
-                        `;
-                        tbody.insertBefore(nuevaFila, tbody.firstChild);
-                        elEmpleado.value = '';
-                        elDias.value = '0';
-                        btnPeriodo.textContent = 'dd/mm/yyyy - dd/mm/yyyy';
-                        agregarFilasVacias();
-                        Swal.fire({
-                            icon: 'success',
-                            title: '¡Agregado!',
-                            text: `Vacación registrada. Días a favor restantes: ${valorDiasFavor}`,
-                            timer: 2500,
-                            showConfirmButton: false
-                        });
-                    } else {
-                        Swal.fire('Error', result.message || 'No se pudo guardar', 'error');
-                    }
-                } catch (err) {
-                    console.error('Error en ApiCreate:', err);
-                    Swal.fire('Error', 'No se pudo conectar con el servidor.', 'error');
-                }
+            if (diasReales > diasSolicitados) {
+            Swal.fire({
+                title: 'Período mayor al solicitado',
+                html: `Solicitaste <b>${diasSolicitados} días</b>, pero el período elegido tiene <b>${diasReales} días reales</b>.<br><br>
+                       El período no puede ser mayor a los días solicitados.<br>
+                       Ajusta el rango de fechas o aumenta los días solicitados.`,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
             });
+            document.getElementById('btnPeriodo').focus();
+            return; 
+            }
+
+            // Validación 1: días solicitados ≤ máximo legal
+            const maxLegal = parseInt(elDias.max) || 60;
+            if (diasSolicitados > maxLegal) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Exceso de días solicitados',
+                    html: `No se pueden solicitar más de <b>${maxLegal} días</b> según la antigüedad del empleado (LCT).<br>
+                           Días solicitados: ${diasSolicitados} (máximo permitido: ${maxLegal})`,
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+                });
+                elDias.focus();
+                return;
+            }
+
+            // Validación 2: días reales del período ≤ máximo legal
+            if (diasReales > maxLegal) {
+                e.preventDefault();
+
+                // Mostrar Swal SIN abrir el calendario
+                Swal.fire({
+                    title: 'Período demasiado largo',
+                    html: `El período seleccionado tiene <b>${diasReales} días corridos</b>, pero solo corresponden <b>${maxLegal} días</b> por ley.<br>
+                           Reduce el rango de fechas o ajusta los días solicitados.`,
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+                }).then(() => {
+                    // Después de cerrar el Swal, enfocar el botón para que pueda corregir
+                    btnPeriodo.focus();
+                });
+
+                // Enfocar el botón (sin abrir el calendario)
+                btnPeriodo.focus();
+                return;
+            }
+
+
+
+
+
+
+
+         const fechaInicioStr = inicioDate.toISOString().split('T')[0];
+        const fechaFinStr = finDate.toISOString().split('T')[0];
+
+        try {
+            const respSolapa = await fetch(`/Vacaciones/CheckSolapamiento?idEmpleado=${empleadoId}&fechaInicio=${fechaInicioStr}&fechaFin=${fechaFinStr}`);
+            const dataSolapa = await respSolapa.json();
+
+            if (dataSolapa.solapamiento) {
+                Swal.fire({
+                    title: '¡Solapamiento detectado!',
+                    html: dataSolapa.mensaje || 'El período elegido se superpone con otra vacación del empleado.',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+                });
+                document.getElementById('btnPeriodo').focus();
+                return; // No guarda
+            }
+            } catch (err) {
+            console.error('Error chequeando solapamiento:', err);
+            const continuar = await Swal.fire({
+                title: 'Error al verificar solapamiento',
+                text: 'No se pudo comprobar si hay superposiciones. ¿Querés guardar de todos modos?',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, guardar',
+                cancelButtonText: 'No, revisar',
+                confirmButtonColor: '#007bff',
+                cancelButtonColor: '#007bff'
+            });
+
+            if (!continuar.isConfirmed) {
+                btnPeriodo.focus();
+                return;
+            }
+        }
+            const datos = {
+                Idusuario: parseInt(empleadoId),
+                DiasVacaciones: diasSolicitados,
+                FechaInicio: inicioDate.toISOString(),
+                FechaFin: finDate.toISOString(),
+                NombreEmpleadoFrontend: empleadoNombre
+            };
+
+            try {
+                const response = await fetch('/Vacaciones/ApiCreate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify(datos)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error ${response.status}: ${errorText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const valorDiasFavor = result.diasFavor;
+                    const tbody = document.querySelector('#tablaVacaciones tbody');
+                    const nuevaFila = document.createElement('tr');
+                    nuevaFila.setAttribute('data-vacacion-id', result.id);
+                    nuevaFila.innerHTML = `
+                        <td class="empleado-clickable">${empleadoNombre}</td>
+                        <td class="text-center">${diasSolicitados}</td>
+                        <td class="text-center">${desde} - ${hasta}</td>
+                        <td class="text-center">${valorDiasFavor}</td>
+                        <td><input type="checkbox" class="form-check-input fila-check" /></td>
+                    `;
+                    tbody.insertBefore(nuevaFila, tbody.firstChild);
+
+                    elEmpleado.value = '';
+                    elDias.value = '0';
+                    btnPeriodo.textContent = 'dd/mm/yyyy - dd/mm/yyyy';
+                    agregarFilasVacias();
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Agregado!',
+                        text: `Vacación registrada. Días a favor restantes: ${valorDiasFavor}`,
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire('Error', result.message || 'No se pudo guardar', 'error');
+                }
+            } catch (err) {
+                console.error('Error en ApiCreate:', err);
+                Swal.fire('Error', 'No se pudo conectar con el servidor.', 'error');
+            }
+        });
 
             // btnNuevoRegistro
 

@@ -401,8 +401,7 @@
                     (ViewData["vista"]?.ToString() ??
                     Context.Request.Query["vistaOrigen"].FirstOrDefault() ?? "Drogueria");
                 }  
-                <a 
-                <a href="@Url.Action("Index", "PanelSeleccion")" class="btn btn-primary" style="background-color:#007bff; border:none;" translate="no">Volver</a>
+                <a href="/Proveedores/Index" class="btn btn-primary" style="background-color:#007bff; border:none;" translate="no">Volver</a>
             </div>
 
             <div class="col-md-10 d-flex justify-content-center">

@@ -1381,31 +1381,43 @@
 
 
 
+                    // Chequeo de vacaciones solapadas (mismo empleado o cualquier otro)
+        const empleadoIdNum = parseInt(empleadoId);
+        if (isNaN(empleadoIdNum) || empleadoIdNum <= 0) {
+            Swal.fire('Error', 'ID de empleado inválido. Selecciona nuevamente.', 'error');
+            elEmpleado.focus();
+            return;
+        }
 
-
-
-         const fechaInicioStr = inicioDate.toISOString().split('T')[0];
+        const fechaInicioStr = inicioDate.toISOString().split('T')[0];
         const fechaFinStr = finDate.toISOString().split('T')[0];
 
         try {
-            const respSolapa = await fetch(`/Vacaciones/CheckSolapamiento?idEmpleado=${empleadoId}&fechaInicio=${fechaInicioStr}&fechaFin=${fechaFinStr}`);
-            const dataSolapa = await respSolapa.json();
+            const url = `/Vacaciones/CheckVacacionesSolapadas?idEmpleadoNuevo=${empleadoIdNum}&fechaInicio=${fechaInicioStr}&fechaFin=${fechaFinStr}`;
+            console.log('Verificando solapamiento:', url);
 
-            if (dataSolapa.solapamiento) {
-                Swal.fire({
-                    title: '¡Solapamiento detectado!',
-                    html: dataSolapa.mensaje || 'El período elegido se superpone con otra vacación del empleado.',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
-                });
-                document.getElementById('btnPeriodo').focus();
-                return; // No guarda
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
             }
-            } catch (err) {
-            console.error('Error chequeando solapamiento:', err);
+
+            const data = await response.json();
+
+            if (!data.permitido) {
+            Swal.fire({
+                title: '¡Período no permitido!',
+                html: data.mensaje || 'El período se superpone con otra vacación.',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'  // rojo para error
+            });
+            btnPeriodo.focus();
+            return;
+            }   
+        } catch (err) {
+            console.error('Error al verificar solapamiento:', err);
             const continuar = await Swal.fire({
-                title: 'Error al verificar solapamiento',
-                text: 'No se pudo comprobar si hay superposiciones. ¿Querés guardar de todos modos?',
+                title: 'Error al verificar cobertura',
+                text: 'No se pudo comprobar si hay empleados en vacaciones en ese período. ¿Querés guardar de todos modos?',
                 showCancelButton: true,
                 confirmButtonText: 'Sí, guardar',
                 cancelButtonText: 'No, revisar',
@@ -1418,6 +1430,7 @@
                 return;
             }
         }
+
             const datos = {
                 Idusuario: parseInt(empleadoId),
                 DiasVacaciones: diasSolicitados,

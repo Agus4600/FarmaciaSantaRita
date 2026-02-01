@@ -155,47 +155,79 @@ namespace FarmaciaSantaRita.Controllers
 
 
 
-        [HttpGet("CheckSolapamiento")]
-        public async Task<IActionResult> CheckSolapamiento(int idEmpleado, string fechaInicio, string fechaFin)
+
+
+        [HttpGet("CheckVacacionesSolapadas")]
+        public async Task<IActionResult> CheckVacacionesSolapadas(int idEmpleadoNuevo, string fechaInicio, string fechaFin)
         {
-            if (idEmpleado <= 0 || string.IsNullOrEmpty(fechaInicio) || string.IsNullOrEmpty(fechaFin))
-                return Json(new { solapamiento = false, mensaje = "Datos incompletos" });
+            if (idEmpleadoNuevo <= 0 || string.IsNullOrEmpty(fechaInicio) || string.IsNullOrEmpty(fechaFin))
+                return Json(new { permitido = false, mensaje = "Datos incompletos" });
 
             if (!DateTime.TryParse(fechaInicio, out DateTime inicioNuevo) ||
                 !DateTime.TryParse(fechaFin, out DateTime finNuevo))
-                return Json(new { solapamiento = false, mensaje = "Formato de fecha inválido" });
+                return Json(new { permitido = false, mensaje = "Fechas inválidas" });
 
             inicioNuevo = DateTime.SpecifyKind(inicioNuevo.Date, DateTimeKind.Utc);
             finNuevo = DateTime.SpecifyKind(finNuevo.Date, DateTimeKind.Utc);
 
-            var existe = await _context.Vacaciones
-                .AnyAsync(v => v.Idusuario == idEmpleado &&
+            // 1. Solapamiento con vacaciones DEL MISMO empleado
+            var solapaMismo = await _context.Vacaciones
+                .AnyAsync(v => v.Idusuario == idEmpleadoNuevo &&
                                v.FechaInicio <= finNuevo &&
                                v.FechaFin >= inicioNuevo);
 
-            if (existe)
+            if (solapaMismo)
             {
                 var conflicto = await _context.Vacaciones
-                    .Where(v => v.Idusuario == idEmpleado &&
+                    .Where(v => v.Idusuario == idEmpleadoNuevo &&
                                 v.FechaInicio <= finNuevo &&
                                 v.FechaFin >= inicioNuevo)
                     .OrderBy(v => v.FechaInicio)
-                    .Select(v => new
-                    {
-                        FechaInicio = v.FechaInicio.ToString("dd/MM/yyyy"),
-                        FechaFin = v.FechaFin.ToString("dd/MM/yyyy")
-                    })
+                    .Select(v => new { v.NombreEmpleadoRegistrado, Inicio = v.FechaInicio.ToString("dd/MM/yyyy"), Fin = v.FechaFin.ToString("dd/MM/yyyy") })
                     .FirstOrDefaultAsync();
 
                 return Json(new
                 {
-                    solapamiento = true,
-                    mensaje = $"¡Atención! {conflicto?.FechaInicio} al {conflicto?.FechaFin}. Este período se superpone."
+                    permitido = false,
+                    tipo = "mismo_empleado",
+                    mensaje = $"¡Atención! {conflicto?.NombreEmpleadoRegistrado} ya tiene vacaciones del {conflicto?.Inicio} al {conflicto?.Fin}. No se puede superponer."
                 });
             }
 
-            return Json(new { solapamiento = false });
+            // 2. Solapamiento con vacaciones de OTRO empleado (cobertura total)
+            var solapaOtro = await _context.Vacaciones
+                .AnyAsync(v => v.Idusuario != idEmpleadoNuevo &&
+                               v.FechaInicio <= finNuevo &&
+                               v.FechaFin >= inicioNuevo);
+
+            if (solapaOtro)
+            {
+                var conflictoOtro = await _context.Vacaciones
+                    .Where(v => v.Idusuario != idEmpleadoNuevo &&
+                                v.FechaInicio <= finNuevo &&
+                                v.FechaFin >= inicioNuevo)
+                    .OrderBy(v => v.FechaInicio)
+                    .Select(v => new { v.NombreEmpleadoRegistrado, Inicio = v.FechaInicio.ToString("dd/MM/yyyy"), Fin = v.FechaFin.ToString("dd/MM/yyyy") })
+                    .FirstOrDefaultAsync();
+
+                return Json(new
+                {
+                    permitido = false,
+                    tipo = "otro_empleado",
+                    mensaje = $"¡Atención! {conflictoOtro?.NombreEmpleadoRegistrado} ya tiene vacaciones del {conflictoOtro?.Inicio} al {conflictoOtro?.Fin}. No se puede registrar otro empleado en este período."
+                });
+            }
+
+            return Json(new { permitido = true });
         }
+
+
+
+
+
+
+
+
 
 
 

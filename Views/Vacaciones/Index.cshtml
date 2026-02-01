@@ -1639,7 +1639,6 @@
                 datos.push([empleado, solicitados, periodo, favor]);
 
                 totalSolicitados += solicitados;
-                // Calcular días reales del período (simplificado)
                 const [inicioStr, finStr] = periodo.split(' - ');
                 const inicio = new Date(inicioStr.split('/').reverse().join('-'));
                 const fin = new Date(finStr.split('/').reverse().join('-'));
@@ -1653,61 +1652,99 @@
                 porEmpleado[empleado].favor += favor;
             });
 
-            // 2. Generar Excel con resumen
+            // 2. Generar Excel
             const workbook = new ExcelJS.Workbook();
             const sheet = workbook.addWorksheet('VACACIONES');
 
             // Título
-            sheet.addRow(['REGISTRO DE VACACIONES']);
+            sheet.getCell('A1').value = 'REGISTRO DE VACACIONES';
             sheet.mergeCells('A1:D1');
-            const titleCell = sheet.getCell('A1');
-            titleCell.font = { size: 16, bold: true };
-            titleCell.alignment = { horizontal: 'center' };
-            titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5DC' } };
+            sheet.getCell('A1').font = { size: 16, bold: true };
+            sheet.getCell('A1').alignment = { horizontal: 'center' };
+            sheet.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5DC' } };
 
-            // Encabezados
+            // Encabezados de registros
             const headers = ['EMPLEADO', 'DÍAS SOLICITADOS', 'PERÍODO', 'DÍAS FAVOR'];
-            sheet.addRow(headers);
-            const headerRow = sheet.lastRow;
-            headerRow.eachCell(cell => {
+            sheet.getRow(2).values = headers;
+            sheet.getRow(2).eachCell(cell => {
                 cell.font = { bold: true };
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC080' } };
                 cell.alignment = { horizontal: 'center' };
             });
 
-            // Datos
+            // Datos de registros (columnas A-D)
             datos.forEach((row, i) => {
-                const dataRow = sheet.addRow(row);
-                dataRow.eachCell(cell => {
+                const rowNumber = 3 + i;
+                sheet.getRow(rowNumber).values = row;
+                sheet.getRow(rowNumber).eachCell(cell => {
                     cell.alignment = { horizontal: 'center' };
                     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: i % 2 === 0 ? 'FFDDEEFF' : 'FFCCFFFF' } };
                 });
             });
 
-            // Resumen general
-            sheet.addRow([]); // línea en blanco
-            sheet.addRow(['RESUMEN GENERAL']);
-            sheet.mergeCells('A' + sheet.rowCount + ':D' + sheet.rowCount);
-            sheet.getCell('A' + sheet.rowCount).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-            sheet.getCell('A' + sheet.rowCount).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF006400' } }; // verde oscuro
+            // === RESUMEN GENERAL Y POR EMPLEADO EN LA COLUMNA DERECHA (a partir de columna F) ===
 
-            sheet.addRow(['Total días solicitados:', totalSolicitados]);
-            sheet.addRow(['Total días reales tomados:', totalReales]);
-            sheet.addRow(['Total días favor (suma):', totalFavor]);
+            // Fila inicial del resumen general (empezamos en F6)
+            const filaInicioResumen = 6;
+            sheet.getCell(`F${filaInicioResumen}`).value = 'RESUMEN GENERAL';
+            sheet.mergeCells(`F${filaInicioResumen}:I${filaInicioResumen}`);
+            sheet.getCell(`F${filaInicioResumen}`).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            sheet.getCell(`F${filaInicioResumen}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF006400' } };
+            sheet.getCell(`F${filaInicioResumen}`).alignment = { horizontal: 'center' };
 
-            // Resumen por empleado
-            sheet.addRow([]); // línea en blanco
-            sheet.addRow(['RESUMEN POR EMPLEADO']);
-            sheet.mergeCells('A' + sheet.rowCount + ':D' + sheet.rowCount);
-            sheet.getCell('A' + sheet.rowCount).font = { bold: true };
+            // Totales generales (F7:I9)
+            sheet.getCell(`F7`).value = 'Total días solicitados:';
+            sheet.getCell(`G7`).value = totalSolicitados;
+            sheet.getCell(`F8`).value = 'Total días reales tomados:';
+            sheet.getCell(`G8`).value = totalReales;
+            sheet.getCell(`F9`).value = 'Total días favor (suma):';
+            sheet.getCell(`G9`).value = totalFavor;
 
+            // Formato para totales
+            ['F7', 'F8', 'F9'].forEach(cell => {
+                sheet.getCell(cell).font = { bold: true };
+                sheet.getCell(cell).alignment = { horizontal: 'right' };
+            });
+            ['G7', 'G8', 'G9'].forEach(cell => {
+                sheet.getCell(cell).numFmt = '#,##0';
+                sheet.getCell(cell).alignment = { horizontal: 'center' };
+            });
+
+            // Resumen por empleado (empieza en F11)
+            sheet.getCell(`F11`).value = 'RESUMEN POR EMPLEADO';
+            sheet.mergeCells(`F11:I11`);
+            sheet.getCell(`F11`).font = { bold: true };
+            sheet.getCell(`F11`).alignment = { horizontal: 'center' };
+
+            let filaActual = 12;
             for (const [empleado, vals] of Object.entries(porEmpleado)) {
-                sheet.addRow([empleado, vals.solicitados, vals.reales, vals.favor]);
+                sheet.getCell(`F${filaActual}`).value = empleado;
+                sheet.getCell(`G${filaActual}`).value = vals.solicitados;
+                sheet.getCell(`H${filaActual}`).value = vals.reales;
+                sheet.getCell(`I${filaActual}`).value = vals.favor;
+                filaActual++;
             }
 
-            // Anchos de columnas
+            // Formato resumen por empleado
+            for (let i = 12; i < filaActual; i++) {
+                sheet.getCell(`F${i}`).alignment = { horizontal: 'left' };
+                ['G${i}', 'H${i}', 'I${i}'].forEach(c => {
+                    sheet.getCell(c.replace('${i}', i)).numFmt = '#,##0';
+                    sheet.getCell(c.replace('${i}', i)).alignment = { horizontal: 'center' };
+                });
+            }
+
+            // Anchos de columnas (izquierda: registros, derecha: resumen)
             sheet.columns = [
-                { width: 30 }, { width: 18 }, { width: 35 }, { width: 15 }
+                { width: 30 }, // A - Empleado
+                { width: 18 }, // B - Solicitados
+                { width: 35 }, // C - Período
+                { width: 15 }, // D - Favor
+                { width: 5  }, // E - vacío (separador)
+                { width: 30 }, // F - Resumen empleado
+                { width: 18 }, // G - Solicitados
+                { width: 18 }, // H - Reales
+                { width: 15 }  // I - Favor
             ];
 
             // Descarga

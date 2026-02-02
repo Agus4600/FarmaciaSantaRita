@@ -674,6 +674,8 @@
                     <p>Puedes combinar el <b>Rango de Fechas</b>, el <b>Turno</b> y el <b>Nombre</b> para auditar ausentismos específicos. Si no encuentras resultados, el sistema te avisará sin limpiar tu tabla actual.</p>
                 </div>
             `,
+            confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
             });
                 }
                     else if (vista === 'vacaciones') {
@@ -859,21 +861,21 @@
                         confirmButtonColor: '#007bff'
             });
                 }
-                    else if (vista === 'ProveedorSecundario') {
+                        else if (vista === 'ProveedorSecundario') {
         Swal.fire({
-            title: '<i class="bi bi-person-badge text-warning"></i> Gestión de Boletas: Parar Proveedores Secundarios',
+            title: '<i class="bi bi-file-earmark-medical text-primary"></i> Gestión de Boletas: Proveedores Secundarios',
             html: `
-                <div class="text-start" style="font-size: 0.9rem; line-height: 1.5;">
-                    <p>Bienvenido al módulo de carga para <strong>${nombreProveedor}</strong>. Este sistema está optimizado para la gestión de proveedores externos y locales.</p>
-
+                <div class="text-start" style="font-size: 0.95rem; line-height: 1.6;">
+                    <p>Bienvenido al módulo de carga para <strong>proveedores secundarios</strong>. Esta vista funciona casi idéntica a la de Droguería Suiza, pero adaptada para proveedores locales o externos sin módulo dedicado.</p>
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <div class="p-2 border rounded bg-light h-100" style="border-left: 4px solid #ffc107 !important;">
                                 <h6 class="fw-bold"><i class="bi bi-pencil-square text-warning"></i> Carga de Datos</h6>
                                 <ul class="small ps-3 mb-0">
-                                    <li><b>Categorización:</b> El sistema asigna automáticamente la categoría según el proveedor seleccionado.</li>
-                                    <li><b>Importe:</b> Ingrese el monto total de la boleta; verifique los decimales antes de agregar.</li>
-                                    <li><b>Persistencia:</b> El botón "Agregar" impacta directamente en la base de datos de la Farmacia.</li>
+                                    <li><b>Proveedor:</b> Selecciona o escribe manualmente el nombre del proveedor secundario.</li>
+                                    <li><b>Categorización:</b> El sistema asigna automáticamente la categoría (Medicamentos o Perfumería).</li>
+                                    <li><b>Importe:</b> Ingresa el monto total de la boleta (con decimales si aplica).</li>
+                                    <li><b>Persistencia:</b> El botón "Agregar" impacta directamente en la base de datos.</li>
                                 </ul>
                             </div>
                         </div>
@@ -881,18 +883,16 @@
                             <div class="p-2 border rounded bg-light h-100" style="border-left: 4px solid #198754 !important;">
                                 <h6 class="fw-bold"><i class="bi bi-file-earmark-spreadsheet text-success"></i> Control de Archivos</h6>
                                 <ul class="small ps-3 mb-0">
-                                    <li><b>Validación:</b> El Excel a "Abrir" debe iniciar obligatoriamente con el nombre <i>"${nombreProveedor}"</i>.</li>
-                                    <li><b>Transfer:</b> Es vital marcar correctamente el origen (SI/NO) para el cierre de mes.</li>
+                                    <li><b>Validación:</b> El Excel a "Abrir" debe iniciar obligatoriamente con el nombre del proveedor seleccionado.</li>
+                                    <li><b>Transfer:</b> Marca correctamente SI/NO para el cierre de mes y reporte de deudas.</li>
                                 </ul>
                             </div>
                         </div>
                     </div>
-
                     <div class="alert alert-warning py-2 mb-0">
                         <h6 class="fw-bold mb-1" style="font-size: 0.85rem;"><i class="bi bi-exclamation-triangle-fill"></i> Importante sobre Eliminación:</h6>
                         <p class="small mb-0">Al usar "Eliminar", los registros se borran permanentemente de la pantalla y del servidor.</p>
                     </div>
-
                     <div class="mt-3 d-flex justify-content-around text-center border-top pt-2 text-secondary">
                         <div><i class="bi bi-database-check d-block"></i><span style="font-size: 0.7rem;">PostgreSQL</span></div>
                         <div><i class="bi bi-shield-lock d-block"></i><span style="font-size: 0.7rem;">Acceso Protegido</span></div>

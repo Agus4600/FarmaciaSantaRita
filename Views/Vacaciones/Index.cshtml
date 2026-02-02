@@ -1337,8 +1337,7 @@
             Swal.fire({
                 title: 'Período insuficiente',
                 html: `Solicitaste <b>${diasSolicitados} días</b>, pero el período elegido cubre solo <b>${diasReales} días corridos</b>.<br><br>
-                       Debes extender el rango de fechas para cubrir al menos los días solicitados.<br>
-                       (No se permiten sobrantes positivos).`,
+                       Debes extender el rango de fechas para cubrir al menos los días solicitados.`,
                 confirmButtonText: 'Entendido',
                 confirmButtonColor: '#007bff'
             });
@@ -1353,7 +1352,7 @@
                 html: `El período seleccionado tiene <b>${diasReales} días corridos</b>, pero solo corresponden <b>${maxLegal} días</b> por ley según antigüedad.<br><br>
                        Reduce el rango de fechas o ajusta los días solicitados.`,
                 confirmButtonText: 'Entendido',
-                confirmButtonColor: '#dc3545'
+                confirmButtonColor: '#007bff'
             });
             btnPeriodo.focus();
             return;

@@ -226,6 +226,21 @@
             .btn-cerrar-panel:hover {
                 background: #5a6268;
             }
+
+        #btnAyuda:hover {
+            background-color: #0056b3 !important;
+            transform: translateY(-5px) !important;
+            box-shadow: 0 12px 20px rgba(0,0,0,0.25) !important;
+        }
+
+        .dropdown-menu {
+            border-radius: 12px !important;
+        }
+
+        .dropdown-item:hover {
+            background-color: #e7f1ff !important;
+            color: #007bff !important;
+        }
     </style>
 </head>
 <body>
@@ -291,6 +306,24 @@
                 </li>
             </ul>
             <button id="cerrarPanel" class="btn-cerrar-panel">Cerrar</button>
+        </div>
+        <!-- Botón Ayuda flotante (esquina inferior derecha) -->
+        <div class="fixed-bottom m-4" style="right: 0; bottom: 0; z-index: 1050;">
+            <div class="dropdown">
+                <button class="btn btn-primary btn-lg rounded-circle shadow-lg d-flex align-items-center justify-content-center"
+                        type="button" id="btnAyuda" data-bs-toggle="dropdown" aria-expanded="false"
+                        style="width: 70px; height: 70px; font-size: 1.5rem; transition: all 0.3s ease;">
+                    <i class="bi bi-question-circle-fill"></i>
+                    <span class="visually-hidden">Ayuda</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3" aria-labelledby="btnAyuda"
+                    style="min-width: 220px; background-color: #fff;">
+                    <li><h6 class="dropdown-header text-primary fw-bold">Ayuda por vista</h6></li>
+                    <li><a class="dropdown-item" href="#" data-vista="panel">Panel de Selección</a></li>
+                    <li><a class="dropdown-item" href="#" data-vista="inasistencia">Inasistencia</a></li>
+                    <li><a class="dropdown-item" href="#" data-vista="vacaciones">Vacaciones</a></li>
+                </ul>
+            </div>
         </div>
     </div>
 
@@ -362,6 +395,90 @@
                     });
                 }
             }
+        });
+    </script>
+
+    <!-- Ayuda por vista - Swal con explicaciones -->
+    <script>
+        document.querySelectorAll('.dropdown-item[data-vista]').forEach(item => {
+            item.addEventListener('click', function (e) {
+                e.preventDefault();
+                const vista = this.getAttribute('data-vista');
+                let titulo = '';
+                let contenido = '';
+
+                switch (vista) {
+                    case 'panel':
+                        titulo = 'Panel de Selección';
+                        contenido = `
+                            <p><strong>¿Para qué sirve?</strong><br>
+                            Es la pantalla inicial donde elegís si querés gestionar <strong>Inasistencias</strong> o <strong>Vacaciones</strong> de los empleados.</p>
+                            <p><strong>Componentes principales:</strong></p>
+                            <ul>
+                                <li><strong>Botones grandes</strong>: "Inasistencia" y "Vacaciones" → te llevan a cada vista.</li>
+                                <li><strong>Logo y foto</strong>: decoración y acceso rápido.</li>
+                            </ul>
+                            <p><strong>Consejo:</strong> Siempre empezá desde aquí para mantener el flujo correcto.</p>
+                        `;
+                        break;
+
+                    case 'inasistencia':
+                        titulo = 'Registro de Inasistencias';
+                        contenido = `
+                            <p><strong>¿Para qué sirve?</strong><br>
+                            Registrar, buscar, eliminar y exportar inasistencias de empleados (faltas, motivos, turnos).</p>
+                            <p><strong>Botones y componentes clave:</strong></p>
+                            <ul>
+                                <li><strong>Agregar</strong>: Seleccioná empleado, fecha, turno y motivo → se agrega temporalmente (amarillo).</li>
+                                <li><strong>Guardar</strong>: Exporta todo a Excel con resúmenes de faltas por empleado y por turno.</li>
+                                <li><strong>Nuevo Registro</strong>: Limpia la tabla para empezar de cero.</li>
+                                <li><strong>Eliminar</strong>: Seleccioná filas con checkbox → elimina de la base.</li>
+                                <li><strong>Filtros</strong> (arriba derecha): Buscar por nombre, rango de fechas o turno.</li>
+                                <li><strong>Tabla</strong>: Clic en nombre de empleado → muestra DNI, teléfono y dirección.</li>
+                            </ul>
+                            <p><strong>Consejo:</strong> Usá el botón Guardar para tener un reporte diario completo.</p>
+                        `;
+                        break;
+
+                    case 'vacaciones':
+                        titulo = 'Registro de Vacaciones';
+                        contenido = `
+                            <p><strong>¿Para qué sirve?</strong><br>
+                            Solicitar y gestionar vacaciones de empleados, respetando el máximo legal por antigüedad.</p>
+                            <p><strong>Botones y componentes clave:</strong></p>
+                            <ul>
+                                <li><strong>Empleado</strong>: Seleccioná de la lista (se carga DNI).</li>
+                                <li><strong>Días Solicitados</strong>: Número de días que pide el empleado (máximo según antigüedad).</li>
+                                <li><strong>Período</strong>: Elegí fechas con el calendario → debe cubrir al menos los días pedidos.</li>
+                                <li><strong>Agregar</strong>: Valida todo y guarda si el período es válido (no permite sobrantes grandes ni exceso legal).</li>
+                                <li><strong>Guardar</strong>: Exporta a Excel con resumen por empleado y totales.</li>
+                                <li><strong>Nuevo Registro</strong>: Limpia la tabla.</li>
+                                <li><strong>Eliminar</strong>: Seleccioná filas → borra de la base.</li>
+                                <li><strong>Buscar</strong>: Filtra por nombre o rango de fechas.</li>
+                                <li><strong>Clic en nombre</strong>: Muestra DNI, teléfono, dirección y días legales.</li>
+                            </ul>
+                            <p><strong>Consejo:</strong> El sistema bloquea si el rango no coincide bien con los días pedidos o excede la ley.</p>
+                        `;
+                        break;
+
+                    default:
+                        titulo = 'Ayuda';
+                        contenido = '<p>No se encontró ayuda para esta vista.</p>';
+                }
+
+                Swal.fire({
+                    title: `Ayuda: ${titulo}`,
+                    html: contenido,
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff',
+                    customClass: {
+                        popup: 'rounded-4 shadow-lg',
+                        title: 'text-primary fw-bold fs-4',
+                        htmlContainer: 'text-start fs-5'
+                    },
+                    width: '600px'
+                });
+            });
         });
     </script>
 </body>

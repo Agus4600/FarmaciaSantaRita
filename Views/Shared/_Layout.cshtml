@@ -436,18 +436,27 @@
                 if (vista === 'login') {
                     Swal.fire({
                         title: '<i class="bi bi-shield-lock-fill text-primary"></i> Guía de Inicio de Sesión',
-                        html: `
-                            <div class="text-start" style="font-size: 0.95rem; line-height: 1.5;">
-                                <p><strong>¿Para qué sirve esta vista?</strong><br>
-                                Es el control de acceso a la Farmacia Santa Rita. Aquí validas tu usuario para poder gestionar el sistema.</p>
-                                <hr>
-                                <p><strong>Instrucciones:</strong></p>
-                                <ul>
-                                    <li>Ingresa tu usuario y contraseña. Usa el ojo (<i class="bi bi-eye"></i>) para verificar.</li>
-                                    <li>Si fallas, aparecerá el botón <b>"Recordar cuenta"</b>.</li>
-                                </ul>
+                    html: `
+                        <div class="text-start" style="font-size: 0.95rem; line-height: 1.5;">
+                            <p><strong>¿Para qué sirve esta vista?</strong><br>
+                            Es el control de acceso a la Farmacia Santa Rita. Aquí validas tu usuario para poder gestionar el sistema.</p>
+
+                            <hr>
+
+                            <p><strong>Instrucciones paso a paso:</strong></p>
+                            <ol>
+                                <li><strong>Ingreso de datos:</strong> Escribe tu nombre de usuario y contraseña. Puedes usar el botón del ojo (<i class="bi bi-eye"></i>) para ver la clave.</li>
+                                <li><strong>Validación:</strong> Si los campos están vacíos, verás un <b>resplandor rojo</b> y un aviso de atención.</li>
+                                <li><strong>¿No recuerdas tus datos?</strong> Si ingresas información incorrecta, el sistema habilitará automáticamente el botón <b>"Recordar cuenta"</b>.</li>
+                                <li><strong>Nuevos usuarios:</strong> Si aún no tienes cuenta, usa el botón <b>"Crear cuenta"</b> para registrarte.</li>
+                            </ol>
+
+                            <div class="alert alert-warning p-2" style="font-size: 0.85rem;">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                <strong>Nota:</strong> Si tu cuenta fue desactivada por el administrador, verás un mensaje de "Acceso Denegado".
                             </div>
-                        `,
+                        </div>
+                    `,
                         confirmButtonText: 'Entendido',
                         confirmButtonColor: '#007bff'
                     });

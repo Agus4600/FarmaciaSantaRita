@@ -313,16 +313,44 @@
             <div class="dropdown">
                 <button class="btn btn-primary shadow-lg d-flex align-items-center justify-content-center"
                         type="button" id="btnAyuda" data-bs-toggle="dropdown" aria-expanded="false"
-                        style="height: 60px; padding: 0 25px; border-radius: 30px; font-size: 1.1rem; font-weight: 600; transition: all 0.3s ease; border: none; background-color: #007bff;">
-                    <i class="bi bi-question-circle-fill me-2"></i>
+                        style="height: 60px; padding: 0 30px; border-radius: 30px; font-size: 1.2rem; font-weight: 600; transition: all 0.3s ease; border: none; background-color: #007bff;">
                     ¿Ayuda?
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3" aria-labelledby="btnAyuda"
-                    style="min-width: 220px; background-color: #fff; margin-bottom: 10px;">
-                    <li><h6 class="dropdown-header text-primary fw-bold">Ayuda por vista</h6></li>
-                    <li><a class="dropdown-item" href="#" data-vista="panel">Panel de Selección</a></li>
-                    <li><a class="dropdown-item" href="#" data-vista="inasistencia">Inasistencia</a></li>
-                    <li><a class="dropdown-item" href="#" data-vista="vacaciones">Vacaciones</a></li>
+                    style="min-width: 350px; max-height: 550px; overflow-y: auto; background-color: #fff; margin-bottom: 10px; padding: 12px;">
+
+					<li><h6 class="dropdown-header text-primary fw-bold"><i class="bi bi-shield-lock me-2"></i>ACCESO Y SEGURIDAD</h6></li>
+					<li><a class="dropdown-item" href="#" title="Ingreso al sistema. Incluye opción para crear cuenta o recordar datos si hay errores">Login</a></li>
+					<li><a class="dropdown-item" href="#" title="Recupera tu usuario y contraseña ingresando solo tu DNI">Recordar Cuenta</a></li>
+					<li><a class="dropdown-item" href="#" title="Formulario de registro con datos personales para obtener una cuenta">Crear Cuenta</a></li>
+
+					<li><hr class="dropdown-divider"></li>
+
+                    <li><h6 class="dropdown-header text-primary fw-bold"><i class="bi bi-person-badge me-2"></i>CUENTAS</h6></li>
+                    <li><a class="dropdown-item" href="#" title="Actualiza tus datos personales de acceso">Cuenta Usuario</a></li>
+                    <li><a class="dropdown-item" href="#" title="Solo Jefe: Gestionar y eliminar cuentas de empleados">Gestión de Cuentas Empleados</a></li>
+                    <li><a class="dropdown-item" href="#" title="Solo Jefe: Restaurar o borrar permanentemente cuentas">Papelera de Reciclaje</a></li>
+
+                    <li><hr class="dropdown-divider"></li>
+
+                    <li><h6 class="dropdown-header text-primary fw-bold"><i class="bi bi-people me-2"></i>CUENTAS DE CLIENTES</h6></li>
+                    <li><a class="dropdown-item" href="#" title="Carga de clientes, productos, compras y reporte Excel">Cuenta de Clientes</a></li>
+
+                    <li><hr class="dropdown-divider"></li>
+
+                    <li><h6 class="dropdown-header text-primary fw-bold"><i class="bi bi-briefcase me-2"></i>GESTIÓN DE EMPLEADOS</h6></li>
+                    <li><a class="dropdown-item" href="#" title="Registro de faltas y reporte Excel (Jefe carga / Empleado ve)">Registro de Inasistencia</a></li>
+                    <li><a class="dropdown-item" href="#" title="Registro de vacaciones y reporte Excel">Vacaciones de Empleados</a></li>
+
+                    <li><hr class="dropdown-divider"></li>
+
+                    <li><h6 class="dropdown-header text-primary fw-bold"><i class="bi bi-truck me-2"></i>PROVEEDORES</h6></li>
+                    <li><a class="dropdown-item" href="#" title="Listado principal para gestionar proveedores">Proveedores</a></li>
+                    <li><a class="dropdown-item" href="#" title="Dar de alta un nuevo proveedor en el sistema">Registrar Proveedor</a></li>
+                    <li><a class="dropdown-item" href="#" title="Recuperar proveedores eliminados">Restaurar Proveedor</a></li>
+                    <li><a class="dropdown-item" href="#" title="Carga especifica de boletas de otros proveedores">Proveedor Secundario</a></li>
+                    <li><a class="dropdown-item" href="#" title="Carga específica de boletas para Droguería Suiza">Droguería Suiza</a></li>
+
                 </ul>
             </div>
         </div>

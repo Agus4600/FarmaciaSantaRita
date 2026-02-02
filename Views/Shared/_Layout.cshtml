@@ -348,7 +348,7 @@
                     <li><a class="dropdown-item" href="#" data-vista="Proveedores" title="Listado principal para gestionar proveedores">Proveedores</a></li>
                     <li><a class="dropdown-item" href="#" data-vista="RegistrarProveedor" title="Dar de alta un nuevo proveedor en el sistema">Registrar Proveedor</a></li>
                     <li><a class="dropdown-item" href="#" data-vista="RestaurarProveedores" title="Recuperar proveedores eliminados">Restaurar Proveedor</a></li>
-                    <li><a class="dropdown-item" href="#" data-vista="Proveedor_Secundario" title="Carga especifica de boletas de otros proveedores">Proveedor Secundario</a></li>
+                    <li><a class="dropdown-item" href="#" data-vista="ProveedorSecundario" title="Carga especifica de boletas de otros proveedores">Proveedor Secundario</a></li>
 					<li><a class="dropdown-item" href="#" data-vista="Drogueria_Suiza" title="Carga específica de boletas para Droguería Suiza">Droguería Suiza</a></li>
 
                 </ul>
@@ -524,8 +524,11 @@
                             </ul>
                         </div>
                     `,
+                    confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
                      });
                 }
+
                     else if (vista === 'perfil_usuario') {
         Swal.fire({
             title: '<i class="bi bi-person-vcard text-primary"></i> Mi Cuenta de Usuario',
@@ -554,6 +557,8 @@
                     Si tienes el rol de <b>Jefe/a</b>, verás habilitado el acceso a "Cuentas de Empleados". Si eres <b>Empleado/a</b>, este botón estará bloqueado por seguridad.</p>
                 </div>
             `,
+            confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
             });
                 }
                     else if (vista === 'gestion_empleados') {
@@ -581,6 +586,8 @@
                     </div>
                 </div>
             `,
+            confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
             });
                 }
                     else if (vista === 'papelera_empleados') {
@@ -608,7 +615,8 @@
                     </ul>
                 </div>
             `,
-
+            confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
             });
                 }
                     else if (vista === 'cuenta_clientes') {
@@ -644,6 +652,8 @@
                     </div>
                 </div>
             `,
+            confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
             });
                 }
                     else if (vista === 'inasistencias') {
@@ -666,7 +676,7 @@
             `,
             });
                 }
-                    else if (vista === 'Vacaciones') {
+                    else if (vista === 'vacaciones') {
         Swal.fire({
             title: '<i class="bi bi-umbrella-fill text-primary"></i> Guía: Vacaciones de Empleados',
             html: `
@@ -696,6 +706,8 @@
                     </div>
                 </div>
             `,
+            confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
             });
                 }
                     else if (vista === 'Proveedores') {
@@ -731,6 +743,8 @@
                     <p class="small text-muted"><i class="bi bi-info-circle"></i> Usa el botón <b>Restaurar</b> si necesitas recuperar un proveedor que fue desactivado previamente.</p>
                 </div>
             `,
+            confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
             });
                 }
                     else if (vista === 'RegistrarProveedor') {
@@ -764,6 +778,8 @@
                     </div>
                 </div>
             `,
+            confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
             });
                 }
                     else if (vista === 'RestaurarProveedores') {
@@ -794,6 +810,8 @@
                     <p class="small text-muted"><i class="bi bi-lightbulb"></i> Puedes seleccionar varios proveedores a la vez usando las casillas de la derecha para procesarlos en lote.</p>
                 </div>
             `,
+            confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
             });
                 }
                     else if (vista === 'Drogueria_Suiza') {
@@ -837,9 +855,11 @@
                     </div>
                 </div>
             `,
+            confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
             });
                 }
-                    else if (vista === 'Proveedor_Secundario') {
+                    else if (vista === 'ProveedorSecundario') {
         Swal.fire({
             title: '<i class="bi bi-person-badge text-warning"></i> Gestión de Boletas: Parar Proveedores Secundarios',
             html: `

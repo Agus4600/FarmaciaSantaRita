@@ -1893,31 +1893,32 @@
 			});
 
 			// 9. RESUMEN POR EMPLEADO (F1:G...)
-			worksheet.getCell('F1').value = 'FALTAS EN TOTAL';
-			worksheet.mergeCells('F1:G1');
-			const resumenEmpleadoHeader = worksheet.getCell('F1');
-			resumenEmpleadoHeader.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-			resumenEmpleadoHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
-			resumenEmpleadoHeader.alignment = { horizontal: 'center', vertical: 'middle' };
-			resumenEmpleadoHeader.border = borderNegro;
+					worksheet.getCell('F1').value = 'FALTAS EN TOTAL';
+		worksheet.mergeCells('F1:G1');
+		const resumenEmpleadoHeader = worksheet.getCell('F1');
+		resumenEmpleadoHeader.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+		resumenEmpleadoHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
+		resumenEmpleadoHeader.alignment = { horizontal: 'center', vertical: 'middle' };
+		resumenEmpleadoHeader.border = borderNegro;
 
-			let filaEmp = 2;
-			faltasPorEmpleado.forEach(item => {
-				// Ajuste de nombres de propiedades según tu API
-				const cellNombre = worksheet.getCell(`F${filaEmp}`);
-				const cellTotal = worksheet.getCell(`G${filaEmp}`);
+		let filaEmp = 2;
+		faltasPorEmpleado.forEach(item => {
+			const cellNombre = worksheet.getCell(`F${filaEmp}`);
+			const cellTotal = worksheet.getCell(`G${filaEmp}`);
 
-				cellNombre.value = item.nombreEmpleado || item.nombre || 'Sin nombre';
-				cellTotal.value = item.totalFaltas || item.total || 0;
+			// ← Usamos los nombres EXACTOS que devuelve el backend
+			cellNombre.value = item.nombre || 'Sin nombre';
+			cellTotal.value = item.faltas || 0;
 
-				[cellNombre, cellTotal].forEach(c => {
-					c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-					c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
-					c.alignment = { horizontal: 'center', vertical: 'middle' };
-					c.border = borderNegro;
-				});
-				filaEmp++;
+			[cellNombre, cellTotal].forEach(c => {
+				c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+				c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verde } };
+				c.alignment = { horizontal: 'center', vertical: 'middle' };
+				c.border = borderNegro;
 			});
+
+			filaEmp++;
+		});
 
 			// 10. RESUMEN POR TURNO (I1:J...)
 			worksheet.getCell('I1').value = 'FALTAS POR TURNO';

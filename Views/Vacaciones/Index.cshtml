@@ -1328,55 +1328,48 @@
 
             // Calcular días reales del período (corridos)
             const diasReales = Math.floor((finDate - inicioDate) / (1000 * 60 * 60 * 24)) + 1;
-                    if (diasReales < diasSolicitados) {
+
+                    // Obtener máximo legal (del input max o de la API)
+        const maxLegal = parseInt(elDias.max) || 60;
+
+        // Validación 1: Bloquear si período real < días solicitados (sobrante positivo)
+        if (diasReales < diasSolicitados) {
             Swal.fire({
                 title: 'Período insuficiente',
                 html: `Solicitaste <b>${diasSolicitados} días</b>, pero el período elegido cubre solo <b>${diasReales} días corridos</b>.<br><br>
-                       Debes extender el rango de fechas para cubrir al menos los ${diasSolicitados} días solicitados.`,
+                       Debes extender el rango de fechas para cubrir al menos los días solicitados.<br>
+                       (No se permiten sobrantes positivos).`,
                 confirmButtonText: 'Entendido',
                 confirmButtonColor: '#007bff'
             });
-            document.getElementById('btnPeriodo').focus();
-            return; // ← ¡No guardar!
-            }
+            btnPeriodo.focus();
+            return;
+        }
 
+        // Validación 2: Bloquear si período real > máximo legal (rompe la ley)
+        if (diasReales > maxLegal) {
+            Swal.fire({
+                title: 'Período excede el máximo legal',
+                html: `El período seleccionado tiene <b>${diasReales} días corridos</b>, pero solo corresponden <b>${maxLegal} días</b> por ley según antigüedad.<br><br>
+                       Reduce el rango de fechas o ajusta los días solicitados.`,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#dc3545'
+            });
+            btnPeriodo.focus();
+            return;
+        }
 
-
-            // Validación 1: días solicitados ≤ máximo legal
-            const maxLegal = parseInt(elDias.max) || 60;
-            if (diasSolicitados > maxLegal) {
-                e.preventDefault();
-                Swal.fire({
-                    title: 'Exceso de días solicitados',
-                    html: `No se pueden solicitar más de <b>${maxLegal} días</b> según la antigüedad del empleado (LCT).<br>
-                           Días solicitados: ${diasSolicitados} (máximo permitido: ${maxLegal})`,
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
-                });
-                elDias.focus();
-                return;
-            }
-
-            // Validación 2: días reales del período ≤ máximo legal
-            if (diasReales > maxLegal) {
-                e.preventDefault();
-
-                // Mostrar Swal SIN abrir el calendario
-                Swal.fire({
-                    title: 'Período demasiado largo',
-                    html: `El período seleccionado tiene <b>${diasReales} días corridos</b>, pero solo corresponden <b>${maxLegal} días</b> por ley.<br>
-                           Reduce el rango de fechas o ajusta los días solicitados.`,
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
-                }).then(() => {
-                    // Después de cerrar el Swal, enfocar el botón para que pueda corregir
-                    btnPeriodo.focus();
-                });
-
-                // Enfocar el botón (sin abrir el calendario)
-                btnPeriodo.focus();
-                return;
-            }
+        // Validación 3: Días solicitados ≤ máximo legal (ya lo tenés, pero reforzamos)
+        if (diasSolicitados > maxLegal || diasSolicitados <= 0) {
+            Swal.fire({
+                title: 'Días solicitados inválidos',
+                html: `Los días solicitados deben estar entre 1 y ${maxLegal} (según antigüedad).`,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#dc3545'
+            });
+            elDias.focus();
+            return;
+        }
 
 
 

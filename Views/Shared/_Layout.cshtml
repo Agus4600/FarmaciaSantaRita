@@ -327,29 +327,29 @@
 					<li><hr class="dropdown-divider"></li>
 
                     <li><h6 class="dropdown-header text-primary fw-bold"><i class="bi bi-person-badge me-2"></i>CUENTAS</h6></li>
-                    <li><a class="dropdown-item" href="#" title="Actualiza tus datos personales de acceso">Cuenta Usuario</a></li>
-                    <li><a class="dropdown-item" href="#" title="Solo Jefe: Gestionar y eliminar cuentas de empleados">Gestión de Cuentas Empleados</a></li>
-                    <li><a class="dropdown-item" href="#" title="Solo Jefe: Restaurar o borrar permanentemente cuentas">Papelera de Reciclaje</a></li>
+                    <li><a class="dropdown-item" href="#" data-vista="perfil_usuario" title="Actualiza tus datos personales de acceso">Cuenta Usuario</a></li>
+                    <li><a class="dropdown-item" href="#" data-vista="gestion_empleados" title="Solo Jefe: Gestionar y eliminar cuentas de empleados">Gestión de Cuentas Empleados</a></li>
+                    <li><a class="dropdown-item" href="#" data-vista="papelera_empleados" title="Solo Jefe: Restaurar o borrar permanentemente cuentas">Papelera de Reciclaje</a></li>
 
                     <li><hr class="dropdown-divider"></li>
 
                     <li><h6 class="dropdown-header text-primary fw-bold"><i class="bi bi-people me-2"></i>CUENTAS DE CLIENTES</h6></li>
-                    <li><a class="dropdown-item" href="#" title="Carga de clientes, productos, compras y reporte Excel">Cuenta de Clientes</a></li>
+                    <li><a class="dropdown-item" href="#" data-vista="cuenta_clientes" title="Carga de clientes, productos, compras y reporte Excel">Cuenta de Clientes</a></li>
 
                     <li><hr class="dropdown-divider"></li>
 
                     <li><h6 class="dropdown-header text-primary fw-bold"><i class="bi bi-briefcase me-2"></i>GESTIÓN DE EMPLEADOS</h6></li>
-                    <li><a class="dropdown-item" href="#" title="Registro de faltas y reporte Excel (Jefe carga / Empleado ve)">Registro de Inasistencia</a></li>
-                    <li><a class="dropdown-item" href="#" title="Registro de vacaciones y reporte Excel">Vacaciones de Empleados</a></li>
+                    <li><a class="dropdown-item" href="#" data-vista="inasistencias" title="Registro de faltas y reporte Excel (Jefe carga / Empleado ve)">Registro de Inasistencia</a></li>
+                    <li><a class="dropdown-item" href="#" data-vista="vacaciones" title="Registro de vacaciones y reporte Excel">Vacaciones de Empleados</a></li>
 
                     <li><hr class="dropdown-divider"></li>
 
                     <li><h6 class="dropdown-header text-primary fw-bold"><i class="bi bi-truck me-2"></i>PROVEEDORES</h6></li>
-                    <li><a class="dropdown-item" href="#" title="Listado principal para gestionar proveedores">Proveedores</a></li>
-                    <li><a class="dropdown-item" href="#" title="Dar de alta un nuevo proveedor en el sistema">Registrar Proveedor</a></li>
-                    <li><a class="dropdown-item" href="#" title="Recuperar proveedores eliminados">Restaurar Proveedor</a></li>
-                    <li><a class="dropdown-item" href="#" title="Carga especifica de boletas de otros proveedores">Proveedor Secundario</a></li>
-                    <li><a class="dropdown-item" href="#" title="Carga específica de boletas para Droguería Suiza">Droguería Suiza</a></li>
+                    <li><a class="dropdown-item" href="#" data-vista="Proveedores" title="Listado principal para gestionar proveedores">Proveedores</a></li>
+                    <li><a class="dropdown-item" href="#" data-vista="RegistrarProveedor" title="Dar de alta un nuevo proveedor en el sistema">Registrar Proveedor</a></li>
+                    <li><a class="dropdown-item" href="#" data-vista="RestaurarProveedores" title="Recuperar proveedores eliminados">Restaurar Proveedor</a></li>
+                    <li><a class="dropdown-item" href="#" data-vista="Proveedor_Secundario" title="Carga especifica de boletas de otros proveedores">Proveedor Secundario</a></li>
+					<li><a class="dropdown-item" href="#" data-vista="Drogueria_Suiza" title="Carga específica de boletas para Droguería Suiza">Droguería Suiza</a></li>
 
                 </ul>
             </div>
@@ -524,6 +524,362 @@
                             </ul>
                         </div>
                     `,
+                     });
+                }
+                    else if (vista === 'perfil_usuario') {
+        Swal.fire({
+            title: '<i class="bi bi-person-vcard text-primary"></i> Mi Cuenta de Usuario',
+            html: `
+                <div class="text-start" style="font-size: 0.9rem; line-height: 1.5;">
+                    <p><strong>Información Personal:</strong><br>
+                    Puedes editar casi todos tus datos. Al presionar <b>Guardar</b>, el sistema eliminará espacios innecesarios automáticamente.</p>
+
+                    <p><strong>Seguridad de Acceso:</strong></p>
+                    <ul>
+                        <li><b>Contraseña Actual:</b> Se muestra desencriptada solo para tu referencia.</li>
+                        <li><b>Nueva Contraseña:</b> Solo complétala si deseas cambiarla. El sistema la encriptará antes de enviarla a la base de datos.</li>
+                    </ul>
+
+                    <p><strong>Estados de Guardado:</strong><br>
+                    El sistema te notificará en tres casos posibles:</p>
+                    <ul>
+                        <li><i class="bi bi-check-circle text-success"></i> <b>Éxito:</b> Datos actualizados correctamente.</li>
+                        <li><i class="bi bi-exclamation-circle text-warning"></i> <b>Sin Cambios:</b> Si presionaste guardar pero no modificaste nada.</li>
+                        <li><i class="bi bi-x-circle text-danger"></i> <b>Error:</b> Por sesión expirada o problemas de conexión con la base de datos.</li>
+                    </ul>
+
+                    <hr>
+
+                    <p><strong>Nota para Jefes/as:</strong><br>
+                    Si tienes el rol de <b>Jefe/a</b>, verás habilitado el acceso a "Cuentas de Empleados". Si eres <b>Empleado/a</b>, este botón estará bloqueado por seguridad.</p>
+                </div>
+            `,
+            });
+                }
+                    else if (vista === 'gestion_empleados') {
+        Swal.fire({
+            title: '<i class="bi bi-people-fill text-primary"></i> Gestión de Empleados',
+            html: `
+                <div class="text-start" style="font-size: 0.9rem; line-height: 1.5;">
+                    <p><strong>Búsqueda Inteligente:</strong><br>
+                    Utiliza el buscador para encontrar empleados por <b>Nombre</b> o <b>DNI</b>. La tabla se filtrará automáticamente mientras escribes.</p>
+
+                    <p><strong>Selección Múltiple:</strong></p>
+                    <ul>
+                        <li><i class="bi bi-check-square"></i> <b>Individual:</b> Haz clic en el recuadro de la derecha para seleccionar una fila. La fila se resaltará en azul.</li>
+                        <li><i class="bi bi-check-all"></i> <b>Masiva:</b> Usa el checkbox de la cabecera para seleccionar o deseleccionar a todos los empleados visibles.</li>
+                    </ul>
+
+                    <p><strong>Acciones de Registro:</strong></p>
+                    <ul>
+                        <li><i class="bi bi-trash text-danger"></i> <b>Eliminar:</b> Al confirmar, las cuentas pasarán a un estado "Inactivo" (Soft Delete). No se borran permanentemente de inmediato.</li>
+                        <li><i class="bi bi-arrow-counterclockwise text-success"></i> <b>Restaurar:</b> Te redirige al panel de cuentas eliminadas para recuperar accesos si es necesario.</li>
+                    </ul>
+
+                    <div class="alert alert-info py-2" style="font-size: 0.85rem;">
+                        <i class="bi bi-info-circle-fill"></i> <b>Nota técnica:</b> Esta vista solo muestra usuarios con el rol <b>"Empleado/a"</b> que no han sido marcados como eliminados.
+                    </div>
+                </div>
+            `,
+            });
+                }
+                    else if (vista === 'papelera_empleados') {
+        Swal.fire({
+            title: '<i class="bi bi-trash3-fill text-danger"></i> Guía de la Papelera',
+            html: `
+                <div style="text-align: left; font-size: 0.95rem;">
+                    <p>En esta sección puedes gestionar las cuentas que han sido desactivadas:</p>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong><i class="bi bi-arrow-counterclockwise text-primary"></i> Restaurar:</strong>
+                            Vuelve a activar a los empleados seleccionados para que puedan usar el sistema.
+                        </li>
+                        <li class="list-group-item">
+                            <strong><i class="bi bi-x-octagon text-danger"></i> Borrado Permanente:</strong>
+                            Elimina la cuenta de la base de datos.
+                            <p class="small text-muted mt-1 mb-0 ms-3">
+                                * El sistema reasignará automáticamente sus <b>Boletas, Compras e Inasistencias</b> a tu cuenta de Jefe/a para mantener el historial legal.
+                            </p>
+                        </li>
+                        <li class="list-group-item">
+                            <strong><i class="bi bi-check2-all"></i> Selección Masiva:</strong>
+                            Usa el cuadro de la cabecera para marcar a todos los empleados filtrados de un solo golpe.
+                        </li>
+                    </ul>
+                </div>
+            `,
+
+            });
+                }
+                    else if (vista === 'cuenta_clientes') {
+        Swal.fire({
+            title: '<i class="bi bi-people text-primary"></i> Guía: Cuenta de Clientes',
+            html: `
+                <div class="text-start" style="font-size: 0.9rem; line-height: 1.5;">
+                    <p><strong>¿Para qué sirve esta sección?</strong><br>
+                    Es el sistema de gestión de cuentas corrientes donde registras las ventas de medicamentos y artículos a crédito para los vecinos.</p>
+
+                    <hr>
+
+                    <p><strong>Instrucciones de Uso:</strong></p>
+                    <ul>
+                        <li><strong>Registro de Venta:</strong> Ingresa el nombre del cliente. Si es <b>nuevo</b>, el sistema te obligará a poner su DNI para crearle una ficha.</li>
+                        <li><strong>Edición Directa:</strong> Puedes hacer clic en las celdas de <b>Cantidad</b> o <b>Precio</b> en la tabla para modificar los valores en tiempo real.</li>
+                        <li><strong>Guardado:</strong> Al editar una celda, presiona el botón verde (<i class="bi bi-check-lg text-success"></i>) para impactar los cambios en la base de datos.</li>
+                        <li><strong>Estados de Pago:</strong> Cambia entre <span class="badge bg-warning text-dark">Pendiente</span> y <span class="badge bg-success">Pagado</span>. La fila cambiará de color automáticamente.</li>
+                    </ul>
+
+                    <hr>
+
+                    <p><strong>Reportes y Exportación:</strong></p>
+                    <p>El botón <b>"Exportar a Excel"</b> genera un documento con:</p>
+                    <ul>
+                        <li>Detalle cronológico de las deudas del cliente.</li>
+                        <li>Totales automáticos calculados.</li>
+                        <li>Un cuadro resumen con el total de lo cobrado vs. lo pendiente.</li>
+                    </ul>
+
+                    <div class="alert alert-info py-2" style="font-size: 0.85rem;">
+                        <i class="bi bi-info-circle-fill"></i> <b>Tip:</b> Al escribir el nombre de un producto, si este ya existe en el sistema, se traerá su último precio guardado automáticamente.
+                    </div>
+                </div>
+            `,
+            });
+                }
+                    else if (vista === 'inasistencias') {
+        Swal.fire({
+            title: '<i class="bi bi-person-badge-fill text-primary"></i> Control de Inasistencias',
+            html: `
+                <div class="text-start" style="font-size: 0.9rem; line-height: 1.6;">
+                    <p>Esta sección permite gestionar el historial de faltas del personal y generar reportes estadísticos.</p>
+
+                    <h6 class="fw-bold border-bottom pb-1">Funciones Principales:</h6>
+                    <ul>
+                        <li><b>Registro Rápido:</b> Completa Fecha, Empleado, Turno y Motivo, luego pulsa <b>Agregar</b>.</li>
+                        <li><b>Consulta de Datos:</b> Haz clic en el <b>nombre del empleado</b> (en azul) para ver su DNI, teléfono y dirección al instante.</li>
+                        <li><b>Reporte Inteligente:</b> El botón <b>Guardar</b> genera un Excel que incluye no solo el listado, sino también un resumen de faltas totales por persona y por turno.</li>
+                    </ul>
+
+                    <h6 class="fw-bold border-bottom pb-1 text-primary">Sistema de Filtros:</h6>
+                    <p>Puedes combinar el <b>Rango de Fechas</b>, el <b>Turno</b> y el <b>Nombre</b> para auditar ausentismos específicos. Si no encuentras resultados, el sistema te avisará sin limpiar tu tabla actual.</p>
+                </div>
+            `,
+            });
+                }
+                    else if (vista === 'Vacaciones') {
+        Swal.fire({
+            title: '<i class="bi bi-umbrella-fill text-primary"></i> Guía: Vacaciones de Empleados',
+            html: `
+                <div class="text-start" style="font-size: 0.9rem; line-height: 1.5;">
+                    <p><strong>¿Cómo funciona el sistema de vacaciones?</strong><br>
+                    Este panel permite registrar el descanso de los empleados, calculando automáticamente los días según la Ley de Contrato de Trabajo (LCT Art. 150).</p>
+
+                    <hr>
+
+                    <p><strong>Pasos para el Registro:</strong></p>
+                    <ul>
+                        <li><strong>Selección:</strong> Al elegir un empleado, el sistema consultará su <b>antigüedad real</b> y te indicará cuántos días le corresponden legalmente.</li>
+                        <li><strong>Días Solicitados:</strong> El campo solo permite usar las flechas para evitar errores manuales. El máximo está limitado por lo que dicta la ley para ese empleado.</li>
+                        <li><strong>Validación de Solapamiento:</strong> El sistema <span class="text-danger fw-bold">bloqueará el registro</span> si el empleado ya tiene vacaciones en esas fechas o si ya hay otra persona de licencia en el mismo período.</li>
+                    </ul>
+
+                    <hr>
+
+                    <p><strong>Cálculos Automáticos:</strong></p>
+                    <ul>
+                        <li><strong>Días a Favor:</strong> Si un empleado se toma menos días de los que le corresponden (ej: le corresponden 14 pero se toma 10), el sistema guardará automáticamente esos <b>4 días</b> como saldo a favor.</li>
+                        <li><strong>Información Extendida:</strong> Haz clic en el nombre del empleado en la tabla para ver su <b>DNI, Teléfono y Dirección</b> sin salir de la vista.</li>
+                    </ul>
+
+                    <div class="alert alert-primary py-2" style="font-size: 0.85rem;">
+                        <i class="bi bi-info-circle-fill"></i> <b>Nota:</b> Las fechas se normalizan a formato UTC para asegurar que los reportes de Excel sean precisos.
+                    </div>
+                </div>
+            `,
+            });
+                }
+                    else if (vista === 'Proveedores') {
+        Swal.fire({
+            title: '<i class="bi bi-truck text-primary"></i> Manual: Agenda de Proveedores',
+            html: `
+                <div class="text-start" style="font-size: 0.9rem; line-height: 1.5;">
+                    <p><strong>¿Qué permite esta vista?</strong><br>
+                    Centraliza el contacto con las droguerías y laboratorios. Es el punto de partida para cargar mercadería y gestionar deudas.</p>
+
+                    <hr>
+
+                    <p><strong>Funciones de la Tabla:</strong></p>
+                    <ul>
+                        <li><strong>Buscador Inteligente:</strong> Puedes filtrar por <b>Nombre, Teléfono o Correo</b>. La tabla se actualiza en tiempo real mientras escribes.</li>
+                        <li><strong>Botón Ingresar:</strong> Debes seleccionar un proveedor de la lista para activarlo. Si eliges <b>"Droguería Suiza"</b>, el sistema te redirigirá automáticamente a su panel especializado.</li>
+                    </ul>
+
+                    <p><strong>Gestión de Registros:</strong></p>
+                    <ul>
+                        <li><i class="bi bi-plus-circle text-success"></i> <b>Nuevo Proveedor:</b> Registra nombres y contactos. El sistema validará que el formato del correo sea correcto antes de guardar.</li>
+                        <li><i class="bi bi-trash text-danger"></i> <b>Eliminación Segura:</b> Al eliminar un proveedor, este pasa a la "Papelera". No se borra definitivamente para evitar pérdida de datos accidentales.</li>
+                    </ul>
+
+                    <hr>
+
+                    <p><strong>Protección de Historial (Boletas):</strong></p>
+                    <div class="alert alert-info py-2" style="font-size: 0.85rem;">
+                        <i class="bi bi-shield-lock-fill"></i> <b>Seguridad Legal:</b> Si decides borrar un proveedor de forma <b>permanente</b> desde la papelera, el sistema reasignará todas sus boletas viejas al perfil <i>"Proveedor Eliminado"</i>.
+                        <br><br>Esto garantiza que los balances contables de la farmacia nunca se descuadren.
+                    </div>
+
+                    <p class="small text-muted"><i class="bi bi-info-circle"></i> Usa el botón <b>Restaurar</b> si necesitas recuperar un proveedor que fue desactivado previamente.</p>
+                </div>
+            `,
+            });
+                }
+                    else if (vista === 'RegistrarProveedor') {
+        Swal.fire({
+            title: '<i class="bi bi-person-plus-fill text-primary"></i> Manual: Registro de Proveedores',
+            html: `
+                <div class="text-start" style="font-size: 0.9rem; line-height: 1.5;">
+                    <p><strong>¿Cómo dar de alta un nuevo socio comercial?</strong><br>
+                    Esta vista permite incorporar nuevas droguerías o laboratorios a la base de datos de <b>Farmacia Santa Rita</b>.</p>
+
+                    <hr>
+
+                    <p><strong>Requisitos de los Campos:</strong></p>
+                    <ul>
+                        <li><strong>Nombre:</strong> Identificación clara de la empresa. No puede quedar vacío.</li>
+                        <li><strong>Teléfono:</strong> Número de contacto directo para pedidos y reclamos.</li>
+                        <li><strong>Correo Electrónico:</strong> Es fundamental para el envío de comprobantes. El sistema validará que contenga un formato válido (Ej: <i>nombre@empresa.com</i>).</li>
+                    </ul>
+
+                    <hr>
+
+                    <p><strong>Validaciones y Seguridad:</strong></p>
+                    <ul>
+                        <li><i class="bi bi-check-circle text-success"></i> <b>Estado Automático:</b> Todo proveedor nuevo nace con el estado <b>"Activo"</b>.</li>
+                        <li><i class="bi bi-exclamation-triangle text-warning"></i> <b>Campos Obligatorios:</b> El botón de registro se bloqueará visualmente si detecta campos vacíos, resaltándolos con un resplandor rojo.</li>
+                        <li><i class="bi bi-arrow-left-circle text-info"></i> <b>Botón Volver:</b> Si intentas salir habiendo escrito datos, el sistema te preguntará si deseas descartar los cambios para evitar pérdidas accidentales.</li>
+                    </ul>
+
+                    <div class="alert alert-warning py-2" style="font-size: 0.85rem;">
+                        <i class="bi bi-lightbulb-fill"></i> <b>Consejo:</b> Si el proveedor que intentas registrar ya existió antes y fue eliminado, te recomendamos revisar la <b>"Papelera de Proveedores"</b> para restaurarlo en lugar de crear uno nuevo.
+                    </div>
+                </div>
+            `,
+            });
+                }
+                    else if (vista === 'RestaurarProveedores') {
+        Swal.fire({
+            title: '<i class="bi bi-arrow-counterclockwise text-warning"></i> Manual: Papelera de Proveedores',
+            html: `
+                <div class="text-start" style="font-size: 0.9rem; line-height: 1.5;">
+                    <p><strong>¿Qué es la Papelera?</strong><br>
+                    Aquí residen los proveedores que fueron "desactivados". No han sido borrados totalmente, lo que te permite recuperarlos si fue un error.</p>
+
+                    <hr>
+
+                    <p><strong>Acciones Disponibles:</strong></p>
+                    <ul>
+                        <li><i class="bi bi-check-lg text-primary"></i> <b>Restaurar:</b> Devuelve al proveedor al listado principal con estado "Activo". Sus datos de contacto se mantienen intactos.</li>
+                        <li><i class="bi bi-trash-fill text-danger"></i> <b>Eliminar Permanente:</b> Borra el registro de la base de datos para siempre.</li>
+                    </ul>
+
+                    <p><strong>Impacto de la Eliminación Permanente:</strong></p>
+                    <div class="alert alert-danger py-2" style="font-size: 0.85rem;">
+                        <i class="bi bi-shield-exclamation"></i> <b>¡Atención!</b> Al borrar permanentemente:
+                        <br>1. El proveedor desaparece del sistema.
+                        <br>2. Sus boletas históricas se mueven automáticamente al perfil <b>"Proveedor Eliminado"</b> (ID: 8) para no alterar tu contabilidad.
+                    </div>
+
+                    <hr>
+
+                    <p class="small text-muted"><i class="bi bi-lightbulb"></i> Puedes seleccionar varios proveedores a la vez usando las casillas de la derecha para procesarlos en lote.</p>
+                </div>
+            `,
+            });
+                }
+                    else if (vista === 'Drogueria_Suiza') {
+        Swal.fire({
+            title: '<i class="bi bi-hospital text-primary"></i> Gestión de Boletas: Droguería Suiza',
+            html: `
+                <div class="text-start" style="font-size: 0.9rem; line-height: 1.5;">
+                    <p>Bienvenido al módulo de carga para <strong>Droguería Suiza</strong>. Este sistema está optimizado para la carga masiva de medicamentos y perfumería.</p>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="p-2 border rounded bg-light h-100" style="border-left: 4px solid #0d6efd !important;">
+                                <h6 class="fw-bold"><i class="bi bi-input-cursor-text text-primary"></i> Carga de Datos</h6>
+                                <ul class="small ps-3 mb-0">
+                                    <li><b>Categorización:</b> Clasifique entre <i>Medicamentos</i> o <i>Perfumería</i> para el reporte contable.</li>
+                                    <li><b>Importe:</b> Ingrese el monto final; el sistema valida el formato de moneda automáticamente.</li>
+                                    <li><b>Persistencia:</b> El botón "Agregar" impacta directamente en la base de datos de la Farmacia.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-2 border rounded bg-light h-100" style="border-left: 4px solid #198754 !important;">
+                                <h6 class="fw-bold"><i class="bi bi-file-earmark-excel text-success"></i> Control de Archivos</h6>
+                                <ul class="small ps-3 mb-0">
+                                    <li><b>Validación:</b> El Excel a "Abrir" debe iniciar obligatoriamente con el nombre <i>"Drogueria Suiza"</i>.</li>
+                                    <li><b>Transfer:</b> El sistema procesa automáticamente el estado SI/NO para el resumen de compras.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning py-2 mb-0">
+                        <h6 class="fw-bold mb-1" style="font-size: 0.85rem;"><i class="bi bi-exclamation-triangle-fill"></i> Importante sobre Eliminación:</h6>
+                        <p class="small mb-0">Al usar "Eliminar", los registros se borran permanentemente de la pantalla y del servidor.</p>
+                    </div>
+
+                    <div class="mt-3 d-flex justify-content-around text-center border-top pt-2 text-secondary">
+                        <div><i class="bi bi-database-check d-block"></i><span style="font-size: 0.7rem;">PostgreSQL</span></div>
+                        <div><i class="bi bi-shield-lock d-block"></i><span style="font-size: 0.7rem;">Acceso Protegido</span></div>
+                        <div><i class="bi bi-cpu d-block"></i><span style="font-size: 0.7rem;">EPPlus Engine</span></div>
+                    </div>
+                </div>
+            `,
+            });
+                }
+                    else if (vista === 'Proveedor_Secundario') {
+        Swal.fire({
+            title: '<i class="bi bi-person-badge text-warning"></i> Gestión de Boletas: Parar Proveedores Secundarios',
+            html: `
+                <div class="text-start" style="font-size: 0.9rem; line-height: 1.5;">
+                    <p>Bienvenido al módulo de carga para <strong>${nombreProveedor}</strong>. Este sistema está optimizado para la gestión de proveedores externos y locales.</p>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="p-2 border rounded bg-light h-100" style="border-left: 4px solid #ffc107 !important;">
+                                <h6 class="fw-bold"><i class="bi bi-pencil-square text-warning"></i> Carga de Datos</h6>
+                                <ul class="small ps-3 mb-0">
+                                    <li><b>Categorización:</b> El sistema asigna automáticamente la categoría según el proveedor seleccionado.</li>
+                                    <li><b>Importe:</b> Ingrese el monto total de la boleta; verifique los decimales antes de agregar.</li>
+                                    <li><b>Persistencia:</b> El botón "Agregar" impacta directamente en la base de datos de la Farmacia.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-2 border rounded bg-light h-100" style="border-left: 4px solid #198754 !important;">
+                                <h6 class="fw-bold"><i class="bi bi-file-earmark-spreadsheet text-success"></i> Control de Archivos</h6>
+                                <ul class="small ps-3 mb-0">
+                                    <li><b>Validación:</b> El Excel a "Abrir" debe iniciar obligatoriamente con el nombre <i>"${nombreProveedor}"</i>.</li>
+                                    <li><b>Transfer:</b> Es vital marcar correctamente el origen (SI/NO) para el cierre de mes.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning py-2 mb-0">
+                        <h6 class="fw-bold mb-1" style="font-size: 0.85rem;"><i class="bi bi-exclamation-triangle-fill"></i> Importante sobre Eliminación:</h6>
+                        <p class="small mb-0">Al usar "Eliminar", los registros se borran permanentemente de la pantalla y del servidor.</p>
+                    </div>
+
+                    <div class="mt-3 d-flex justify-content-around text-center border-top pt-2 text-secondary">
+                        <div><i class="bi bi-database-check d-block"></i><span style="font-size: 0.7rem;">PostgreSQL</span></div>
+                        <div><i class="bi bi-shield-lock d-block"></i><span style="font-size: 0.7rem;">Acceso Protegido</span></div>
+                        <div><i class="bi bi-cpu d-block"></i><span style="font-size: 0.7rem;">EPPlus Engine</span></div>
+                    </div>
+                </div>
+            `,
                     confirmButtonText: 'Entendido',
                     confirmButtonColor: '#007bff',
                     width: '600px',

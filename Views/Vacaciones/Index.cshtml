@@ -1328,6 +1328,20 @@
 
             // Calcular días reales del período (corridos)
             const diasReales = Math.floor((finDate - inicioDate) / (1000 * 60 * 60 * 24)) + 1;
+                    if (diasReales < diasSolicitados) {
+            Swal.fire({
+                title: 'Período insuficiente',
+                html: `Solicitaste <b>${diasSolicitados} días</b>, pero el período elegido cubre solo <b>${diasReales} días corridos</b>.<br><br>
+                       Debes extender el rango de fechas para cubrir al menos los ${diasSolicitados} días solicitados.`,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
+            });
+            document.getElementById('btnPeriodo').focus();
+            return; // ← ¡No guardar!
+            }
+
+
+
 
             if (diasReales > diasSolicitados) {
             Swal.fire({

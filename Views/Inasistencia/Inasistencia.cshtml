@@ -1791,16 +1791,58 @@
 			});
 
 			// 3. Obtener datos de resumen desde las APIs
-			let faltasPorEmpleado = [];
-			let faltasPorTurno = [];
-			try {
-				const [resEmp, resTur] = await Promise.all([
-					fetch('/Inasistencia/GetFaltasTotalesPorEmpleado'), // Asegúrate de que este endpoint exista en tu controlador
-					fetch('/Inasistencia/GetFaltasPorTurno')
-				]);
-				if (resEmp.ok) faltasPorEmpleado = await resEmp.json();
-				if (resTur.ok) faltasPorTurno = await resTur.json();
-			} catch (err) { console.error('Error al obtener resúmenes:', err); }
+					// 3. Obtener datos de resumen
+		let faltasPorEmpleado = [];
+		let faltasPorTurno = [];
+
+				try {
+			console.log('Iniciando llamadas a endpoints...');
+
+			const [resEmp, resTur] = await Promise.all([
+				fetch('/Inasistencia/GetFaltasTotalesPorEmpleado'),
+				fetch('/Inasistencia/GetFaltasPorTurno')
+			]);
+
+			// Empleados
+			console.log('GetFaltasTotalesPorEmpleado → Status:', resEmp.status);
+			if (resEmp.ok) {
+				faltasPorEmpleado = await resEmp.json();
+				console.log('Empleados recibidos:', faltasPorEmpleado);
+			} else {
+				const errText = await resEmp.text();
+				console.error('Error empleados:', resEmp.status, errText);
+				Swal.fire({
+					icon: 'error',
+					title: 'Error en empleados',
+					text: `Código ${resEmp.status} - ${errText || 'Sin detalles'}`,
+					timer: 5000
+				});
+			}
+
+			// Turnos
+			console.log('GetFaltasPorTurno → Status:', resTur.status);
+			if (resTur.ok) {
+				faltasPorTurno = await resTur.json();
+				console.log('Turnos recibidos:', faltasPorTurno);
+			} else {
+				const errText = await resTur.text();
+				console.error('Error turnos:', resTur.status, errText);
+				Swal.fire({
+					icon: 'error',
+					title: 'Error en turnos',
+					text: `Código ${resTur.status} - ${errText || 'Sin detalles'}`,
+					timer: 5000
+				});
+			}
+		} catch (err) {
+			console.error('Error general en llamadas:', err);
+			Swal.fire({
+				icon: 'error',
+				title: 'Error de conexión',
+				text: 'No se pudo conectar con los endpoints de resúmenes.',
+				timer: 5000
+			});
+		}
 
 			// 4. Crear Workbook y Worksheet
 			const workbook = new ExcelJS.Workbook();

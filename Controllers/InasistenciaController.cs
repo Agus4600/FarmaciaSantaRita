@@ -31,25 +31,27 @@ public class InasistenciaController : Controller
     //"~/Views/Inasistencia/Inasistencia.cshtml"//
 
     [HttpGet]
-    public async Task<IActionResult> GetFaltasTotalesPorEmpleado()
+    public async Task<IActionResult> GetFaltasPorTurno()
     {
-        var faltas = await _context.Usuarios
-            .Where(u => u.Rol == "Empleado/a" || u.Rol == "Jefe/a")
-            .GroupJoin(
-                _context.Inasistencia,
-                u => u.Idusuario,
-                i => i.Idusuario,
-                (u, grupoFaltas) => new
-                {
-                    nombre = u.Nombre + " " + u.Apellido,
-                    faltas = grupoFaltas.Count()
-                })
-            .OrderBy(x => x.nombre)
+        var conteos = await _context.Inasistencia
+            .GroupBy(i => i.Turno)
+            .Select(g => new
+            {
+                turno = g.Key ?? "Sin turno",
+                total = g.Count()
+            })
             .ToListAsync();
 
-        return Json(faltas);  // ← Simplemente retorna faltas (nunca null)
-    }
+        // Forzamos los 3 turnos siempre
+        var resultado = new[]
+        {
+        new { turno = "Mañana", total = conteos.FirstOrDefault(x => x.turno == "Mañana")?.total ?? 0 },
+        new { turno = "Tarde", total = conteos.FirstOrDefault(x => x.turno == "Tarde")?.total ?? 0 },
+        new { turno = "Completo", total = conteos.FirstOrDefault(x => x.turno == "Completo")?.total ?? 0 }
+    };
 
+        return Json(resultado);
+    }
 
 
 

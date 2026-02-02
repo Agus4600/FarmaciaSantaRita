@@ -320,7 +320,7 @@
                     style="min-width: 350px; max-height: 550px; overflow-y: auto; background-color: #fff; margin-bottom: 10px; padding: 12px;">
 
 					<li><h6 class="dropdown-header text-primary fw-bold"><i class="bi bi-shield-lock me-2"></i>ACCESO Y SEGURIDAD</h6></li>
-					<li><a class="dropdown-item" href="#" title="Ingreso al sistema. Incluye opción para crear cuenta o recordar datos si hay errores">Login</a></li>
+                    <li><a class="dropdown-item" href="#" data-vista="login" title="Ingreso al sistema. Incluye opción para crear cuenta o recordar datos si hay errores">Login</a></li>
 					<li><a class="dropdown-item" href="#" title="Recupera tu usuario y contraseña ingresando solo tu DNI">Recordar Cuenta</a></li>
 					<li><a class="dropdown-item" href="#" title="Formulario de registro con datos personales para obtener una cuenta">Crear Cuenta</a></li>
 
@@ -427,88 +427,57 @@
         });
     </script>
 
-    <!-- Ayuda por vista - Swal con explicaciones -->
     <script>
         document.querySelectorAll('.dropdown-item[data-vista]').forEach(item => {
             item.addEventListener('click', function (e) {
                 e.preventDefault();
                 const vista = this.getAttribute('data-vista');
-                let titulo = '';
-                let contenido = '';
 
-                switch (vista) {
-                    case 'panel':
-                        titulo = 'Panel de Selección';
-                        contenido = `
-                            <p><strong>¿Para qué sirve?</strong><br>
-                            Es la pantalla inicial donde elegís si querés gestionar <strong>Inasistencias</strong> o <strong>Vacaciones</strong> de los empleados.</p>
-                            <p><strong>Componentes principales:</strong></p>
-                            <ul>
-                                <li><strong>Botones grandes</strong>: "Inasistencia" y "Vacaciones" → te llevan a cada vista.</li>
-                                <li><strong>Logo y foto</strong>: decoración y acceso rápido.</li>
-                            </ul>
-                            <p><strong>Consejo:</strong> Siempre empezá desde aquí para mantener el flujo correcto.</p>
-                        `;
-                        break;
+                // Solo ejecutamos si es la vista de login
+                if (vista === 'login') {
+                    Swal.fire({
+                        title: '<i class="bi bi-shield-lock-fill text-primary"></i> Guía de Inicio de Sesión',
+                        html: `
+                            <div class="text-start" style="font-size: 0.95rem; line-height: 1.5;">
+                                <p><strong>¿Para qué sirve esta vista?</strong><br>
+                                Es el control de acceso a la Farmacia Santa Rita. Aquí validas tu usuario para poder gestionar el sistema.</p>
 
-                    case 'inasistencia':
-                        titulo = 'Registro de Inasistencias';
-                        contenido = `
-                            <p><strong>¿Para qué sirve?</strong><br>
-                            Registrar, buscar, eliminar y exportar inasistencias de empleados (faltas, motivos, turnos).</p>
-                            <p><strong>Botones y componentes clave:</strong></p>
-                            <ul>
-                                <li><strong>Agregar</strong>: Seleccioná empleado, fecha, turno y motivo → se agrega temporalmente (amarillo).</li>
-                                <li><strong>Guardar</strong>: Exporta todo a Excel con resúmenes de faltas por empleado y por turno.</li>
-                                <li><strong>Nuevo Registro</strong>: Limpia la tabla para empezar de cero.</li>
-                                <li><strong>Eliminar</strong>: Seleccioná filas con checkbox → elimina de la base.</li>
-                                <li><strong>Filtros</strong> (arriba derecha): Buscar por nombre, rango de fechas o turno.</li>
-                                <li><strong>Tabla</strong>: Clic en nombre de empleado → muestra DNI, teléfono y dirección.</li>
-                            </ul>
-                            <p><strong>Consejo:</strong> Usá el botón Guardar para tener un reporte diario completo.</p>
-                        `;
-                        break;
+                                <hr>
 
-                    case 'vacaciones':
-                        titulo = 'Registro de Vacaciones';
-                        contenido = `
-                            <p><strong>¿Para qué sirve?</strong><br>
-                            Solicitar y gestionar vacaciones de empleados, respetando el máximo legal por antigüedad.</p>
-                            <p><strong>Botones y componentes clave:</strong></p>
-                            <ul>
-                                <li><strong>Empleado</strong>: Seleccioná de la lista (se carga DNI).</li>
-                                <li><strong>Días Solicitados</strong>: Número de días que pide el empleado (máximo según antigüedad).</li>
-                                <li><strong>Período</strong>: Elegí fechas con el calendario → debe cubrir al menos los días pedidos.</li>
-                                <li><strong>Agregar</strong>: Valida todo y guarda si el período es válido (no permite sobrantes grandes ni exceso legal).</li>
-                                <li><strong>Guardar</strong>: Exporta a Excel con resumen por empleado y totales.</li>
-                                <li><strong>Nuevo Registro</strong>: Limpia la tabla.</li>
-                                <li><strong>Eliminar</strong>: Seleccioná filas → borra de la base.</li>
-                                <li><strong>Buscar</strong>: Filtra por nombre o rango de fechas.</li>
-                                <li><strong>Clic en nombre</strong>: Muestra DNI, teléfono, dirección y días legales.</li>
-                            </ul>
-                            <p><strong>Consejo:</strong> El sistema bloquea si el rango no coincide bien con los días pedidos o excede la ley.</p>
-                        `;
-                        break;
+                                <p><strong>Instrucciones paso a paso:</strong></p>
+                                <ol>
+                                    <li><strong>Ingreso de datos:</strong> Escribe tu nombre de usuario y contraseña. Puedes usar el botón del ojo (<i class="bi bi-eye"></i>) para ver la clave.</li>
+                                    <li><strong>Validación:</strong> Si los campos están vacíos, verás un <b>resplandor rojo</b> y un aviso de atención.</li>
+                                    <li><strong>¿No recuerdas tus datos?</strong> Si ingresas información incorrecta, el sistema habilitará automáticamente el botón <b>"Recordar cuenta"</b>.</li>
+                                    <li><strong>Nuevos usuarios:</strong> Si aún no tienes cuenta, usa el botón <b>"Crear cuenta"</b> para registrarte.</li>
+                                </ol>
 
-                    default:
-                        titulo = 'Ayuda';
-                        contenido = '<p>No se encontró ayuda para esta vista.</p>';
+                                <div class="alert alert-warning p-2" style="font-size: 0.85rem;">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                    <strong>Nota:</strong> Si tu cuenta fue desactivada por el administrador, verás un mensaje de "Acceso Denegado".
+                                </div>
+                            </div>
+                        `,
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff',
+                        customClass: {
+                            popup: 'rounded-4 shadow-lg',
+                            title: 'fw-bold'
+                        },
+                        width: '500px'
+                    });
+                } else {
+                    // Mensaje temporal para las otras opciones mientras no las configuramos
+                    Swal.fire({
+                        title: 'Próximamente',
+                        text: 'La guía para esta sección se activará pronto.',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
+                    });
                 }
-
-                Swal.fire({
-                    title: `Ayuda: ${titulo}`,
-                    html: contenido,
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff',
-                    customClass: {
-                        popup: 'rounded-4 shadow-lg',
-                        title: 'text-primary fw-bold fs-4',
-                        htmlContainer: 'text-start fs-5'
-                    },
-                    width: '600px'
-                });
             });
         });
     </script>
+    
 </body>
 </html>

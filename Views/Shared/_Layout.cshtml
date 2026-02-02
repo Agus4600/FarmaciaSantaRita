@@ -267,46 +267,48 @@
     </div>
 
     <!-- Ícono flotante de información (esquina inferior derecha) -->
-    <div class="info-flotante">
-        <button id="btnInfo" class="btn-info-flotante" title="Información de contacto">
-            <i class="bi bi-info-circle-fill"></i>
-        </button>
-
-        <div id="panelInfo" class="panel-info">
-            <h5>Contacto - Farmacia Santa Rita</h5>
-            <ul>
-                <li>
-                    <i class="bi bi-whatsapp"></i>
+    <div style="position: fixed; left: 25px; bottom: 25px; z-index: 2000;">
+        <div class="dropdown">
+            <button class="btn btn-primary btn-lg rounded-circle shadow-lg d-flex align-items-center justify-content-center"
+                    type="button" id="btnInfo" data-bs-toggle="dropdown" aria-expanded="false"
+                    style="width: 70px; height: 70px; font-size: 1.5rem; transition: all 0.3s ease;">
+                <i class="bi bi-info-circle-fill"></i>
+                <span class="visually-hidden">Información</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-start shadow-lg border-0 rounded-3" aria-labelledby="btnInfo"
+                style="min-width: 320px; max-height: 500px; overflow-y: auto; background-color: #fff; margin-bottom: 10px; padding: 20px;">
+                <li><h5 class="text-primary fw-bold text-center mb-4">Contacto - Farmacia Santa Rita</h5></li>
+                <li class="mb-3">
+                    <i class="bi bi-whatsapp me-2 text-success"></i>
                     <a href="https://wa.me/543863512906" target="_blank" rel="noopener">
                         +54 386 351-2906
                     </a>
                 </li>
-                <li>
-                    <i class="bi bi-instagram"></i>
+                <li class="mb-3">
+                    <i class="bi bi-instagram me-2 text-danger"></i>
                     <a href="https://www.instagram.com/farmacia.santa.rita.rioseco?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener">
                         @@farmacia.santa.rita.rioseco
                     </a>
                 </li>
-                <li>
-                    <i class="bi bi-envelope-fill"></i>
+                <li class="mb-3">
+                    <i class="bi bi-envelope-fill me-2 text-primary"></i>
                     <span style="color: #007bff; cursor: pointer; text-decoration: underline;"
-                          onclick="navigator.clipboard.writeText('santaritafarma@yahoo.com');
-                   alert('Correo copiado al portapapeles: santaritafarma@yahoo.com\n\nPegalo en tu cliente de correo (Gmail, Outlook, etc.) y envíanos tu mensaje.')">
+                          onclick="navigator.clipboard.writeText('santaritafarma@yahoo.com'); Swal.fire({icon: 'success', title: 'Copiado!', text: 'Correo copiado al portapapeles: santaritafarma@yahoo.com\n\nPegalo en tu cliente de correo.', timer: 2000});">
                         santaritafarma@yahoo.com
                     </span>
-                    <small style="display: block; color: #666; font-size: 12px; margin-top: 4px;">
-                        (Clic para copiar y pegar en tu correo)
-                    </small>
+                    <small class="d-block text-muted mt-1">(Clic para copiar y pegar en tu correo)</small>
                 </li>
-                <li>
-                    <i class="bi bi-geo-alt-fill"></i>
+                <li class="mb-3">
+                    <i class="bi bi-geo-alt-fill me-2 text-danger"></i>
                     Av. Himno Patrio, T4145 Río Seco, Tucumán
                     <br>
                     <small><a href="https://maps.app.goo.gl/M83Mb2kFBsQeKiQJ6" target="_blank" rel="noopener">(ver en Google Maps)</a></small>
                 </li>
+                <li><hr class="dropdown-divider"></li>
+                <li><button id="cerrarInfo" class="btn btn-secondary w-100">Cerrar</button></li>
             </ul>
-            <button id="cerrarPanel" class="btn-cerrar-panel">Cerrar</button>
         </div>
+    
 
         <!-- Botón Ayuda flotante (esquina inferior derecha) -->
         <div style="position: fixed; right: 25px; bottom: 25px; z-index: 1050;">

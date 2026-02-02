@@ -118,6 +118,28 @@ public class InasistenciaController : Controller
 
 
 
+    [HttpGet]
+    public async Task<IActionResult> GetFaltasTotalesPorEmpleado()
+    {
+        var faltas = await _context.Usuarios
+            .Where(u => u.Rol == "Empleado/a" || u.Rol == "Jefe/a")
+            .GroupJoin(
+                _context.Inasistencia,
+                u => u.Idusuario,
+                i => i.Idusuario,
+                (u, grupoFaltas) => new
+                {
+                    nombre = u.Nombre + " " + u.Apellido,
+                    faltas = grupoFaltas.Count()
+                })
+            .OrderBy(x => x.nombre)
+            .ToListAsync();
+
+        return Json(faltas);
+    }
+
+
+
 
 
     [HttpGet]

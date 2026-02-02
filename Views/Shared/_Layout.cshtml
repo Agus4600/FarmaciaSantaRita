@@ -321,8 +321,8 @@
 
 					<li><h6 class="dropdown-header text-primary fw-bold"><i class="bi bi-shield-lock me-2"></i>ACCESO Y SEGURIDAD</h6></li>
                     <li><a class="dropdown-item" href="#" data-vista="login" title="Ingreso al sistema. Incluye opción para crear cuenta o recordar datos si hay errores">Login</a></li>
-					<li><a class="dropdown-item" href="#" title="Recupera tu usuario y contraseña ingresando solo tu DNI">Recordar Cuenta</a></li>
-					<li><a class="dropdown-item" href="#" title="Formulario de registro con datos personales para obtener una cuenta">Crear Cuenta</a></li>
+                    <li><a class="dropdown-item" href="#" data-vista="recordar" title="Recupera tu usuario y contraseña ingresando solo tu DNI">Recordar Cuenta</a></li>
+                    <li><a class="dropdown-item" href="#" data-vista="registro" title="Formulario de registro con datos personales para obtener una cuenta">Crear Cuenta</a></li>
 
 					<li><hr class="dropdown-divider"></li>
 
@@ -433,7 +433,6 @@
                 e.preventDefault();
                 const vista = this.getAttribute('data-vista');
 
-                // Solo ejecutamos si es la vista de login
                 if (vista === 'login') {
                     Swal.fire({
                         title: '<i class="bi bi-shield-lock-fill text-primary"></i> Guía de Inicio de Sesión',
@@ -441,33 +440,88 @@
                             <div class="text-start" style="font-size: 0.95rem; line-height: 1.5;">
                                 <p><strong>¿Para qué sirve esta vista?</strong><br>
                                 Es el control de acceso a la Farmacia Santa Rita. Aquí validas tu usuario para poder gestionar el sistema.</p>
+                                <hr>
+                                <p><strong>Instrucciones:</strong></p>
+                                <ul>
+                                    <li>Ingresa tu usuario y contraseña. Usa el ojo (<i class="bi bi-eye"></i>) para verificar.</li>
+                                    <li>Si fallas, aparecerá el botón <b>"Recordar cuenta"</b>.</li>
+                                </ul>
+                            </div>
+                        `,
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
+                    });
+                }
+                else if (vista === 'recordar') {
+                    Swal.fire({
+                        title: '<i class="bi bi-person-search text-primary"></i> Manual: Recordar Cuenta',
+                        html: `
+                            <div class="text-start" style="font-size: 0.95rem; line-height: 1.5;">
+                                <p><strong>¿Para qué sirve?</strong><br>
+                                Permite recuperar tus datos de acceso si los has olvidado, utilizando únicamente tu número de documento.</p>
 
                                 <hr>
 
-                                <p><strong>Instrucciones paso a paso:</strong></p>
+                                <p><strong>Paso a paso para recuperar:</strong></p>
                                 <ol>
-                                    <li><strong>Ingreso de datos:</strong> Escribe tu nombre de usuario y contraseña. Puedes usar el botón del ojo (<i class="bi bi-eye"></i>) para ver la clave.</li>
-                                    <li><strong>Validación:</strong> Si los campos están vacíos, verás un <b>resplandor rojo</b> y un aviso de atención.</li>
-                                    <li><strong>¿No recuerdas tus datos?</strong> Si ingresas información incorrecta, el sistema habilitará automáticamente el botón <b>"Recordar cuenta"</b>.</li>
-                                    <li><strong>Nuevos usuarios:</strong> Si aún no tienes cuenta, usa el botón <b>"Crear cuenta"</b> para registrarte.</li>
+                                    <li><strong>Ingresa tu DNI:</strong> Escribe tu número de documento en el campo central.</li>
+                                    <li><strong>Búsqueda:</strong> Haz clic en el botón azul de la lupa (<i class="bi bi-search"></i>).</li>
+                                    <li><strong>Resultado:</strong> Si el DNI existe, aparecerá un cuadro gris abajo con tu <b>Usuario</b> y tu <b>Contraseña</b>.</li>
                                 </ol>
 
-                                <div class="alert alert-warning p-2" style="font-size: 0.85rem;">
-                                    <i class="bi bi-exclamation-triangle-fill"></i>
-                                    <strong>Nota:</strong> Si tu cuenta fue desactivada por el administrador, verás un mensaje de "Acceso Denegado".
-                                </div>
+                                <hr>
+
+                                <p><strong>Casos especiales:</strong></p>
+                                <ul>
+                                    <li><span style="color: #dc3545; font-weight: bold;">Campo vacío:</span> Si intentas buscar sin escribir nada, el campo brillará en rojo.</li>
+                                    <li><span style="color: #6c757d; font-weight: bold;">Contraseña protegida:</span> Si el sistema indica "Contraseña antigua protegida", deberás contactar al jefe para resetearla manualmente.</li>
+                                    <li><span style="color: #007bff; font-weight: bold;">Volver:</span> Usa el botón azul <b>"Volver"</b> para regresar al login una vez que tengas tus datos.</li>
+                                </ul>
                             </div>
                         `,
                         confirmButtonText: 'Entendido',
                         confirmButtonColor: '#007bff',
-                        customClass: {
-                            popup: 'rounded-4 shadow-lg',
-                            title: 'fw-bold'
-                        },
-                        width: '500px'
                     });
-                } else {
-                    // Mensaje temporal para las otras opciones mientras no las configuramos
+                }
+                else if (vista === 'registro') {
+                Swal.fire({
+                    title: '<i class="bi bi-person-plus-fill text-primary"></i> Guía de Registro de Usuario',
+                    html: `
+                        <div class="text-start" style="font-size: 0.9rem; line-height: 1.4;">
+                            <p><strong>¿Cómo crear tu cuenta?</strong><br>
+                            Completa los dos bloques de información para darte de alta en el sistema.</p>
+
+                            <hr>
+
+                            <p><strong>1. Datos Personales:</strong></p>
+                            <ul>
+                                <li><b>DNI:</b> Debe tener entre 7 y 8 números únicamente.</li>
+                                <li><b>Dirección:</b> Es obligatorio incluir una coma (ej: <i>Calle 123, Ciudad</i>).</li>
+                                <li><b>Rol:</b> Selecciona si eres Empleado/a o Jefe/a.</li>
+                            </ul>
+
+                            <p><strong>2. Cuenta y Seguridad:</strong></p>
+                            <ul>
+                                <li><b>Correo:</b> Solo se aceptan cuentas de <b>Gmail, Hotmail o Outlook</b>.</li>
+                                <li><b>Contraseña:</b> Debe tener un mínimo de <b>6 caracteres</b>. Usa el ojo (<i class="bi bi-eye"></i>) para ver lo que escribes.</li>
+                            </ul>
+
+                            <hr>
+
+                            <p><strong>Validaciones del sistema:</strong></p>
+                            <ul>
+                                <li><span style="color: #dc3545; font-weight: bold;">Resplandor Rojo:</span> Si un campo brilla en rojo, es porque está vacío o no cumple el formato (ej: falta la coma en dirección).</li>
+                                <li><b>Confirmación:</b> Al terminar, el sistema te pedirá una última confirmación antes de guardar.</li>
+                            </ul>
+                        </div>
+                    `,
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff',
+                    width: '600px',
+                    customClass: { popup: 'rounded-4 shadow-lg' }
+                    });
+                }
+                else {
                     Swal.fire({
                         title: 'Próximamente',
                         text: 'La guía para esta sección se activará pronto.',

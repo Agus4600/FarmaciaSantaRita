@@ -137,6 +137,14 @@ namespace FarmaciaSantaRita.Controllers
 
                 if (huboCambios)
                 {
+                    if (usuarioParaActualizar.FechaNacimiento != default(DateTime))
+                    {
+                        usuarioParaActualizar.FechaNacimiento = DateTime.SpecifyKind(usuarioParaActualizar.FechaNacimiento, DateTimeKind.Utc);
+                    }
+                    if (usuarioParaActualizar.FechaIngreso.HasValue && usuarioParaActualizar.FechaIngreso.Value != default(DateTime))
+                    {
+                        usuarioParaActualizar.FechaIngreso = DateTime.SpecifyKind(usuarioParaActualizar.FechaIngreso.Value, DateTimeKind.Utc);
+                    }
                     _context.Entry(usuarioParaActualizar).State = EntityState.Modified;
                     int cambios = _context.SaveChanges();
 

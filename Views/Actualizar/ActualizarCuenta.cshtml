@@ -294,14 +294,7 @@
                         @Html.HiddenFor(model => model.Idusuario)
                         <input type="hidden" name="idProveedor" value="@ViewData["IdProveedor"]" />
                         <input type="hidden" name="vista" value="@ViewData["vista"]" />
-                        @Html.HiddenFor(model => model.Nombre, new { id = "orig_Nombre" })
-                        @Html.HiddenFor(model => model.Apellido, new { id = "orig_Apellido" })
-                        @Html.HiddenFor(model => model.NombreUsuario, new { id = "orig_NombreUsuario" })
-                        @Html.HiddenFor(model => model.CorreoUsuario, new { id = "orig_CorreoUsuario" })
-                        @Html.HiddenFor(model => model.Dni, new { id = "orig_Dni" })
-                        @Html.HiddenFor(model => model.Direccion, new { id = "orig_Direccion" })
-                        @Html.HiddenFor(model => model.Telefono, new { id = "orig_Telefono" })
-                        @Html.Hidden("orig_NuevaContraseña", "") <!-- No hay contraseña original visible -->
+                       
 
                         <div class="tres-columnas">
                             <div class="grupo-campo">
@@ -560,7 +553,6 @@
 
     if (!huboCambios) {
         Swal.fire({
-            icon: 'info',
             title: 'Sin cambios detectados',
             text: 'No se realizaron modificaciones en ningún dato.',
             confirmButtonText: 'Entendido',

@@ -437,6 +437,19 @@
             });
             </text>
         }
+
+                @if (TempData["ResultadoActualizacion"]?.ToString() == "SinCambios")
+        {
+                <text>
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Sin cambios',
+                    text: '@TempData["MensajeSinCambios"]',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff'
+                });
+                </text>
+        }
         // Botón Guardar Cambios
         document.getElementById('btnGuardarCambios').addEventListener('click', function() {
     console.log("[DEBUG] Botón GUARDAR CAMBIOS presionado");

@@ -274,6 +274,30 @@
 
 <div class="container mt-5">
     <div class="card shadow-lg p-4 card-principal">
+        @if (TempData["ResultadoActualizacion"] != null)
+        {
+            var resultado = TempData["ResultadoActualizacion"].ToString();
+            var mensaje = "";
+
+            if (resultado == "Exito")
+            {
+                mensaje = TempData["MensajeExito"]?.ToString() ?? "Los cambios se guardaron correctamente.";
+            }
+            else if (resultado == "SinCambios")
+            {
+                mensaje = TempData["MensajeSinCambios"]?.ToString() ?? "No se detectaron cambios para guardar.";
+            }
+            else
+            {
+                mensaje = TempData["MensajeError"]?.ToString() ?? "Ocurrió un error inesperado.";
+            }
+
+            <script>
+                console.log("[DEBUG Backend Resultado] Tipo: " + "@resultado");
+                console.log("[DEBUG Backend Mensaje] " + "@mensaje");
+                console.log("[DEBUG TempData Completo] Exito: @TempData["MensajeExito"], SinCambios: @TempData["MensajeSinCambios"], Error: @TempData["MensajeError"]");
+            </script>
+        }
         <h2 class="text-center mb-4 fw-bold text-primary" translate="no">CUENTA DE USUARIO: @nombreUsuario</h2>
         <div class="row">
             <div class="col-md-2 d-flex flex-column align-items-start">
@@ -427,30 +451,31 @@
         // Swal de éxito desde TempData (si viene de redirect)
         @if (TempData["ResultadoActualizacion"]?.ToString() == "Exito")
         {
-            <text>
-            Swal.fire({
-                icon: 'success',
-                title: '¡Cuenta Actualizada!',
-                text: 'Los cambios se aplicaron con éxito.',
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#007bff'
-            });
-            </text>
+                <text>
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Cuenta Actualizada!',
+                    text: 'Los cambios se aplicaron con éxito.',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff',
+                    timer: 2500,
+                    showConfirmButton: false
+                });
+                </text>
         }
 
-        
         @if (TempData["ResultadoActualizacion"]?.ToString() == "SinCambios")
         {
-            <text>
-            Swal.fire({
-                title: 'Sin cambios',
-                text: '@TempData["MensajeSinCambios"]',
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#007bff',
-                timer: 2500,
-                showConfirmButton: false
-            });
-            </text>
+                <text>
+                Swal.fire({
+                    title: 'Sin cambios',
+                    text: '@TempData["MensajeSinCambios"]',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#007bff',
+                    timer: 2500,
+                    showConfirmButton: false
+                });
+                </text>
         }
         // Botón Guardar Cambios
     document.getElementById('btnGuardarCambios').addEventListener('click', function() {

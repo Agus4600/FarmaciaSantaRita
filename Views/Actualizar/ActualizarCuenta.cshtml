@@ -449,32 +449,50 @@
             });
         });
         // Swal de éxito desde TempData (si viene de redirect)
-        @if (TempData["ResultadoActualizacion"]?.ToString() == "Exito")
-        {
-                <text>
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Cuenta Actualizada!',
-                    text: 'Los cambios se aplicaron con éxito.',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff',
-                    showConfirmButton: false
-                });
-                </text>
-        }
+                @if (TempData["ResultadoActualizacion"] != null)
+                {
+                        var resultado = TempData["ResultadoActualizacion"].ToString();
 
-        @if (TempData["ResultadoActualizacion"]?.ToString() == "SinCambios")
-        {
-                <text>
-                Swal.fire({
-                    title: 'Sin cambios',
-                    text: '@TempData["MensajeSinCambios"]',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff',
-                    showConfirmButton: false
-                });
-                </text>
-        }
+                        if (resultado == "Error")
+                        {
+                                <text>
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: '@(TempData["MensajeError"] ?? "Ocurrió un error inesperado.")',
+                                    confirmButtonText: 'Entendido',
+                                    confirmButtonColor: '#007bff',
+                                     showConfirmButton: true
+                                });
+                                </text>
+                        }
+                        else if (resultado == "SinCambios")
+                        {
+                                <text>
+                                Swal.fire({
+                                    icon: 'info',
+                                    title: 'Sin cambios',
+                                    text: '@(TempData["MensajeSinCambios"] ?? "No se detectaron cambios para guardar.")',
+                                    confirmButtonText: 'Entendido',
+                                    confirmButtonColor: '#007bff',
+                                    showConfirmButton: true   // Botón visible siempre
+                                });
+                                </text>
+                        }
+                        else if (resultado == "Exito")
+                        {
+                                <text>
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '¡Cuenta Actualizada!',
+                                    text: '@(TempData["MensajeExito"] ?? "Los cambios se guardaron correctamente.")',
+                                    confirmButtonText: 'Entendido',
+                                    confirmButtonColor: '#007bff',
+                                    showConfirmButton: true
+                                });
+                                </text>
+                        }
+                }
         // Botón Guardar Cambios
     document.getElementById('btnGuardarCambios').addEventListener('click', function() {
     console.log("[DEBUG] Botón GUARDAR CAMBIOS presionado");

@@ -438,20 +438,22 @@
             </text>
         }
 
-                @if (TempData["ResultadoActualizacion"]?.ToString() == "SinCambios")
+        
+        @if (TempData["ResultadoActualizacion"]?.ToString() == "SinCambios")
         {
-                <text>
-                Swal.fire({
-                    icon: 'info',
-                    title: 'Sin cambios',
-                    text: '@TempData["MensajeSinCambios"]',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
-                });
-                </text>
+            <text>
+            Swal.fire({
+                title: 'Sin cambios',
+                text: '@TempData["MensajeSinCambios"]',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff',
+                timer: 2500,
+                showConfirmButton: false
+            });
+            </text>
         }
         // Botón Guardar Cambios
-        document.getElementById('btnGuardarCambios').addEventListener('click', function() {
+    document.getElementById('btnGuardarCambios').addEventListener('click', function() {
     console.log("[DEBUG] Botón GUARDAR CAMBIOS presionado");
 
     const form = document.getElementById('formCuenta');
@@ -460,7 +462,6 @@
         return;
     }
 
-    // Campos visibles a validar/comparar
     const campos = {
         nombre: document.getElementById('Nombre'),
         apellido: document.getElementById('Apellido'),
@@ -469,31 +470,8 @@
         dni: document.getElementById('Dni'),
         direccion: document.getElementById('DireccionInput'),
         telefono: document.getElementById('Telefono'),
-        nuevaPass: document.getElementById('nuevaContraseña')
-    };
-
-    // Valores originales (de los hidden inputs)
-    const orig = {
-        nombre: document.getElementById('orig_Nombre')?.value?.trim() || '',
-        apellido: document.getElementById('orig_Apellido')?.value?.trim() || '',
-        usuario: document.getElementById('orig_NombreUsuario')?.value?.trim() || '',
-        correo: document.getElementById('orig_CorreoUsuario')?.value?.trim() || '',
-        dni: document.getElementById('orig_Dni')?.value?.trim() || '',
-        direccion: document.getElementById('orig_Direccion')?.value?.trim() || '',
-        telefono: document.getElementById('orig_Telefono')?.value?.trim() || '',
-        nuevaPass: '' // Contraseña nueva no tiene original visible
-    };
-
-    // Valores actuales (lo que está en el formulario ahora)
-    const actual = {
-        nombre: campos.nombre?.value?.trim() || '',
-        apellido: campos.apellido?.value?.trim() || '',
-        usuario: campos.usuario?.value?.trim() || '',
-        correo: campos.correo?.value?.trim() || '',
-        dni: campos.dni?.value?.trim() || '',
-        direccion: campos.direccion?.value?.trim() || '',
-        telefono: campos.telefono?.value?.trim() || '',
-        nuevaPass: campos.nuevaPass?.value?.trim() || ''
+        nuevaPass: document.getElementById('nuevaContraseña'),
+        wrapNuevaPass: document.getElementById('wrapperNuevaContrasena')
     };
 
     // Limpiar glows previos
@@ -502,45 +480,46 @@
         if (c?.closest('.password-wrapper')) c.closest('.password-wrapper').classList.remove('invalid-glow');
     });
 
-    // Validaciones (las mismas que ya tenías)
     let errores = [];
     const regexLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
     const regexMail = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const regexDni = /^\d{7,8}$/;
     const regexTelefono = /^\d{7,15}$/;
 
-    if (!actual.nombre || !regexLetras.test(actual.nombre)) {
+    if (!campos.nombre?.value?.trim() || !regexLetras.test(campos.nombre.value.trim())) {
         errores.push("El <b>Nombre</b> es obligatorio y solo puede contener letras.");
         campos.nombre?.classList.add('invalid-glow');
     }
-    if (!actual.apellido || !regexLetras.test(actual.apellido)) {
+    if (!campos.apellido?.value?.trim() || !regexLetras.test(campos.apellido.value.trim())) {
         errores.push("El <b>Apellido</b> es obligatorio y solo puede contener letras.");
         campos.apellido?.classList.add('invalid-glow');
     }
-    if (!actual.usuario) {
+    if (!campos.usuario?.value?.trim()) {
         errores.push("El <b>Nombre de Usuario</b> es obligatorio.");
         campos.usuario?.classList.add('invalid-glow');
     }
-    if (!actual.correo || !regexMail.test(actual.correo)) {
+    if (!campos.correo?.value?.trim() || !regexMail.test(campos.correo.value.trim())) {
         errores.push("Ingresa un <b>Correo</b> válido.");
         campos.correo?.classList.add('invalid-glow');
     }
-    if (!actual.dni || !regexDni.test(actual.dni)) {
+    if (!campos.dni?.value?.trim() || !regexDni.test(campos.dni.value.trim())) {
         errores.push("El <b>DNI</b> es obligatorio y debe tener 7 u 8 números.");
         campos.dni?.classList.add('invalid-glow');
     }
-    if (!actual.direccion || !actual.direccion.includes(",") || actual.direccion.split(",")[1].trim().length < 2) {
+    if (!campos.direccion?.value?.trim() || !campos.direccion.value.includes(",") || campos.direccion.value.split(",")[1].trim().length < 2) {
         errores.push("La <b>Dirección</b> es obligatoria y debe incluir coma + localidad.");
         campos.direccion?.classList.add('invalid-glow');
     }
-    if (!actual.telefono || !regexTelefono.test(actual.telefono)) {
+    if (!campos.telefono?.value?.trim() || !regexTelefono.test(campos.telefono.value.trim())) {
         errores.push("El <b>Teléfono</b> es obligatorio y debe tener 7-15 números.");
         campos.telefono?.classList.add('invalid-glow');
     }
+
     // Contraseña nueva (opcional)
-    if (actual.nuevaPass && actual.nuevaPass === document.getElementById('contrasenaActual')?.value) {
+    const passActual = document.getElementById('contrasenaActual')?.value || "";
+    if (campos.nuevaPass?.value?.trim() && campos.nuevaPass.value.trim() === passActual) {
         errores.push("La <b>Nueva Contraseña</b> no puede ser igual a la anterior.");
-        campos.nuevaPass?.closest('.password-wrapper')?.classList.add('invalid-glow');
+        campos.wrapNuevaPass?.classList.add('invalid-glow');
     }
 
     if (errores.length > 0) {
@@ -553,28 +532,7 @@
         return;
     }
 
-    // ← Aquí está la detección de cambios ←
-    let huboCambios = false;
-    if (actual.nombre !== orig.nombre) huboCambios = true;
-    if (actual.apellido !== orig.apellido) huboCambios = true;
-    if (actual.usuario !== orig.usuario) huboCambios = true;
-    if (actual.correo !== orig.correo) huboCambios = true;
-    if (actual.dni !== orig.dni) huboCambios = true;
-    if (actual.direccion !== orig.direccion) huboCambios = true;
-    if (actual.telefono !== orig.telefono) huboCambios = true;
-    if (actual.nuevaPass !== '') huboCambios = true; // Si escribió nueva contraseña → hay cambio
-
-    if (!huboCambios) {
-        Swal.fire({
-            title: 'Sin cambios detectados',
-            text: 'No se realizaron modificaciones en ningún dato.',
-            confirmButtonText: 'Entendido',
-            confirmButtonColor: '#007bff'
-        });
-        return; // ← No envía el formulario
-    }
-
-    // Si llegó aquí → hubo cambios → mostrar confirmación y enviar
+    // Siempre mostrar confirmación (backend decidirá si hubo cambios o no)
     Swal.fire({
         title: '¿Guardar cambios?',
         text: "Se actualizará la información de tu cuenta.",

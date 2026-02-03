@@ -593,7 +593,7 @@
                 }
                     else if (vista === 'papelera_empleados') {
         Swal.fire({
-            title: '<i class="bi bi-trash3-fill text-danger"></i> Guía de la Papelera',
+            title: '<i class="bi bi-trash3-fill text-primary"></i> Guía de la Papelera',
             html: `
                 <div style="text-align: left; font-size: 0.95rem;">
                     <p>En esta sección puedes gestionar las cuentas que han sido desactivadas:</p>
@@ -681,7 +681,7 @@
                 }
                     else if (vista === 'vacaciones') {
         Swal.fire({
-            title: '<i class="bi bi-umbrella-fill text-primary"></i> Guía: Vacaciones de Empleados',
+            title: '<i class="bi bi-person-badge-fill text-primary"></i> Guía: Vacaciones de Empleados',
             html: `
                 <div class="text-start" style="font-size: 0.9rem; line-height: 1.5;">
                     <p><strong>¿Cómo funciona el sistema de vacaciones?</strong><br>
@@ -787,7 +787,7 @@
                 }
                     else if (vista === 'RestaurarProveedores') {
         Swal.fire({
-            title: '<i class="bi bi-arrow-counterclockwise text-warning"></i> Manual: Papelera de Proveedores',
+            title: '<i class="bi bi-arrow-counterclockwise text-primary"></i> Manual: Papelera de Proveedores',
             html: `
                 <div class="text-start" style="font-size: 0.9rem; line-height: 1.5;">
                     <p><strong>¿Qué es la Papelera?</strong><br>
@@ -819,7 +819,7 @@
                 }
                     else if (vista === 'Drogueria_Suiza') {
         Swal.fire({
-            title: '<i class="bi bi-hospital text-primary"></i> Gestión de Boletas: Droguería Suiza',
+            title: '<i class="bi bi-file-earmark-medical text-primary"></i> Gestión de Boletas: Droguería Suiza',
             html: `
                 <div class="text-start" style="font-size: 0.9rem; line-height: 1.5;">
                     <p>Bienvenido al módulo de carga para <strong>Droguería Suiza</strong>. Este sistema está optimizado para la carga masiva de medicamentos y perfumería.</p>
@@ -830,6 +830,7 @@
                                 <h6 class="fw-bold"><i class="bi bi-input-cursor-text text-primary"></i> Carga de Datos</h6>
                                 <ul class="small ps-3 mb-0">
                                     <li><b>Categorización:</b> Clasifique entre <i>Medicamentos</i> o <i>Perfumería</i> para el reporte contable.</li>
+                                    <li><b>Fecha:</b> ingresa la fecha de la boleta.</li>
                                     <li><b>Importe:</b> Ingrese el monto final; el sistema valida el formato de moneda automáticamente.</li>
                                     <li><b>Persistencia:</b> El botón "Agregar" impacta directamente en la base de datos de la Farmacia.</li>
                                 </ul>
@@ -874,7 +875,7 @@
                                 <h6 class="fw-bold"><i class="bi bi-pencil-square text-warning"></i> Carga de Datos</h6>
                                 <ul class="small ps-3 mb-0">
                                     <li><b>Proveedor:</b> Selecciona o escribe manualmente el nombre del proveedor secundario.</li>
-                                    <li><b>Categorización:</b> El sistema asigna automáticamente la categoría (Medicamentos o Perfumería).</li>
+                                    <li><b>Fecha:</b> ingresa la fecha de la boleta.</li>
                                     <li><b>Importe:</b> Ingresa el monto total de la boleta (con decimales si aplica).</li>
                                     <li><b>Persistencia:</b> El botón "Agregar" impacta directamente en la base de datos.</li>
                                 </ul>

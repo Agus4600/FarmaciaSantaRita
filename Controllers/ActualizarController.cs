@@ -91,52 +91,66 @@ namespace FarmaciaSantaRita.Controllers
                     return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
                 }
 
-                // Actualizar campos editables
-                usuarioParaActualizar.Nombre = modeloActualizado.Nombre?.Trim();
-                usuarioParaActualizar.Apellido = modeloActualizado.Apellido?.Trim();
-                usuarioParaActualizar.NombreUsuario = modeloActualizado.NombreUsuario?.Trim();
-                usuarioParaActualizar.Telefono = modeloActualizado.Telefono?.Trim();
-                usuarioParaActualizar.CorreoUsuario = modeloActualizado.CorreoUsuario?.Trim();
-                usuarioParaActualizar.Dni = modeloActualizado.Dni?.Trim();
-                usuarioParaActualizar.Direccion = modeloActualizado.Direccion?.Trim();
+                bool huboCambios = false;
 
-                if (!string.IsNullOrWhiteSpace(modeloActualizado.Rol) && modeloActualizado.Rol != usuarioParaActualizar.Rol)
+                // Comparar cada campo antes de asignar
+                if (usuarioParaActualizar.Nombre?.Trim() != modeloActualizado.Nombre?.Trim())
                 {
-                    usuarioParaActualizar.Rol = modeloActualizado.Rol;
+                    usuarioParaActualizar.Nombre = modeloActualizado.Nombre?.Trim();
+                    huboCambios = true;
                 }
-
+                if (usuarioParaActualizar.Apellido?.Trim() != modeloActualizado.Apellido?.Trim())
+                {
+                    usuarioParaActualizar.Apellido = modeloActualizado.Apellido?.Trim();
+                    huboCambios = true;
+                }
+                if (usuarioParaActualizar.NombreUsuario?.Trim() != modeloActualizado.NombreUsuario?.Trim())
+                {
+                    usuarioParaActualizar.NombreUsuario = modeloActualizado.NombreUsuario?.Trim();
+                    huboCambios = true;
+                }
+                if (usuarioParaActualizar.Telefono?.Trim() != modeloActualizado.Telefono?.Trim())
+                {
+                    usuarioParaActualizar.Telefono = modeloActualizado.Telefono?.Trim();
+                    huboCambios = true;
+                }
+                if (usuarioParaActualizar.CorreoUsuario?.Trim() != modeloActualizado.CorreoUsuario?.Trim())
+                {
+                    usuarioParaActualizar.CorreoUsuario = modeloActualizado.CorreoUsuario?.Trim();
+                    huboCambios = true;
+                }
+                if (usuarioParaActualizar.Dni?.Trim() != modeloActualizado.Dni?.Trim())
+                {
+                    usuarioParaActualizar.Dni = modeloActualizado.Dni?.Trim();
+                    huboCambios = true;
+                }
+                if (usuarioParaActualizar.Direccion?.Trim() != modeloActualizado.Direccion?.Trim())
+                {
+                    usuarioParaActualizar.Direccion = modeloActualizado.Direccion?.Trim();
+                    huboCambios = true;
+                }
                 if (!string.IsNullOrWhiteSpace(modeloActualizado.NuevaContraseña))
                 {
                     usuarioParaActualizar.Contraseña = _encryptionService.Encrypt(modeloActualizado.NuevaContraseña.Trim());
+                    huboCambios = true;
                 }
 
-                // Convertir fechas a UTC para PostgreSQL timestamptz
-                if (usuarioParaActualizar.FechaNacimiento != default(DateTime))
+                if (huboCambios)
                 {
-                    usuarioParaActualizar.FechaNacimiento = DateTime.SpecifyKind(usuarioParaActualizar.FechaNacimiento, DateTimeKind.Utc);
-                }
+                    _context.Entry(usuarioParaActualizar).State = EntityState.Modified;
+                    int cambios = _context.SaveChanges();
 
-                if (usuarioParaActualizar.FechaIngreso.HasValue)
-                {
-                    usuarioParaActualizar.FechaIngreso = DateTime.SpecifyKind(usuarioParaActualizar.FechaIngreso.Value, DateTimeKind.Utc);
-                }
-
-                _context.Entry(usuarioParaActualizar).State = EntityState.Modified;
-                int cambios = _context.SaveChanges();
-
-                if (cambios > 0)
-                {
                     TempData["ResultadoActualizacion"] = "Exito";
                     TempData["MensajeExito"] = "Los cambios se guardaron correctamente.";
                 }
                 else
                 {
                     TempData["ResultadoActualizacion"] = "SinCambios";
-                    TempData["MensajeError"] = "No se detectaron cambios para guardar.";
+                    TempData["MensajeSinCambios"] = "No se detectaron cambios para guardar.";
                 }
 
                 return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
-            }
+            }  // ← Esta llave cierra el try (la que faltaba)
             catch (DbUpdateException dbEx)
             {
                 TempData["ResultadoActualizacion"] = "Error";

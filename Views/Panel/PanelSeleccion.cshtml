@@ -79,10 +79,11 @@
 
             <!-- Botón Volver al Inicio - centrado en el espacio inferior con más margen superior -->
             <div class="text-center mt-3 pt-1">
-                <!-- mt-5 + pt-4 = bajado y con padding extra arriba -->
-                <a href="@Url.Action("Index", "Login")" class="btn-panel-custom">
-                    Volver al Inicio
-                </a>
+                <form asp-controller="Login" asp-action="Logout" method="post" class="d-inline">
+                    <button type="submit" class="btn-panel-custom">
+                        Volver al Inicio
+                    </button>
+                </form>
             </div>
         </div>
     </div>

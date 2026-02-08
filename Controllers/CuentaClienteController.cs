@@ -257,67 +257,7 @@ namespace FarmaciaSantaRita.Controllers
 
 
 
-        [HttpGet]
-        public async Task<IActionResult> GetTotalDeuda(int idCliente)
-        {
-            var total = await _context.Compras
-                .Where(c => c.Idcliente == idCliente && c.EstadoDePago == "Pendiente")
-                .SumAsync(c => c.MontoCompra);
 
-            return Json(new { success = true, total });
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> PagarTodo(int idCliente)
-        {
-            var compras = await _context.Compras
-                .Where(c => c.Idcliente == idCliente && c.EstadoDePago == "Pendiente")
-                .ToListAsync();
-
-            if (!compras.Any()) return Json(new { success = false, message = "No hay deudas pendientes" });
-
-            compras.ForEach(c => c.EstadoDePago = "Pagado");
-            await _context.SaveChangesAsync();
-
-            return Json(new { success = true, message = "Deuda pagada completamente" });
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> PagarParcial(int idCliente, decimal montoPagado)
-        {
-            var compras = await _context.Compras
-                .Where(c => c.Idcliente == idCliente && c.EstadoDePago == "Pendiente")
-                .OrderBy(c => c.FechaCompra)
-                .ToListAsync();
-
-            if (!compras.Any()) return Json(new { success = false, message = "No hay deudas pendientes" });
-
-            decimal restante = montoPagado;
-            int pagados = 0;
-
-            foreach (var compra in compras)
-            {
-                if (restante <= 0) break;
-                decimal totalCompra = compra.MontoCompra;
-                if (restante >= totalCompra)
-                {
-                    compra.EstadoDePago = "Pagado";
-                    restante -= totalCompra;
-                    pagados++;
-                }
-                else
-                {
-                    compra.EstadoDePago = "Parcial";
-                    compra.MontoCompra -= restante;
-                    restante = 0;
-                    pagados++;
-                }
-            }
-
-            await _context.SaveChangesAsync();
-
-            return Json(new { success = true, message = $"Pago parcial de ${montoPagado:N2} aplicado ({pagados} compras actualizadas)" });
-        }
 
 
     }

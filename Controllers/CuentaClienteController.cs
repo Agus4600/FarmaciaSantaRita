@@ -274,7 +274,7 @@ namespace FarmaciaSantaRita.Controllers
         public async Task<IActionResult> PagarTodo(int idCliente)
         {
             var compras = await _context.Compras
-                .Where(c => c.Idcliente == idCliente && c.EstadoDePago == "Pendiente")
+                .Where(c => c.Idcliente == idCliente && c.EstadoDePago.ToLower() == "pendiente")
                 .ToListAsync();
 
             if (!compras.Any()) return Json(new { success = false, message = "No hay deudas pendientes" });
@@ -290,7 +290,7 @@ namespace FarmaciaSantaRita.Controllers
         public async Task<IActionResult> PagarParcial(int idCliente, decimal montoPagado)
         {
             var compras = await _context.Compras
-                .Where(c => c.Idcliente == idCliente && c.EstadoDePago == "Pendiente")
+                .Where(c => c.Idcliente == idCliente && c.EstadoDePago.ToLower() == "pendiente")
                 .OrderBy(c => c.FechaCompra) // más antiguas primero
                 .ToListAsync();
 

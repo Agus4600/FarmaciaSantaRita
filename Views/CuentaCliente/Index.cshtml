@@ -1213,13 +1213,20 @@
             const data = await res.json();
             if (data.success) {
                 Swal.fire('Éxito', data.message, 'success');
-                location.reload();  // Necesario para ver todos los cambios
-            } else {
-                Swal.fire('Error', data.message || 'No se pudo procesar', 'error');
-            }
-        } catch (err) {
-            console.error('Error Pagar Todo:', err);
-            Swal.fire('Error', 'No se pudo conectar o procesar el pago', 'error');
+                   document.getElementById('totalDeuda').innerText = '$0,00';
+            document.getElementById('totalDeuda').className = 'text-success';
+
+            // Cambia todos los selects visibles a "Pagado" y su clase
+            const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
+            filasVisibles.forEach(fila => {
+                const select = fila.querySelector('.sel-estado');
+                if (select) {
+                    select.value = 'pagado';
+                    select.className = 'sel-estado pagado';
+                }
+            });
+        } else {
+            Swal.fire('Error', data.message || 'No se pudo procesar', 'error');
         }
     });
 

@@ -108,7 +108,7 @@ namespace FarmaciaSantaRita.Controllers
                         DNI = datos.dni.Trim(),
                         TelefonoCliente = datos.telefono?.Trim() ?? "Sin especificar",
                         DireccionCliente = datos.direccion?.Trim() ?? "Sin especificar",
-                        EstadoDePago = "Pendiente"
+                        EstadoDePago = "pendiente"
                     };
                     _context.Clientes.Add(cliente);
                 }
@@ -145,7 +145,7 @@ namespace FarmaciaSantaRita.Controllers
                     MontoCompra = datos.cantidad * datos.precio,
                     Idcliente = cliente.Idcliente,
                     Idusuario = idUsuarioLogueado,
-                    EstadoDePago = "Pendiente"
+                    EstadoDePago = "pendiente"
                 };
 
                 _context.Compras.Add(nuevaCompra);
@@ -170,6 +170,8 @@ namespace FarmaciaSantaRita.Controllers
                 return Json(new { success = false, message = ex.InnerException?.Message ?? ex.Message });
             }
         }
+
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -201,6 +203,8 @@ namespace FarmaciaSantaRita.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
+
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -274,8 +278,11 @@ namespace FarmaciaSantaRita.Controllers
         public async Task<IActionResult> PagarTodo(int idCliente)
         {
             var compras = await _context.Compras
-                .Where(c => c.Idcliente == idCliente && c.EstadoDePago.ToLower() == "pendiente")
-                .ToListAsync();
+    .Where(c => c.Idcliente == idCliente &&
+                (c.EstadoDePago.ToLowerInvariant() == "pendiente" ||
+                 c.EstadoDePago.ToLowerInvariant() == "parcial"))
+    .OrderBy(c => c.FechaCompra)
+    .ToListAsync();
 
             if (!compras.Any()) return Json(new { success = false, message = "No hay deudas pendientes" });
 
@@ -290,9 +297,10 @@ namespace FarmaciaSantaRita.Controllers
         public async Task<IActionResult> PagarParcial(int idCliente, decimal montoPagado)
         {
             var compras = await _context.Compras
-                .Where(c => c.Idcliente == idCliente && c.EstadoDePago.ToLower() == "pendiente")
-                .OrderBy(c => c.FechaCompra) // más antiguas primero
-                .ToListAsync();
+    .Where(c => c.Idcliente == idCliente &&
+                (c.EstadoDePago.ToLowerInvariant() == "pendiente" ||
+                 c.EstadoDePago.ToLowerInvariant() == "parcial"))
+    .ToListAsync();
 
             if (!compras.Any()) return Json(new { success = false, message = "No hay deudas pendientes" });
 
@@ -306,13 +314,13 @@ namespace FarmaciaSantaRita.Controllers
 
                 if (restante >= totalCompra)
                 {
-                    compra.EstadoDePago = "Pagado";
+                    compra.EstadoDePago = "pagado";
                     restante -= totalCompra;
                     pagados++;
                 }
                 else
                 {
-                    compra.EstadoDePago = "Parcial";
+                    compra.EstadoDePago = "parcial";
                     compra.MontoCompra -= restante;
                     restante = 0;
                     pagados++;

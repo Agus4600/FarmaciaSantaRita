@@ -1305,9 +1305,8 @@
     });
 
     // Botón Pagar Parcial
-    document.getElementById('btnPagarParcial')?.addEventListener('click', async () => {
+        document.getElementById('btnPagarParcial')?.addEventListener('click', async () => {
         const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
-
         if (filasVisibles.length === 0) {
             Swal.fire({
                 title: 'Atención',
@@ -1346,7 +1345,7 @@
             text: `Aplicar $${monto.toLocaleString('es-AR')} a compras más antiguas.`,
             showCancelButton: true,
             confirmButtonColor: '#007bff',
-            cancelButtonColor: '#6c757d',
+            cancelButtonColor: '#007bff',
             confirmButtonText: 'Sí, pagar',
             cancelButtonText: 'Cancelar'
         });
@@ -1377,18 +1376,36 @@
                     showConfirmButton: false
                 });
 
+                // Actualizar total
                 const deudaActual = parseFloat(document.getElementById('totalDeuda').innerText.replace(/[$.]/g, '').replace(',', '.')) || 0;
                 const nuevaDeuda = Math.max(0, deudaActual - monto);
                 document.getElementById('totalDeuda').innerText = '$' + nuevaDeuda.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 document.getElementById('totalDeuda').className = nuevaDeuda > 0 ? 'text-danger' : 'text-success';
                 document.getElementById('montoParcial').value = '';
 
-                if (nuevaDeuda === 0) {
+                // Mensaje temporal sin ícono
+                Swal.fire({
+                    title: 'Pago registrado',
+                    text: `Se aplicaron $${monto.toLocaleString('es-AR')} correctamente. ` +
+                          (nuevaDeuda > 0
+                            ? `Queda $${nuevaDeuda.toLocaleString('es-AR')} pendiente.`
+                            : '¡Deuda saldada por completo!'),
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#007bff',
+                    timer: nuevaDeuda > 0 ? 4000 : 2000,
+                    showConfirmButton: false
+                });
+
+                // Marcar solo las filas pagadas (ya lo tenés)
+                if (data.comprasPagadas && Array.isArray(data.comprasPagadas)) {
                     filasVisibles.forEach(fila => {
-                        const select = fila.querySelector('.sel-estado');
-                        if (select) {
-                            select.value = 'pagado';
-                            select.className = 'sel-estado pagado';
+                        const idCompraFila = parseInt(fila.dataset.id);
+                        if (data.comprasPagadas.includes(idCompraFila)) {
+                            const select = fila.querySelector('.sel-estado');
+                            if (select) {
+                                select.value = 'pagado';
+                                select.className = 'sel-estado pagado';
+                            }
                         }
                     });
                 }

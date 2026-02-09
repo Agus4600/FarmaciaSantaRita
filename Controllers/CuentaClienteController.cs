@@ -398,10 +398,16 @@ namespace FarmaciaSantaRita.Controllers
 
                 await _context.SaveChangesAsync();
 
+                var comprasPagadas = compras
+                    .Where(c => c.EstadoDePago == "pagado")
+                    .Select(c => c.Idcompras)
+                    .ToList();
+
                 return Json(new
                 {
                     success = true,
-                    message = $"¡Pago parcial realizado! Se aplicaron ${montoPagado:N2} y se actualizaron {actualizadas} compra(s)."
+                    message = $"¡Pago parcial realizado! Se aplicaron ${montoPagado:N2} y se actualizaron {actualizadas} compra(s).",
+                    comprasPagadas = comprasPagadas  // ← nuevo array con IDs de compras que quedaron "pagado"
                 });
             }
             catch (Exception ex)

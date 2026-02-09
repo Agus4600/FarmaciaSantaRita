@@ -305,7 +305,6 @@ namespace FarmaciaSantaRita.Controllers
 
             try
             {
-                // Usamos EF.Functions.ILike para comparación case-insensitive (compatible con PostgreSQL)
                 var compras = await _context.Compras
                     .Where(c => c.Idcliente == idCliente &&
                                 !string.IsNullOrEmpty(c.EstadoDePago) &&
@@ -314,7 +313,7 @@ namespace FarmaciaSantaRita.Controllers
                     .ToListAsync();
 
                 if (!compras.Any())
-                    return Json(new { success = false, message = "No hay deudas pendientes o parciales" });
+                    return Json(new { success = false, message = "No hay deudas pendientes ni parciales para este cliente" });
 
                 foreach (var compra in compras)
                 {
@@ -323,7 +322,11 @@ namespace FarmaciaSantaRita.Controllers
 
                 await _context.SaveChangesAsync();
 
-                return Json(new { success = true, message = $"Deuda pagada completamente ({compras.Count} compras actualizadas)" });
+                return Json(new
+                {
+                    success = true,
+                    message = $"¡Pago completo realizado con éxito! Se actualizaron {compras.Count} compra(s) como pagadas."
+                });
             }
             catch (Exception ex)
             {
@@ -334,8 +337,8 @@ namespace FarmaciaSantaRita.Controllers
                 return StatusCode(500, new
                 {
                     success = false,
-                    message = "Error interno al procesar el pago",
-                    detail = errorDetail,
+                    message = "Ocurrió un error al procesar el pago completo. Intenta nuevamente o contacta soporte.",
+                    detail = errorDetail,  // solo para depuración (no se muestra al usuario final)
                     stack = ex.StackTrace is not null
                         ? ex.StackTrace.Substring(0, Math.Min(500, ex.StackTrace.Length))
                         : ""
@@ -354,7 +357,7 @@ namespace FarmaciaSantaRita.Controllers
                 return Json(new { success = false, message = "ID de cliente inválido" });
 
             if (montoPagado <= 0)
-                return Json(new { success = false, message = "El monto debe ser mayor a 0" });
+                return Json(new { success = false, message = "El monto a pagar debe ser mayor a 0" });
 
             try
             {
@@ -363,11 +366,11 @@ namespace FarmaciaSantaRita.Controllers
                                 !string.IsNullOrEmpty(c.EstadoDePago) &&
                                 (EF.Functions.ILike(c.EstadoDePago, "pendiente") ||
                                  EF.Functions.ILike(c.EstadoDePago, "parcial")))
-                    .OrderBy(c => c.FechaCompra)  // Aplicamos a las más antiguas primero
+                    .OrderBy(c => c.FechaCompra)
                     .ToListAsync();
 
                 if (!compras.Any())
-                    return Json(new { success = false, message = "No hay deudas pendientes o parciales" });
+                    return Json(new { success = false, message = "No hay deudas pendientes ni parciales para este cliente" });
 
                 decimal restante = montoPagado;
                 int actualizadas = 0;
@@ -398,7 +401,7 @@ namespace FarmaciaSantaRita.Controllers
                 return Json(new
                 {
                     success = true,
-                    message = $"Pago parcial de ${montoPagado:N2} aplicado ({actualizadas} compras actualizadas)"
+                    message = $"¡Pago parcial realizado! Se aplicaron ${montoPagado:N2} y se actualizaron {actualizadas} compra(s)."
                 });
             }
             catch (Exception ex)
@@ -409,7 +412,7 @@ namespace FarmaciaSantaRita.Controllers
                 return StatusCode(500, new
                 {
                     success = false,
-                    message = "Error al procesar pago parcial",
+                    message = "Ocurrió un error al procesar el pago parcial. Verifica el monto e intenta nuevamente.",
                     detail = detail,
                     stack = ex.StackTrace is not null ? ex.StackTrace.Substring(0, Math.Min(500, ex.StackTrace.Length)) : ""
                 });

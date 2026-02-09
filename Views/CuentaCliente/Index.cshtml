@@ -1170,26 +1170,43 @@
     });
 
     // Asegurate de que la función actualizarTotalDeuda esté definida (si no la tenés, pegala aquí)
-    async function actualizarTotalDeuda(idCliente) {
+       async function actualizarTotalDeuda(idCliente) {
+        console.log('actualizarTotalDeuda llamada con ID:', idCliente);
+
         if (!idCliente) {
+            console.log('ID vacío → forzando $0,00 verde');
             document.getElementById('totalDeuda').innerText = '$0,00';
+            document.getElementById('totalDeuda').className = 'text-success';
             return;
         }
 
         try {
+            console.log('Haciendo fetch a /GetTotalDeuda?idCliente=' + idCliente);
             const res = await fetch(`/CuentaCliente/GetTotalDeuda?idCliente=${idCliente}`);
+            console.log('Respuesta fetch status:', res.status);
+
+            if (!res.ok) {
+                console.log('Fetch falló con status:', res.status);
+                throw new Error('Fetch falló');
+            }
+
             const data = await res.json();
+            console.log('Respuesta del backend completa:', data);
+
             const totalEl = document.getElementById('totalDeuda');
             if (data.success && data.total !== undefined) {
+                console.log('Total recibido del backend:', data.total);
                 totalEl.innerText = '$' + data.total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 totalEl.className = data.total > 0 ? 'text-danger' : 'text-success';
             } else {
+                console.log('Backend devolvió success false o total undefined → $0,00 verde');
                 totalEl.innerText = '$0,00';
                 totalEl.className = 'text-success';
             }
         } catch (err) {
-            console.error('Error al cargar deuda:', err);
+            console.error('Error real en actualizarTotalDeuda:', err);
             document.getElementById('totalDeuda').innerText = '$0,00';
+            document.getElementById('totalDeuda').className = 'text-success';
         }
     }
 

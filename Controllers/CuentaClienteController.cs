@@ -327,40 +327,70 @@ namespace FarmaciaSantaRita.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PagarParcial(int idCliente, decimal montoPagado)
         {
-            var compras = await _context.Compras
-    .Where(c => c.Idcliente == idCliente &&
-                (c.EstadoDePago.ToLowerInvariant() == "pendiente" ||
-                 c.EstadoDePago.ToLowerInvariant() == "parcial"))
-    .ToListAsync();
+            if (idCliente <= 0)
+                return Json(new { success = false, message = "ID de cliente inválido" });
 
-            if (!compras.Any()) return Json(new { success = false, message = "No hay deudas pendientes" });
+            if (montoPagado <= 0)
+                return Json(new { success = false, message = "El monto debe ser mayor a 0" });
 
-            decimal restante = montoPagado;
-            int pagados = 0;
-
-            foreach (var compra in compras)
+            try
             {
-                if (restante <= 0) break;
-                decimal totalCompra = compra.MontoCompra;
+                var compras = await _context.Compras
+                    .Where(c => c.Idcliente == idCliente &&
+                                !string.IsNullOrEmpty(c.EstadoDePago) &&
+                                (EF.Functions.ILike(c.EstadoDePago, "pendiente") ||
+                                 EF.Functions.ILike(c.EstadoDePago, "parcial")))
+                    .OrderBy(c => c.FechaCompra)  // Aplicamos a las más antiguas primero
+                    .ToListAsync();
 
-                if (restante >= totalCompra)
+                if (!compras.Any())
+                    return Json(new { success = false, message = "No hay deudas pendientes o parciales" });
+
+                decimal restante = montoPagado;
+                int actualizadas = 0;
+
+                foreach (var compra in compras)
                 {
-                    compra.EstadoDePago = "pagado";
-                    restante -= totalCompra;
-                    pagados++;
+                    if (restante <= 0) break;
+
+                    decimal totalCompra = compra.MontoCompra;
+
+                    if (restante >= totalCompra)
+                    {
+                        compra.EstadoDePago = "pagado";
+                        restante -= totalCompra;
+                    }
+                    else
+                    {
+                        compra.EstadoDePago = "parcial";
+                        compra.MontoCompra -= restante;
+                        restante = 0;
+                    }
+
+                    actualizadas++;
                 }
-                else
+
+                await _context.SaveChangesAsync();
+
+                return Json(new
                 {
-                    compra.EstadoDePago = "parcial";
-                    compra.MontoCompra -= restante;
-                    restante = 0;
-                    pagados++;
-                }
+                    success = true,
+                    message = $"Pago parcial de ${montoPagado:N2} aplicado ({actualizadas} compras actualizadas)"
+                });
             }
+            catch (Exception ex)
+            {
+                var detail = ex.Message;
+                if (ex.InnerException != null) detail += " → " + ex.InnerException.Message;
 
-            await _context.SaveChangesAsync();
-
-            return Json(new { success = true, message = $"Pago parcial de ${montoPagado:N2} aplicado ({pagados} compras actualizadas)" });
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Error al procesar pago parcial",
+                    detail = detail,
+                    stack = ex.StackTrace is not null ? ex.StackTrace.Substring(0, Math.Min(500, ex.StackTrace.Length)) : ""
+                });
+            }
         }
     }
 }

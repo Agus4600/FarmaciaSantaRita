@@ -1003,29 +1003,6 @@
     }
 
 
-
-
-
-
-
-
-        // BUSCADOR PREDICTIVO EN TIEMPO REAL
-    document.getElementById('buscadorCliente').addEventListener('input', function() {
-        const filtro = this.value.toLowerCase().trim();
-        const filas = document.querySelectorAll('#tablaCompras tbody tr');
-
-        filas.forEach(fila => {
-            const nombre = fila.dataset.nombre || '';
-            if (filtro === '' || nombre.includes(filtro)) {
-                fila.style.display = '';
-            } else {
-                fila.style.display = 'none';
-            }
-        });
-    });
-
-
-
     document.querySelectorAll('.nombre-cliente-link').forEach(link => {
         link.addEventListener('click', function() {
             const tr = this.closest('tr');
@@ -1141,26 +1118,50 @@
 
         // Actualizar total de deuda CADA VEZ que se filtra con el buscador
         // Actualizar total de deuda CADA VEZ que se filtra con el buscador
+        // BUSCADOR PREDICTIVO + ACTUALIZACIÓN DE TOTAL DEUDA
     document.getElementById('buscadorCliente').addEventListener('input', function() {
-        // Pequeño delay para esperar que el filtro termine de ocultar filas
+        const filtro = this.value.toLowerCase().trim();
+
+        // 1. Filtrar filas por nombre
+        const filas = document.querySelectorAll('#tablaCompras tbody tr');
+        filas.forEach(fila => {
+            const nombre = fila.dataset.nombre || '';
+            if (filtro === '' || nombre.includes(filtro)) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+
+        // 2. Actualizar el total de deuda después del filtro
         setTimeout(() => {
             const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
-            if (filasVisibles.length > 0) {
-                // Tomamos TODOS los idCliente visibles (por si hay varios clientes filtrados)
-                const idClientes = [...new Set(Array.from(filasVisibles).map(f => f.dataset.idcliente).filter(id => id))];
-                if (idClientes.length === 1) {
-                    actualizarTotalDeuda(idClientes[0]);
-                } else if (idClientes.length > 1) {
-                    // Múltiples clientes → mostramos algo genérico o suma manual
-                    document.getElementById('totalDeuda').innerText = 'Varios clientes';
-                    document.getElementById('totalDeuda').className = 'text-warning';
-                } else {
-                    document.getElementById('totalDeuda').innerText = '$0,00';
-                }
-            } else {
+
+            if (filasVisibles.length === 0) {
                 document.getElementById('totalDeuda').innerText = '$0,00';
+                document.getElementById('totalDeuda').className = 'text-success';
+                return;
             }
-        }, 300); // 300 milisegundos de espera (suficiente para que el filtro termine)
+
+            // Recolectamos IDs únicos de clientes visibles
+            const idClientes = [...new Set(
+                Array.from(filasVisibles)
+                    .map(f => f.dataset.idcliente)
+                    .filter(id => id && !isNaN(parseInt(id)))
+            )];
+
+            if (idClientes.length === 0) {
+                document.getElementById('totalDeuda').innerText = '$0,00';
+                document.getElementById('totalDeuda').className = 'text-success';
+            } else if (idClientes.length === 1) {
+                // Un solo cliente → deuda real
+                actualizarTotalDeuda(idClientes[0]);
+            } else {
+                // Múltiples clientes → advertencia
+                document.getElementById('totalDeuda').innerText = 'Varios clientes';
+                document.getElementById('totalDeuda').className = 'text-warning';
+            }
+        }, 300);
     });
 
     // Asegurate de que la función actualizarTotalDeuda esté definida (si no la tenés, pegala aquí)
@@ -1245,6 +1246,8 @@
             Swal.fire('Error', 'No se pudo conectar o procesar el pago', 'error');
         }
     });
+
+
 
     // Botón Pagar Parcial (NO recarga, actualiza total y estados visualmente)
     document.getElementById('btnPagarParcial')?.addEventListener('click', async () => {

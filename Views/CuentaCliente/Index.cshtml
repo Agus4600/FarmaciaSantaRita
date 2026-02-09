@@ -1140,24 +1140,27 @@
 
 
         // Actualizar total de deuda CADA VEZ que se filtra con el buscador
+        // Actualizar total de deuda CADA VEZ que se filtra con el buscador
     document.getElementById('buscadorCliente').addEventListener('input', function() {
         // Pequeño delay para esperar que el filtro termine de ocultar filas
         setTimeout(() => {
             const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
-
             if (filasVisibles.length > 0) {
-                // Tomamos el ID del cliente de la PRIMERA fila visible después del filtro
-                const idCliente = filasVisibles[0].dataset.idcliente || null;
-                if (idCliente) {
-                    actualizarTotalDeuda(idCliente);
+                // Tomamos TODOS los idCliente visibles (por si hay varios clientes filtrados)
+                const idClientes = [...new Set(Array.from(filasVisibles).map(f => f.dataset.idcliente).filter(id => id))];
+                if (idClientes.length === 1) {
+                    actualizarTotalDeuda(idClientes[0]);
+                } else if (idClientes.length > 1) {
+                    // Múltiples clientes → mostramos algo genérico o suma manual
+                    document.getElementById('totalDeuda').innerText = 'Varios clientes';
+                    document.getElementById('totalDeuda').className = 'text-warning';
                 } else {
                     document.getElementById('totalDeuda').innerText = '$0,00';
                 }
             } else {
-                // Si no queda ningún cliente visible
                 document.getElementById('totalDeuda').innerText = '$0,00';
             }
-        }, 300);  // 300 milisegundos de espera (suficiente para que el filtro termine)
+        }, 300); // 300 milisegundos de espera (suficiente para que el filtro termine)
     });
 
     // Asegurate de que la función actualizarTotalDeuda esté definida (si no la tenés, pegala aquí)
@@ -1186,21 +1189,17 @@
 
 
 
-            document.getElementById('btnPagarTodo')?.addEventListener('click', async () => {
+            // Botón Pagar Todo (sí recarga, porque afecta muchas filas)
+        document.getElementById('btnPagarTodo')?.addEventListener('click', async () => {
         const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
-        if (filasVisibles.length === 0) {
-            return Swal.fire('Atención', 'No hay cliente seleccionado o visible.', 'warning');
-        }
+        if (filasVisibles.length === 0) return Swal.fire('Atención', 'No hay cliente seleccionado.', 'warning');
 
         const idCliente = filasVisibles[0].dataset.idcliente;
-        if (!idCliente || isNaN(parseInt(idCliente))) {
-            return Swal.fire('Error', 'No se pudo obtener el ID del cliente.', 'error');
-        }
+        if (!idCliente) return Swal.fire('Error', 'No se encontró ID del cliente.', 'error');
 
         const confirm = await Swal.fire({
             title: '¿Pagar toda la deuda?',
-            text: 'Se marcarán todas las compras pendientes/parciales como pagadas.',
-            icon: 'question',
+            text: 'Se marcarán todas las compras pendientes como pagadas.',
             showCancelButton: true,
             confirmButtonColor: '#007bff',
             cancelButtonColor: '#007bff',
@@ -1213,32 +1212,24 @@
         try {
             const res = await fetch(`/CuentaCliente/PagarTodo?idCliente=${idCliente}`, {
                 method: 'POST',
-                headers: {
-                    'RequestVerificationToken': token,
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'RequestVerificationToken': token }
             });
 
             if (!res.ok) {
                 const errText = await res.text();
-                throw new Error(`Error ${res.status}: ${errText.substring(0, 200)}...`);
+                throw new Error(`Error ${res.status}: ${errText}`);
             }
 
             const data = await res.json();
 
             if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Éxito!',
-                    text: data.message || 'Deuda pagada completamente',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
+                Swal.fire('Éxito', data.message || 'Deuda pagada completamente', 'success');
 
-                // Actualización visual inmediata (mantiene filtro)
+                // Actualiza visualmente sin recargar (mantiene el filtro)
                 document.getElementById('totalDeuda').innerText = '$0,00';
                 document.getElementById('totalDeuda').className = 'text-success';
 
+                // Cambia TODOS los selects visibles a "Pagado" y clase verde
                 filasVisibles.forEach(fila => {
                     const select = fila.querySelector('.sel-estado');
                     if (select) {
@@ -1247,15 +1238,11 @@
                     }
                 });
             } else {
-                Swal.fire('Error', data.message || 'No se pudo procesar el pago', 'error');
+                Swal.fire('Error', data.message || 'No se pudo procesar', 'error');
             }
         } catch (err) {
             console.error('Error en Pagar Todo:', err);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: err.message.includes('500') ? 'Error interno del servidor (contactar soporte)' : 'No se pudo conectar o procesar el pago'
-            });
+            Swal.fire('Error', 'No se pudo conectar o procesar el pago', 'error');
         }
     });
 

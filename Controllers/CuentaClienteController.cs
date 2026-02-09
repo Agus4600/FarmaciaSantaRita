@@ -282,11 +282,12 @@ namespace FarmaciaSantaRita.Controllers
 
             try
             {
+                // Usamos EF.Functions.ILike para comparación case-insensitive (compatible con PostgreSQL)
                 var compras = await _context.Compras
                     .Where(c => c.Idcliente == idCliente &&
                                 !string.IsNullOrEmpty(c.EstadoDePago) &&
-                                (c.EstadoDePago.ToLowerInvariant() == "pendiente" ||
-                                 c.EstadoDePago.ToLowerInvariant() == "parcial"))
+                                (EF.Functions.ILike(c.EstadoDePago, "pendiente") ||
+                                 EF.Functions.ILike(c.EstadoDePago, "parcial")))
                     .ToListAsync();
 
                 if (!compras.Any())
@@ -299,19 +300,19 @@ namespace FarmaciaSantaRita.Controllers
 
                 await _context.SaveChangesAsync();
 
-                return Json(new { success = true, message = $"Pagado OK ({compras.Count} compras)" });
+                return Json(new { success = true, message = $"Deuda pagada completamente ({compras.Count} compras actualizadas)" });
             }
             catch (Exception ex)
             {
-                var errorMessage = ex.Message;
+                var errorDetail = ex.Message;
                 if (ex.InnerException != null)
-                    errorMessage += " → " + ex.InnerException.Message;
+                    errorDetail += " → " + ex.InnerException.Message;
 
                 return StatusCode(500, new
                 {
                     success = false,
-                    message = "Error interno",
-                    detail = errorMessage,
+                    message = "Error interno al procesar el pago",
+                    detail = errorDetail,
                     stack = ex.StackTrace is not null
                         ? ex.StackTrace.Substring(0, Math.Min(500, ex.StackTrace.Length))
                         : ""

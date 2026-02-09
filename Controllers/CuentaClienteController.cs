@@ -262,15 +262,38 @@ namespace FarmaciaSantaRita.Controllers
 
 
 
+
+
+
         [HttpGet]
         public async Task<IActionResult> GetTotalDeuda(int idCliente)
         {
-            var total = await _context.Compras
-                .Where(c => c.Idcliente == idCliente && c.EstadoDePago == "Pendiente")
-                .SumAsync(c => c.MontoCompra);
+            if (idCliente <= 0)
+                return Json(new { success = false, total = 0m });
 
-            return Json(new { success = true, total });
+            try
+            {
+                var total = await _context.Compras
+                    .Where(c => c.Idcliente == idCliente &&
+                                !string.IsNullOrEmpty(c.EstadoDePago) &&
+                                EF.Functions.ILike(c.EstadoDePago, "pendiente"))
+                    .SumAsync(c => c.MontoCompra);
+
+                return Json(new { success = true, total });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en GetTotalDeuda: {ex.Message}");
+                return Json(new { success = false, total = 0m });
+            }
         }
+
+
+
+
+
+
+
 
 
         [HttpPost]

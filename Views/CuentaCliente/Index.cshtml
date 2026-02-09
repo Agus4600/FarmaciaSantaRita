@@ -1187,7 +1187,7 @@
 
 
             // Botón Pagar Todo (sí recarga, porque afecta muchas filas)
-    document.getElementById('btnPagarTodo')?.addEventListener('click', async () => {
+        document.getElementById('btnPagarTodo')?.addEventListener('click', async () => {
         const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
         if (filasVisibles.length === 0) return Swal.fire('Atención', 'No hay cliente seleccionado.', 'warning');
 
@@ -1198,10 +1198,10 @@
             title: '¿Pagar toda la deuda?',
             text: 'Se marcarán todas las compras pendientes como pagadas.',
             showCancelButton: true,
-            cancelButtonColor: '#007bff',
             confirmButtonColor: '#007bff',
-            cancelButtonText: 'Cancelar',
-            confirmButtonText: 'Sí, pagar todo'
+            cancelButtonColor: '#007bff',
+            confirmButtonText: 'Sí, pagar todo',
+            cancelButtonText: 'Cancelar'
         });
 
         if (!confirm.isConfirmed) return;
@@ -1214,26 +1214,32 @@
 
             if (!res.ok) {
                 const errText = await res.text();
-                throw new Error(`HTTP ${res.status}: ${errText}`);
+                throw new Error(`Error ${res.status}: ${errText}`);
             }
 
             const data = await res.json();
-            if (data.success) {
-                Swal.fire('Éxito', data.message, 'success');
-                   document.getElementById('totalDeuda').innerText = '$0,00';
-            document.getElementById('totalDeuda').className = 'text-success';
 
-            // Cambia todos los selects visibles a "Pagado" y su clase
-            const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
-            filasVisibles.forEach(fila => {
-                const select = fila.querySelector('.sel-estado');
-                if (select) {
-                    select.value = 'pagado';
-                    select.className = 'sel-estado pagado';
-                }
-            });
-        } else {
-            Swal.fire('Error', data.message || 'No se pudo procesar', 'error');
+            if (data.success) {
+                Swal.fire('Éxito', data.message || 'Deuda pagada completamente', 'success');
+
+                // Actualiza visualmente sin recargar (mantiene el filtro)
+                document.getElementById('totalDeuda').innerText = '$0,00';
+                document.getElementById('totalDeuda').className = 'text-success';
+
+                // Cambia TODOS los selects visibles a "Pagado" y clase verde
+                filasVisibles.forEach(fila => {
+                    const select = fila.querySelector('.sel-estado');
+                    if (select) {
+                        select.value = 'pagado';
+                        select.className = 'sel-estado pagado';
+                    }
+                });
+            } else {
+                Swal.fire('Error', data.message || 'No se pudo procesar', 'error');
+            }
+        } catch (err) {
+            console.error('Error en Pagar Todo:', err);
+            Swal.fire('Error', 'No se pudo conectar o procesar el pago', 'error');
         }
     });
 

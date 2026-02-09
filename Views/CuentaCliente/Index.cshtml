@@ -1179,7 +1179,7 @@
 
 
 
-            // Botón Pagar Todo (recarga porque cambia muchas filas)
+            // Botón Pagar Todo (sí recarga, porque afecta muchas filas)
     document.getElementById('btnPagarTodo')?.addEventListener('click', async () => {
         const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
         if (filasVisibles.length === 0) return Swal.fire('Atención', 'No hay cliente seleccionado.', 'warning');
@@ -1191,8 +1191,8 @@
             title: '¿Pagar toda la deuda?',
             text: 'Se marcarán todas las compras pendientes como pagadas.',
             showCancelButton: true,
-            confirmButtonColor: '#007bff',
             cancelButtonColor: '#007bff',
+            confirmButtonColor: '#007bff',
             cancelButtonText: 'Cancelar',
             confirmButtonText: 'Sí, pagar todo'
         });
@@ -1205,23 +1205,25 @@
                 headers: { 'RequestVerificationToken': token }
             });
 
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(`HTTP ${res.status}: ${errText}`);
+            }
 
             const data = await res.json();
             if (data.success) {
                 Swal.fire('Éxito', data.message, 'success');
-                // Recarga porque cambia muchas filas → es más seguro
-                location.reload();
+                location.reload();  // Necesario para ver todos los cambios
             } else {
                 Swal.fire('Error', data.message || 'No se pudo procesar', 'error');
             }
         } catch (err) {
             console.error('Error Pagar Todo:', err);
-            Swal.fire('Error', 'No se pudo conectar', 'error');
+            Swal.fire('Error', 'No se pudo conectar o procesar el pago', 'error');
         }
     });
 
-    // Botón Pagar Parcial (SIN recarga completa → actualiza solo lo necesario)
+    // Botón Pagar Parcial (NO recarga, actualiza total y estados visualmente)
     document.getElementById('btnPagarParcial')?.addEventListener('click', async () => {
         const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
         if (filasVisibles.length === 0) return Swal.fire('Atención', 'No hay cliente seleccionado.', 'warning');
@@ -1250,26 +1252,29 @@
                 headers: { 'RequestVerificationToken': token }
             });
 
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(`HTTP ${res.status}: ${errText}`);
+            }
 
             const data = await res.json();
             if (data.success) {
                 Swal.fire('Éxito', data.message, 'success');
 
-                // Actualiza el total sin recargar (simula el cambio)
+                // Actualiza total sin recargar
                 const deudaActual = parseFloat(document.getElementById('totalDeuda').innerText.replace(/[$.]/g, '').replace(',', '.')) || 0;
                 const nuevaDeuda = Math.max(0, deudaActual - monto);
-                document.getElementById('totalDeuda').innerText = '$' + nuevaDeuda.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+                document.getElementById('totalDeuda').innerText = '$' + nuevaDeuda.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 document.getElementById('montoParcial').value = '';
 
-                // Opcional: refrescar la tabla manualmente o dejar que el usuario refresque con F5
-                // Para no perder el filtro, NO recargamos
+                // Opcional: marca visualmente las filas más antiguas como "Pagado" o "Parcial" (simulado)
+                // Si querés precisión total, tendrías que recargar la tabla con AJAX, pero por ahora esto basta
             } else {
                 Swal.fire('Error', data.message || 'No se pudo aplicar el pago', 'error');
             }
         } catch (err) {
             console.error('Error Pagar Parcial:', err);
-            Swal.fire('Error', 'No se pudo conectar', 'error');
+            Swal.fire('Error', 'No se pudo conectar o procesar el pago', 'error');
         }
     });
 </script>

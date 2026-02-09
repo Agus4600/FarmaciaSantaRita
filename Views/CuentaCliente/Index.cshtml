@@ -639,14 +639,18 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
 <script>
-        document.addEventListener("DOMContentLoaded", function () {
-        const filas = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia)');
-        if (filas.length > 0) {
-            // Si agregaste data-idcliente en las filas, podés usarlo
-            const idCliente = filas[0].dataset.idcliente || null;
-            if (idCliente) actualizarTotalDeuda(idCliente);
-            }
+            // Carga inicial: al abrir la página, DEUDA EN $0,00 (sin asumir cliente)
+    document.addEventListener("DOMContentLoaded", function () {
+        // Fuerza $0,00 al cargar (sin cliente seleccionado)
+        document.getElementById('totalDeuda').innerText = '$0,00';
+        // Opcional: podés agregar un texto aclaratorio si querés
+        // document.getElementById('totalDeuda').insertAdjacentHTML('afterend', '<small class="text-muted ms-2">(Seleccione un cliente)</small>');
+
+        // El resto de tu código de formateo precios sigue aquí si querés mantenerlo en el mismo evento
+        document.querySelectorAll('.edit-precio').forEach(td => {
+            formatearPrecioEnTabla(td);
         });
+    });
 
     const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
 

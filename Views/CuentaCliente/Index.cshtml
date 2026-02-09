@@ -1057,7 +1057,6 @@
         const confirmacion = await Swal.fire({
             title: '¿Eliminar compra?',
             text: 'Esta acción no se puede deshacer',
-            icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc3545',
             confirmButtonText: 'Sí, eliminar',
@@ -1085,14 +1084,12 @@
                 });
             } else {
                 Swal.fire({
-                    icon: 'error',
                     title: 'Error',
                     text: result.message || 'No se pudo eliminar'
                 });
             }
         } catch (e) {
             Swal.fire({
-                icon: 'error',
                 title: 'Error de conexión',
                 text: 'No se pudo contactar con el servidor'
             });
@@ -1127,4 +1124,51 @@
             e.target.blur();
         }
     });
+
+
+
+        // Actualizar total de deuda CADA VEZ que se filtra con el buscador
+    document.getElementById('buscadorCliente').addEventListener('input', function() {
+        // Pequeño delay para esperar que el filtro termine de ocultar filas
+        setTimeout(() => {
+            const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
+
+            if (filasVisibles.length > 0) {
+                // Tomamos el ID del cliente de la PRIMERA fila visible después del filtro
+                const idCliente = filasVisibles[0].dataset.idcliente || null;
+                if (idCliente) {
+                    actualizarTotalDeuda(idCliente);
+                } else {
+                    document.getElementById('totalDeuda').innerText = '$0,00';
+                }
+            } else {
+                // Si no queda ningún cliente visible
+                document.getElementById('totalDeuda').innerText = '$0,00';
+            }
+        }, 300);  // 300 milisegundos de espera (suficiente para que el filtro termine)
+    });
+
+    // Asegurate de que la función actualizarTotalDeuda esté definida (si no la tenés, pegala aquí)
+    async function actualizarTotalDeuda(idCliente) {
+        if (!idCliente) {
+            document.getElementById('totalDeuda').innerText = '$0,00';
+            return;
+        }
+
+        try {
+            const res = await fetch(`/CuentaCliente/GetTotalDeuda?idCliente=${idCliente}`);
+            const data = await res.json();
+            const totalEl = document.getElementById('totalDeuda');
+            if (data.success && data.total !== undefined) {
+                totalEl.innerText = '$' + data.total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                totalEl.className = data.total > 0 ? 'text-danger' : 'text-success';
+            } else {
+                totalEl.innerText = '$0,00';
+                totalEl.className = 'text-success';
+            }
+        } catch (err) {
+            console.error('Error al cargar deuda:', err);
+            document.getElementById('totalDeuda').innerText = '$0,00';
+        }
+    }
 </script>

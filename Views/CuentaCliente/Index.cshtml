@@ -1076,6 +1076,11 @@
                 headers: { 'RequestVerificationToken': token }
             });
 
+            if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`Error ${res.status}: ${errText}`);
+        }
+
             const result = await res.json();
 
             if (result.success) {
@@ -1083,7 +1088,7 @@
                 Swal.fire({
                     icon: 'success',
                     title: 'Eliminado',
-                    text: 'La compra ha sido borrada permanentemente',
+                    text: 'La compra ha sido eliminada',
                     timer: 1500,
                     showConfirmButton: false
                 });
@@ -1094,11 +1099,13 @@
                 });
             }
         } catch (e) {
-            Swal.fire({
-                title: 'Error de conexión',
-                text: 'No se pudo contactar con el servidor'
-            });
-        }
+        console.error('Error al eliminar compra:', e);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: 'No se pudo contactar con el servidor o procesar la eliminación'
+        });
+    }
     }
 
 

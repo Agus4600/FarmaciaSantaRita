@@ -1062,7 +1062,8 @@
             title: '¿Eliminar compra?',
             text: 'Esta acción no se puede deshacer',
             showCancelButton: true,
-            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#007bff',
+            confirmButtonColor: '#007bff',
             confirmButtonText: 'Sí, eliminar',
             cancelButtonText: 'Cancelar'
         });
@@ -1175,4 +1176,101 @@
             document.getElementById('totalDeuda').innerText = '$0,00';
         }
     }
+
+
+
+        // Botón Pagar Todo
+    document.getElementById('btnPagarTodo')?.addEventListener('click', async () => {
+        const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
+        if (filasVisibles.length === 0) {
+            return Swal.fire('Atención', 'No hay cliente seleccionado o visible.', 'warning');
+        }
+
+        const idCliente = filasVisibles[0].dataset.idcliente;
+        if (!idCliente) {
+            return Swal.fire('Error', 'No se encontró ID del cliente.', 'error');
+        }
+
+        const confirm = await Swal.fire({
+            title: '¿Pagar toda la deuda?',
+            text: 'Se marcarán todas las compras pendientes como pagadas.',
+            showCancelButton: true,
+            confirmButtonColor: '#007bff',
+            cancelButtonColor: '#007bff',
+            confirmButtonText: 'Sí, pagar todo',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            const res = await fetch(`/CuentaCliente/PagarTodo?idCliente=${idCliente}`, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token }
+            });
+
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('Éxito', data.message || 'Deuda pagada completamente', 'success');
+                location.reload();
+            } else {
+                Swal.fire('Error', data.message || 'No se pudo procesar el pago', 'error');
+            }
+        } catch (err) {
+            console.error('Error en Pagar Todo:', err);
+            Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+        }
+    });
+
+    // Botón Pagar Parcial
+    document.getElementById('btnPagarParcial')?.addEventListener('click', async () => {
+        const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
+        if (filasVisibles.length === 0) {
+            return Swal.fire('Atención', 'No hay cliente seleccionado o visible.', 'warning');
+        }
+
+        const idCliente = filasVisibles[0].dataset.idcliente;
+        const monto = parseFloat(document.getElementById('montoParcial').value);
+
+        if (!idCliente) {
+            return Swal.fire('Error', 'No se encontró ID del cliente.', 'error');
+        }
+        if (isNaN(monto) || monto <= 0) {
+            return Swal.fire('Atención', 'Ingrese un monto válido mayor a 0.', 'warning');
+        }
+
+        const confirm = await Swal.fire({
+            title: '¿Pagar parcial?',
+            text: `Aplicar $${monto.toLocaleString('es-AR')} a las compras más antiguas.`,
+            showCancelButton: true,
+            confirmButtonColor: '#007bff',
+            cancelButtonColor: '#007bff',
+            confirmButtonText: 'Sí, pagar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            const res = await fetch(`/CuentaCliente/PagarParcial?idCliente=${idCliente}&montoPagado=${monto}`, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token }
+            });
+
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('Éxito', data.message || 'Pago parcial aplicado', 'success');
+                location.reload();
+            } else {
+                Swal.fire('Error', data.message || 'No se pudo procesar el pago', 'error');
+            }
+        } catch (err) {
+            console.error('Error en Pagar Parcial:', err);
+            Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+        }
+    });
 </script>

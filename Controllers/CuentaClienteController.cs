@@ -278,20 +278,26 @@ namespace FarmaciaSantaRita.Controllers
         public async Task<IActionResult> PagarTodo(int idCliente)
         {
             if (idCliente <= 0)
+            {
                 return Json(new { success = false, message = "ID de cliente inválido" });
+            }
 
             try
             {
+                // Buscamos compras pendientes o parciales (con chequeo de null seguro)
                 var compras = await _context.Compras
                     .Where(c => c.Idcliente == idCliente &&
-                                (c.EstadoDePago != null &&
-                                 (c.EstadoDePago.ToLowerInvariant() == "pendiente" ||
-                                  c.EstadoDePago.ToLowerInvariant() == "parcial")))
+                                !string.IsNullOrEmpty(c.EstadoDePago) &&  // Evita null
+                                (c.EstadoDePago.ToLowerInvariant() == "pendiente" ||
+                                 c.EstadoDePago.ToLowerInvariant() == "parcial"))
                     .ToListAsync();
 
                 if (!compras.Any())
-                    return Json(new { success = false, message = "No hay deudas pendientes o parciales" });
+                {
+                    return Json(new { success = false, message = "No hay deudas pendientes o parciales para este cliente" });
+                }
 
+                // Actualizamos el estado
                 foreach (var compra in compras)
                 {
                     compra.EstadoDePago = "pagado";
@@ -299,15 +305,26 @@ namespace FarmaciaSantaRita.Controllers
 
                 await _context.SaveChangesAsync();
 
-                return Json(new { success = true, message = $"Deuda pagada completamente ({compras.Count} compras actualizadas)" });
+                return Json(new
+                {
+                    success = true,
+                    message = $"Deuda pagada completamente ({compras.Count} compras actualizadas)"
+                });
+            }
+            catch (DbUpdateException dbEx)
+            {
+                // Errores comunes de base de datos (constraint, conexión, etc.)
+                return Json(new { success = false, message = "Error al guardar en la base de datos: " + dbEx.InnerException?.Message });
             }
             catch (Exception ex)
             {
-                // ← Aquí podés loguear el error real (usa ILogger si lo tenés configurado)
-                Console.WriteLine($"Error en PagarTodo: {ex.Message}\n{ex.StackTrace}");
-                return Json(new { success = false, message = "Error interno al procesar el pago" });
+                // Cualquier otro error inesperado
+                return Json(new { success = false, message = "Error interno al procesar el pago: " + ex.Message });
             }
         }
+
+
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]

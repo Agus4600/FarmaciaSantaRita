@@ -277,19 +277,36 @@ namespace FarmaciaSantaRita.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PagarTodo(int idCliente)
         {
-            var compras = await _context.Compras
-    .Where(c => c.Idcliente == idCliente &&
-                (c.EstadoDePago.ToLowerInvariant() == "pendiente" ||
-                 c.EstadoDePago.ToLowerInvariant() == "parcial"))
-    .OrderBy(c => c.FechaCompra)
-    .ToListAsync();
+            if (idCliente <= 0)
+                return Json(new { success = false, message = "ID de cliente inválido" });
 
-            if (!compras.Any()) return Json(new { success = false, message = "No hay deudas pendientes" });
+            try
+            {
+                var compras = await _context.Compras
+                    .Where(c => c.Idcliente == idCliente &&
+                                (c.EstadoDePago != null &&
+                                 (c.EstadoDePago.ToLowerInvariant() == "pendiente" ||
+                                  c.EstadoDePago.ToLowerInvariant() == "parcial")))
+                    .ToListAsync();
 
-            compras.ForEach(c => c.EstadoDePago = "Pagado");
-            await _context.SaveChangesAsync();
+                if (!compras.Any())
+                    return Json(new { success = false, message = "No hay deudas pendientes o parciales" });
 
-            return Json(new { success = true, message = "Deuda pagada completamente" });
+                foreach (var compra in compras)
+                {
+                    compra.EstadoDePago = "pagado";
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = $"Deuda pagada completamente ({compras.Count} compras actualizadas)" });
+            }
+            catch (Exception ex)
+            {
+                // ← Aquí podés loguear el error real (usa ILogger si lo tenés configurado)
+                Console.WriteLine($"Error en PagarTodo: {ex.Message}\n{ex.StackTrace}");
+                return Json(new { success = false, message = "Error interno al procesar el pago" });
+            }
         }
 
         [HttpPost]
@@ -331,9 +348,5 @@ namespace FarmaciaSantaRita.Controllers
 
             return Json(new { success = true, message = $"Pago parcial de ${montoPagado:N2} aplicado ({pagados} compras actualizadas)" });
         }
-
-
-
-
     }
 }

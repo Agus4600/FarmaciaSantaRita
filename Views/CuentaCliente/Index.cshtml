@@ -1116,9 +1116,8 @@
 
 
 
-        // Actualizar total de deuda CADA VEZ que se filtra con el buscador
-        // Actualizar total de deuda CADA VEZ que se filtra con el buscador
-        // BUSCADOR PREDICTIVO + ACTUALIZACIÓN DE TOTAL DEUDA
+
+        // BUSCADOR PREDICTIVO + ACTUALIZACIÓN DE TOTAL DEUDA (con depuración temporal)
     document.getElementById('buscadorCliente').addEventListener('input', function() {
         const filtro = this.value.toLowerCase().trim();
 
@@ -1133,11 +1132,14 @@
             }
         });
 
-        // 2. Actualizar el total de deuda después del filtro
+        // 2. Actualizar el total de deuda después del filtro (con logs para depurar)
         setTimeout(() => {
             const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
 
+            console.log('Filas visibles encontradas:', filasVisibles.length);
+
             if (filasVisibles.length === 0) {
+                console.log('Caso: No hay filas visibles → $0,00 verde');
                 document.getElementById('totalDeuda').innerText = '$0,00';
                 document.getElementById('totalDeuda').className = 'text-success';
                 return;
@@ -1150,14 +1152,17 @@
                     .filter(id => id && !isNaN(parseInt(id)))
             )];
 
+            console.log('IDs de clientes visibles encontrados:', idClientes);
+
             if (idClientes.length === 0) {
+                console.log('Caso: IDs vacíos o inválidos → $0,00 verde');
                 document.getElementById('totalDeuda').innerText = '$0,00';
                 document.getElementById('totalDeuda').className = 'text-success';
             } else if (idClientes.length === 1) {
-                // Un solo cliente → deuda real
+                console.log('Caso: Un solo cliente → calculando deuda real para ID', idClientes[0]);
                 actualizarTotalDeuda(idClientes[0]);
             } else {
-                // Múltiples clientes → advertencia
+                console.log('Caso: Múltiples clientes → "Varios clientes" amarillo');
                 document.getElementById('totalDeuda').innerText = 'Varios clientes';
                 document.getElementById('totalDeuda').className = 'text-warning';
             }
@@ -1250,13 +1255,12 @@
 
 
     // Botón Pagar Parcial (NO recarga, actualiza total y estados visualmente)
-    document.getElementById('btnPagarParcial')?.addEventListener('click', async () => {
+       document.getElementById('btnPagarParcial')?.addEventListener('click', async () => {
         const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
         if (filasVisibles.length === 0) return Swal.fire('Atención', 'No hay cliente seleccionado.', 'warning');
 
         const idCliente = filasVisibles[0].dataset.idcliente;
         const monto = parseFloat(document.getElementById('montoParcial').value);
-
         if (!idCliente) return Swal.fire('Error', 'No se encontró ID del cliente.', 'error');
         if (isNaN(monto) || monto <= 0) return Swal.fire('Atención', 'Ingrese monto válido > 0.', 'warning');
 
@@ -1284,6 +1288,7 @@
             }
 
             const data = await res.json();
+
             if (data.success) {
                 Swal.fire('Éxito', data.message, 'success');
 
@@ -1291,10 +1296,19 @@
                 const deudaActual = parseFloat(document.getElementById('totalDeuda').innerText.replace(/[$.]/g, '').replace(',', '.')) || 0;
                 const nuevaDeuda = Math.max(0, deudaActual - monto);
                 document.getElementById('totalDeuda').innerText = '$' + nuevaDeuda.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                document.getElementById('totalDeuda').className = nuevaDeuda > 0 ? 'text-danger' : 'text-success';
                 document.getElementById('montoParcial').value = '';
 
-                // Opcional: marca visualmente las filas más antiguas como "Pagado" o "Parcial" (simulado)
-                // Si querés precisión total, tendrías que recargar la tabla con AJAX, pero por ahora esto basta
+                // NUEVO: Si la nueva deuda es 0 → cambia todas las filas visibles a "Pagado" verde
+                if (nuevaDeuda === 0) {
+                    filasVisibles.forEach(fila => {
+                        const select = fila.querySelector('.sel-estado');
+                        if (select) {
+                            select.value = 'pagado';
+                            select.className = 'sel-estado pagado';
+                        }
+                    });
+                }
             } else {
                 Swal.fire('Error', data.message || 'No se pudo aplicar el pago', 'error');
             }

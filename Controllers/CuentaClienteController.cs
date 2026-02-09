@@ -278,26 +278,20 @@ namespace FarmaciaSantaRita.Controllers
         public async Task<IActionResult> PagarTodo(int idCliente)
         {
             if (idCliente <= 0)
-            {
                 return Json(new { success = false, message = "ID de cliente inválido" });
-            }
 
             try
             {
-                // Buscamos compras pendientes o parciales (con chequeo de null seguro)
                 var compras = await _context.Compras
                     .Where(c => c.Idcliente == idCliente &&
-                                !string.IsNullOrEmpty(c.EstadoDePago) &&  // Evita null
+                                !string.IsNullOrEmpty(c.EstadoDePago) &&
                                 (c.EstadoDePago.ToLowerInvariant() == "pendiente" ||
                                  c.EstadoDePago.ToLowerInvariant() == "parcial"))
                     .ToListAsync();
 
                 if (!compras.Any())
-                {
-                    return Json(new { success = false, message = "No hay deudas pendientes o parciales para este cliente" });
-                }
+                    return Json(new { success = false, message = "No hay deudas pendientes o parciales" });
 
-                // Actualizamos el estado
                 foreach (var compra in compras)
                 {
                     compra.EstadoDePago = "pagado";
@@ -305,21 +299,23 @@ namespace FarmaciaSantaRita.Controllers
 
                 await _context.SaveChangesAsync();
 
-                return Json(new
-                {
-                    success = true,
-                    message = $"Deuda pagada completamente ({compras.Count} compras actualizadas)"
-                });
-            }
-            catch (DbUpdateException dbEx)
-            {
-                // Errores comunes de base de datos (constraint, conexión, etc.)
-                return Json(new { success = false, message = "Error al guardar en la base de datos: " + dbEx.InnerException?.Message });
+                return Json(new { success = true, message = $"Pagado OK ({compras.Count} compras)" });
             }
             catch (Exception ex)
             {
-                // Cualquier otro error inesperado
-                return Json(new { success = false, message = "Error interno al procesar el pago: " + ex.Message });
+                var errorMessage = ex.Message;
+                if (ex.InnerException != null)
+                    errorMessage += " → " + ex.InnerException.Message;
+
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Error interno",
+                    detail = errorMessage,
+                    stack = ex.StackTrace is not null
+                        ? ex.StackTrace.Substring(0, Math.Min(500, ex.StackTrace.Length))
+                        : ""
+                });
             }
         }
 

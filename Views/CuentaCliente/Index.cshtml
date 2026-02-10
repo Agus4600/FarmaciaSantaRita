@@ -1133,40 +1133,40 @@
         });
 
         // 2. Actualizar el total de deuda después del filtro (con logs para depurar)
-        setTimeout(() => {
-            const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
+            setTimeout(() => {
+        const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
+        console.log('Filas visibles encontradas:', filasVisibles.length);
 
-            console.log('Filas visibles encontradas:', filasVisibles.length);
+        if (filasVisibles.length === 0) {
+            console.log('Caso: No hay filas visibles → $0,00 verde');
+            document.getElementById('totalDeuda').innerText = '$0,00';
+            document.getElementById('totalDeuda').className = 'text-success';
+            return;
+        }
 
-            if (filasVisibles.length === 0) {
-                console.log('Caso: No hay filas visibles → $0,00 verde');
-                document.getElementById('totalDeuda').innerText = '$0,00';
-                document.getElementById('totalDeuda').className = 'text-success';
-                return;
-            }
+        // Recolectamos IDs únicos de clientes visibles
+        const idClientes = [...new Set(
+            Array.from(filasVisibles)
+                .map(f => f.dataset.idcliente)
+                .filter(id => id && !isNaN(parseInt(id)))
+        )];
+        console.log('IDs de clientes visibles encontrados:', idClientes);
 
-            // Recolectamos IDs únicos de clientes visibles
-            const idClientes = [...new Set(
-                Array.from(filasVisibles)
-                    .map(f => f.dataset.idcliente)
-                    .filter(id => id && !isNaN(parseInt(id)))
-            )];
-
-            console.log('IDs de clientes visibles encontrados:', idClientes);
-
-            if (idClientes.length === 0) {
-                console.log('Caso: IDs vacíos o inválidos → $0,00 verde');
-                document.getElementById('totalDeuda').innerText = '$0,00';
-                document.getElementById('totalDeuda').className = 'text-success';
-            } else if (idClientes.length === 1) {
-                console.log('Caso: Un solo cliente → calculando deuda real para ID', idClientes[0]);
-                actualizarTotalDeuda(idClientes[0]);
-            } else {
-                console.log('Caso: Múltiples clientes → "Varios clientes" amarillo');
-                document.getElementById('totalDeuda').innerText = 'Varios clientes';
-                document.getElementById('totalDeuda').className = 'text-warning';
-            }
-        }, 300);
+        if (idClientes.length === 0) {
+            console.log('Caso: IDs vacíos o inválidos → $0,00 verde');
+            document.getElementById('totalDeuda').innerText = '$0,00';
+            document.getElementById('totalDeuda').className = 'text-success';
+        } else if (idClientes.length === 1) {
+            console.log('Caso: Un solo cliente → calculando deuda real para ID', idClientes[0]);
+            actualizarTotalDeuda(idClientes[0]);
+        } else {
+            console.log('Caso: Múltiples clientes → "Varios clientes" amarillo y reset total');
+            document.getElementById('totalDeuda').innerText = 'Varios clientes';
+            document.getElementById('totalDeuda').className = 'text-warning';
+            // NUEVO: Resetear visualmente para evitar "fantasma" del último filtro
+            // (opcional: podrías sumar todos si querés, pero reset es más limpio)
+        }
+    }, 300);
     });
 
     // Asegurate de que la función actualizarTotalDeuda esté definida (si no la tenés, pegala aquí)

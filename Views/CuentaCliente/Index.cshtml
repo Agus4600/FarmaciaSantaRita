@@ -1100,6 +1100,12 @@
         const totalEl = document.getElementById('totalDeuda');
         totalEl.innerText = 'Varios clientes';
         totalEl.className = 'text-warning';
+
+        // NUEVO: Deshabilitar botones desde el inicio (sin filtro)
+    const btnParcial = document.getElementById('btnPagarParcial');
+    const btnTodo = document.getElementById('btnPagarTodo');
+    if (btnParcial) btnParcial.disabled = true;
+    if (btnTodo) btnTodo.disabled = true;
     });
 
     // Cuando terminan de editar el precio (al hacer blur o enter)
@@ -1125,7 +1131,7 @@
             document.getElementById('buscadorCliente').addEventListener('input', function() {
         const filtro = this.value.toLowerCase().trim();
 
-        // 1. Filtrar filas (tu código actual)
+        // Filtrado por nombre o DNI (correcto)
         const filas = document.querySelectorAll('#tablaCompras tbody tr');
         filas.forEach(fila => {
             const nombre = (fila.dataset.nombre || '').toLowerCase();
@@ -1134,20 +1140,22 @@
             fila.style.display = coincide ? '' : 'none';
         });
 
-        // 2. Actualizar total (tu código actual)
+        // Actualización del total (correcto)
         const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
         const totalEl = document.getElementById('totalDeuda');
         if (filasVisibles.length === 0) {
             totalEl.innerText = '$0,00';
-            totalEl.className = 'text-danger';
+            totalEl.className = 'text-danger';  // Rojo cuando no hay resultados → excelente decisión
             currentClientId = null;
             return;
         }
+
         const idClientes = [...new Set(
             Array.from(filasVisibles)
                 .map(f => f.dataset.idcliente)
                 .filter(id => id && !isNaN(parseInt(id)))
         )];
+
         if (idClientes.length === 1) {
             currentClientId = idClientes[0];
             actualizarTotalDeuda(currentClientId);
@@ -1157,55 +1165,13 @@
             totalEl.className = 'text-warning';
         }
 
-        // NUEVO: Control de botones (agregado aquí)
+        // Control de botones según si hay texto (perfecto)
         const tieneFiltro = filtro.length > 0;
         const btnParcial = document.getElementById('btnPagarParcial');
         const btnTodo = document.getElementById('btnPagarTodo');
         if (btnParcial) btnParcial.disabled = !tieneFiltro;
         if (btnTodo) btnTodo.disabled = !tieneFiltro;
     });
-
-        async function actualizarTotalDeuda(idCliente) {
-        console.log('actualizarTotalDeuda llamada con ID:', idCliente);
-
-        // Ignorar si ya cambió el filtro
-        if (idCliente !== currentClientId) {
-            console.log('Fetch ignorado: ID viejo - filtro cambió');
-            return;
-        }
-
-        if (!idCliente) {
-            document.getElementById('totalDeuda').innerText = '$0,00';
-            document.getElementById('totalDeuda').className = 'text-success';
-            return;
-        }
-
-        try {
-            const res = await fetch(`/CuentaCliente/GetTotalDeuda?idCliente=${idCliente}`);
-            if (!res.ok) throw new Error('Fetch falló');
-
-            const data = await res.json();
-
-            // Verificar de nuevo antes de actualizar
-            if (idCliente !== currentClientId) {
-                console.log('Respuesta ignorada: filtro cambió mientras esperábamos');
-                return;
-            }
-
-            const totalEl = document.getElementById('totalDeuda');
-            if (data.success && data.total !== undefined) {
-                totalEl.innerText = '$' + data.total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                totalEl.className = data.total > 0 ? 'text-danger' : 'text-success';
-            } else {
-                totalEl.innerText = '$0,00';
-                totalEl.className = 'text-success';
-            }
-        } catch (err) {
-            console.error('Error en actualizarTotalDeuda:', err);
-            document.getElementById('totalDeuda').innerText = '$0,00';
-            document.getElementById('totalDeuda').className = 'text-success';
-        }
-    }
 
 
 

@@ -1121,49 +1121,37 @@
             document.getElementById('buscadorCliente').addEventListener('input', function() {
         const filtro = this.value.toLowerCase().trim();
 
-        // 1. Filtrar filas por nombre/apellido O por DNI
+        // Filtrar por nombre/apellido O DNI
         const filas = document.querySelectorAll('#tablaCompras tbody tr');
         filas.forEach(fila => {
             const nombre = (fila.dataset.nombre || '').toLowerCase();
-            const dni = (fila.dataset.dni || '').toLowerCase();  // ← nuevo
-
-            // Muestra la fila si coincide con nombre/apellido O con DNI
-            const coincide = filtro === '' ||
-                             nombre.includes(filtro) ||
-                             dni.includes(filtro);
-
+            const dni = (fila.dataset.dni || '').toLowerCase();
+            const coincide = filtro === '' || nombre.includes(filtro) || dni.includes(filtro);
             fila.style.display = coincide ? '' : 'none';
         });
 
-        // 2. Actualizar el total de deuda (mismo código que ya tenías, con limpieza)
-        setTimeout(() => {
-            const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
+        // Actualizar total inmediatamente
+        const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
+        const totalEl = document.getElementById('totalDeuda');
 
-            const totalEl = document.getElementById('totalDeuda');
+        if (filasVisibles.length === 0) {
+            totalEl.innerText = '$0,00';
+            totalEl.className = 'text-success';
+            return;
+        }
 
-            // Limpieza previa para evitar valores pegados
-            totalEl.innerText = '...';
-            totalEl.className = '';
+        const idClientes = [...new Set(
+            Array.from(filasVisibles)
+                .map(f => f.dataset.idcliente)
+                .filter(id => id && !isNaN(parseInt(id)))
+        )];
 
-            if (filasVisibles.length === 0) {
-                totalEl.innerText = '$0,00';
-                totalEl.className = 'text-success';
-                return;
-            }
-
-            const idClientes = [...new Set(
-                Array.from(filasVisibles)
-                    .map(f => f.dataset.idcliente)
-                    .filter(id => id && !isNaN(parseInt(id)))
-            )];
-
-            if (idClientes.length === 1) {
-                actualizarTotalDeuda(idClientes[0]);
-            } else {
-                totalEl.innerText = 'Varios clientes';
-                totalEl.className = 'text-warning';
-            }
-        }, 10);
+        if (idClientes.length === 1) {
+            actualizarTotalDeuda(idClientes[0]);
+        } else {
+            totalEl.innerText = 'Varios clientes';
+            totalEl.className = 'text-warning';
+        }
     });
 
     async function actualizarTotalDeuda(idCliente) {

@@ -1118,30 +1118,36 @@
 
         let currentClientId = null;
         // BUSCADOR PREDICTIVO + ACTUALIZACIÓN DE TOTAL DEUDA (con depuración temporal)
-           document.getElementById('buscadorCliente').addEventListener('input', function() {
+            document.getElementById('buscadorCliente').addEventListener('input', function() {
         const filtro = this.value.toLowerCase().trim();
 
-        // 1. Filtrar filas
+        // 1. Filtrar filas por nombre/apellido O por DNI
         const filas = document.querySelectorAll('#tablaCompras tbody tr');
         filas.forEach(fila => {
-            const nombre = fila.dataset.nombre || '';
-            fila.style.display = (filtro === '' || nombre.includes(filtro)) ? '' : 'none';
+            const nombre = (fila.dataset.nombre || '').toLowerCase();
+            const dni = (fila.dataset.dni || '').toLowerCase();  // ← nuevo
+
+            // Muestra la fila si coincide con nombre/apellido O con DNI
+            const coincide = filtro === '' ||
+                             nombre.includes(filtro) ||
+                             dni.includes(filtro);
+
+            fila.style.display = coincide ? '' : 'none';
         });
 
-        // 2. Actualizar total
+        // 2. Actualizar el total de deuda (mismo código que ya tenías, con limpieza)
         setTimeout(() => {
             const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
 
             const totalEl = document.getElementById('totalDeuda');
 
-            // Limpieza inmediata (evita fantasmas)
+            // Limpieza previa para evitar valores pegados
             totalEl.innerText = '...';
             totalEl.className = '';
 
             if (filasVisibles.length === 0) {
                 totalEl.innerText = '$0,00';
                 totalEl.className = 'text-success';
-                currentClientId = null; // Reset bandera
                 return;
             }
 
@@ -1152,14 +1158,12 @@
             )];
 
             if (idClientes.length === 1) {
-                currentClientId = idClientes[0];
-                actualizarTotalDeuda(currentClientId);
+                actualizarTotalDeuda(idClientes[0]);
             } else {
                 totalEl.innerText = 'Varios clientes';
                 totalEl.className = 'text-warning';
-                currentClientId = null; // Reset para ignorar fetches viejos
             }
-        }, 50);
+        }, 10);
     });
 
     async function actualizarTotalDeuda(idCliente) {

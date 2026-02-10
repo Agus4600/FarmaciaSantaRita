@@ -1116,30 +1116,32 @@
 
 
 
-
+        let currentClientId = null;
         // BUSCADOR PREDICTIVO + ACTUALIZACIÓN DE TOTAL DEUDA (con depuración temporal)
-        document.getElementById('buscadorCliente').addEventListener('input', function() {
+           document.getElementById('buscadorCliente').addEventListener('input', function() {
         const filtro = this.value.toLowerCase().trim();
 
-        // 1. Filtrar filas inmediatamente
+        // 1. Filtrar filas
         const filas = document.querySelectorAll('#tablaCompras tbody tr');
         filas.forEach(fila => {
             const nombre = fila.dataset.nombre || '';
             fila.style.display = (filtro === '' || nombre.includes(filtro)) ? '' : 'none';
         });
 
-        // 2. Actualizar total (con timeout muy corto + limpieza previa)
+        // 2. Actualizar total
         setTimeout(() => {
             const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
 
-            // Limpieza previa para evitar valores "pegados" de filtros anteriores
             const totalEl = document.getElementById('totalDeuda');
-            totalEl.innerText = '...';  // Placeholder temporal (opcional, se puede quitar)
+
+            // Limpieza inmediata (evita fantasmas)
+            totalEl.innerText = '...';
             totalEl.className = '';
 
             if (filasVisibles.length === 0) {
                 totalEl.innerText = '$0,00';
                 totalEl.className = 'text-success';
+                currentClientId = null; // Reset bandera
                 return;
             }
 
@@ -1150,23 +1152,26 @@
             )];
 
             if (idClientes.length === 1) {
-                actualizarTotalDeuda(idClientes[0]);  // Actualiza con fetch (rojo o verde)
+                currentClientId = idClientes[0];
+                actualizarTotalDeuda(currentClientId);
             } else {
                 totalEl.innerText = 'Varios clientes';
                 totalEl.className = 'text-warning';
+                currentClientId = null; // Reset para ignorar fetches viejos
             }
-        }, 50);  // 50 ms es suficiente y muy rápido
+        }, 50);
     });
 
-
-
-
-    // Asegurate de que la función actualizarTotalDeuda esté definida (si no la tenés, pegala aquí)
-       async function actualizarTotalDeuda(idCliente) {
+    async function actualizarTotalDeuda(idCliente) {
         console.log('actualizarTotalDeuda llamada con ID:', idCliente);
 
+        // Ignorar si el ID ya no es el actual (fetch viejo llegó tarde)
+        if (idCliente !== currentClientId) {
+            console.log('Fetch ignorado: ID viejo (', idCliente, ') - filtro cambió');
+            return;
+        }
+
         if (!idCliente) {
-            console.log('ID vacío → forzando $0,00 verde');
             document.getElementById('totalDeuda').innerText = '$0,00';
             document.getElementById('totalDeuda').className = 'text-success';
             return;
@@ -1177,13 +1182,16 @@
             const res = await fetch(`/CuentaCliente/GetTotalDeuda?idCliente=${idCliente}`);
             console.log('Respuesta fetch status:', res.status);
 
-            if (!res.ok) {
-                console.log('Fetch falló con status:', res.status);
-                throw new Error('Fetch falló');
-            }
+            if (!res.ok) throw new Error('Fetch falló');
 
             const data = await res.json();
             console.log('Respuesta del backend completa:', data);
+
+            // Verificar de nuevo antes de actualizar (por si cambió mientras esperábamos)
+            if (idCliente !== currentClientId) {
+                console.log('Respuesta ignorada: filtro cambió mientras esperábamos');
+                return;
+            }
 
             const totalEl = document.getElementById('totalDeuda');
             if (data.success && data.total !== undefined) {
@@ -1191,7 +1199,6 @@
                 totalEl.innerText = '$' + data.total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 totalEl.className = data.total > 0 ? 'text-danger' : 'text-success';
             } else {
-                console.log('Backend devolvió success false o total undefined → $0,00 verde');
                 totalEl.innerText = '$0,00';
                 totalEl.className = 'text-success';
             }

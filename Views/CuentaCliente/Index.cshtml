@@ -1118,10 +1118,10 @@
 
         let currentClientId = null;
         // BUSCADOR PREDICTIVO + ACTUALIZACIÓN DE TOTAL DEUDA (con depuración temporal)
-            document.getElementById('buscadorCliente').addEventListener('input', function() {
+           document.getElementById('buscadorCliente').addEventListener('input', function() {
         const filtro = this.value.toLowerCase().trim();
 
-        // Filtrar por nombre/apellido O DNI
+        // 1. Filtrar filas por nombre/apellido O DNI
         const filas = document.querySelectorAll('#tablaCompras tbody tr');
         filas.forEach(fila => {
             const nombre = (fila.dataset.nombre || '').toLowerCase();
@@ -1130,13 +1130,14 @@
             fila.style.display = coincide ? '' : 'none';
         });
 
-        // Actualizar total inmediatamente
+        // 2. Actualizar total inmediatamente
         const filasVisibles = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia):not([style*="display: none"])');
         const totalEl = document.getElementById('totalDeuda');
 
         if (filasVisibles.length === 0) {
             totalEl.innerText = '$0,00';
             totalEl.className = 'text-success';
+            currentClientId = null; // Reset
             return;
         }
 
@@ -1147,19 +1148,21 @@
         )];
 
         if (idClientes.length === 1) {
-            actualizarTotalDeuda(idClientes[0]);
+            currentClientId = idClientes[0];
+            actualizarTotalDeuda(currentClientId);  // Siempre llamar cuando hay un solo cliente
         } else {
+            currentClientId = null; // Reset para evitar sobrescritura tardía
             totalEl.innerText = 'Varios clientes';
             totalEl.className = 'text-warning';
         }
     });
 
-    async function actualizarTotalDeuda(idCliente) {
+        async function actualizarTotalDeuda(idCliente) {
         console.log('actualizarTotalDeuda llamada con ID:', idCliente);
 
-        // Ignorar si el ID ya no es el actual (fetch viejo llegó tarde)
+        // Ignorar si ya cambió el filtro
         if (idCliente !== currentClientId) {
-            console.log('Fetch ignorado: ID viejo (', idCliente, ') - filtro cambió');
+            console.log('Fetch ignorado: ID viejo - filtro cambió');
             return;
         }
 
@@ -1170,16 +1173,12 @@
         }
 
         try {
-            console.log('Haciendo fetch a /GetTotalDeuda?idCliente=' + idCliente);
             const res = await fetch(`/CuentaCliente/GetTotalDeuda?idCliente=${idCliente}`);
-            console.log('Respuesta fetch status:', res.status);
-
             if (!res.ok) throw new Error('Fetch falló');
 
             const data = await res.json();
-            console.log('Respuesta del backend completa:', data);
 
-            // Verificar de nuevo antes de actualizar (por si cambió mientras esperábamos)
+            // Verificar de nuevo antes de actualizar
             if (idCliente !== currentClientId) {
                 console.log('Respuesta ignorada: filtro cambió mientras esperábamos');
                 return;
@@ -1187,7 +1186,6 @@
 
             const totalEl = document.getElementById('totalDeuda');
             if (data.success && data.total !== undefined) {
-                console.log('Total recibido del backend:', data.total);
                 totalEl.innerText = '$' + data.total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 totalEl.className = data.total > 0 ? 'text-danger' : 'text-success';
             } else {
@@ -1195,7 +1193,7 @@
                 totalEl.className = 'text-success';
             }
         } catch (err) {
-            console.error('Error real en actualizarTotalDeuda:', err);
+            console.error('Error en actualizarTotalDeuda:', err);
             document.getElementById('totalDeuda').innerText = '$0,00';
             document.getElementById('totalDeuda').className = 'text-success';
         }

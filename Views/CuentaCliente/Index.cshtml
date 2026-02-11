@@ -644,6 +644,18 @@
         document.querySelectorAll('.edit-precio').forEach(td => {
             formatearPrecioEnTabla(td);
         });
+
+        // Deshabilitar botones al inicio
+    const btnParcial = document.getElementById('btnPagarParcial');
+    const btnTodo = document.getElementById('btnPagarTodo');
+    if (btnParcial) btnParcial.disabled = true;
+    if (btnTodo) btnTodo.disabled = true;
+
+    // Ejecutar lógica del buscador al cargar (filtro vacío)
+    const buscador = document.getElementById('buscadorCliente');
+    if (buscador) {
+        buscador.dispatchEvent(new Event('input'));
+    }
     });
 
     const token = document.querySelector('input[name="__RequestVerificationToken"]').value;

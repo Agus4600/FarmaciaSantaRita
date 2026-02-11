@@ -641,20 +641,12 @@
 <script>
             // Carga inicial: al abrir la página, DEUDA EN $0,00 (sin asumir cliente)
     document.addEventListener("DOMContentLoaded", function () {
-        // Fuerza $0,00 al cargar (sin cliente seleccionado)
-        document.getElementById('totalDeuda').innerText = '$0,00';
-        // Opcional: podés agregar un texto aclaratorio si querés
-        // document.getElementById('totalDeuda').insertAdjacentHTML('afterend', '<small class="text-muted ms-2">(Seleccione un cliente)</small>');
-
-        // El resto de tu código de formateo precios sigue aquí si querés mantenerlo en el mismo evento
         document.querySelectorAll('.edit-precio').forEach(td => {
             formatearPrecioEnTabla(td);
         });
     });
 
     const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-    // Lista de clientes existentes para detectar si es nuevo o registrado
     const clientesExistentes = [
         @foreach (var c in ViewBag.Clientes)
         {

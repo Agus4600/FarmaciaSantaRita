@@ -1115,6 +1115,52 @@
 
 
         let currentClientId = null;
+
+
+            async function actualizarTotalDeuda(idCliente) {
+        console.log('actualizarTotalDeuda llamada con ID:', idCliente);
+
+        // Ignorar si ya cambió el filtro (seguridad)
+        if (idCliente !== currentClientId) {
+            console.log('Fetch ignorado: ID viejo - filtro cambió');
+            return;
+        }
+
+        if (!idCliente) {
+            document.getElementById('totalDeuda').innerText = '$0,00';
+            document.getElementById('totalDeuda').className = 'text-success';
+            return;
+        }
+
+        try {
+            const res = await fetch(`/CuentaCliente/GetTotalDeuda?idCliente=${idCliente}`);
+            if (!res.ok) throw new Error('Fetch falló');
+
+            const data = await res.json();
+
+            // Verificar de nuevo antes de actualizar
+            if (idCliente !== currentClientId) {
+                console.log('Respuesta ignorada: filtro cambió mientras esperábamos');
+                return;
+            }
+
+            const totalEl = document.getElementById('totalDeuda');
+            if (data.success && data.total !== undefined) {
+                totalEl.innerText = '$' + data.total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                totalEl.className = data.total > 0 ? 'text-danger' : 'text-success';
+            } else {
+                totalEl.innerText = '$0,00';
+                totalEl.className = 'text-success';
+            }
+        } catch (err) {
+            console.error('Error en actualizarTotalDeuda:', err);
+            document.getElementById('totalDeuda').innerText = '$0,00';
+            document.getElementById('totalDeuda').className = 'text-success';
+        }
+    }
+
+
+
         // BUSCADOR PREDICTIVO + ACTUALIZACIÓN DE TOTAL DEUDA (con depuración temporal)
             document.getElementById('buscadorCliente').addEventListener('input', function() {
         const filtro = this.value.toLowerCase().trim();

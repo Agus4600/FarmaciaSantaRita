@@ -68,100 +68,73 @@
                  style="width: 100%; height: auto; max-height: 180px; object-fit: contain;">
         </div>
 
-        <h3 class="text-center mb-2">Gestión de Usuarios</h3>
-        <p class="text-muted text-center small mb-4">Administra los accesos y roles del personal del sistema.</p>
+        <h4 class="text-center mb-2">Recordar Cuenta</h4>
+        <p class="text-muted text-center small mb-4">Ingresa tu número de DNI para consultar tus datos.</p>
 
         <div class="d-flex align-items-center gap-2 mb-4">
-            <div class="col-md-9">
+            <form asp-action="Index" method="post" id="recordarForm" class="flex-grow-1">
                 <div class="input-group">
-                    <input type="text" id="userInput" class="form-control form-control-custom" placeholder="Buscar usuario..." />
-                    <button class="btn btn-search-integrated" type="button">
+                    <input type="text" name="dni" class="form-control" id="dniInput" placeholder="DNI..." maxlength="10" style="border-radius: 8px 0 0 8px;" />
+                    <button class="btn btn-outline-primary" type="submit" style="border-radius: 0 8px 8px 0;">
                         <i class="bi bi-search"></i> Buscar
                     </button>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <a asp-controller="PanelSeleccion" asp-action="Index" class="btn-custom">
-                    Volver
-                </a>
-            </div>
+            </form>
+            <a asp-controller="Login" asp-action="Index" class="btn btn-primary" style="border-radius: 8px; height: 38px; display: flex; align-items: center;">
+                Volver
+            </a>
         </div>
 
-        <div class="table-responsive">
-            <table class="table table-hover text-center" id="userTable">
-                <thead style="background-color: #e9ecef;">
-                    <tr>
-                        <th>Nombre Completo</th>
-                        <th>Usuario</th>
-                        <th>Rol</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var u in Model ?? new List<FarmaciaSantaRita.Models.Usuario>())
-                    {
-                        <tr>
-                            <td><strong>@u.Nombre @u.Apellido</strong></td>
-                            <td>@u.NombreUsuario</td>
-                            <td><span class="badge bg-white text-primary border border-primary">@u.Rol</span></td>
-                            <td>
-                                <span style="font-weight: bold; color: @(u.Eliminado ? "#dc3545" : "#28a745")">
-                                    @(u.Eliminado ? "Inactivo" : "Activo")
-                                </span>
-                            </td>
-                            <td>
-                                <div class="btn-group">
-                                    <button class="btn btn-sm btn-outline-primary cambiar-rol" data-id="@u.Idusuario">
-                                        <i class="bi bi-person-gear"></i>
-                                    </button>
-                                    @if (!u.Eliminado)
-                                    {
-                                        <button class="btn btn-sm btn-outline-danger eliminar" data-id="@u.Idusuario">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <button class="btn btn-sm btn-outline-success restaurar" data-id="@u.Idusuario">
-                                            <i class="bi bi-arrow-counterclockwise"></i>
-                                        </button>
-                                    }
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+        @if (ViewBag.NombreUsuario != null)
+        {
+            <div class="p-3 border-start border-primary border-4 bg-light rounded shadow-sm">
+                <p class="mb-1"><strong>Usuario:</strong> <span class="text-primary">@ViewBag.NombreUsuario</span></p>
+                <p class="mb-0"><strong>Contraseña:</strong> <span>@ViewBag.Contraseña</span></p>
+            </div>
+        }
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        $(document).ready(function() {
-            // Filtrado de tabla
-            $("#userInput").on("keyup", function() {
-                var value = $(this).val().toLowerCase();
-                $("#userTable tbody tr").filter(function() {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-                });
-            });
+<script>
+    // 1. Manejo de errores y mensajes con SweetAlert2
+    document.addEventListener('DOMContentLoaded', function() {
+        @if (ViewBag.Mensaje != null)
+        {
+                    <text>
+                    Swal.fire({
+                        title: 'Información',
+                        text: '@ViewBag.Mensaje',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
+                    });
+                    </text>
+        }
+    });
 
-            // SweetAlert para Cambiar Rol
-            $('.cambiar-rol').click(function () {
-                Swal.fire({
-                    title: 'Modificar Rol',
-                    html: `<select id="nuevoRol" class="form-select">
-                             <option value="Empleado/a">Empleado/a</option>
-                             <option value="Jefe/a">Jefe/a</option>
-                             <option value="SuperAdmin">SuperAdmin</option>
-                           </select>`,
-                    confirmButtonColor: '#007bff',
-                    confirmButtonText: 'Actualizar',
-                    showCancelButton: true
-                });
+    // 2. Validación de campo vacío antes de enviar
+    const form = document.getElementById('recordarForm');
+    const dniInput = document.getElementById('dniInput');
+
+    form.addEventListener('submit', function(e) {
+        if (dniInput.value.trim() === "") {
+            e.preventDefault();
+
+            // Outer Glow de error
+            dniInput.style.boxShadow = "0 0 12px rgba(220, 53, 69, 0.5)";
+            dniInput.style.borderColor = "#dc3545";
+
+            Swal.fire({
+                title: '¡Atención!',
+                text: 'Por favor, ingresa tu número de DNI para realizar la búsqueda.',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
             });
-        });
-    </script>
-}
+        }
+    });
+
+    // Limpiar el brillo de error al escribir
+    dniInput.addEventListener('input', function() {
+        dniInput.style.boxShadow = "";
+        dniInput.style.borderColor = "";
+    });
+</script>

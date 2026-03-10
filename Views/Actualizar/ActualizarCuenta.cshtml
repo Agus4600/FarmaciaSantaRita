@@ -38,6 +38,7 @@
         width: 100%;
         max-width: 180px;
         text-align: center;
+        margin-top: 24px !important;
     }
 
         .btn-administrar:hover:not(.disabled) {
@@ -123,7 +124,7 @@
 
 
     .btn-volver {
-        margin-top: 50px !important;
+        margin-top: 40px !important;
         background-color: #007bff;
         color: white;
         border: none;
@@ -348,7 +349,7 @@
                 <a href="@Url.Action("Index", "GestionUsuarios", new { area = "Admin" })"
                    class="btn btn-info btn-administrar mt-2 @(!User.IsInRole("SuperAdmin") ? "disabled" : "")"
                    style="@(!User.IsInRole("SuperAdmin") ? "pointer-events: none; opacity: 0.6;" : "")">
-                    <i class="bi bi-gear"></i> Administrar
+                   </i> Administrar
                 </a>
 
                 <!-- Botón Volver -->

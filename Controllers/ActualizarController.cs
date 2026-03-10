@@ -38,6 +38,18 @@ namespace FarmaciaSantaRita.Controllers
                 return RedirectToAction("Index", "Login");
             }
 
+            ViewBag.Usuarios = _context.Usuarios
+            .Select(u => new
+            {
+            u.Idusuario,
+            u.Nombre,
+            u.Apellido,
+            u.NombreUsuario,
+            u.Rol,
+            u.Eliminado
+            })
+            .ToList();
+
             ViewData["IdProveedor"] = idProveedor;
             ViewData["vista"] = vista;
 
@@ -172,6 +184,27 @@ namespace FarmaciaSantaRita.Controllers
                 return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
             }
         }
+
+
+
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult ActualizarRol(int idUsuario, string nuevoRol)
+        {
+            var usuario = _context.Usuarios.Find(idUsuario);
+            if (usuario == null) return Json(new { success = false, message = "Usuario no encontrado" });
+
+            usuario.Rol = nuevoRol;
+            _context.SaveChanges();
+
+            return Json(new { success = true });
+        }
+
+
+
+
 
 
 

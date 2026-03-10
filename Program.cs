@@ -37,6 +37,7 @@ builder.Services.AddScoped<EncryptionService>(sp =>
 // Esto obliga a la app a usar el puerto que Render le asigne
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
@@ -59,6 +60,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession(); // Mover UseSession después de UseAuthorization o usar solo el mínimo necesario
 app.MapControllers();
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Login}/{action=Index}/{id?}");

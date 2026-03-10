@@ -1,5 +1,70 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
+﻿@model List<FarmaciaSantaRita.Models.Usuario>
+
+<h2>Gestión de Usuarios (Super Admin)</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var u in Model)
+        {
+            <tr>
+                <td>@u.Nombre @u.Apellido</td>
+                <td>@u.NombreUsuario</td>
+                <td>@u.Rol</td>
+                <td>@(u.Eliminado ? "Eliminado" : "Activo")</td>
+                <td>
+                    <button class="btn btn-sm btn-warning cambiar-rol" data-id="@u.Idusuario" data-rol="@u.Rol">Cambiar Rol</button>
+                    @if (!u.Eliminado)
+                    {
+                        <button class="btn btn-sm btn-danger eliminar" data-id="@u.Idusuario">Eliminar</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-sm btn-success restaurar" data-id="@u.Idusuario">Restaurar</button>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Modal para cambiar rol (puedes expandirlo) -->
+<div class="modal fade" id="modalCambiarRol">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>Cambiar Rol</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <select id="nuevoRol" class="form-select">
+                    <option value="Jefe/a">Jefe/a</option>
+                    <option value="Empleado/a">Empleado/a</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="guardarRol">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Cambiar rol (ejemplo básico)
+        $('.cambiar-rol').click(function () {
+            var id = $(this).data('id');
+            // Aquí puedes abrir modal y guardar con AJAX
+            alert('Cambiar rol para ID: ' + id);
+        });
+        // Agregar lógica similar para eliminar/restaurar
+    </script>
 }

@@ -7,6 +7,19 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
+    /* Esto obliga a la tarjeta a ser transparente y quita el blanco de Bootstrap */
+    .card-custom {
+        background-color: rgba(255, 255, 255, 0.1) !important; /* Un blanco casi invisible */
+        backdrop-filter: blur(10px); /* Efecto de cristal esmerilado */
+        border: none !important;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;
+    }
+
+        /* Opcional: Si quieres que el texto sea más legible sobre el fondo */
+        .card-custom h4, .card-custom p {
+            color: white !important;
+        }
+
     .btn-custom {
         background-color: #007bff;
         color: white !important;

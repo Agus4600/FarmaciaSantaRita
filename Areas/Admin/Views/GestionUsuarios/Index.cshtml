@@ -7,30 +7,55 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 <style>
-    /* Reutilizamos TODOS los estilos de ActualizarCuenta */
+    /* TODOS los estilos exactamente iguales a ActualizarCuenta */
     .col-md-2 {
         padding-top: 20px !important;
         gap: 8px !important;
         margin-bottom: 0 !important;
     }
 
-    .btn-volver {
-        margin-top: 0 !important;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 50px;
-        padding: 12px 24px;
-        font-weight: 600;
-        font-size: 1.1rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        transition: all 0.25s ease;
+    .btn-administrar, .btn-volver {
+        margin-top: 8px !important;
+        padding: 10px 16px !important;
+        font-size: 0.95rem !important;
     }
 
-        .btn-volver:hover {
-            background-color: #0056b3;
+    .btn-administrar {
+        background-color: #17a2b8;
+        border: none;
+        border-radius: 50px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: all 0.25s ease;
+        width: 100%;
+        max-width: 180px;
+        text-align: center;
+        margin-top: 55px !important;
+        margin-bottom: 10px !important;
+    }
+
+        .btn-administrar:hover:not(.disabled) {
+            background-color: #138496;
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,123,255,0.3);
+            box-shadow: 0 8px 20px rgba(23, 162, 184, 0.3);
+        }
+
+        .btn-administrar.disabled {
+            cursor: not-allowed;
+        }
+
+    .user-icon-side {
+        display: flex;
+        justify-content: flex-start;
+        width: 100%;
+        padding-left: 20px;
+        color: #007bff;
+    }
+
+        .user-icon-side i {
+            font-size: 140px;
         }
 
     .card-principal {
@@ -91,24 +116,38 @@
         object-fit: contain;
     }
 
-    .user-icon-side {
-        display: flex;
-        justify-content: flex-start;
-        width: 100%;
-        padding-left: 20px;
-        color: #007bff;
+    .btn-volver {
+        margin-top: 0 !important;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 12px 24px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: all 0.25s ease;
     }
 
-        .user-icon-side i {
-            font-size: 140px;
+        .btn-volver:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,123,255,0.3);
         }
 
     .table {
         margin-top: 20px;
+        font-size: 0.95rem; /* misma tipografía que los campos */
     }
+
+        .table th, .table td {
+            vertical-align: middle;
+            text-align: center;
+        }
 
     .btn-sm {
         margin: 0 3px;
+        font-size: 0.85rem;
     }
 </style>
 
@@ -123,7 +162,8 @@
                 <div class="user-icon-side">
                     <i class="bi bi-person-circle"></i>
                 </div>
-                <!-- Botón Volver (mismo estilo que en ActualizarCuenta) -->
+
+                <!-- Botón Volver (exacto igual que en la otra vista) -->
                 <a href="@Url.Action("Index", "PanelSeleccion")" class="btn btn-primary btn-volver mt-2">
                     Volver
                 </a>
@@ -131,7 +171,7 @@
 
             <div class="col-md-10 d-flex justify-content-center">
                 <div class="bloque-principal">
-                    <!-- Tabla de usuarios -->
+                    <!-- Aquí va la tabla de usuarios (sin el form ni campos) -->
                     <table class="table table-striped">
                         <thead>
                             <tr>
@@ -163,6 +203,12 @@
                                     </td>
                                 </tr>
                             }
+                            @if (!Model.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center">No hay usuarios registrados aún.</td>
+                                </tr>
+                            }
                         </tbody>
                     </table>
 
@@ -176,8 +222,8 @@
                                 </div>
                                 <div class="modal-body">
                                     <select id="nuevoRol" class="form-select">
-                                        <option value="Jefe/a">Jefe/a</option>
                                         <option value="Empleado/a">Empleado/a</option>
+                                        <option value="Jefe/a">Jefe/a</option>
                                         <option value="SuperAdmin">SuperAdmin</option>
                                     </select>
                                 </div>
@@ -196,31 +242,32 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Toggle básico para el modal (puedes expandirlo con AJAX después)
-        $('.cambiar-rol').click(function () {
-            var id = $(this).data('id');
-            $('#modalCambiarRol').modal('show');
-            // Guardar el ID del usuario en algún lugar (hidden input o data)
-            $('#modalCambiarRol').data('userid', id);
-        });
+        document.addEventListener("DOMContentLoaded", function() {
+            // Toggle básico para el modal (puedes expandirlo con AJAX después)
+            $('.cambiar-rol').click(function () {
+                var id = $(this).data('id');
+                $('#modalCambiarRol').modal('show');
+                $('#modalCambiarRol').data('userid', id);
+            });
 
-        $('#guardarRol').click(function () {
-            var id = $('#modalCambiarRol').data('userid');
-            var nuevoRol = $('#nuevoRol').val();
-            Swal.fire({
-                title: '¿Cambiar rol?',
-                text: "Se actualizará el rol del usuario.",
-                showCancelButton: true,
-                confirmButtonColor: '#007bff',
-                cancelButtonColor: '#007bff',
-                cancelButtonText: 'Cancelar',
-                confirmButtonText: 'Sí, cambiar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Aquí iría la llamada AJAX al backend
-                    Swal.fire('¡Listo!', 'Rol actualizado (simulado)', 'success');
-                    $('#modalCambiarRol').modal('hide');
-                }
+            $('#guardarRol').click(function () {
+                var id = $('#modalCambiarRol').data('userid');
+                var nuevoRol = $('#nuevoRol').val();
+                Swal.fire({
+                    title: '¿Cambiar rol?',
+                    text: "Se actualizará el rol del usuario.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#007bff',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sí, cambiar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Aquí iría la llamada AJAX real al backend
+                        Swal.fire('¡Listo!', 'Rol actualizado (simulado)', 'success');
+                        $('#modalCambiarRol').modal('hide');
+                    }
+                });
             });
         });
     </script>

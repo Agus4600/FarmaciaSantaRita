@@ -18,6 +18,7 @@ namespace FarmaciaSantaRita.Controllers
         private readonly FarmaciabdContext _context;
         private readonly EncryptionService _encryptionService; // ← Inyectamos el servicio
 
+
         public LoginController(FarmaciabdContext context, EncryptionService encryptionService)
         {
             _context = context;
@@ -89,6 +90,87 @@ namespace FarmaciaSantaRita.Controllers
             ViewBag.MostrarRecordarCuenta = true;
             return View();
         }
+
+
+
+        // Acción TEMPORAL solo para desarrollo: crear usuarios de prueba
+        // ¡Borrar o comentar en producción!
+        [HttpGet]
+        public IActionResult CrearUsuariosPrueba()
+        {
+            var usuariosNuevos = new List<Usuario>
+    {
+        // SuperAdmin (rol especial)
+        new Usuario
+        {
+            Nombre = "Super",
+            Apellido = "Admin",
+            NombreUsuario = "superadmin",
+            Dni = "00000000",
+            Contraseña = _encryptionService.Encrypt("admin123"), // Encripta "admin123"
+            Rol = "SuperAdmin",
+            Eliminado = false,
+            Telefono = "123456789",
+            CorreoUsuario = "superadmin@farmaciasantarita.com",
+            FechaNacimiento = new DateTime(1990, 1, 1),
+            FechaIngreso = DateTime.UtcNow,
+            Direccion = "Dirección Admin"
+        },
+
+        // Jefe/a de prueba
+        new Usuario
+        {
+            Nombre = "Alejandra",
+            Apellido = "Ovejero",
+            NombreUsuario = "Ale31",
+            Dni = "42502029",
+            Contraseña = _encryptionService.Encrypt("jefe123"), // Cambia la contraseña real
+            Rol = "Jefe/a",
+            Eliminado = false,
+            Telefono = "03865644770",
+            CorreoUsuario = "ale205@gmail.com",
+            FechaNacimiento = new DateTime(1975, 12, 31),
+            FechaIngreso = new DateTime(2002, 1, 1),
+            Direccion = "25 de mayo 52, Villa Quinteros"
+        },
+
+        // Empleado/a de prueba
+        new Usuario
+        {
+            Nombre = "Juan",
+            Apellido = "Pérez",
+            NombreUsuario = "juanp",
+            Dni = "30123456",
+            Contraseña = _encryptionService.Encrypt("empleado123"),
+            Rol = "Empleado/a",
+            Eliminado = false,
+            Telefono = "3816543210",
+            CorreoUsuario = "juanp@farmaciasantarita.com",
+            FechaNacimiento = new DateTime(1995, 5, 15),
+            FechaIngreso = DateTime.UtcNow.AddYears(-1),
+            Direccion = "Av. Siempre Viva 123"
+        }
+    };
+
+            foreach (var usuario in usuariosNuevos)
+            {
+                // Evitar duplicados
+                if (!_context.Usuarios.Any(u => u.NombreUsuario == usuario.NombreUsuario))
+                {
+                    _context.Usuarios.Add(usuario);
+                }
+            }
+
+            _context.SaveChanges();
+
+            return Content("Usuarios de prueba creados exitosamente:\n" +
+                           "- superadmin / admin123 (SuperAdmin)\n" +
+                           "- Ale31 / jefe123 (Jefe/a)\n" +
+                           "- juanp / empleado123 (Empleado/a)\n" +
+                           "¡Borra esta acción en producción!");
+        }
+
+
 
         public async Task<IActionResult> Logout()
         {

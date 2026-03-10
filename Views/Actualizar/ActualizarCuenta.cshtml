@@ -347,11 +347,16 @@
                     <i class="bi bi-person-circle"></i>
                 </div>
                 
-                <a href="@Url.Action("Index", "GestionUsuarios", new { area = "Admin" })"
-                   class="btn btn-info btn-administrar mt-2 @(!User.IsInRole("SuperAdmin") ? "disabled" : "")"
-                   style="@(!User.IsInRole("SuperAdmin") ? "pointer-events: none; opacity: 0.6;" : "")">
-                    Administrar
-                </a>
+                
+                @if (User.IsInRole("SuperAdmin"))
+                {
+                    <button type="button" class="btn btn-info btn-administrar mt-2"
+                            data-bs-toggle="offcanvas"
+                            data-bs-target="#offcanvasUsuarios"
+                            aria-controls="offcanvasUsuarios">
+                        Administrar
+                    </button>
+                }
 
                 <!-- Botón Volver -->
                 <a href="@Url.Action("Index", "PanelSeleccion")" class="btn btn-primary btn-volver mt-2">
@@ -469,6 +474,52 @@
                     </form>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasUsuarios" aria-labelledby="offcanvasUsuariosLabel" style="width: 45%; max-width: 500px;">
+    <div class="offcanvas-header bg-primary text-white">
+        <h5 class="offcanvas-title" id="offcanvasUsuariosLabel">Gestión de Usuarios</h5>
+        <button type="button" class="btn-close btn-close-white text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <p class="text-muted small mb-3">Asigna rol a cada usuario (Empleado/a o Jefe/a).</p>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Usuario</th>
+                        <th>Rol</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in ViewBag.Usuarios ?? new List<FarmaciaSantaRita.Models.Usuario>())
+                    {
+                        <tr>
+                            <td>@u.Nombre @u.Apellido</td>
+                            <td>@u.NombreUsuario</td>
+                            <td>@u.Rol</td>
+                            <td>
+                                <select class="form-select form-select-sm nuevo-rol" data-id="@u.Idusuario">
+                                    <option value="Empleado/a" selected="@(u.Rol == "Empleado/a")">Empleado/a</option>
+                                    <option value="Jefe/a" selected="@(u.Rol == "Jefe/a")">Jefe/a</option>
+                                </select>
+                                <button class="btn btn-sm btn-success mt-1 guardar-rol" data-id="@u.Idusuario">Guardar</button>
+                            </td>
+                        </tr>
+                    }
+                    @if (!(ViewBag.Usuarios?.Any() ?? false))
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-3">No hay usuarios registrados.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -645,6 +696,44 @@
                 if (this.closest('.password-wrapper')) {
                     this.closest('.password-wrapper').classList.remove('invalid-glow');
                 }
+            });
+        });
+
+
+
+
+                        document.querySelectorAll('.guardar-rol').forEach(btn => {
+            btn.addEventListener('click', function() {
+                var id = this.getAttribute('data-id');
+                var select = this.parentElement.querySelector('.nuevo-rol');
+                var nuevoRol = select.value;
+
+                Swal.fire({
+                    title: '¿Confirmar?',
+                    text: `Cambiar rol a ${nuevoRol}`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch('/Actualizar/ActualizarRol', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            },
+                            body: JSON.stringify({ idUsuario: id, nuevoRol: nuevoRol })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire('¡Listo!', 'Rol actualizado', 'success');
+                            } else {
+                                Swal.fire('Error', data.message, 'error');
+                            }
+                        });
+                    }
+                });
             });
         });
     </script>

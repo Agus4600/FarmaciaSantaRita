@@ -348,9 +348,9 @@
                 </div>
                 
                 <a href="@Url.Action("Index", "GestionUsuarios", new { area = "Admin" })"
-                   class="btn btn-info btn-administrar mt-2 @(!User.IsInRole("Administración") ? "disabled" : "")"
-                   style="@(!User.IsInRole("Administración") ? "pointer-events: none; opacity: 0.6;" : "")">
-                   </i> Administrar
+                   class="btn btn-info btn-administrar mt-2 @(!User.IsInRole("SuperAdmin") ? "disabled" : "")"
+                   style="@(!User.IsInRole("SuperAdmin") ? "pointer-events: none; opacity: 0.6;" : "")">
+                    Administrar
                 </a>
 
                 <!-- Botón Volver -->

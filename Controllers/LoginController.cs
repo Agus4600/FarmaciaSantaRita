@@ -36,6 +36,9 @@ namespace FarmaciaSantaRita.Controllers
             return View();
         }
 
+
+
+
         [HttpPost]
         public async Task<IActionResult> Index(string nombreUsuario, string contraseña)
         {
@@ -46,33 +49,46 @@ namespace FarmaciaSantaRita.Controllers
                 return View();
             }
 
+            Console.WriteLine($"[LOGIN] Intento de login con usuario: '{nombreUsuario}'");
+
             var usuario = _context.Usuarios
                 .FirstOrDefault(u => u.NombreUsuario == nombreUsuario);
 
-            if (usuario != null)
+            if (usuario == null)
             {
-                // 🔥 DESENCRIPTAR LA CONTRASEÑA GUARDADA Y COMPARAR
+                Console.WriteLine("[LOGIN] Usuario no encontrado");
+                ViewBag.Error = "Usuario o contraseña incorrectos";
+                ViewBag.MostrarRecordarCuenta = true;
+                return View();
+            }
+
+            Console.WriteLine($"[LOGIN] Usuario encontrado. Rol: {usuario.Rol}, Eliminado: {usuario.Eliminado}");
+
+            if (usuario.Eliminado)
+            {
+                ViewBag.ShowDisabledModal = true;
+                ViewBag.DisabledMessage = "Tu cuenta ha sido desactivada o eliminada, habla con tu jefe";
+                ViewBag.MostrarRecordarCuenta = false;
+                return View();
+            }
+
+            try
+            {
                 string contraseñaDesencriptada = _encryptionService.Decrypt(usuario.Contraseña);
+                Console.WriteLine($"[LOGIN] Contraseña desencriptada: '{contraseñaDesencriptada}'");
 
                 if (contraseña == contraseñaDesencriptada)
                 {
-                    if (usuario.Eliminado)
-                    {
-                        ViewBag.ShowDisabledModal = true;
-                        ViewBag.DisabledMessage = "Tu cuenta ha sido desactivada o eliminada, habla con tu jefe";
-                        ViewBag.MostrarRecordarCuenta = false;
-                        return View();
-                    }
+                    Console.WriteLine("[LOGIN] Contraseña correcta - Login exitoso");
 
                     var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.NameIdentifier, usuario.Idusuario.ToString()),
-                        new Claim(ClaimTypes.Name, usuario.NombreUsuario),
-                        new Claim(ClaimTypes.Role, usuario.Rol ?? "")
-                    };
+            {
+                new Claim(ClaimTypes.NameIdentifier, usuario.Idusuario.ToString()),
+                new Claim(ClaimTypes.Name, usuario.NombreUsuario),
+                new Claim(ClaimTypes.Role, usuario.Rol ?? "")
+            };
 
                     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
                     var authProperties = new AuthenticationProperties
                     {
                         IsPersistent = true,
@@ -84,9 +100,18 @@ namespace FarmaciaSantaRita.Controllers
 
                     return RedirectToAction("Index", "PanelSeleccion");
                 }
+                else
+                {
+                    Console.WriteLine($"[LOGIN] Contraseña NO coincide. Ingresada: '{contraseña}' vs Desencriptada: '{contraseñaDesencriptada}'");
+                    ViewBag.Error = "Usuario o contraseña incorrectos";
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[LOGIN] ERROR AL DESENCRIPTAR: {ex.Message}\nStackTrace: {ex.StackTrace}");
+                ViewBag.Error = "Error interno al procesar la contraseña. Contacta al administrador.";
             }
 
-            ViewBag.Error = "Usuario o contraseña incorrectos";
             ViewBag.MostrarRecordarCuenta = true;
             return View();
         }

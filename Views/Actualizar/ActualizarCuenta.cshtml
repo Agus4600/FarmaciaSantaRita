@@ -443,8 +443,10 @@
                                 <div class="grupo-campo">
                                     <label asp-for="Rol">Rol</label>
                                     <select asp-for="Rol" class="form-control" disabled>
-                                        <option value="Empleado/a">Empleado/a</option>
-                                        <option value="Jefe/a">Jefe/a</option>
+                                        <option value="Empleado/a" selected="@(Model.Rol == "Empleado/a")">Empleado/a</option>
+                                        <option value="Jefe/a" selected="@(Model.Rol == "Jefe/a")">Jefe/a</option>
+                                        <option value="Administración" selected="@(Model.Rol == "Administración")">Administración</option>
+                                        <option value="SuperAdmin" selected="@(Model.Rol == "SuperAdmin")">SuperAdmin</option>
                                     </select>
                                 </div>
                             </div>

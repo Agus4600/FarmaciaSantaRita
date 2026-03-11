@@ -12,7 +12,39 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 <style>
-    #offcanvasUsuarios .table {
+    /* Ajustes para que el panel parezca una tarjeta redondeada y flotante */
+    #offcanvasUsuarios {
+        /* 1. Bordes redondeados en todas las esquinas */
+        border-radius: 20px !important;
+        /* 2. Separación del borde izquierdo y superior para que "flote" */
+        margin-left: 15px;
+        margin-top: 15px;
+        margin-bottom: 85px; /* Espacio suficiente para no tapar el icono azul */
+        /* 3. Ajuste de altura según contenido */
+        height: auto !important;
+        max-height: calc(100vh - 110px); /* Evita que choque con el fondo */
+        /* 4. Sombra suave para dar profundidad (estética del panel Contactos) */
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        /* 5. Quitar bordes predeterminados de Bootstrap */
+        border: none !important;
+    }
+
+        /* Ajuste específico para el encabezado azul del panel */
+        #offcanvasUsuarios .offcanvas-header {
+            background-color: #0d6efd; /* El azul de tu botón Administrar */
+            color: white;
+            border-radius: 20px 20px 0 0; /* Redondea solo arriba */
+            padding: 1.5rem;
+        }
+
+        /* Asegurar que el cuerpo tenga buen espacio interno */
+        #offcanvasUsuarios .offcanvas-body {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+
+        #offcanvasUsuarios .table {
         font-size: 0.575rem; /* Letra más pequeña pero legible */
     }
 

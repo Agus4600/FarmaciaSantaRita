@@ -43,6 +43,8 @@ public partial class FarmaciabdContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+
+
         // Forzamos TODAS las tablas con su nombre exacto (mayúscula y comillas)
         modelBuilder.Entity<Boletum>().ToTable("Boleta");
         modelBuilder.Entity<Cliente>().ToTable("Clientes");
@@ -86,6 +88,7 @@ public partial class FarmaciabdContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Boleta_Usuarios");
         });
+
 
         modelBuilder.Entity<Cliente>(entity =>
         {

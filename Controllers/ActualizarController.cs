@@ -160,12 +160,11 @@ namespace FarmaciaSantaRita.Controllers
                 }
 
                 // Convertir fechas a UTC para PostgreSQL timestamptz
-                if (usuarioParaActualizar.FechaNacimiento != default(DateTime))
+                if (usuarioParaActualizar.FechaNacimiento.Kind != DateTimeKind.Utc)
                 {
                     usuarioParaActualizar.FechaNacimiento = DateTime.SpecifyKind(usuarioParaActualizar.FechaNacimiento, DateTimeKind.Utc);
                 }
-
-                if (usuarioParaActualizar.FechaIngreso.HasValue)
+                if (usuarioParaActualizar.FechaIngreso.HasValue && usuarioParaActualizar.FechaIngreso.Value.Kind != DateTimeKind.Utc)
                 {
                     usuarioParaActualizar.FechaIngreso = DateTime.SpecifyKind(usuarioParaActualizar.FechaIngreso.Value, DateTimeKind.Utc);
                 }
@@ -247,6 +246,16 @@ namespace FarmaciaSantaRita.Controllers
                 {
                     Console.WriteLine($"[ERROR] Rol no permitido: {model.NuevoRol}");
                     return Json(new { success = false, message = "Rol no válido" });
+                }
+
+                // Asegurar que las fechas estén en UTC antes de guardar
+                if (usuario.FechaNacimiento.Kind != DateTimeKind.Utc)
+                {
+                    usuario.FechaNacimiento = DateTime.SpecifyKind(usuario.FechaNacimiento, DateTimeKind.Utc);
+                }
+                if (usuario.FechaIngreso.HasValue && usuario.FechaIngreso.Value.Kind != DateTimeKind.Utc)
+                {
+                    usuario.FechaIngreso = DateTime.SpecifyKind(usuario.FechaIngreso.Value, DateTimeKind.Utc);
                 }
 
                 Console.WriteLine($"[LOG] Actualizando Rol: '{usuario.Rol}' → '{model.NuevoRol}'");

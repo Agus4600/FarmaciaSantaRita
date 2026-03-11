@@ -586,23 +586,23 @@
 </div>
 
 <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasUsuarios" aria-labelledby="offcanvasUsuariosLabel"
-     style="width: 75%; max-width: 800px; border-radius: 20px; box-shadow: 0 12px 50px rgba(0,0,0,0.3); margin-top: 20px; margin-bottom: 80px;">
-    <div class="offcanvas-header bg-primary text-white" style="border-radius: 20px 20px 0 0; padding: 1.25rem 1.5rem;">
-        <h5 class="offcanvas-title fw-bold" id="offcanvasUsuariosLabel">Gestión de Usuarios</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+     style="width: 85%; max-width: 1000px; border-radius: 24px; box-shadow: 0 15px 60px rgba(0,0,0,0.35); margin-top: 20px; margin-bottom: 80px;">
+    <div class="offcanvas-header bg-primary text-white" style="border-radius: 24px 24px 0 0; padding: 1.5rem 2rem;">
+        <h5 class="offcanvas-title fw-bold fs-4" id="offcanvasUsuariosLabel">Gestión de Usuarios</h5>
+        <button type="button" class="btn-close btn-close-white fs-4" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body p-4" style="max-height: calc(100vh - 140px); overflow-y: auto;">
-        <p class="text-muted small mb-4">Asigna rol a cada usuario (Empleado/a o Jefe/a).</p>
+        <p class="text-muted small mb-4 fw-medium">Asigna rol a cada usuario (Empleado/a o Jefe/a).</p>
 
         <div class="table-responsive">
-            <table class="table table-striped table-hover table-bordered">
-                <thead class="table-primary" style="position: sticky; top: 0; z-index: 10; background-color: #0d6efd; color: white;">
+            <table class="table table-striped table-hover table-bordered shadow-sm">
+                <thead class="table-primary" style="position: sticky; top: 0; z-index: 10; background-color: #0d6efd !important; color: white !important;">
                     <tr class="text-center">
-                        <th style="width: 25%;">Nombre</th>
-                        <th style="width: 20%;">Usuario</th>
-                        <th style="width: 15%;">DNI</th>
-                        <th style="width: 20%;">Rol</th>
-                        <th style="width: 20%;">Acción</th>
+                        <th style="width: 22%;">Nombre</th>
+                        <th style="width: 18%;">Usuario</th>
+                        <th style="width: 13%;">DNI</th>
+                        <th style="width: 17%;">Rol</th>
+                        <th style="width: 30%;">Acción</th> <!-- Más espacio para select + botón -->
                     </tr>
                 </thead>
                 <tbody>
@@ -613,19 +613,19 @@
                     {
                         var rolActual = (string)u.Rol;
 
-                        <tr>
-                            <td class="align-middle">@u.Nombre @u.Apellido</td>
-                            <td class="align-middle">@u.NombreUsuario</td>
-                            <td class="align-middle text-center">@(u.Dni ?? "—")</td> <!-- DNI nuevo -->
-                            <td class="align-middle text-center">@rolActual</td>
-                            <td class="align-middle text-center">
-                                <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap">
-                                    <select class="form-select form-select-sm nuevo-rol" data-id="@u.Idusuario" style="width: 140px;">
+                        <tr class="align-middle">
+                            <td>@u.Nombre @u.Apellido</td>
+                            <td>@u.NombreUsuario</td>
+                            <td class="text-center">@(u.Dni ?? "—")</td>
+                            <td class="text-center fw-medium">@rolActual</td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center gap-2 flex-nowrap">
+                                    <select class="form-select form-select-sm nuevo-rol" data-id="@u.Idusuario" style="width: 160px; min-width: 140px;">
                                         <option value="Empleado/a" selected="@(rolActual == "Empleado/a")">Empleado/a</option>
                                         <option value="Jefe/a" selected="@(rolActual == "Jefe/a")">Jefe/a</option>
                                     </select>
-                                    <button class="btn btn-sm btn-success guardar-rol" data-id="@u.Idusuario" title="Guardar cambios">
-                                        <i class="bi bi-check-lg me-1"></i> Guardar
+                                    <button class="btn btn-sm btn-success guardar-rol d-flex align-items-center gap-1" data-id="@u.Idusuario" title="Guardar cambios">
+                                        <i class="bi bi-check-lg"></i> Guardar
                                     </button>
                                 </div>
                             </td>
@@ -634,7 +634,9 @@
                     @if (usuariosLista.Cast<object>().Count() == 0)
                     {
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-4">No hay usuarios registrados.</td>
+                            <td colspan="5" class="text-center text-muted py-5 fw-medium fs-5">
+                                No hay usuarios registrados.
+                            </td>
                         </tr>
                     }
                 </tbody>

@@ -26,56 +26,34 @@ namespace FarmaciaSantaRita.Controllers
         [HttpGet]
         public IActionResult ActualizarCuenta(int idProveedor, string vista)
         {
-            Console.WriteLine("Entrando a ActualizarCuenta GET");
-
             var idUsuarioClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            Console.WriteLine($"Claim NameIdentifier: {idUsuarioClaim}");
-
             if (!int.TryParse(idUsuarioClaim, out int idUsuario))
             {
-                Console.WriteLine("Fallo en TryParse del ID usuario");
                 return RedirectToAction("Index", "Login");
             }
-
-            Console.WriteLine($"ID Usuario parseado: {idUsuario}");
 
             var usuario = _context.Usuarios.FirstOrDefault(u => u.Idusuario == idUsuario);
-            Console.WriteLine($"Usuario encontrado: {(usuario != null ? "Sí" : "No")}");
-
             if (usuario == null)
             {
-                Console.WriteLine("Usuario no encontrado - redirigiendo a Login");
                 return RedirectToAction("Index", "Login");
             }
-
-            // Carga usuarios para offcanvas
-            ViewBag.Usuarios = _context.Usuarios
-                .Select(u => new { u.Idusuario, u.Nombre, u.Apellido, u.NombreUsuario, u.Rol })
-                .ToList();
 
             ViewData["IdProveedor"] = idProveedor;
             ViewData["vista"] = vista;
 
-            try
-            {
-                ViewBag.ContraseñaActualDesencriptada = _encryptionService.Decrypt(usuario.Contraseña);
-                Console.WriteLine("Contraseña desencriptada OK");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error al desencriptar contraseña: {ex.Message}");
-                ViewBag.ContraseñaActualDesencriptada = "Error al desencriptar";
-            }
+            // Desencriptamos la contraseña actual
+            ViewBag.ContraseñaActualDesencriptada = _encryptionService.Decrypt(usuario.Contraseña);
 
-            ViewBag.FechaNacimientoFormatted = usuario.FechaNacimiento != default
+            // Formateo de FechaNacimiento (DateTime normal, no nullable)
+            ViewBag.FechaNacimientoFormatted = usuario.FechaNacimiento != default(DateTime)
                 ? usuario.FechaNacimiento.ToString("yyyy-MM-dd")
                 : "";
 
-            ViewBag.FechaIngresoFormatted = usuario.FechaIngreso.HasValue && usuario.FechaIngreso.Value != default
+            // Formateo de FechaIngreso (DateTime?, sí nullable)
+            ViewBag.FechaIngresoFormatted = usuario.FechaIngreso.HasValue && usuario.FechaIngreso.Value != default(DateTime)
                 ? usuario.FechaIngreso.Value.ToString("yyyy-MM-dd")
                 : "";
 
-            Console.WriteLine("Retornando View");
             return View(usuario);
         }
 
@@ -113,63 +91,41 @@ namespace FarmaciaSantaRita.Controllers
                     return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
                 }
 
-                bool huboCambios = false;
+                // Actualizar campos editables
+                usuarioParaActualizar.Nombre = modeloActualizado.Nombre?.Trim();
+                usuarioParaActualizar.Apellido = modeloActualizado.Apellido?.Trim();
+                usuarioParaActualizar.NombreUsuario = modeloActualizado.NombreUsuario?.Trim();
+                usuarioParaActualizar.Telefono = modeloActualizado.Telefono?.Trim();
+                usuarioParaActualizar.CorreoUsuario = modeloActualizado.CorreoUsuario?.Trim();
+                usuarioParaActualizar.Dni = modeloActualizado.Dni?.Trim();
+                usuarioParaActualizar.Direccion = modeloActualizado.Direccion?.Trim();
 
-                // Comparar cada campo antes de asignar
-                if (usuarioParaActualizar.Nombre?.Trim() != modeloActualizado.Nombre?.Trim())
+                if (!string.IsNullOrWhiteSpace(modeloActualizado.Rol) && modeloActualizado.Rol != usuarioParaActualizar.Rol)
                 {
-                    usuarioParaActualizar.Nombre = modeloActualizado.Nombre?.Trim();
-                    huboCambios = true;
+                    usuarioParaActualizar.Rol = modeloActualizado.Rol;
                 }
-                if (usuarioParaActualizar.Apellido?.Trim() != modeloActualizado.Apellido?.Trim())
-                {
-                    usuarioParaActualizar.Apellido = modeloActualizado.Apellido?.Trim();
-                    huboCambios = true;
-                }
-                if (usuarioParaActualizar.NombreUsuario?.Trim() != modeloActualizado.NombreUsuario?.Trim())
-                {
-                    usuarioParaActualizar.NombreUsuario = modeloActualizado.NombreUsuario?.Trim();
-                    huboCambios = true;
-                }
-                if (usuarioParaActualizar.Telefono?.Trim() != modeloActualizado.Telefono?.Trim())
-                {
-                    usuarioParaActualizar.Telefono = modeloActualizado.Telefono?.Trim();
-                    huboCambios = true;
-                }
-                if (usuarioParaActualizar.CorreoUsuario?.Trim() != modeloActualizado.CorreoUsuario?.Trim())
-                {
-                    usuarioParaActualizar.CorreoUsuario = modeloActualizado.CorreoUsuario?.Trim();
-                    huboCambios = true;
-                }
-                if (usuarioParaActualizar.Dni?.Trim() != modeloActualizado.Dni?.Trim())
-                {
-                    usuarioParaActualizar.Dni = modeloActualizado.Dni?.Trim();
-                    huboCambios = true;
-                }
-                if (usuarioParaActualizar.Direccion?.Trim() != modeloActualizado.Direccion?.Trim())
-                {
-                    usuarioParaActualizar.Direccion = modeloActualizado.Direccion?.Trim();
-                    huboCambios = true;
-                }
+
                 if (!string.IsNullOrWhiteSpace(modeloActualizado.NuevaContraseña))
                 {
                     usuarioParaActualizar.Contraseña = _encryptionService.Encrypt(modeloActualizado.NuevaContraseña.Trim());
-                    huboCambios = true;
                 }
 
-                if (huboCambios)
+                // Convertir fechas a UTC para PostgreSQL timestamptz
+                if (usuarioParaActualizar.FechaNacimiento != default(DateTime))
                 {
-                    if (usuarioParaActualizar.FechaNacimiento != default(DateTime))
-                    {
-                        usuarioParaActualizar.FechaNacimiento = DateTime.SpecifyKind(usuarioParaActualizar.FechaNacimiento, DateTimeKind.Utc);
-                    }
-                    if (usuarioParaActualizar.FechaIngreso.HasValue && usuarioParaActualizar.FechaIngreso.Value != default(DateTime))
-                    {
-                        usuarioParaActualizar.FechaIngreso = DateTime.SpecifyKind(usuarioParaActualizar.FechaIngreso.Value, DateTimeKind.Utc);
-                    }
-                    _context.Entry(usuarioParaActualizar).State = EntityState.Modified;
-                    int cambios = _context.SaveChanges();
+                    usuarioParaActualizar.FechaNacimiento = DateTime.SpecifyKind(usuarioParaActualizar.FechaNacimiento, DateTimeKind.Utc);
+                }
 
+                if (usuarioParaActualizar.FechaIngreso.HasValue)
+                {
+                    usuarioParaActualizar.FechaIngreso = DateTime.SpecifyKind(usuarioParaActualizar.FechaIngreso.Value, DateTimeKind.Utc);
+                }
+
+                _context.Entry(usuarioParaActualizar).State = EntityState.Modified;
+                int cambios = _context.SaveChanges();
+
+                if (cambios > 0)
+                {
                     TempData["ResultadoActualizacion"] = "Exito";
                     TempData["MensajeExito"] = "Los cambios se guardaron correctamente.";
                 }
@@ -180,7 +136,7 @@ namespace FarmaciaSantaRita.Controllers
                 }
 
                 return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
-            }  // ← Esta llave cierra el try (la que faltaba)
+            }
             catch (DbUpdateException dbEx)
             {
                 TempData["ResultadoActualizacion"] = "Error";
@@ -194,27 +150,6 @@ namespace FarmaciaSantaRita.Controllers
                 return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
             }
         }
-
-
-
-
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public JsonResult ActualizarRol(int idUsuario, string nuevoRol)
-        {
-            var usuario = _context.Usuarios.Find(idUsuario);
-            if (usuario == null) return Json(new { success = false, message = "Usuario no encontrado" });
-
-            usuario.Rol = nuevoRol;
-            _context.SaveChanges();
-
-            return Json(new { success = true });
-        }
-
-
-
-
 
 
 

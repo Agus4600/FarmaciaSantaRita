@@ -851,13 +851,13 @@
                     cancelButtonColor: '#007bff'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        fetch('/Actualizar/ActualizarRol', {
+                         fetch('@Url.Action("ActualizarRol", "Actualizar")', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                             },
-                            body: JSON.stringify({ idUsuario: parseInt(id), nuevoRol: nuevoRol })
+                                body: JSON.stringify({ idUsuario: parseInt(id), nuevoRol: nuevoRol })
                         })
                         .then(response => {
                             if (!response.ok) {

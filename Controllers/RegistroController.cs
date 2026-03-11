@@ -28,6 +28,7 @@ namespace FarmaciaSantaRita.Controllers
         public async Task<IActionResult> Index(Usuario nuevoUsuario)
         {
             // Limpiamos errores de campos automáticos
+            ModelState.Remove("Rol");
             ModelState.Remove("Idusuario");
             ModelState.Remove("Contraseña");
             ModelState.Remove("Eliminado");

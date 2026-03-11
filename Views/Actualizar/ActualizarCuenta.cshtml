@@ -55,6 +55,36 @@
             overflow: hidden;
             text-overflow: ellipsis; /* ... si el texto es muy largo */
         }
+        /* 1. Centrar encabezados y celdas de la tabla */
+        #offcanvasUsuarios table th,
+        #offcanvasUsuarios table td {
+            text-align: center;
+            vertical-align: middle; /* Centrado vertical para que el select y la tilde alineen bien */
+        }
+
+        /* 2. Añadir líneas divisorias (Bordes) */
+        #offcanvasUsuarios table {
+            border-collapse: collapse;
+        }
+
+            #offcanvasUsuarios table th,
+            #offcanvasUsuarios table td {
+                border: 1px solid #dee2e6 !important; /* Líneas grises suaves */
+            }
+
+        /* 3. Estilo adicional para los encabezados */
+        #offcanvasUsuarios thead th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+        /* 4. Efecto hover para identificar filas fácilmente */
+        #offcanvasUsuarios tbody tr:hover {
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+
 
             #offcanvasUsuarios .table th:nth-child(1),
             #offcanvasUsuarios .table td:nth-child(1) {
@@ -585,12 +615,17 @@
                             <td>@u.Nombre @u.Apellido</td>
                             <td>@u.NombreUsuario</td>
                             <td>@rolActual</td>
-                            <td>
-                                <select class="form-select form-select-sm nuevo-rol" data-id="@u.Idusuario">
-                                    <option value="Empleado/a" selected="@(rolActual == "Empleado/a")">Empleado/a</option>
-                                    <option value="Jefe/a" selected="@(rolActual == "Jefe/a")">Jefe/a</option>
-                                </select>
-                                <button class="btn btn-sm btn-success mt-1 guardar-rol" data-id="@u.Idusuario">Guardar</button>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <select class="form-select form-select-sm me-2" style="width: auto;">
+                                        <option>Empleado/a</option>
+                                        <option>Jefe/a</option>
+                                    </select>
+
+                                    <a href="#" class="text-success fs-4" title="Guardar cambios" onclick="tuFuncionGuardar()">
+                                        <i class="bi bi-check-lg"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     }

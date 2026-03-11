@@ -617,7 +617,7 @@
                     }
                     @foreach (dynamic u in usuariosLista)
                     {
-                        var rolActual = (string)u.Rol;
+                        var rolActual = (string)(u.Rol ?? "Pendiente");  // o solo (string)u.Rol
 
                         <tr class="align-middle">
                             <td>@u.Nombre @u.Apellido</td>
@@ -627,6 +627,7 @@
                             <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-2 flex-nowrap">
                                     <select class="form-select form-select-sm nuevo-rol" data-id="@u.Idusuario" style="width: 110px; min-width: 90px;">
+                                        <option value="Pendiente" selected="@(rolActual == "Pendiente")">Pendiente</option>
                                         <option value="Empleado/a" selected="@(rolActual == "Empleado/a")">Empleado/a</option>
                                         <option value="Jefe/a" selected="@(rolActual == "Jefe/a")">Jefe/a</option>
                                     </select>

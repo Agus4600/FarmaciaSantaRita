@@ -58,6 +58,7 @@ namespace FarmaciaSantaRita.Controllers
                         {
                             u.Idusuario,
                             u.Nombre,
+                            u.Dni,
                             u.Apellido,
                             u.NombreUsuario,
                             u.Rol

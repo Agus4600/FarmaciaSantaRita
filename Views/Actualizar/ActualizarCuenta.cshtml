@@ -830,18 +830,25 @@
 
 
 
-                        document.querySelectorAll('.guardar-rol').forEach(btn => {
+                document.querySelectorAll('.guardar-rol').forEach(btn => {
             btn.addEventListener('click', function() {
-                var id = this.getAttribute('data-id');
-                var select = this.parentElement.querySelector('.nuevo-rol');
-                var nuevoRol = select.value;
+                const id = this.getAttribute('data-id');
+                const select = this.parentElement.querySelector('.nuevo-rol');
+                const nuevoRol = select.value;
+
+                if (!nuevoRol) {
+                    Swal.fire('Error', 'Selecciona un rol válido', 'error');
+                    return;
+                }
 
                 Swal.fire({
-                    title: '¿Confirmar?',
-                    text: `Cambiar rol a ${nuevoRol}`,
-                    icon: 'question',
+                    title: '¿Confirmar cambio de rol?',
+                    text: `Cambiar a "${nuevoRol}"`,
                     showCancelButton: true,
-                    confirmButtonText: 'Sí'
+                    confirmButtonText: 'Sí, cambiar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#007bff',
+                    cancelButtonColor: '#007bff'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         fetch('/Actualizar/ActualizarRol', {
@@ -850,15 +857,33 @@
                                 'Content-Type': 'application/json',
                                 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                             },
-                            body: JSON.stringify({ idUsuario: id, nuevoRol: nuevoRol })
+                            body: JSON.stringify({ idUsuario: parseInt(id), nuevoRol: nuevoRol })
                         })
-                        .then(response => response.json())
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Error en la respuesta del servidor');
+                            }
+                            return response.json();
+                        })
                         .then(data => {
                             if (data.success) {
-                                Swal.fire('¡Listo!', 'Rol actualizado', 'success');
+                                Swal.fire({
+                                    title: '¡Listo!',
+                                    text: `Rol actualizado a ${nuevoRol}`,
+                                    icon: 'success',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    // Refrescar la página para ver el cambio
+                                    location.reload();
+                                });
                             } else {
-                                Swal.fire('Error', data.message, 'error');
+                                Swal.fire('Error', data.message || 'No se pudo actualizar el rol', 'error');
                             }
+                        })
+                        .catch(error => {
+                            console.error('Error en fetch:', error);
+                            Swal.fire('Error', 'Hubo un problema al conectar con el servidor', 'error');
                         });
                     }
                 });

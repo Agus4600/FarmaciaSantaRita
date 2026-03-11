@@ -851,19 +851,20 @@
                     cancelButtonColor: '#007bff'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                         fetch('@Url.Action("ActualizarRol", "Actualizar")', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                            },
-                                body: JSON.stringify({ idUsuario: parseInt(id), nuevoRol: nuevoRol })
-                        })
+                                 fetch('@Url.Action("ActualizarRol", "Actualizar")', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                                        },
+                                     body: JSON.stringify({ idUsuario: parseInt(id), nuevoRol: nuevoRol })
+                                        })
                         .then(response => {
+                            console.log("[DEBUG] Respuesta status:", response.status); // ← Agrega esto para ver el código
                             if (!response.ok) {
-                                throw new Error('Error en la respuesta del servidor');
+                                throw new Error('Error en la respuesta del servidor: ' + response.status);
                             }
-                            return response.json();
+                        return response.json();
                         })
                         .then(data => {
                             if (data.success) {

@@ -26,46 +26,56 @@ namespace FarmaciaSantaRita.Controllers
         [HttpGet]
         public IActionResult ActualizarCuenta(int idProveedor, string vista)
         {
+            Console.WriteLine("Entrando a ActualizarCuenta GET");
+
             var idUsuarioClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Console.WriteLine($"Claim NameIdentifier: {idUsuarioClaim}");
+
             if (!int.TryParse(idUsuarioClaim, out int idUsuario))
             {
+                Console.WriteLine("Fallo en TryParse del ID usuario");
                 return RedirectToAction("Index", "Login");
             }
+
+            Console.WriteLine($"ID Usuario parseado: {idUsuario}");
 
             var usuario = _context.Usuarios.FirstOrDefault(u => u.Idusuario == idUsuario);
+            Console.WriteLine($"Usuario encontrado: {(usuario != null ? "Sí" : "No")}");
+
             if (usuario == null)
             {
+                Console.WriteLine("Usuario no encontrado - redirigiendo a Login");
                 return RedirectToAction("Index", "Login");
             }
 
+            // Carga usuarios para offcanvas
             ViewBag.Usuarios = _context.Usuarios
-            .Select(u => new
-            {
-            u.Idusuario,
-            u.Nombre,
-            u.Apellido,
-            u.NombreUsuario,
-            u.Rol,
-            u.Eliminado
-            })
-            .ToList();
+                .Select(u => new { u.Idusuario, u.Nombre, u.Apellido, u.NombreUsuario, u.Rol })
+                .ToList();
 
             ViewData["IdProveedor"] = idProveedor;
             ViewData["vista"] = vista;
 
-            // Desencriptamos la contraseña actual
-            ViewBag.ContraseñaActualDesencriptada = _encryptionService.Decrypt(usuario.Contraseña);
+            try
+            {
+                ViewBag.ContraseñaActualDesencriptada = _encryptionService.Decrypt(usuario.Contraseña);
+                Console.WriteLine("Contraseña desencriptada OK");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al desencriptar contraseña: {ex.Message}");
+                ViewBag.ContraseñaActualDesencriptada = "Error al desencriptar";
+            }
 
-            // Formateo de FechaNacimiento (DateTime normal, no nullable)
-            ViewBag.FechaNacimientoFormatted = usuario.FechaNacimiento != default(DateTime)
+            ViewBag.FechaNacimientoFormatted = usuario.FechaNacimiento != default
                 ? usuario.FechaNacimiento.ToString("yyyy-MM-dd")
                 : "";
 
-            // Formateo de FechaIngreso (DateTime?, sí nullable)
-            ViewBag.FechaIngresoFormatted = usuario.FechaIngreso.HasValue && usuario.FechaIngreso.Value != default(DateTime)
+            ViewBag.FechaIngresoFormatted = usuario.FechaIngreso.HasValue && usuario.FechaIngreso.Value != default
                 ? usuario.FechaIngreso.Value.ToString("yyyy-MM-dd")
                 : "";
 
+            Console.WriteLine("Retornando View");
             return View(usuario);
         }
 

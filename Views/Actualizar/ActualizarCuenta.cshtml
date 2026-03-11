@@ -854,7 +854,7 @@
                                                  fetch('/actualizar/actualizarrol', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
                 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
             },
             body: JSON.stringify({ idUsuario: parseInt(id), nuevoRol: nuevoRol })

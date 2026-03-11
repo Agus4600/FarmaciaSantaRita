@@ -205,10 +205,73 @@ namespace FarmaciaSantaRita.Controllers
 
 
         [HttpPost]
-        public IActionResult ActualizarRol()
+        public IActionResult ActualizarRol([FromBody] ActualizarRolModel model)
         {
-            Console.WriteLine("[LOG] ActualizarRol MINIMAL llamado - SIN PARAMETROS");
-            return Json(new { success = true, message = "Llegó al método (prueba mínima)" });
+            Console.WriteLine("[LOG] ActualizarRol REAL llamado - Inicio");
+
+            // Log inmediato del model recibido (crucial)
+            if (model == null)
+            {
+                Console.WriteLine("[ERROR] model es NULL");
+                return Json(new { success = false, message = "Model nulo - no se recibieron datos" });
+            }
+
+            Console.WriteLine($"[LOG] IdUsuario recibido: {model.IdUsuario}");
+            Console.WriteLine($"[LOG] NuevoRol recibido: '{model.NuevoRol}'");
+
+            if (model.IdUsuario <= 0 || string.IsNullOrWhiteSpace(model.NuevoRol))
+            {
+                Console.WriteLine("[ERROR] Datos inválidos");
+                return Json(new { success = false, message = "Datos inválidos (ID o rol vacío)" });
+            }
+
+            try
+            {
+                var usuario = _context.Usuarios.Find(model.IdUsuario);
+                if (usuario == null)
+                {
+                    Console.WriteLine($"[ERROR] Usuario NO encontrado con ID: {model.IdUsuario}");
+                    return Json(new { success = false, message = $"Usuario con ID {model.IdUsuario} no encontrado" });
+                }
+
+                Console.WriteLine($"[LOG] Usuario encontrado - Rol actual: '{usuario.Rol ?? "null"}'");
+
+                if (usuario.Rol == model.NuevoRol)
+                {
+                    Console.WriteLine("[LOG] El rol ya es el mismo - no se hace nada");
+                    return Json(new { success = true, message = "Rol ya era el mismo - no se necesitó cambio" });
+                }
+
+                var rolesPermitidos = new[] { "Pendiente", "Empleado/a", "Jefe/a" };
+                if (!rolesPermitidos.Contains(model.NuevoRol))
+                {
+                    Console.WriteLine($"[ERROR] Rol no permitido: {model.NuevoRol}");
+                    return Json(new { success = false, message = "Rol no válido" });
+                }
+
+                Console.WriteLine($"[LOG] Actualizando Rol: '{usuario.Rol}' → '{model.NuevoRol}'");
+                usuario.Rol = model.NuevoRol;
+
+                _context.Entry(usuario).State = EntityState.Modified;
+                int cambios = _context.SaveChanges();
+
+                Console.WriteLine($"[LOG] SaveChanges retornó: {cambios} cambios");
+
+                if (cambios > 0)
+                {
+                    return Json(new { success = true, message = "Rol actualizado correctamente" });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "No se detectaron cambios (¿el rol ya era el mismo?)" });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR CRÍTICO] Excepción en ActualizarRol: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
+                return Json(new { success = false, message = "Error interno al guardar: " + ex.Message });
+            }
         }
 
         // Clase auxiliar simple para recibir el JSON

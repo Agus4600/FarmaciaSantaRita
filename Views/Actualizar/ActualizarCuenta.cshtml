@@ -851,22 +851,21 @@
                     cancelButtonColor: '#007bff'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                                         fetch('/actualizar/actualizarrol', {  // ← prueba explícita en minúsculas
+                                                 fetch('/actualizar/actualizarrol', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
                 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
             },
             body: JSON.stringify({ idUsuario: parseInt(id), nuevoRol: nuevoRol })
         })
         .then(response => {
-            console.log("[DEBUG] Respuesta status:", response.status);
-            if (!response.ok) {
-                throw new Error('Error en la respuesta del servidor: ' + response.status);
-            }
+            console.log("[DEBUG] Status:", response.status);
+            if (!response.ok) throw new Error('Error ' + response.status);
             return response.json();
         })
-                        .then(data => {
+        .then(data => {
+            console.log("[DEBUG] Respuesta:", data);
                             if (data.success) {
                                 Swal.fire({
                                     title: '¡Listo!',
@@ -882,10 +881,10 @@
                                 Swal.fire('Error', data.message || 'No se pudo actualizar el rol', 'error');
                             }
                         })
-                        .catch(error => {
-                            console.error('Error en fetch:', error);
-                            Swal.fire('Error', 'Hubo un problema al conectar con el servidor', 'error');
-                        });
+                                .catch(error => {
+            console.error('Error fetch:', error);
+            Swal.fire('Error', 'Problema al conectar: ' + error.message, 'error');
+        });
                     }
                 });
             });

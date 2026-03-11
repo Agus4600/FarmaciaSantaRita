@@ -10,7 +10,7 @@ using System.Web;
 
 namespace FarmaciaSantaRita.Controllers
 {
-    [Authorize]
+    //[Authorize]
     public class ActualizarController : Controller
     {
         private readonly FarmaciabdContext _context;
@@ -198,6 +198,24 @@ namespace FarmaciaSantaRita.Controllers
                 TempData["MensajeError"] = "Error inesperado: " + ex.Message;
                 return RedirectToAction("ActualizarCuenta", new { idProveedor, vista });
             }
+        }
+
+
+
+
+
+        [HttpPost]
+        public IActionResult ActualizarRol()
+        {
+            Console.WriteLine("[LOG] ActualizarRol MINIMAL llamado - SIN PARAMETROS");
+            return Json(new { success = true, message = "Llegó al método (prueba mínima)" });
+        }
+
+        // Clase auxiliar simple para recibir el JSON
+        public class ActualizarRolModel
+        {
+            public int IdUsuario { get; set; }
+            public string NuevoRol { get; set; }
         }
 
 

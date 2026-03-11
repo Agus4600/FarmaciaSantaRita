@@ -585,56 +585,53 @@
     </div>
 </div>
 
-<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasUsuarios" aria-labelledby="offcanvasUsuariosLabel" style="width: 45%; max-width: 500px;">
-    <div class="offcanvas-header bg-primary text-white">
-        <h5 class="offcanvas-title" id="offcanvasUsuariosLabel">Gestión de Usuarios</h5>
-        <button type="button" class="btn-close btn-close-white text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasUsuarios" aria-labelledby="offcanvasUsuariosLabel" style="width: 60%; max-width: 650px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.25); margin-top: 20px; margin-bottom: 80px;">
+    <div class="offcanvas-header bg-primary text-white" style="border-radius: 20px 20px 0 0; padding: 1.25rem 1.5rem;">
+        <h5 class="offcanvas-title fw-bold" id="offcanvasUsuariosLabel">Gestión de Usuarios</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
-    <div class="offcanvas-body">
-        <p class="text-muted small mb-3">Asigna rol a cada usuario (Empleado/a o Jefe/a).</p>
-        
+    <div class="offcanvas-body p-4" style="max-height: calc(100vh - 140px); overflow-y: auto;">
+        <p class="text-muted small mb-4">Asigna rol a cada usuario (Empleado/a o Jefe/a).</p>
+
         <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Usuario</th>
-                        <th>Rol</th>
-                        <th>Acción</th>
+            <table class="table table-striped table-hover table-bordered">
+                <thead class="table-primary">
+                    <tr class="text-center">
+                        <th style="width: 30%;">Nombre</th>
+                        <th style="width: 25%;">Usuario</th>
+                        <th style="width: 20%;">Rol</th>
+                        <th style="width: 25%;">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
                     @{
                         var usuariosLista = ViewBag.Usuarios as System.Collections.IEnumerable ?? new List<object>();
                     }
-
                     @foreach (dynamic u in usuariosLista)
                     {
                         var rolActual = (string)u.Rol;
 
                         <tr>
-                            <td>@u.Nombre @u.Apellido</td>
-                            <td>@u.NombreUsuario</td>
-                            <td>@rolActual</td>
-                            <td class="text-center">
-                                <div class="d-flex align-items-center justify-content-center">
-                                    <select class="form-select form-select-sm me-2" style="width: auto;">
-                                        <option>Empleado/a</option>
-                                        <option>Jefe/a</option>
+                            <td class="align-middle">@u.Nombre @u.Apellido</td>
+                            <td class="align-middle">@u.NombreUsuario</td>
+                            <td class="align-middle text-center">@rolActual</td>
+                            <td class="align-middle text-center">
+                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                    <select class="form-select form-select-sm nuevo-rol" data-id="@u.Idusuario" style="width: 140px;">
+                                        <option value="Empleado/a" selected="@(rolActual == "Empleado/a")">Empleado/a</option>
+                                        <option value="Jefe/a" selected="@(rolActual == "Jefe/a")">Jefe/a</option>
                                     </select>
-
-                                    <a href="#" class="text-success fs-4" title="Guardar cambios" onclick="tuFuncionGuardar()">
-                                        <i class="bi bi-check-lg"></i>
-                                    </a>
+                                    <button class="btn btn-sm btn-success guardar-rol" data-id="@u.Idusuario" title="Guardar cambios">
+                                        <i class="bi bi-check-lg"></i> Guardar
+                                    </button>
                                 </div>
                             </td>
                         </tr>
                     }
-
                     @if (usuariosLista.Cast<object>().Count() == 0)
                     {
                         <tr>
-                            <td colspan="4" class="text-center text-muted py-3">No hay usuarios registrados.</td>
+                            <td colspan="4" class="text-center text-muted py-4">No hay usuarios registrados.</td>
                         </tr>
                     }
                 </tbody>

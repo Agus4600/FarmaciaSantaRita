@@ -222,22 +222,7 @@
                         <span id="err-FechaIngreso" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
 
-                    <div class="col-md-3">
-                        <div class="custom-groupbox m-0" style="padding: 10px 20px; border-width: 1px;">
-                            <legend style="font-size: 0.9rem !important; padding: 0 10px;">Rol</legend>
-                            <div class="d-flex justify-content-around align-items-center">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" asp-for="Rol" value="Empleado/a" id="rolEmpleado" checked />
-                                    <label class="form-check-label" for="rolEmpleado">Empleado/a</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" asp-for="Rol" value="Jefe/a" id="rolJefe" />
-                                    <label class="form-check-label" for="rolJefe">Jefe/a</label>
-                                </div>
-                            </div>
-                            <span asp-validation-for="Rol" class="text-danger"></span>
-                        </div>
-                    </div>
+                    
                 </div>
             </fieldset>
 
@@ -354,7 +339,6 @@
         const usuario = document.getElementById("NombreUsuario").value.trim();
         const correo = document.getElementById("CorreoUsuario").value.trim();
         const pass = document.getElementById("passInput").value.trim();
-        const rolSeleccionado = document.querySelector('input[name="Rol"]:checked');
 
         let hayError = false;
 
@@ -405,11 +389,6 @@
         }
         if (pass.length < 6) {
             mostrarError("passInput", "La contraseña debe tener mínimo 6 caracteres");
-            hayError = true;
-        }
-        if (!rolSeleccionado) {
-            document.querySelector('.custom-groupbox.rol-group').classList.add('invalid');
-            mostrarError("rolEmpleado", "Debe seleccionar un rol (Empleado/a o Jefe/a)");
             hayError = true;
         }
 

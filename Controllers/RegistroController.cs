@@ -37,6 +37,7 @@ namespace FarmaciaSantaRita.Controllers
             {
                 try
                 {
+                    nuevoUsuario.Rol = "Pendiente";
                     // Fix para PostgreSQL (sin el .Value porque FechaNacimiento no es nullable)
                     if (nuevoUsuario.FechaNacimiento != default(DateTime))
                     {

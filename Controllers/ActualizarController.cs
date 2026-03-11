@@ -38,6 +38,17 @@ namespace FarmaciaSantaRita.Controllers
                 return RedirectToAction("Index", "Login");
             }
 
+            ViewBag.Usuarios = _context.Usuarios
+        .Select(u => new
+        {
+            u.Idusuario,
+            u.Nombre,
+            u.Apellido,
+            u.NombreUsuario,
+            u.Rol
+        })
+        .ToList();
+
             ViewData["IdProveedor"] = idProveedor;
             ViewData["vista"] = vista;
 

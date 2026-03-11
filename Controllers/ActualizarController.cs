@@ -26,46 +26,83 @@ namespace FarmaciaSantaRita.Controllers
         [HttpGet]
         public IActionResult ActualizarCuenta(int idProveedor, string vista)
         {
-            var idUsuarioClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(idUsuarioClaim, out int idUsuario))
+            Console.WriteLine("[LOG] 1 - Entrando a ActualizarCuenta GET");
+
+            try
             {
-                return RedirectToAction("Index", "Login");
-            }
+                var idUsuarioClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                Console.WriteLine($"[LOG] 2 - Claim NameIdentifier: '{idUsuarioClaim ?? "NULL"}'");
 
-            var usuario = _context.Usuarios.FirstOrDefault(u => u.Idusuario == idUsuario);
-            if (usuario == null)
+                if (string.IsNullOrEmpty(idUsuarioClaim) || !int.TryParse(idUsuarioClaim, out int idUsuario))
+                {
+                    Console.WriteLine("[LOG] 3 - Fallo en parseo o claim vacío → redirigiendo a Login");
+                    return RedirectToAction("Index", "Login");
+                }
+
+                Console.WriteLine($"[LOG] 4 - ID parseado: {idUsuario}");
+
+                var usuario = _context.Usuarios.FirstOrDefault(u => u.Idusuario == idUsuario);
+                Console.WriteLine($"[LOG] 5 - Usuario encontrado: {(usuario != null ? "Sí" : "No")}");
+
+                if (usuario == null)
+                {
+                    Console.WriteLine("[LOG] 6 - Usuario null → redirigiendo a Login");
+                    return RedirectToAction("Index", "Login");
+                }
+
+                // Carga segura de usuarios (con try-catch)
+                try
+                {
+                    ViewBag.Usuarios = _context.Usuarios
+                        .Select(u => new
+                        {
+                            u.Idusuario,
+                            u.Nombre,
+                            u.Apellido,
+                            u.NombreUsuario,
+                            u.Rol
+                        })
+                        .ToList();
+                    Console.WriteLine("[LOG] 7 - ViewBag.Usuarios cargado OK");
+                }
+                catch (Exception exDb)
+                {
+                    Console.WriteLine($"[ERROR DB] Fallo al cargar usuarios: {exDb.Message}");
+                    ViewBag.Usuarios = new List<object>(); // Lista vacía para no romper
+                }
+
+                ViewData["IdProveedor"] = idProveedor;
+                ViewData["vista"] = vista;
+
+                // Desencriptado seguro (con fallback)
+                try
+                {
+                    ViewBag.ContraseñaActualDesencriptada = _encryptionService.Decrypt(usuario.Contraseña ?? "");
+                    Console.WriteLine("[LOG] 8 - Contraseña desencriptada OK");
+                }
+                catch (Exception exDecrypt)
+                {
+                    Console.WriteLine($"[ERROR] Fallo al desencriptar: {exDecrypt.Message}");
+                    ViewBag.ContraseñaActualDesencriptada = "[No disponible]";
+                }
+
+                ViewBag.FechaNacimientoFormatted = usuario.FechaNacimiento != default
+                    ? usuario.FechaNacimiento.ToString("yyyy-MM-dd")
+                    : "";
+
+                ViewBag.FechaIngresoFormatted = usuario.FechaIngreso.HasValue && usuario.FechaIngreso.Value != default
+                    ? usuario.FechaIngreso.Value.ToString("yyyy-MM-dd")
+                    : "";
+
+                Console.WriteLine("[LOG] 9 - Retornando View OK");
+                return View(usuario);
+            }
+            catch (Exception ex)
             {
-                return RedirectToAction("Index", "Login");
+                Console.WriteLine($"[ERROR CRÍTICO] Excepción general en GET: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
+                return StatusCode(500, "Error interno del servidor. Contacta al administrador.");
             }
-
-            ViewBag.Usuarios = _context.Usuarios
-        .Select(u => new
-        {
-            u.Idusuario,
-            u.Nombre,
-            u.Apellido,
-            u.NombreUsuario,
-            u.Rol
-        })
-        .ToList();
-
-            ViewData["IdProveedor"] = idProveedor;
-            ViewData["vista"] = vista;
-
-            // Desencriptamos la contraseña actual
-            ViewBag.ContraseñaActualDesencriptada = _encryptionService.Decrypt(usuario.Contraseña);
-
-            // Formateo de FechaNacimiento (DateTime normal, no nullable)
-            ViewBag.FechaNacimientoFormatted = usuario.FechaNacimiento != default(DateTime)
-                ? usuario.FechaNacimiento.ToString("yyyy-MM-dd")
-                : "";
-
-            // Formateo de FechaIngreso (DateTime?, sí nullable)
-            ViewBag.FechaIngresoFormatted = usuario.FechaIngreso.HasValue && usuario.FechaIngreso.Value != default(DateTime)
-                ? usuario.FechaIngreso.Value.ToString("yyyy-MM-dd")
-                : "";
-
-            return View(usuario);
         }
 
 

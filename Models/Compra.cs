@@ -21,6 +21,8 @@ public partial class Compra
 
     public string EstadoDePago { get; set; }
 
+    public bool IsDeleted { get; set; } = false;
+
     public virtual Cliente IdclienteNavigation { get; set; } = null!;
 
     public virtual Usuario IdusuarioNavigation { get; set; } = null!;

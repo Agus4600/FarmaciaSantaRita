@@ -291,11 +291,18 @@
                                     <th style="width: 5%;">Acción</th>
                                 </tr>
                             </thead>
+                            
                             <tbody>
                                 @foreach (var compra in Model)
                                 {
                                     var cliente = compra.IdclienteNavigation;
                                     var linea = compra.LineaDeCompras?.FirstOrDefault();
+
+                                    decimal precioUnitario = 0m;
+                                    if (linea?.IdproductoNavigation != null)
+                                    {
+                                        precioUnitario = linea.IdproductoNavigation.PrecioUnitario;
+                                    }
 
                                     <tr data-id="@compra.Idcompras"
                                         data-idcliente="@compra.Idcliente"
@@ -306,7 +313,7 @@
                                         <td>@(linea?.IdproductoNavigation?.NombreProducto ?? "Sin producto")</td>
                                         <td>@(linea?.Cantidad ?? 0)</td>
                                         <td>
-                                            $@((linea?.IdproductoNavigation?.PrecioUnitario ?? 0m).ToString("N2"))
+                                            $@precioUnitario.ToString("N2")
                                         </td>
                                         <td>@compra.FechaCompra.ToString("dd/MM/yyyy")</td>
                                         <td class="text-primary fw-bold">
@@ -318,7 +325,6 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <!-- Por ahora sin botón de acción, lo agregamos después si querés -->
                                             &nbsp;
                                         </td>
                                     </tr>

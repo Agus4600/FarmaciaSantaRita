@@ -3,13 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FarmaciaSantaRita.Controllers
 {
-    [Authorize]
+    
     public class RecuperarClienteController : Controller
     {
-        public IActionResult Index()
+        [HttpGet]
+        public IActionResult RecuperarCliente()
         {
             ViewData["Title"] = "Recuperar Cliente";
-            return View();
+            return View("RecuperarCliente");  // Nombre de la vista sin .cshtml
         }
     }
 }

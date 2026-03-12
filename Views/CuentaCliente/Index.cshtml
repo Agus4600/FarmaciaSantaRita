@@ -1007,27 +1007,136 @@
     }
 
 
-    document.querySelectorAll('.nombre-cliente-link').forEach(link => {
-        link.addEventListener('click', function() {
-            const tr = this.closest('tr');
-            const nombre = tr.querySelector('.nombre-cliente-link').innerText.trim();
-            const telefono = tr.dataset.telefono || 'Sin teléfono';
-            const direccion = tr.dataset.direccion || 'Sin dirección';
-            const dni = tr.dataset.dni || 'Sin DNI';
 
-            Swal.fire({
-                title: `<strong>${nombre}</strong>`,
-                html: `
-                    <p><strong>DNI:</strong> ${dni}</p>
-                    <p><strong>Teléfono:</strong> ${telefono}</p>
-                    <p><strong>Dirección:</strong> ${direccion}</p>
-                `,
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#007bff',
-                width: '400px'
-            });
+
+
+
+
+        document.querySelectorAll('.nombre-cliente-link').forEach(link => {
+    link.addEventListener('click', function() {
+        const tr = this.closest('tr');
+        const nombre = tr.querySelector('.nombre-cliente-link').innerText.trim();
+        const telefono = tr.dataset.telefono || 'Sin teléfono';
+        const direccion = tr.dataset.direccion || 'Sin dirección';
+        const dni = tr.dataset.dni || 'Sin DNI';
+        const idCliente = tr.dataset.idcliente; // Necesario para guardar después
+
+        Swal.fire({
+            title: `<strong>${nombre}</strong>`,
+            html: `
+                <div id="swalClienteDatos">
+                    <p><strong>DNI:</strong> <span id="dniView">${dni}</span></p>
+                    <p><strong>Teléfono:</strong> <span id="telefonoView">${telefono}</span></p>
+                    <p><strong>Dirección:</strong> <span id="direccionView">${direccion}</span></p>
+                </div>
+            `,
+            width: '450px',
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar',
+                cancelButtonColor: '#007bff',
+            showConfirmButton: true,
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#007bff',
+            showDenyButton: true,               // Activamos el botón "Actualizar"
+            denyButtonText: 'Actualizar',
+                denyButtonColor: '#007bff',         // Celeste para diferenciar
+            reverseButtons: true,               // Importante: pone "Actualizar" a la izquierda de "Entendido"
+            allowOutsideClick: false,           // Evita cerrar accidentalmente
+            didOpen: () => {
+                // Opcional: podemos personalizar más aquí si queremos
+            }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                // "Entendido" → solo cierra
+                return;
+            }
+
+            if (result.isDenied) {
+                // "Actualizar" fue presionado → pasamos a modo edición
+                const datosDiv = document.getElementById('swalClienteDatos');
+                if (!datosDiv) return;
+
+                // Cambiamos el título
+                Swal.update({ title: `<strong>Editar datos de ${nombre}</strong>` });
+
+                // Convertimos los spans en inputs editables
+                document.getElementById('dniView').outerHTML = 
+                    `<input type="text" id="dniEdit" class="form-control mb-2" value="${dni}" placeholder="DNI" />`;
+
+                document.getElementById('telefonoView').outerHTML = 
+                    `<input type="text" id="telefonoEdit" class="form-control mb-2" value="${telefono}" placeholder="Teléfono" />`;
+
+                document.getElementById('direccionView').outerHTML = 
+                    `<input type="text" id="direccionEdit" class="form-control mb-2" value="${direccion}" placeholder="Dirección" />`;
+
+                // Cambiamos los botones del Swal
+                Swal.update({
+                    showDenyButton: false,              // Quitamos "Actualizar"
+                    showCancelButton: true,
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonText: 'Guardar Cambios',
+                    confirmButtonColor: '#28a745'       // Verde para guardar
+                });
+
+                // Sobrescribimos el evento del botón "Guardar Cambios"
+                Swal.getConfirmButton().onclick = async function(e) {
+                    e.preventDefault(); // Evitamos comportamiento por defecto
+
+                    const dniNuevo = document.getElementById('dniEdit')?.value.trim() || dni;
+                    const telefonoNuevo = document.getElementById('telefonoEdit')?.value.trim() || telefono;
+                    const direccionNuevo = document.getElementById('direccionEdit')?.value.trim() || direccion;
+
+                    // Validación mínima (puedes agregar más reglas)
+                    if (!dniNuevo && !telefonoNuevo && !direccionNuevo) {
+                        Swal.showValidationMessage('Debe modificar al menos un campo');
+                        return false;
+                    }
+
+                    try {
+                        const res = await fetch('/CuentaCliente/ActualizarCliente', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            },
+                            body: JSON.stringify({
+                                idCliente: idCliente,
+                                dni: dniNuevo,
+                                telefono: telefonoNuevo,
+                                direccion: direccionNuevo
+                            })
+                        });
+
+                        const data = await res.json();
+
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '¡Actualizado!',
+                                text: 'Los datos del cliente se guardaron correctamente.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload(); // Refresca para ver cambios
+                            });
+                        } else {
+                            Swal.fire('Error', data.message || 'No se pudo actualizar', 'error');
+                        }
+                    } catch (err) {
+                        Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+                    }
+                };
+            }
         });
     });
+});
+
+
+
+
+
+
+
 
         async function eliminarFila(btn) {
         const tr = btn.closest('tr');

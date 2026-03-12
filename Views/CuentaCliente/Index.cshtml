@@ -1257,7 +1257,7 @@
 
 
 
-        document.getElementById('btnRestaurar').addEventListener('click', async function () {
+            document.getElementById('btnRestaurar').addEventListener('click', async function () {
         try {
             const res = await fetch('/CuentaCliente/GetComprasEliminadas');
             if (!res.ok) {
@@ -1300,9 +1300,13 @@
                     tablaHtml += `
                         <tr data-nombre="${(compra.nombreCliente || '').toLowerCase()}"
                             data-dni="${(compra.dni || '').toLowerCase()}">
-                            <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.nombreCliente}</td>
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6; white-space: normal; word-break: break-word; overflow-wrap: break-word; max-width: 180px;">
+                                ${compra.nombreCliente}
+                            </td>
                             <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.dni}</td>
-                            <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.producto}</td>
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6; white-space: normal; word-break: break-word; overflow-wrap: break-word; max-width: 220px;">
+                                ${compra.producto}
+                            </td>
                             <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.cantidad}</td>
                             <td style="padding: 12px 10px; border: 1px solid #dee2e6;">$${compra.precioUnitario.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                             <td style="padding: 12px 10px; border: 1px solid #dee2e6;">$${compra.montoCompra.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
@@ -1323,15 +1327,15 @@
             Swal.fire({
                 title: 'Compras Eliminadas',
                 html: tablaHtml,
-                width: '1200px',                    // ← Tamaño similar al bloque interior (ajustable)
-                maxWidth: '95vw',                   // ← Para pantallas más chicas
+                width: '1200px',
+                maxWidth: '95vw',
                 heightAuto: false,
-                padding: '25px',                    // ← Igual que .bloque-interior
-                borderRadius: '16px',               // ← Igual que .bloque-interior
+                padding: '25px',
+                borderRadius: '16px',
                 showCloseButton: true,
                 showConfirmButton: false,
                 customClass: {
-                    popup: 'bloque-interior-swal'   // ← Clase para aplicar estilos similares
+                    popup: 'bloque-interior-swal'
                 },
                 didOpen: () => {
                     // Buscador predictivo

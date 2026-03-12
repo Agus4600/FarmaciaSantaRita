@@ -1075,6 +1075,9 @@
                         const telefonoNuevo = document.getElementById('telefonoEdit')?.value.trim() || telefono;
                         const direccionNuevo = document.getElementById('direccionEdit')?.value.trim() || direccion;
 
+                        console.log('Enviando actualización con ID cliente:', idCliente);
+                        console.log('Datos a enviar:', { dni: dniNuevo, telefono: telefonoNuevo, direccion: direccionNuevo });
+
                         if (!dniNuevo && !telefonoNuevo && !direccionNuevo) {
                             Swal.showValidationMessage('Debe modificar al menos un campo');
                             return false;

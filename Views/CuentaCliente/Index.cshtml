@@ -1021,8 +1021,6 @@
             const dni = tr.dataset.dni || 'Sin DNI';
             const idCliente = tr.dataset.idcliente;
 
-            let isEditing = false;
-
             Swal.fire({
                 title: `<strong>${nombre}</strong>`,
                 html: `
@@ -1043,28 +1041,24 @@
                 denyButtonText: 'Actualizar',
                 denyButtonColor: '#007bff',
                 reverseButtons: true,
-                allowOutsideClick: false
-            }).then(async (result) => {
-                if (result.isDenied) {
-                    // Entramos en modo edición
-                    isEditing = true;
-
-                    // Reconstruimos TODO el HTML con inputs editables
+                allowOutsideClick: false,
+                preDeny: () => {
+                    // Entramos en modo edición SIN cerrar el popup
                     Swal.update({
                         title: `<strong>Editar datos de ${nombre}</strong>`,
                         html: `
                             <div id="swalClienteDatos">
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">DNI</label>
-                                    <input type="text" id="dniEdit" class="form-control" value="${dni}" placeholder="DNI" />
+                                    <input type="text" id="dniEdit" class="form-control" value="${dni}" />
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Teléfono</label>
-                                    <input type="text" id="telefonoEdit" class="form-control" value="${telefono}" placeholder="Teléfono" />
+                                    <input type="text" id="telefonoEdit" class="form-control" value="${telefono}" />
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Dirección</label>
-                                    <input type="text" id="direccionEdit" class="form-control" value="${direccion}" placeholder="Dirección" />
+                                    <input type="text" id="direccionEdit" class="form-control" value="${direccion}" />
                                 </div>
                             </div>
                         `,
@@ -1073,7 +1067,7 @@
                         confirmButtonColor: '#28a745'
                     });
 
-                    // Sobrescribimos el evento del botón "Guardar Cambios"
+                    // Sobrescribimos el botón "Guardar Cambios" para que envíe los datos
                     Swal.getConfirmButton().onclick = async function(e) {
                         e.preventDefault();
 
@@ -1120,8 +1114,15 @@
                             Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
                         }
                     };
+
+                    return false; // Mantenemos el popup abierto
                 }
-                // Si es "Entendido" o "Cancelar" → simplemente cierra (no hacemos nada extra)
+            }).then((result) => {
+                // Solo si se presiona "Entendido" desde el modo vista (no edición)
+                if (result.isConfirmed) {
+                    // Cierra sin hacer nada
+                }
+                // Si se cancela o se cierra de otra forma → no hacemos nada
             });
         });
     });

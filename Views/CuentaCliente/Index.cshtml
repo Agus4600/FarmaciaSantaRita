@@ -1256,7 +1256,8 @@
 
 
 
-    document.getElementById('btnRestaurar').addEventListener('click', async function () {
+
+                document.getElementById('btnRestaurar').addEventListener('click', async function () {
         try {
             const res = await fetch('/CuentaCliente/GetComprasEliminadas');
             if (!res.ok) {
@@ -1274,49 +1275,50 @@
                         </div>
                     </div>
                 </div>
-                <div style="max-height: 520px; overflow-y: auto; overflow-x: hidden; width: 100%; border: 1px solid #dee2e6; border-radius: 12px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-                    <table style="width: 100%; max-width: 100%; border-collapse: collapse; font-size: 14px; text-align: center; table-layout: fixed;" id="tablaEliminadas">
+                <div style="max-height: 520px; overflow-y: auto; width: 100%; border: 1px solid #dee2e6; border-radius: 12px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center; table-layout: fixed;" id="tablaEliminadas">
                         <thead style="background: #0d6efd; color: white; position: sticky; top: 0; z-index: 10;">
                             <tr>
-                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 17%;">Cliente</th>
-                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 10%;">DNI</th>
-                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 20%;">Producto</th>
-                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 7%;">Cant.</th>
-                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 10%;">Precio U.</th>
-                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 10%;">Total</th>
-                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 10%;">Fecha</th>
-                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 9%;">Estado</th>
-                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 7%;">Acción</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 16%;">Cliente</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 11%;">DNI</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 16%;">Producto</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 7%;">Cant.</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 10%;">Precio U.</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 10%;">Total</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 11%;">F.Compra</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 10%;">Estado</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 11%;">Acción</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
 
             if (eliminadas.length === 0) {
-                tablaHtml += `<tr><td colspan="9" style="padding: 40px 20px; text-align:center; font-size: 16px; color: #6c757d;">No hay compras eliminadas</td></tr>`;
+                tablaHtml += `<tr><td colspan="9" style="padding: 30px; text-align:center; font-size: 16px; color: #6c757d;">No hay compras eliminadas</td></tr>`;
             } else {
                 eliminadas.forEach(compra => {
+                    // Para forzar UNA PALABRA POR LÍNEA: reemplazamos espacios por <br>
                     const nombreConSaltos = (compra.nombreCliente || 'Desconocido').replace(/\s+/g, '<br>');
                     const productoConSaltos = (compra.producto || 'Sin producto').replace(/\s+/g, '<br>');
 
                     tablaHtml += `
                         <tr data-nombre="${(compra.nombreCliente || '').toLowerCase()}"
                             data-dni="${(compra.dni || '').toLowerCase()}">
-                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; white-space: pre-line; line-height: 1.5; text-align: center; vertical-align: middle; overflow: hidden;">
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6; white-space: pre-line; word-break: normal; line-height: 1.4;">
                                 ${nombreConSaltos}
                             </td>
-                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle; overflow: hidden;">${compra.dni}</td>
-                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; white-space: pre-line; line-height: 1.5; text-align: center; vertical-align: middle; overflow: hidden;">
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.dni}</td>
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6; white-space: pre-line; word-break: normal; line-height: 1.4;">
                                 ${productoConSaltos}
                             </td>
-                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle; overflow: hidden;">${compra.cantidad}</td>
-                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle; overflow: hidden;">$${compra.precioUnitario.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle; overflow: hidden;">$${compra.montoCompra.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle; overflow: hidden;">${compra.fechaCompra}</td>
-                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle; overflow: hidden;">${compra.estadoDePago === 'pagado' ? 'Pagado' : 'Pendiente'}</td>
-                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle; overflow: hidden;">
-                                <button class="btn btn-success btn-sm recuperar-btn" data-id="${compra.idCompras}" style="min-width: 90px; padding: 6px 10px; font-size: 13px; white-space: nowrap;">
-                                    <i class="bi bi-arrow-repeat me-1"></i> Recuperar
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.cantidad}</td>
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6;">$${compra.precioUnitario.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6;">$${compra.montoCompra.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.fechaCompra}</td>
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.estadoDePago === 'pagado' ? 'Pagado' : 'Pendiente'}</td>
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6; text-align: center;">
+                                <button class="btn btn-success btn-sm recuperar-btn" data-id="${compra.idCompras}" style="padding: 6px 12px;">
+                                    <i class="bi bi-arrow-repeat"></i> Recuperar
                                 </button>
                             </td>
                         </tr>
@@ -1340,6 +1342,7 @@
                     popup: 'bloque-interior-swal'
                 },
                 didOpen: () => {
+                    // Buscador predictivo
                     const buscador = document.getElementById('buscadorEliminadas');
                     if (buscador) {
                         buscador.focus();
@@ -1355,6 +1358,7 @@
                         });
                     }
 
+                    // Botones Recuperar
                     document.querySelectorAll('.recuperar-btn').forEach(btn => {
                         btn.addEventListener('click', async function () {
                             const id = this.getAttribute('data-id');
@@ -1401,6 +1405,9 @@
             Swal.fire('Error', 'No se pudieron cargar las compras eliminadas', 'error');
         }
     });
+
+
+
 
 
 

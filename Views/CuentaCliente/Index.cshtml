@@ -459,6 +459,11 @@
                         : "ProveedorSecundario";
                     }
                 }
+                <a href="@Url.Action("Index", "RecuperarCliente")"
+                   class="btn-panel btn-volver-estilizado"
+                   translate="no"></i>Restaurar
+                </a>
+
                 <a href="@Url.Action("Index", "PanelSeleccion")" class="btn-panel btn-volver-estilizado" translate="no">Volver</a>
             </div>
             <div class="col-md-10 contenido-derecho">
@@ -577,8 +582,7 @@
                                             <input type="number" id="montoParcial" class="form-control d-inline-block mx-2"
                                                    style="width: 140px; height: 32px; vertical-align: middle;" min="0" step="0.01" placeholder="Ej: 5000" />
 
-                                            <button id="btnPagarParcial" class="btn btn-primary btn-sm px-3 py-1">Pagar Parcial</button>
-                                            <button id="btnPagarTodo" class="btn btn-success btn-sm px-3 py-1 ms-2">Pagar Todo</button>
+                                            <button id="btnPagarParcial" class="btn btn-primary btn-sm px-3 py-1">Pagar</button>
                                         </td>
                                     </tr>
 

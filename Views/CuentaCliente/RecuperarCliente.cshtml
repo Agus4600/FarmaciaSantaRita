@@ -272,31 +272,42 @@
                             <tbody>
                                 @foreach (var compra in Model)
                                 {
-                                    var cliente = compra.IdclienteNavigation;
+                                    string nombreCliente = "Desconocido";
+                                    if (compra.IdclienteNavigation != null)
+                                    {
+                                        nombreCliente = compra.IdclienteNavigation.NombreCliente ?? "Desconocido";
+                                    }
+
+                                    string producto = "Sin producto";
+                                    int cantidad = 0;
+                                    string precioUnitarioStr = "0,00";
+                                    string totalStr = compra.MontoCompra.ToString("N2");
+                                    string estado = compra.EstadoDePago ?? "pendiente";
+                                    string estadoClase = estado == "pagado" ? "pagado" : "pendiente";
+                                    string estadoTexto = estado == "pagado" ? "Pagado" : "Pendiente";
+
                                     var linea = compra.LineaDeCompras?.FirstOrDefault();
+                                    if (linea != null)
+                                    {
+                                        producto = linea.IdproductoNavigation?.NombreProducto ?? "Sin producto";
+                                        cantidad = linea.Cantidad;
+                                        if (linea.IdproductoNavigation != null)
+                                        {
+                                            precioUnitarioStr = linea.IdproductoNavigation.PrecioUnitario.ToString("N2");
+                                        }
+                                    }
 
                                     <tr data-id="@compra.Idcompras"
                                         data-idcliente="@compra.Idcliente"
-                                        data-nombre="@(cliente?.NombreCliente?.ToLower() ?? "")">
-                                        <td class="fw-bold">
-                                            @(cliente?.NombreCliente ?? "Desconocido")
-                                        </td>
-                                        <td>@(linea?.IdproductoNavigation?.NombreProducto ?? "Sin producto")</td>
-                                        <td>@(linea?.Cantidad ?? 0)</td>
-                                        <td>
-                                            @{
-                                                var precio = linea?.IdproductoNavigation?.PrecioUnitario ?? 0m;
-                                            }
-                                            $@precio.ToString("N2")
-                                        </td>
+                                        data-nombre="@nombreCliente.ToLower()">
+                                        <td class="fw-bold">@nombreCliente</td>
+                                        <td>@producto</td>
+                                        <td>@cantidad</td>
+                                        <td>$@precioUnitarioStr</td>
                                         <td>@compra.FechaCompra.ToString("dd/MM/yyyy")</td>
-                                        <td class="text-primary fw-bold">
-                                            $@compra.MontoCompra.ToString("N2")
-                                        </td>
+                                        <td class="text-primary fw-bold">$@totalStr</td>
                                         <td>
-                                            <span class="sel-estado @(compra.EstadoDePago == "pagado" ? "pagado" : "pendiente")">
-                                                @(compra.EstadoDePago == "pagado" ? "Pagado" : "Pendiente")
-                                            </span>
+                                            <span class="sel-estado @estadoClase">@estadoTexto</span>
                                         </td>
                                         <td>&nbsp;</td>
                                     </tr>

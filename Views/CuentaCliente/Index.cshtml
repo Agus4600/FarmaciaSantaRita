@@ -1274,19 +1274,19 @@
                         </div>
                     </div>
                 </div>
-                <div style="max-height: 520px; overflow-y: auto; width: 100%; border: 1px solid #dee2e6; border-radius: 12px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center; table-layout: fixed;" id="tablaEliminadas">
+                <div style="max-height: 520px; overflow-y: auto; overflow-x: hidden; width: 100%; border: 1px solid #dee2e6; border-radius: 12px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                    <table style="width: 100%; max-width: 100%; border-collapse: collapse; font-size: 14px; text-align: center; table-layout: fixed;" id="tablaEliminadas">
                         <thead style="background: #0d6efd; color: white; position: sticky; top: 0; z-index: 10;">
                             <tr>
-                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 18%;">Cliente</th>
-                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 11%;">DNI</th>
-                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 22%;">Producto</th>
-                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 7%;">Cant.</th>
-                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 10%;">Precio U.</th>
-                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 10%;">Total</th>
-                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 11%;">Fecha Compra</th>
-                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 10%;">Estado</th>
-                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 11%;">Acción</th>
+                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 17%;">Cliente</th>
+                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 10%;">DNI</th>
+                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 20%;">Producto</th>
+                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 7%;">Cant.</th>
+                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 10%;">Precio U.</th>
+                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 10%;">Total</th>
+                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 10%;">Fecha</th>
+                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 9%;">Estado</th>
+                                <th style="padding: 12px 6px; border: 1px solid #dee2e6; width: 7%;">Acción</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1302,20 +1302,20 @@
                     tablaHtml += `
                         <tr data-nombre="${(compra.nombreCliente || '').toLowerCase()}"
                             data-dni="${(compra.dni || '').toLowerCase()}">
-                            <td style="padding: 12px 8px; border: 1px solid #dee2e6; white-space: pre-line; line-height: 1.5; text-align: center; vertical-align: middle;">
+                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; white-space: pre-line; line-height: 1.5; text-align: center; vertical-align: middle; overflow: hidden;">
                                 ${nombreConSaltos}
                             </td>
-                            <td style="padding: 12px 8px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle;">${compra.dni}</td>
-                            <td style="padding: 12px 8px; border: 1px solid #dee2e6; white-space: pre-line; line-height: 1.5; text-align: center; vertical-align: middle;">
+                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle; overflow: hidden;">${compra.dni}</td>
+                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; white-space: pre-line; line-height: 1.5; text-align: center; vertical-align: middle; overflow: hidden;">
                                 ${productoConSaltos}
                             </td>
-                            <td style="padding: 12px 8px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle;">${compra.cantidad}</td>
-                            <td style="padding: 12px 8px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle;">$${compra.precioUnitario.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                            <td style="padding: 12px 8px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle;">$${compra.montoCompra.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                            <td style="padding: 12px 8px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle;">${compra.fechaCompra}</td>
-                            <td style="padding: 12px 8px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle;">${compra.estadoDePago === 'pagado' ? 'Pagado' : 'Pendiente'}</td>
-                            <td style="padding: 12px 8px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle;">
-                                <button class="btn btn-success btn-sm recuperar-btn" data-id="${compra.idCompras}" style="min-width: 100px; padding: 8px 12px; font-size: 13px; white-space: nowrap;">
+                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle; overflow: hidden;">${compra.cantidad}</td>
+                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle; overflow: hidden;">$${compra.precioUnitario.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle; overflow: hidden;">$${compra.montoCompra.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle; overflow: hidden;">${compra.fechaCompra}</td>
+                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle; overflow: hidden;">${compra.estadoDePago === 'pagado' ? 'Pagado' : 'Pendiente'}</td>
+                            <td style="padding: 12px 6px; border: 1px solid #dee2e6; text-align: center; vertical-align: middle; overflow: hidden;">
+                                <button class="btn btn-success btn-sm recuperar-btn" data-id="${compra.idCompras}" style="min-width: 90px; padding: 6px 10px; font-size: 13px; white-space: nowrap;">
                                     <i class="bi bi-arrow-repeat me-1"></i> Recuperar
                                 </button>
                             </td>

@@ -132,6 +132,14 @@
         margin-bottom: 0 !important;
     }
 
+    /* Quita el borde de enfoque específicamente para el botón Administrar */
+    .administrar-extra-margin:focus,
+    .administrar-extra-margin:active {
+        outline: none !important;
+        box-shadow: none !important;
+        border-color: transparent !important;
+    }
+
     .administrar-extra-margin {
         margin-top: 80px !important; /* Ajusta este número para bajarlo más o menos */
         margin-bottom: -5px !important;
@@ -241,15 +249,10 @@
         object-fit: contain;
     }
 
-    .btn-volver:focus,
-    .btn-volver:active {
-        outline: none !important;
-    }
 
     .btn-volver {
         margin-top: 0;
         background-color: #007bff;
-        outline: none !important;
         color: white;
         border: none;
         border-radius: 50px;

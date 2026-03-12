@@ -461,15 +461,14 @@
                 </div>
                 
                 
-                @if (User.IsInRole("SuperAdmin"))
-                {
-                    <button type="button" class="btn btn-info btn-administrar mt-2"
-                            data-bs-toggle="offcanvas"
-                            data-bs-target="#offcanvasUsuarios"
-                            aria-controls="offcanvasUsuarios">
-                        Administrar
-                    </button>
-                }
+                <button type="button"
+                        class="btn btn-administrar mt-2 @(!User.IsInRole("SuperAdmin") ? "disabled" : "")"
+                        data-bs-toggle="offcanvas"
+                        data-bs-target="#offcanvasUsuarios"
+                        aria-controls="offcanvasUsuarios"
+                        @( !User.IsInRole("SuperAdmin") ? "disabled" : "" )>
+                    Administrar
+                </button>
 
                 <!-- Botón Volver -->
                 <a href="@Url.Action("Index", "PanelSeleccion")" class="btn btn-primary btn-volver mt-2">

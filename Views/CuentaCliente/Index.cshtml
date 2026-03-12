@@ -16,6 +16,23 @@
 <!-- Librería SheetJS para exportar a Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
+    .swal2-popup.bloque-interior-swal {
+        border-radius: 16px !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+        background: white !important;
+        padding: 25px !important;
+    }
+
+    .swal2-title {
+        color: #0d6efd !important;
+        font-weight: 600 !important;
+        margin-bottom: 20px !important;
+    }
+
+    .swal2-close {
+        font-size: 28px !important;
+        color: #6c757d !important;
+    }
     /* ---------------------------------------------------- */
     /* ESTILO PARA EL ICONO DE CUENTAS DE CLIENTES          */
     /* ---------------------------------------------------- */
@@ -1248,10 +1265,9 @@
             }
             const eliminadas = await res.json();
 
-            // Construimos la tabla con columnas extras: DNI y Precio Unitario
             let tablaHtml = `
                 <div style="margin-bottom: 15px;">
-                    <div class="input-group-custom" style="max-width: 400px; margin: 0 auto;">
+                    <div class="input-group-custom" style="max-width: 500px; margin: 0 auto;">
                         <input type="text" id="buscadorEliminadas" class="form-control" placeholder="Buscar por nombre o DNI..." autocomplete="off" />
                         <div class="seccion-adorno">
                             <i class="bi bi-search"></i>
@@ -1259,41 +1275,41 @@
                         </div>
                     </div>
                 </div>
-                <div style="max-height: 450px; overflow-y: auto; width: 100%;">
+                <div style="max-height: 520px; overflow-y: auto; width: 100%; border: 1px solid #dee2e6; border-radius: 12px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
                     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center;" id="tablaEliminadas">
                         <thead style="background: #0d6efd; color: white; position: sticky; top: 0; z-index: 10;">
                             <tr>
-                                <th style="padding: 10px; border: 1px solid #dee2e6;">Cliente</th>
-                                <th style="padding: 10px; border: 1px solid #dee2e6;">DNI</th>              <!-- Nueva columna -->
-                                <th style="padding: 10px; border: 1px solid #dee2e6;">Producto</th>
-                                <th style="padding: 10px; border: 1px solid #dee2e6;">Cant.</th>
-                                <th style="padding: 10px; border: 1px solid #dee2e6;">Precio U.</th>     <!-- Nueva columna -->
-                                <th style="padding: 10px; border: 1px solid #dee2e6;">Total</th>
-                                <th style="padding: 10px; border: 1px solid #dee2e6;">Fecha Compra</th>
-                                <th style="padding: 10px; border: 1px solid #dee2e6;">Estado</th>
-                                <th style="padding: 10px; border: 1px solid #dee2e6;">Acción</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; min-width: 180px;">Cliente</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; min-width: 110px;">DNI</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; min-width: 220px;">Producto</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; min-width: 70px;">Cant.</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; min-width: 100px;">Precio U.</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; min-width: 100px;">Total</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; min-width: 110px;">Fecha Compra</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; min-width: 100px;">Estado</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; min-width: 110px;">Acción</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
 
             if (eliminadas.length === 0) {
-                tablaHtml += `<tr><td colspan="9" style="padding: 20px; text-align:center;">No hay compras eliminadas</td></tr>`;
+                tablaHtml += `<tr><td colspan="9" style="padding: 30px; text-align:center; font-size: 16px; color: #6c757d;">No hay compras eliminadas</td></tr>`;
             } else {
                 eliminadas.forEach(compra => {
                     tablaHtml += `
                         <tr data-nombre="${(compra.nombreCliente || '').toLowerCase()}"
                             data-dni="${(compra.dni || '').toLowerCase()}">
-                            <td style="padding: 10px; border: 1px solid #dee2e6;">${compra.nombreCliente}</td>
-                            <td style="padding: 10px; border: 1px solid #dee2e6;">${compra.dni}</td>
-                            <td style="padding: 10px; border: 1px solid #dee2e6;">${compra.producto}</td>
-                            <td style="padding: 10px; border: 1px solid #dee2e6;">${compra.cantidad}</td>
-                            <td style="padding: 10px; border: 1px solid #dee2e6;">$${compra.precioUnitario.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
-                            <td style="padding: 10px; border: 1px solid #dee2e6;">$${compra.montoCompra.toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
-                            <td style="padding: 10px; border: 1px solid #dee2e6;">${compra.fechaCompra}</td>
-                            <td style="padding: 10px; border: 1px solid #dee2e6;">${compra.estadoDePago === 'pagado' ? 'Pagado' : 'Pendiente'}</td>
-                            <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">
-                                <button class="btn btn-success btn-sm recuperar-btn" data-id="${compra.idCompras}">
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.nombreCliente}</td>
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.dni}</td>
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.producto}</td>
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.cantidad}</td>
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6;">$${compra.precioUnitario.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6;">$${compra.montoCompra.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.fechaCompra}</td>
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.estadoDePago === 'pagado' ? 'Pagado' : 'Pendiente'}</td>
+                            <td style="padding: 12px 10px; border: 1px solid #dee2e6; text-align: center;">
+                                <button class="btn btn-success btn-sm recuperar-btn" data-id="${compra.idCompras}" style="padding: 6px 12px;">
                                     <i class="bi bi-arrow-repeat"></i> Recuperar
                                 </button>
                             </td>
@@ -1307,24 +1323,34 @@
             Swal.fire({
                 title: 'Compras Eliminadas',
                 html: tablaHtml,
-                width: '98%',
+                width: '1200px',                    // ← Tamaño similar al bloque interior (ajustable)
+                maxWidth: '95vw',                   // ← Para pantallas más chicas
+                heightAuto: false,
+                padding: '25px',                    // ← Igual que .bloque-interior
+                borderRadius: '16px',               // ← Igual que .bloque-interior
                 showCloseButton: true,
                 showConfirmButton: false,
+                customClass: {
+                    popup: 'bloque-interior-swal'   // ← Clase para aplicar estilos similares
+                },
                 didOpen: () => {
-                    // Buscador autopredictivo
+                    // Buscador predictivo
                     const buscador = document.getElementById('buscadorEliminadas');
-                    buscador.addEventListener('input', function () {
-                        const filtro = this.value.toLowerCase().trim();
-                        const filas = document.querySelectorAll('#tablaEliminadas tbody tr');
-                        filas.forEach(fila => {
-                            const nombre = fila.dataset.nombre || '';
-                            const dni = fila.dataset.dni || '';
-                            const coincide = filtro === '' || nombre.includes(filtro) || dni.includes(filtro);
-                            fila.style.display = coincide ? '' : 'none';
+                    if (buscador) {
+                        buscador.focus();
+                        buscador.addEventListener('input', function () {
+                            const filtro = this.value.toLowerCase().trim();
+                            const filas = document.querySelectorAll('#tablaEliminadas tbody tr');
+                            filas.forEach(fila => {
+                                const nombre = fila.dataset.nombre || '';
+                                const dni = fila.dataset.dni || '';
+                                const coincide = filtro === '' || nombre.includes(filtro) || dni.includes(filtro);
+                                fila.style.display = coincide ? '' : 'none';
+                            });
                         });
-                    });
+                    }
 
-                    // Eventos de recuperación (igual que antes)
+                    // Botones Recuperar
                     document.querySelectorAll('.recuperar-btn').forEach(btn => {
                         btn.addEventListener('click', async function () {
                             const id = this.getAttribute('data-id');

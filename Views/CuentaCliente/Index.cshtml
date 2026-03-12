@@ -262,15 +262,34 @@
         cursor: default;
     }
 
-            .sel-estado:disabled,
-            .sel-estado:disabled.pagado,
-            .sel-estado:disabled.pendiente {
-                background-color: inherit !important;
-                color: inherit !important;
-                border-color: inherit !important;
-                opacity: 1 !important; /* Evita el efecto gris apagado */
-                -webkit-text-fill-color: inherit !important; /* Para Safari/Chrome */
-            }
+        .sel-estado:disabled {
+            opacity: 1 !important;
+            -webkit-text-fill-color: currentColor !important; /* Para Chrome/Safari */
+            cursor: default;
+        }
+
+        .sel-estado.pagado {
+            background-color: #d1fae5 !important;
+            color: #065f46 !important;
+            border-color: #34d399 !important;
+        }
+
+        .sel-estado.pendiente {
+            background-color: #fff3cd !important;
+            color: #856404 !important;
+            border-color: #ffeeba !important;
+        }
+
+    /* 3. Asegurar que los colores se mantengan aunque esté deshabilitado */
+    select.sel-estado.pagado:disabled {
+        background-color: #d1fae5 !important;
+        color: #065f46 !important;
+    }
+
+    select.sel-estado.pendiente:disabled {
+        background-color: #fff3cd !important;
+        color: #856404 !important;
+    }
 
     .pagado {
         background-color: #d1fae5 !important;

@@ -1012,7 +1012,7 @@
 
 
 
-            document.querySelectorAll('.nombre-cliente-link').forEach(link => {
+               document.querySelectorAll('.nombre-cliente-link').forEach(link => {
         link.addEventListener('click', function() {
             const tr = this.closest('tr');
             const nombre = tr.querySelector('.nombre-cliente-link').innerText.trim();
@@ -1021,7 +1021,7 @@
             const dni = tr.dataset.dni || 'Sin DNI';
             const idCliente = tr.dataset.idcliente;
 
-            let isEditing = false; // Bandera para saber si estamos en modo edición
+            let isEditing = false;
 
             Swal.fire({
                 title: `<strong>${nombre}</strong>`,
@@ -1043,97 +1043,85 @@
                 denyButtonText: 'Actualizar',
                 denyButtonColor: '#007bff',
                 reverseButtons: true,
-                allowOutsideClick: false,
-                preDeny: () => {
-                    if (isEditing) {
-                        // Ya estamos editando → no hacer nada (o validar)
-                        return false;
-                    }
-
-                    // Entramos en modo edición SIN cerrar el popup
+                allowOutsideClick: false
+            }).then(async (result) => {
+                if (result.isDenied) {
+                    // Entramos en modo edición
                     isEditing = true;
 
-                    // Cambiar título
-                    Swal.update({ title: `<strong>Editar datos de ${nombre}</strong>` });
-
-                    // Convertir textos a inputs
-                    const dniSpan = document.getElementById('dniText');
-                    dniSpan.outerHTML = `<input type="text" id="dniEdit" class="form-control mb-2" value="${dni}" />`;
-
-                    const telefonoSpan = document.getElementById('telefonoText');
-                    telefonoSpan.outerHTML = `<input type="text" id="telefonoEdit" class="form-control mb-2" value="${telefono}" />`;
-
-                    const direccionSpan = document.getElementById('direccionText');
-                    direccionSpan.outerHTML = `<input type="text" id="direccionEdit" class="form-control mb-2" value="${direccion}" />`;
-
-                    // Cambiar botones
+                    // Reconstruimos TODO el HTML con inputs editables
                     Swal.update({
-                        showDenyButton: false,              // Quitamos "Actualizar"
+                        title: `<strong>Editar datos de ${nombre}</strong>`,
+                        html: `
+                            <div id="swalClienteDatos">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">DNI</label>
+                                    <input type="text" id="dniEdit" class="form-control" value="${dni}" placeholder="DNI" />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Teléfono</label>
+                                    <input type="text" id="telefonoEdit" class="form-control" value="${telefono}" placeholder="Teléfono" />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Dirección</label>
+                                    <input type="text" id="direccionEdit" class="form-control" value="${direccion}" placeholder="Dirección" />
+                                </div>
+                            </div>
+                        `,
+                        showDenyButton: false,
                         confirmButtonText: 'Guardar Cambios',
-                        confirmButtonColor: '#28a745'       // Verde para guardar
+                        confirmButtonColor: '#28a745'
                     });
 
-                    return false; // Mantenemos el popup abierto
-                },
-                preConfirm: () => {
-                    if (!isEditing) {
-                        // Modo vista → solo cierra
-                        return true;
-                    }
+                    // Sobrescribimos el evento del botón "Guardar Cambios"
+                    Swal.getConfirmButton().onclick = async function(e) {
+                        e.preventDefault();
 
-                    // Modo edición → validamos y preparamos datos para guardar
-                    const dniNuevo = document.getElementById('dniEdit')?.value.trim() || dni;
-                    const telefonoNuevo = document.getElementById('telefonoEdit')?.value.trim() || telefono;
-                    const direccionNuevo = document.getElementById('direccionEdit')?.value.trim() || direccion;
+                        const dniNuevo = document.getElementById('dniEdit')?.value.trim() || dni;
+                        const telefonoNuevo = document.getElementById('telefonoEdit')?.value.trim() || telefono;
+                        const direccionNuevo = document.getElementById('direccionEdit')?.value.trim() || direccion;
 
-                    if (!dniNuevo && !telefonoNuevo && !direccionNuevo) {
-                        Swal.showValidationMessage('Debe modificar al menos un campo');
-                        return false;
-                    }
-
-                    // Retornamos los datos para usarlos en .then()
-                    return { dni: dniNuevo, telefono: telefonoNuevo, direccion: direccionNuevo };
-                }
-            }).then(async (result) => {
-                if (result.isConfirmed && isEditing) {
-                    // "Guardar Cambios" fue presionado
-                    const { dni, telefono, direccion } = result.value;
-
-                    try {
-                        const res = await fetch('/CuentaCliente/ActualizarCliente', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                            },
-                            body: JSON.stringify({
-                                idCliente: idCliente,
-                                dni: dni,
-                                telefono: telefono,
-                                direccion: direccion
-                            })
-                        });
-
-                        const data = await res.json();
-
-                        if (data.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: '¡Actualizado!',
-                                text: 'Los datos del cliente se guardaron correctamente.',
-                                timer: 2000,
-                                showConfirmButton: false
-                            }).then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire('Error', data.message || 'No se pudo actualizar', 'error');
+                        if (!dniNuevo && !telefonoNuevo && !direccionNuevo) {
+                            Swal.showValidationMessage('Debe modificar al menos un campo');
+                            return false;
                         }
-                    } catch (err) {
-                        Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
-                    }
+
+                        try {
+                            const res = await fetch('/CuentaCliente/ActualizarCliente', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                                },
+                                body: JSON.stringify({
+                                    idCliente: idCliente,
+                                    dni: dniNuevo,
+                                    telefono: telefonoNuevo,
+                                    direccion: direccionNuevo
+                                })
+                            });
+
+                            const data = await res.json();
+
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '¡Actualizado!',
+                                    text: 'Los datos del cliente se guardaron correctamente.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Error', data.message || 'No se pudo actualizar', 'error');
+                            }
+                        } catch (err) {
+                            Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+                        }
+                    };
                 }
-                // Si es "Entendido" (no edición) o "Cancelar" → simplemente cierra
+                // Si es "Entendido" o "Cancelar" → simplemente cierra (no hacemos nada extra)
             });
         });
     });

@@ -257,7 +257,16 @@
         font-size: 0.75rem;
         font-weight: bold;
         border: 1px solid #ccc;
+        pointer-events: none;
+        appearance: none;
+        cursor: default;
     }
+
+        .sel-estado:disabled {
+            background-color: inherit; /* Mantiene el color de pagado/pendiente */
+            color: inherit;
+            opacity: 1; /* Evita que se vea "apagado" */
+        }
 
     .pagado {
         background-color: #d1fae5;
@@ -598,15 +607,12 @@
                                                 @{
                                                     var pg = compra.EstadoDePago == "pagado";
                                                 }
-                                                <select class="sel-estado @(pg ? "pagado" : "pendiente")" onchange="actualizarEstadoStyle(this)">
+                                                <select class="sel-estado @(pg ? "pagado" : "pendiente")" onchange="actualizarEstadoStyle(this)" disabled>
                                                     <option value="pendiente" selected="@(!pg)">Pendiente</option>
                                                     <option value="pagado" selected="@pg">Pagado</option>
                                                 </select>
                                             </td>
                                             <td>
-                                                <button class="btn-accion btn-tilde" title="Actualizar" onclick="enviarActualizacion(this)">
-                                                    <i class="bi bi-check-circle-fill"></i>
-                                                </button>
                                                 <button class="btn-accion btn-cruz" title="Eliminar" onclick="eliminarFila(this)">
                                                     <i class="bi bi-x-circle-fill"></i>
                                                 </button>

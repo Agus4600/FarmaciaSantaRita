@@ -132,6 +132,10 @@
         margin-bottom: 0 !important;
     }
 
+    .administrar-extra-margin {
+        margin-top: 25px !important; /* ← baja solo este botón 25px más abajo */
+    }
+
     /* Botones más compactos */
     .btn-administrar, .btn-volver {
         margin-top: 8px !important; /* Espacio mínimo entre ellos */
@@ -462,7 +466,7 @@
                 
                 
                 <button type="button"
-                        class="btn btn-primary btn-volver mt-2 @(!User.IsInRole("SuperAdmin") ? "disabled" : "")"
+                        class="btn btn-primary btn-volver mt-2 @(!User.IsInRole("SuperAdmin") ? "disabled" : "") administrar-extra-margin"
                         data-bs-toggle="offcanvas"
                         data-bs-target="#offcanvasUsuarios"
                         aria-controls="offcanvasUsuarios"

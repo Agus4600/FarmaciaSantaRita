@@ -1012,7 +1012,7 @@
 
 
 
-               document.querySelectorAll('.nombre-cliente-link').forEach(link => {
+                document.querySelectorAll('.nombre-cliente-link').forEach(link => {
         link.addEventListener('click', function() {
             const tr = this.closest('tr');
             const nombre = tr.querySelector('.nombre-cliente-link').innerText.trim();
@@ -1025,12 +1025,13 @@
                 title: `<strong>${nombre}</strong>`,
                 html: `
                     <div id="swalClienteDatos">
+                        <p><strong>Nombre:</strong> <span id="nombreText">${nombre}</span></p>
                         <p><strong>DNI:</strong> <span id="dniText">${dni}</span></p>
                         <p><strong>Teléfono:</strong> <span id="telefonoText">${telefono}</span></p>
                         <p><strong>Dirección:</strong> <span id="direccionText">${direccion}</span></p>
                     </div>
                 `,
-                width: '450px',
+                width: '500px',  // Un poco más ancho para que quepa bien el nombre
                 showCancelButton: true,
                 cancelButtonText: 'Cancelar',
                 cancelButtonColor: '#007bff',
@@ -1049,6 +1050,10 @@
                         html: `
                             <div id="swalClienteDatos">
                                 <div class="mb-3">
+                                    <label class="form-label fw-bold">Nombre</label>
+                                    <input type="text" id="nombreEdit" class="form-control" value="${nombre}" />
+                                </div>
+                                <div class="mb-3">
                                     <label class="form-label fw-bold">DNI</label>
                                     <input type="text" id="dniEdit" class="form-control" value="${dni}" />
                                 </div>
@@ -1064,19 +1069,21 @@
                         `,
                         showDenyButton: false,
                         confirmButtonText: 'Guardar Cambios',
-                        confirmButtonColor: '#28a745'
+                        confirmButtonColor: '#007bff'
                     });
 
-                    // Sobrescribimos el botón "Guardar Cambios" para que envíe los datos
+                    // Sobrescribimos el botón "Guardar Cambios"
                     Swal.getConfirmButton().onclick = async function(e) {
                         e.preventDefault();
 
+                        const nombreNuevo = document.getElementById('nombreEdit')?.value.trim() || nombre;
                         const dniNuevo = document.getElementById('dniEdit')?.value.trim() || dni;
                         const telefonoNuevo = document.getElementById('telefonoEdit')?.value.trim() || telefono;
                         const direccionNuevo = document.getElementById('direccionEdit')?.value.trim() || direccion;
 
-                        if (!dniNuevo && !telefonoNuevo && !direccionNuevo) {
-                            Swal.showValidationMessage('Debe modificar al menos un campo');
+                        // Validación básica (puedes hacerla más estricta si querés)
+                        if (!nombreNuevo.trim()) {
+                            Swal.showValidationMessage('El nombre es obligatorio');
                             return false;
                         }
 
@@ -1089,6 +1096,7 @@
                                 },
                                 body: JSON.stringify({
                                     idCliente: idCliente,
+                                    nombre: nombreNuevo,
                                     dni: dniNuevo,
                                     telefono: telefonoNuevo,
                                     direccion: direccionNuevo
@@ -1118,11 +1126,10 @@
                     return false; // Mantenemos el popup abierto
                 }
             }).then((result) => {
-                // Solo si se presiona "Entendido" desde el modo vista (no edición)
+                // Solo si se presiona "Entendido" desde el modo vista
                 if (result.isConfirmed) {
                     // Cierra sin hacer nada
                 }
-                // Si se cancela o se cierra de otra forma → no hacemos nada
             });
         });
     });

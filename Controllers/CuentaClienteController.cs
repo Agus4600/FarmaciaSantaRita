@@ -378,10 +378,33 @@ namespace FarmaciaSantaRita.Controllers
                 if (cliente == null)
                     return Json(new { success = false, message = "Cliente no encontrado" });
 
-                // Actualizamos solo los campos que vengan
-                if (!string.IsNullOrWhiteSpace(dto.Dni)) cliente.DNI = dto.Dni.Trim();
-                if (!string.IsNullOrWhiteSpace(dto.Telefono)) cliente.TelefonoCliente = dto.Telefono.Trim();
-                if (!string.IsNullOrWhiteSpace(dto.Direccion)) cliente.DireccionCliente = dto.Direccion.Trim();
+                bool huboCambios = false;
+
+                // Nombre (nuevo campo)
+                if (!string.IsNullOrWhiteSpace(dto.Nombre) && dto.Nombre.Trim() != cliente.NombreCliente)
+                {
+                    cliente.NombreCliente = dto.Nombre.Trim();
+                    huboCambios = true;
+                }
+
+                if (!string.IsNullOrWhiteSpace(dto.Dni) && dto.Dni.Trim() != cliente.DNI)
+                {
+                    cliente.DNI = dto.Dni.Trim();
+                    huboCambios = true;
+                }
+                if (!string.IsNullOrWhiteSpace(dto.Telefono) && dto.Telefono.Trim() != cliente.TelefonoCliente)
+                {
+                    cliente.TelefonoCliente = dto.Telefono.Trim();
+                    huboCambios = true;
+                }
+                if (!string.IsNullOrWhiteSpace(dto.Direccion) && dto.Direccion.Trim() != cliente.DireccionCliente)
+                {
+                    cliente.DireccionCliente = dto.Direccion.Trim();
+                    huboCambios = true;
+                }
+
+                if (!huboCambios)
+                    return Json(new { success = true, message = "No se detectaron cambios" });
 
                 _context.Clientes.Update(cliente);
                 await _context.SaveChangesAsync();
@@ -398,6 +421,7 @@ namespace FarmaciaSantaRita.Controllers
         public class ClienteUpdateDto
         {
             public int IdCliente { get; set; }
+            public string Nombre { get; set; }
             public string Dni { get; set; }
             public string Telefono { get; set; }
             public string Direccion { get; set; }

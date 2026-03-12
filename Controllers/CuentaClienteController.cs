@@ -56,6 +56,11 @@ namespace FarmaciaSantaRita.Controllers
             return View(comprasBD);  // @model List<Compra>
         }
 
+
+
+
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> GuardarNuevaCompra([FromBody] CompraDto datos)
@@ -173,6 +178,8 @@ namespace FarmaciaSantaRita.Controllers
 
 
 
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ActualizarCompra([FromBody] CompraDto datos)
@@ -203,6 +210,9 @@ namespace FarmaciaSantaRita.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
+
+
+
 
 
 
@@ -237,6 +247,10 @@ namespace FarmaciaSantaRita.Controllers
                 return Json(new { success = false, message = ex.InnerException?.Message ?? ex.Message });
             }
         }
+
+
+
+
 
         [HttpGet]
         public async Task<IActionResult> Cuenta(int id)
@@ -345,6 +359,53 @@ namespace FarmaciaSantaRita.Controllers
                 });
             }
         }
+
+
+
+
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ActualizarCliente([FromBody] ClienteUpdateDto dto)
+        {
+            if (dto == null || dto.IdCliente <= 0)
+                return Json(new { success = false, message = "Datos inválidos" });
+
+            try
+            {
+                var cliente = await _context.Clientes.FindAsync(dto.IdCliente);
+                if (cliente == null)
+                    return Json(new { success = false, message = "Cliente no encontrado" });
+
+                // Actualizamos solo los campos que vengan
+                if (!string.IsNullOrWhiteSpace(dto.Dni)) cliente.DNI = dto.Dni.Trim();
+                if (!string.IsNullOrWhiteSpace(dto.Telefono)) cliente.TelefonoCliente = dto.Telefono.Trim();
+                if (!string.IsNullOrWhiteSpace(dto.Direccion)) cliente.DireccionCliente = dto.Direccion.Trim();
+
+                _context.Clientes.Update(cliente);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Cliente actualizado correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error al actualizar: " + ex.Message });
+            }
+        }
+
+        // DTO simple para recibir los datos
+        public class ClienteUpdateDto
+        {
+            public int IdCliente { get; set; }
+            public string Dni { get; set; }
+            public string Telefono { get; set; }
+            public string Direccion { get; set; }
+        }
+
+
+
+
 
 
 

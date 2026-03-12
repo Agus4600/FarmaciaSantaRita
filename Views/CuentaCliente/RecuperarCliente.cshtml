@@ -394,7 +394,10 @@
                                             <td>@(linea?.IdproductoNavigation?.NombreProducto ?? "Sin producto")</td>
                                             <td>@(linea?.Cantidad ?? 0)</td>
                                             <td>
-                                                $@((linea?.IdproductoNavigation?.PrecioUnitario ?? 0m).ToString("N2"))
+                                                @{
+                                                    decimal precio = linea?.IdproductoNavigation?.PrecioUnitario ?? 0m;
+                                                }
+                                                $@precio.ToString("N2")
                                             </td>
                                             <td>@compra.FechaCompra.ToString("dd/MM/yyyy")</td>
                                             <td class="text-primary fw-bold">

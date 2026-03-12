@@ -7,6 +7,159 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 <!-- Botón para volver a Cuentas de Clientes -->
+<style>
+    html, body {
+        height: 100vh;
+        width: 100vw;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #f0f2f5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .card-principal {
+        width: 1300px;
+        max-width: none;
+        height: 610px;
+        margin: 0 auto;
+        position: relative;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+        padding: 30px 10px 30px 20px;
+        overflow: hidden;
+    }
+
+    .cuerpo-interactivo {
+        display: flex;
+        flex: none;
+        overflow: hidden;
+        gap: 20px;
+        height: 100%;
+    }
+
+    .col-md-2 {
+        padding-left: 8px;
+        padding-right: 10px;
+    }
+
+    .col-md-10 {
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .row > .col-md-2 {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding-top: 5px;
+        align-items: center;
+        padding-right: 25px;
+    }
+
+    .btn-panel {
+        background-color: #007bff;
+        color: white !important;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-weight: 600;
+        min-width: 140px;
+        width: 100%;
+        max-width: 180px;
+        margin-bottom: 10px;
+        text-align: center;
+        text-decoration: none;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 40px;
+        transition: all 0.3s ease;
+    }
+
+        .btn-panel:hover {
+            background-color: #0056b3 !important;
+            transform: translateY(-3px) !important;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important;
+        }
+
+    #logoContainer {
+        min-width: 140px;
+        width: 100%;
+        max-width: 180px;
+        height: 110px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding-left: 6px;
+    }
+
+    #farmaciaLogo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .clientes-icon-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        color: #007bff;
+        margin-bottom: 20px;
+    }
+
+        .clientes-icon-container i {
+            font-size: 140px;
+        }
+
+    .contenido-derecho {
+        flex: 1;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+</style>
+
+<div class="card-principal">
+    <div class="cuerpo-interactivo">
+        <!-- Panel izquierdo (logo + ícono + botón Volver) -->
+        <div class="col-md-2 d-flex flex-column align-items-start">
+            <div id="logoContainer">
+                <img src="/images/file_0000000079e461fd8636559665695d530001.png" alt="Logo" id="farmaciaLogo" />
+            </div>
+
+            <div class="clientes-icon-container">
+                <i class="bi bi-people-fill"></i>
+            </div>
+
+            <!-- Botón Volver (el que ya tenías, pero con la clase btn-panel para que combine) -->
+            <a href="@Url.Action("Index", "CuentaCliente")"
+               class="btn-panel btn-volver-estilizado"
+               translate="no">
+                Volver a Cuentas de Clientes
+            </a>
+        </div>
+
+        <!-- Contenido central (por ahora solo título) -->
+        <div class="col-md-10 contenido-derecho">
+            <h2 class="text-center fw-bold text-primary mb-4">@ViewData["Title"]</h2>
+
+            <!-- Aquí irá el resto en los próximos pasos (buscador, tabla, etc.) -->
+            <p class="text-center text-muted mt-4">
+                Próximamente: lista de clientes eliminados o formulario para recuperar por DNI/nombre.
+            </p>
+        </div>
+    </div>
+</div>
+
 <a href="@Url.Action("Index", "CuentaCliente")" class="btn btn-primary btn-lg">
     Volver a Cuentas de Clientes
 </a>

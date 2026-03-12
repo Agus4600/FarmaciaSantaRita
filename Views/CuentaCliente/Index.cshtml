@@ -459,10 +459,9 @@
                         : "ProveedorSecundario";
                     }
                 }
-                <a href="@Url.Action("RecuperarCliente", "RecuperarCliente")"
-                   class="btn-panel btn-volver-estilizado"
-                   translate="no"></i>Restaurar
-                </a>
+                <button id="btnRestaurar" class="btn-panel btn-volver-estilizado" translate="no">
+                    <i class="bi bi-arrow-repeat me-2"></i>Restaurar
+                </button>
 
                 <a href="@Url.Action("Index", "PanelSeleccion")" class="btn-panel btn-volver-estilizado" translate="no">Volver</a>
             </div>
@@ -1233,6 +1232,105 @@
         });
     }
     }
+
+
+
+
+
+
+
+
+    document.getElementById('btnRestaurar').addEventListener('click', function () {
+        // Simulamos datos de clientes eliminados (esto lo reemplazarás con una llamada real al servidor)
+        const clientesEliminados = [
+            { id: 1, nombre: "Juan Pérez", dni: "30123456", telefono: "3865123456", direccion: "San Martín 123", fechaEliminado: "2025-03-10" },
+            { id: 2, nombre: "María Gómez", dni: "32123456", telefono: "3865987654", direccion: "Belgrano 456", fechaEliminado: "2025-03-08" },
+            { id: 3, nombre: "Carlos López", dni: "34123456", telefono: "", direccion: "", fechaEliminado: "2025-03-05" }
+        ];
+
+        // Construimos el HTML de la tabla
+        let tablaHtml = `
+            <div style="max-height: 400px; overflow-y: auto; width: 100%;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr style="background: #0d6efd; color: white;">
+                            <th style="padding: 10px; border: 1px solid #dee2e6;">Nombre</th>
+                            <th style="padding: 10px; border: 1px solid #dee2e6;">DNI</th>
+                            <th style="padding: 10px; border: 1px solid #dee2e6;">Teléfono</th>
+                            <th style="padding: 10px; border: 1px solid #dee2e6;">Dirección</th>
+                            <th style="padding: 10px; border: 1px solid #dee2e6;">Eliminado el</th>
+                            <th style="padding: 10px; border: 1px solid #dee2e6;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        if (clientesEliminados.length === 0) {
+            tablaHtml += `<tr><td colspan="6" style="text-align:center; padding: 20px;">No hay clientes eliminados</td></tr>`;
+        } else {
+            clientesEliminados.forEach(cliente => {
+                tablaHtml += `
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #dee2e6;">${cliente.nombre}</td>
+                        <td style="padding: 10px; border: 1px solid #dee2e6;">${cliente.dni || '-'}</td>
+                        <td style="padding: 10px; border: 1px solid #dee2e6;">${cliente.telefono || '-'}</td>
+                        <td style="padding: 10px; border: 1px solid #dee2e6;">${cliente.direccion || '-'}</td>
+                        <td style="padding: 10px; border: 1px solid #dee2e6;">${cliente.fechaEliminado}</td>
+                        <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">
+                            <button class="btn btn-success btn-sm recuperar-btn" data-id="${cliente.id}">
+                                <i class="bi bi-arrow-repeat"></i> Recuperar
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        tablaHtml += `</tbody></table></div>`;
+
+        Swal.fire({
+            title: 'Clientes Eliminados',
+            html: tablaHtml,
+            width: '90%',
+            showCloseButton: true,
+            showConfirmButton: false,
+            didOpen: () => {
+                // Agregamos evento a los botones "Recuperar" dentro del Swal
+                document.querySelectorAll('.recuperar-btn').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const id = this.getAttribute('data-id');
+                        Swal.fire({
+                            title: '¿Recuperar cliente?',
+                            text: "El cliente volverá a estar activo en el sistema.",
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#28a745',
+                            cancelButtonColor: '#d33',
+                            confirmButtonText: 'Sí, recuperar',
+                            cancelButtonText: 'Cancelar'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Aquí iría la llamada real al servidor para recuperar
+                                // Por ahora simulamos
+                                Swal.fire(
+                                    'Recuperado!',
+                                    'El cliente fue restaurado correctamente.',
+                                    'success'
+                                );
+                                // Opcional: recargar la página principal después
+                                // location.reload();
+                            }
+                        });
+                    });
+                });
+            }
+        });
+    });
+
+
+
+
+
 
 
 

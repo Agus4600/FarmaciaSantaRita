@@ -8,6 +8,7 @@
 
 <!-- Botón para volver a Cuentas de Clientes -->
 <style>
+    /* Estilos base (iguales a la vista principal) */
     html, body {
         height: 100vh;
         width: 100vw;
@@ -129,32 +130,115 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        align-items: center;
     }
 
-    .text-center {
-        text-align: center;
+    .seccion-tabla {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .contenedor-scroll {
+        flex: 1;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background: white;
+    }
+
+    .tabla-compras {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+        .tabla-compras thead th {
+            position: sticky;
+            top: 0;
+            background-color: #0d6efd;
+            color: white;
+            padding: 12px 8px;
+            font-size: 0.85rem;
+            z-index: 20;
+            text-align: center !important;
+        }
+
+        .tabla-compras tbody td {
+            height: 45px;
+            padding: 0 8px;
+            font-size: 0.85rem;
+            border-bottom: 2px solid #dee2e6;
+            vertical-align: middle;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+            .tabla-compras tbody td:first-child {
+                text-align: center !important;
+            }
+
+    .tabla-encabezado {
+        font-size: 17px;
+        font-weight: 600;
+        color: #0d6efd;
+        text-align: left;
+        margin-bottom: 0px;
+        border-bottom: 2px solid #0d6efd33;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding-bottom: 4px;
+        line-height: 1.2;
+    }
+
+    .d-flex {
+        display: flex !important;
+    }
+
+    .justify-content-between {
+        justify-content: space-between !important;
+    }
+
+    .align-items-end {
+        align-items: flex-end !important;
+    }
+
+    .mb-2 {
+        margin-bottom: 0.5rem !important;
+    }
+
+    .me-4 {
+        margin-right: 1.5rem !important;
+    }
+
+    .flex-grow-1 {
+        flex-grow: 1 !important;
     }
 
     .fw-bold {
-        font-weight: 700;
+        font-weight: 700 !important;
     }
 
     .text-primary {
         color: #0d6efd !important;
     }
 
-    .mb-4 {
-        margin-bottom: 1.5rem !important;
+    .text-danger {
+        color: #dc3545 !important;
     }
 
-    .mt-4 {
-        margin-top: 1.5rem !important;
+    .text-center {
+        text-align: center !important;
     }
 
-    .text-muted {
-        color: #6c757d !important;
+    .py-3 {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+
+    .ms-2 {
+        margin-left: 0.5rem !important;
     }
 </style>
 
@@ -180,11 +264,73 @@
         <!-- Contenido central con cuadro blanco interior -->
         <div class="col-md-10">
             <div class="bloque-interior">
-                <h2 class="text-center fw-bold text-primary mb-4">@ViewData["Title"]</h2>
+                <!-- Título encima del cuadro interior (pero dentro de él) -->
+                <div class="tabla-encabezado" style="margin-bottom: 12px;">
+                    LISTADO DE COMPRAS REGISTRADAS
+                </div>
 
-                <p class="text-center text-muted mt-4">
-                    Próximamente: lista de clientes eliminados o formulario para recuperar por DNI/nombre.
-                </p>
+                <!-- Tabla -->
+                <div class="seccion-tabla flex-grow-1">
+                    <div class="contenedor-scroll">
+                        <table class="tabla-compras" id="tablaCompras">
+                            <thead>
+                                <tr style="background: #e3f2fd; font-size: 1.1rem; font-weight: bold;">
+                                    <td colspan="8" class="text-center py-3">
+                                        Deuda total pendiente:
+                                        <span id="totalDeuda" class="text-danger ms-2">$0,00</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th style="width: 32%;">Nombre</th>
+                                    <th style="width: 18%;">Producto</th>
+                                    <th style="width: 5%;">Cant.</th>
+                                    <th style="width: 10%;">Precio U.</th>
+                                    <th style="width: 10%;">Fecha</th>
+                                    <th style="width: 10%;">Total</th>
+                                    <th style="width: 10%;">Estado</th>
+                                    <th style="width: 5%;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var compra in Model)
+                                {
+                                    var cliente = compra.IdclienteNavigation;
+                                    var linea = compra.LineaDeCompras?.FirstOrDefault();
+
+                                    <tr data-id="@compra.Idcompras"
+                                        data-idcliente="@compra.Idcliente"
+                                        data-nombre="@(cliente?.NombreCliente?.ToLower() ?? "")">
+                                        <td class="fw-bold">
+                                            @(cliente?.NombreCliente ?? "Desconocido")
+                                        </td>
+                                        <td>@(linea?.IdproductoNavigation?.NombreProducto ?? "Sin producto")</td>
+                                        <td>@(linea?.Cantidad ?? 0)</td>
+                                        <td>
+                                            $@((linea?.IdproductoNavigation?.PrecioUnitario ?? 0m).ToString("N2"))
+                                        </td>
+                                        <td>@compra.FechaCompra.ToString("dd/MM/yyyy")</td>
+                                        <td class="text-primary fw-bold">
+                                            $@compra.MontoCompra.ToString("N2")
+                                        </td>
+                                        <td>
+                                            <span class="sel-estado @(compra.EstadoDePago == "pagado" ? "pagado" : "pendiente")">
+                                                @(compra.EstadoDePago == "pagado" ? "Pagado" : "Pendiente")
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <!-- Por ahora sin botón de acción, lo agregamos después si querés -->
+                                            &nbsp;
+                                        </td>
+                                    </tr>
+                                }
+                                @for (int i = Model.Count; i < 5; i++)
+                                {
+                                    <tr class="fila-vacia"><td colspan="8">&nbsp;</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

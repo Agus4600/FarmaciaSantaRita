@@ -70,9 +70,7 @@ namespace FarmaciaSantaRita.Controllers
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // 1. Manejo del Cliente
-                // 1. Manejo del Cliente
-                // 1. Manejo del Cliente
+               
                 Cliente cliente = null;
 
                 // Primero intentamos por DNI (si viene)
@@ -93,11 +91,11 @@ namespace FarmaciaSantaRita.Controllers
                 if (cliente != null)
                 {
                     // Cliente existente → actualizamos lo que venga
-                    cliente.NombreCliente = datos.nombre?.Trim() ?? cliente.NombreCliente;
-                    if (!string.IsNullOrEmpty(datos.telefono)) cliente.TelefonoCliente = datos.telefono.Trim();
-                    if (!string.IsNullOrEmpty(datos.direccion)) cliente.DireccionCliente = datos.direccion.Trim();
-                    if (!string.IsNullOrEmpty(datos.dni)) cliente.DNI = datos.dni.Trim();
-                    _context.Clientes.Update(cliente);
+                    //cliente.NombreCliente = datos.nombre?.Trim() ?? cliente.NombreCliente;
+                    //if (!string.IsNullOrEmpty(datos.telefono)) cliente.TelefonoCliente = datos.telefono.Trim();
+                    //if (!string.IsNullOrEmpty(datos.direccion)) cliente.DireccionCliente = datos.direccion.Trim();
+                    //if (!string.IsNullOrEmpty(datos.dni)) cliente.DNI = datos.dni.Trim();
+                    //_context.Clientes.Update(cliente);
                 }
                 else
                 {

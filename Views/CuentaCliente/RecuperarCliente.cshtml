@@ -334,7 +334,7 @@
                    translate="no">Volver</a>
             </div>
 
-            <!-- Contenido principal: título + buscador + tabla -->
+            <!-- Contenido principal -->
             <div class="col-md-10 contenido-derecho">
                 <div class="bloque-interior">
                     <div class="seccion-tabla">
@@ -346,12 +346,8 @@
                                 </div>
                             </div>
                             <div class="input-group-custom">
-                                <input type="text"
-                                       id="buscadorCliente"
-                                       class="form-control"
-                                       placeholder="Buscar cliente"
-                                       aria-label="Buscar cliente"
-                                       autocomplete="off" />
+                                <input type="text" id="buscadorCliente" class="form-control"
+                                       placeholder="Buscar cliente" aria-label="Buscar cliente" autocomplete="off" />
                                 <div class="seccion-adorno">
                                     <i class="bi bi-search"></i>
                                     <span>Buscar</span>
@@ -383,33 +379,30 @@
                                 <tbody>
                                     @foreach (var compra in Model)
                                     {
-                                        var nombreCliente = compra.IdclienteNavigation?.NombreCliente ?? "Desconocido";
+                                        var cliente = compra.IdclienteNavigation;
                                         var linea = compra.LineaDeCompras?.FirstOrDefault();
 
                                         <tr data-id="@compra.Idcompras"
                                             data-idcliente="@compra.Idcliente"
-                                            data-nombre="@(nombreCliente.ToLower())">
+                                            data-nombre="@(cliente?.NombreCliente?.ToLower() ?? "")">
                                             <td class="fw-bold">
                                                 <span class="nombre-cliente-link"
                                                       style="cursor: pointer; text-decoration: underline; color: #007bff;">
-                                                    @nombreCliente
+                                                    @(cliente?.NombreCliente ?? "Desconocido")
                                                 </span>
                                             </td>
                                             <td>@(linea?.IdproductoNavigation?.NombreProducto ?? "Sin producto")</td>
                                             <td>@(linea?.Cantidad ?? 0)</td>
                                             <td>
-                                                $ @((linea?.IdproductoNavigation?.PrecioUnitario ?? 0m).ToString("N2"))
+                                                $@((linea?.IdproductoNavigation?.PrecioUnitario ?? 0m).ToString("N2"))
                                             </td>
                                             <td>@compra.FechaCompra.ToString("dd/MM/yyyy")</td>
                                             <td class="text-primary fw-bold">
                                                 $@compra.MontoCompra.ToString("N2")
                                             </td>
                                             <td>
-                                                @{
-                                                    var pg = compra.EstadoDePago == "pagado";
-                                                }
-                                                <span class="sel-estado @(pg ? "pagado" : "pendiente")">
-                                                    @(pg ? "Pagado" : "Pendiente")
+                                                <span class="sel-estado @(compra.EstadoDePago == "pagado" ? "pagado" : "pendiente")">
+                                                    @(compra.EstadoDePago == "pagado" ? "Pagado" : "Pendiente")
                                                 </span>
                                             </td>
                                             <td>
@@ -421,9 +414,7 @@
                                     }
                                     @for (int i = Model.Count; i < 5; i++)
                                     {
-                                        <tr class="fila-vacia">
-                                            <td colspan="8">&nbsp;</td>
-                                        </tr>
+                                        <tr class="fila-vacia"><td colspan="8">&nbsp;</td></tr>
                                     }
                                 </tbody>
                             </table>
@@ -438,35 +429,28 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    // Solo mantenemos lo esencial para la tabla y el buscador
     document.addEventListener("DOMContentLoaded", function () {
         const buscador = document.getElementById('buscadorCliente');
-        if (buscador) {
-            buscador.dispatchEvent(new Event('input'));
-        }
+        if (buscador) buscador.dispatchEvent(new Event('input'));
     });
 
     document.getElementById('buscadorCliente')?.addEventListener('input', function() {
         const filtro = this.value.toLowerCase().trim();
-        const filas = document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia)');
-        filas.forEach(fila => {
+        document.querySelectorAll('#tablaCompras tbody tr:not(.fila-vacia)').forEach(fila => {
             const nombre = (fila.dataset.nombre || '').toLowerCase();
-            const coincide = filtro === '' || nombre.includes(filtro);
-            fila.style.display = coincide ? '' : 'none';
+            fila.style.display = (filtro === '' || nombre.includes(filtro)) ? '' : 'none';
         });
     });
 
     async function eliminarFila(btn) {
         const tr = btn.closest('tr');
         const id = tr.dataset.id;
-        if (!id) {
-            tr.remove();
-            return;
-        }
+        if (!id) { tr.remove(); return; }
 
-        const confirmacion = await Swal.fire({
+        const result = await Swal.fire({
             title: '¿Eliminar compra?',
             text: 'Esta acción no se puede deshacer',
+            icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc3545',
             cancelButtonColor: '#6c757d',
@@ -474,7 +458,7 @@
             cancelButtonText: 'Cancelar'
         });
 
-        if (!confirmacion.isConfirmed) return;
+        if (!result.isConfirmed) return;
 
         try {
             const res = await fetch(`/CuentaCliente/EliminarCompra?id=${id}`, {
@@ -482,15 +466,15 @@
                 headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value }
             });
 
-            const result = await res.json();
-            if (result.success) {
+            const data = await res.json();
+            if (data.success) {
                 tr.remove();
-                Swal.fire('Eliminado', 'La compra ha sido eliminada', 'success');
+                Swal.fire('Eliminado', 'Compra eliminada correctamente', 'success');
             } else {
-                Swal.fire('Error', result.message || 'No se pudo eliminar', 'error');
+                Swal.fire('Error', data.message || 'No se pudo eliminar', 'error');
             }
-        } catch (e) {
-            Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+        } catch {
+            Swal.fire('Error', 'No se pudo conectar al servidor', 'error');
         }
     }
 </script>

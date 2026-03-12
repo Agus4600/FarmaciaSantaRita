@@ -385,6 +385,7 @@
                                     {
                                         var nombreCliente = compra.IdclienteNavigation?.NombreCliente ?? "Desconocido";
                                         var linea = compra.LineaDeCompras?.FirstOrDefault();
+
                                         <tr data-id="@compra.Idcompras"
                                             data-idcliente="@compra.Idcliente"
                                             data-nombre="@(nombreCliente.ToLower())">
@@ -396,9 +397,13 @@
                                             </td>
                                             <td>@(linea?.IdproductoNavigation?.NombreProducto ?? "Sin producto")</td>
                                             <td>@(linea?.Cantidad ?? 0)</td>
-                                            <td>$@(linea?.IdproductoNavigation?.PrecioUnitario?.ToString("N2") ?? "0,00")</td>
+                                            <td>
+                                                $ @((linea?.IdproductoNavigation?.PrecioUnitario ?? 0m).ToString("N2"))
+                                            </td>
                                             <td>@compra.FechaCompra.ToString("dd/MM/yyyy")</td>
-                                            <td class="text-primary fw-bold">$@compra.MontoCompra.ToString("N2")</td>
+                                            <td class="text-primary fw-bold">
+                                                $@compra.MontoCompra.ToString("N2")
+                                            </td>
                                             <td>
                                                 @{
                                                     var pg = compra.EstadoDePago == "pagado";

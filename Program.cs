@@ -67,4 +67,26 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Login}/{action=Index}/{id?}");
 
+app.MapControllerRoute(
+    name: "actualizarRol",
+    pattern: "actualizar/actualizarrol",
+    defaults: new { controller = "Actualizar", action = "ActualizarRol" });
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapPost("/actualizar/actualizarrol", async (HttpContext context) =>
+{
+    // Esto es solo para confirmar que la ruta existe
+    context.Response.ContentType = "application/json";
+    await context.Response.WriteAsync("{\"success\": true, \"message\": \"Ruta forzada OK - llegó aquí\"}");
+});
+
+// O la ruta real apuntando al método del controlador
+app.MapControllerRoute(
+    name: "actualizarRolForce",
+    pattern: "actualizar/actualizarrol",
+    defaults: new { controller = "Actualizar", action = "ActualizarRol" });
+
 app.Run();

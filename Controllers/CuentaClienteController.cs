@@ -38,23 +38,108 @@ namespace FarmaciaSantaRita.Controllers
         public async Task<IActionResult> Index()
         {
             var comprasBD = await _context.Compras
+                .Where(c => !c.IsDeleted)   // ← Solo las que NO están eliminadas
                 .Include(c => c.IdclienteNavigation)
                 .Include(c => c.LineaDeCompras)
                     .ThenInclude(l => l.IdproductoNavigation)
                 .OrderByDescending(c => c.Idcompras)
                 .ToListAsync();
 
-            // Pasamos los datos extras con ViewBag (como ya tenías en versiones anteriores)
             ViewBag.Clientes = await _context.Clientes
                 .Select(c => new { id = c.Idcliente, nombre = c.NombreCliente, dni = c.DNI })
                 .ToListAsync();
 
             ViewBag.Productos = await _context.Productos
-    .Select(p => new { Id = p.Idproducto, Nombre = p.NombreProducto, Precio = p.PrecioUnitario })
-    .ToListAsync();
+                .Select(p => new { Id = p.Idproducto, Nombre = p.NombreProducto, Precio = p.PrecioUnitario })
+                .ToListAsync();
 
-            return View(comprasBD);  // @model List<Compra>
+            return View(comprasBD);
         }
+
+
+
+
+
+
+
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetComprasEliminadas()
+        {
+            var eliminadas = await _context.Compras
+                .Where(c => c.IsDeleted)
+                .Include(c => c.IdclienteNavigation)
+                .Include(c => c.LineaDeCompras)
+                    .ThenInclude(l => l.IdproductoNavigation)
+                .OrderByDescending(c => c.FechaCompra)
+                .Select(c => new
+                {
+                    IdCompras = c.Idcompras,
+                    NombreCliente = c.IdclienteNavigation != null ? c.IdclienteNavigation.NombreCliente : "Desconocido",
+                    DNI = c.IdclienteNavigation != null ? c.IdclienteNavigation.DNI ?? "-" : "-",
+                    Telefono = c.IdclienteNavigation != null ? c.IdclienteNavigation.TelefonoCliente ?? "-" : "-",
+                    Direccion = c.IdclienteNavigation != null ? c.IdclienteNavigation.DireccionCliente ?? "-" : "-",
+                    Producto = c.LineaDeCompras != null && c.LineaDeCompras.Any()
+                        ? (c.LineaDeCompras.First().IdproductoNavigation != null
+                            ? c.LineaDeCompras.First().IdproductoNavigation.NombreProducto
+                            : "Sin producto")
+                        : "Sin producto",
+                    Cantidad = c.LineaDeCompras != null && c.LineaDeCompras.Any()
+                        ? c.LineaDeCompras.First().Cantidad
+                        : 0,
+                    PrecioUnitario = c.LineaDeCompras != null && c.LineaDeCompras.Any()
+                        && c.LineaDeCompras.First().IdproductoNavigation != null
+                        ? c.LineaDeCompras.First().IdproductoNavigation.PrecioUnitario
+                        : 0m,
+                    FechaCompra = c.FechaCompra.ToString("dd/MM/yyyy"),
+                    MontoCompra = c.MontoCompra,
+                    EstadoDePago = c.EstadoDePago ?? "pendiente"
+                })
+                .ToListAsync();
+
+            return Json(eliminadas);
+        }
+
+
+
+
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RecuperarCompra(int id)
+        {
+            try
+            {
+                var compra = await _context.Compras
+                    .FirstOrDefaultAsync(c => c.Idcompras == id && c.IsDeleted);
+
+                if (compra == null)
+                    return Json(new { success = false, message = "Compra no encontrada o no está eliminada" });
+
+                compra.IsDeleted = false;
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Compra recuperada correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -221,24 +306,19 @@ namespace FarmaciaSantaRita.Controllers
             try
             {
                 var compra = await _context.Compras
-                    .Include(c => c.LineaDeCompras)  // ← Cargamos las líneas asociadas
+                    .Include(c => c.LineaDeCompras)
                     .FirstOrDefaultAsync(c => c.Idcompras == id);
 
                 if (compra == null)
                     return Json(new { success = false, message = "Compra no encontrada" });
 
-                // 1. Borramos primero las líneas de compra
-                if (compra.LineaDeCompras != null && compra.LineaDeCompras.Any())
-                {
-                    _context.LineaDeCompras.RemoveRange(compra.LineaDeCompras);
-                }
-
-                // 2. Luego borramos la compra
-                _context.Compras.Remove(compra);
+                // Soft delete
+                compra.IsDeleted = true;
+                // Opcional: compra.FechaEliminacion = DateTime.UtcNow;  (si agregaste esta columna)
 
                 await _context.SaveChangesAsync();
 
-                return Json(new { success = true });
+                return Json(new { success = true, message = "Compra marcada como eliminada" });
             }
             catch (Exception ex)
             {

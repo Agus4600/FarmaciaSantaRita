@@ -1012,85 +1012,92 @@
 
 
 
-        document.querySelectorAll('.nombre-cliente-link').forEach(link => {
-    link.addEventListener('click', function() {
-        const tr = this.closest('tr');
-        const nombre = tr.querySelector('.nombre-cliente-link').innerText.trim();
-        const telefono = tr.dataset.telefono || 'Sin teléfono';
-        const direccion = tr.dataset.direccion || 'Sin dirección';
-        const dni = tr.dataset.dni || 'Sin DNI';
-        const idCliente = tr.dataset.idcliente; // Necesario para guardar después
+            document.querySelectorAll('.nombre-cliente-link').forEach(link => {
+        link.addEventListener('click', function() {
+            const tr = this.closest('tr');
+            const nombre = tr.querySelector('.nombre-cliente-link').innerText.trim();
+            const telefono = tr.dataset.telefono || 'Sin teléfono';
+            const direccion = tr.dataset.direccion || 'Sin dirección';
+            const dni = tr.dataset.dni || 'Sin DNI';
+            const idCliente = tr.dataset.idcliente;
 
-        Swal.fire({
-            title: `<strong>${nombre}</strong>`,
-            html: `
-                <div id="swalClienteDatos">
-                    <p><strong>DNI:</strong> <span id="dniView">${dni}</span></p>
-                    <p><strong>Teléfono:</strong> <span id="telefonoView">${telefono}</span></p>
-                    <p><strong>Dirección:</strong> <span id="direccionView">${direccion}</span></p>
-                </div>
-            `,
-            width: '450px',
-            showCancelButton: true,
-            cancelButtonText: 'Cancelar',
+            let isEditing = false; // Bandera para saber si estamos en modo edición
+
+            Swal.fire({
+                title: `<strong>${nombre}</strong>`,
+                html: `
+                    <div id="swalClienteDatos">
+                        <p><strong>DNI:</strong> <span id="dniText">${dni}</span></p>
+                        <p><strong>Teléfono:</strong> <span id="telefonoText">${telefono}</span></p>
+                        <p><strong>Dirección:</strong> <span id="direccionText">${direccion}</span></p>
+                    </div>
+                `,
+                width: '450px',
+                showCancelButton: true,
+                cancelButtonText: 'Cancelar',
                 cancelButtonColor: '#007bff',
-            showConfirmButton: true,
-            confirmButtonText: 'Entendido',
-            confirmButtonColor: '#007bff',
-            showDenyButton: true,               // Activamos el botón "Actualizar"
-            denyButtonText: 'Actualizar',
-                denyButtonColor: '#007bff',         // Celeste para diferenciar
-            reverseButtons: true,               // Importante: pone "Actualizar" a la izquierda de "Entendido"
-            allowOutsideClick: false,           // Evita cerrar accidentalmente
-            didOpen: () => {
-                // Opcional: podemos personalizar más aquí si queremos
-            }
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                // "Entendido" → solo cierra
-                return;
-            }
+                showConfirmButton: true,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff',
+                showDenyButton: true,
+                denyButtonText: 'Actualizar',
+                denyButtonColor: '#007bff',
+                reverseButtons: true,
+                allowOutsideClick: false,
+                preDeny: () => {
+                    if (isEditing) {
+                        // Ya estamos editando → no hacer nada (o validar)
+                        return false;
+                    }
 
-            if (result.isDenied) {
-                // "Actualizar" fue presionado → pasamos a modo edición
-                const datosDiv = document.getElementById('swalClienteDatos');
-                if (!datosDiv) return;
+                    // Entramos en modo edición SIN cerrar el popup
+                    isEditing = true;
 
-                // Cambiamos el título
-                Swal.update({ title: `<strong>Editar datos de ${nombre}</strong>` });
+                    // Cambiar título
+                    Swal.update({ title: `<strong>Editar datos de ${nombre}</strong>` });
 
-                // Convertimos los spans en inputs editables
-                document.getElementById('dniView').outerHTML = 
-                    `<input type="text" id="dniEdit" class="form-control mb-2" value="${dni}" placeholder="DNI" />`;
+                    // Convertir textos a inputs
+                    const dniSpan = document.getElementById('dniText');
+                    dniSpan.outerHTML = `<input type="text" id="dniEdit" class="form-control mb-2" value="${dni}" />`;
 
-                document.getElementById('telefonoView').outerHTML = 
-                    `<input type="text" id="telefonoEdit" class="form-control mb-2" value="${telefono}" placeholder="Teléfono" />`;
+                    const telefonoSpan = document.getElementById('telefonoText');
+                    telefonoSpan.outerHTML = `<input type="text" id="telefonoEdit" class="form-control mb-2" value="${telefono}" />`;
 
-                document.getElementById('direccionView').outerHTML = 
-                    `<input type="text" id="direccionEdit" class="form-control mb-2" value="${direccion}" placeholder="Dirección" />`;
+                    const direccionSpan = document.getElementById('direccionText');
+                    direccionSpan.outerHTML = `<input type="text" id="direccionEdit" class="form-control mb-2" value="${direccion}" />`;
 
-                // Cambiamos los botones del Swal
-                Swal.update({
-                    showDenyButton: false,              // Quitamos "Actualizar"
-                    showCancelButton: true,
-                    cancelButtonText: 'Cancelar',
-                    confirmButtonText: 'Guardar Cambios',
-                    confirmButtonColor: '#28a745'       // Verde para guardar
-                });
+                    // Cambiar botones
+                    Swal.update({
+                        showDenyButton: false,              // Quitamos "Actualizar"
+                        confirmButtonText: 'Guardar Cambios',
+                        confirmButtonColor: '#28a745'       // Verde para guardar
+                    });
 
-                // Sobrescribimos el evento del botón "Guardar Cambios"
-                Swal.getConfirmButton().onclick = async function(e) {
-                    e.preventDefault(); // Evitamos comportamiento por defecto
+                    return false; // Mantenemos el popup abierto
+                },
+                preConfirm: () => {
+                    if (!isEditing) {
+                        // Modo vista → solo cierra
+                        return true;
+                    }
 
+                    // Modo edición → validamos y preparamos datos para guardar
                     const dniNuevo = document.getElementById('dniEdit')?.value.trim() || dni;
                     const telefonoNuevo = document.getElementById('telefonoEdit')?.value.trim() || telefono;
                     const direccionNuevo = document.getElementById('direccionEdit')?.value.trim() || direccion;
 
-                    // Validación mínima (puedes agregar más reglas)
                     if (!dniNuevo && !telefonoNuevo && !direccionNuevo) {
                         Swal.showValidationMessage('Debe modificar al menos un campo');
                         return false;
                     }
+
+                    // Retornamos los datos para usarlos en .then()
+                    return { dni: dniNuevo, telefono: telefonoNuevo, direccion: direccionNuevo };
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed && isEditing) {
+                    // "Guardar Cambios" fue presionado
+                    const { dni, telefono, direccion } = result.value;
 
                     try {
                         const res = await fetch('/CuentaCliente/ActualizarCliente', {
@@ -1101,9 +1108,9 @@
                             },
                             body: JSON.stringify({
                                 idCliente: idCliente,
-                                dni: dniNuevo,
-                                telefono: telefonoNuevo,
-                                direccion: direccionNuevo
+                                dni: dni,
+                                telefono: telefono,
+                                direccion: direccion
                             })
                         });
 
@@ -1117,7 +1124,7 @@
                                 timer: 2000,
                                 showConfirmButton: false
                             }).then(() => {
-                                location.reload(); // Refresca para ver cambios
+                                location.reload();
                             });
                         } else {
                             Swal.fire('Error', data.message || 'No se pudo actualizar', 'error');
@@ -1125,11 +1132,11 @@
                     } catch (err) {
                         Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
                     }
-                };
-            }
+                }
+                // Si es "Entendido" (no edición) o "Cancelar" → simplemente cierra
+            });
         });
     });
-});
 
 
 

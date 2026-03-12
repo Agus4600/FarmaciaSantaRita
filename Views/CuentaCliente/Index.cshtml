@@ -262,22 +262,26 @@
         cursor: default;
     }
 
-        .sel-estado:disabled {
-            background-color: inherit; /* Mantiene el color de pagado/pendiente */
-            color: inherit;
-            opacity: 1; /* Evita que se vea "apagado" */
-        }
+            .sel-estado:disabled,
+            .sel-estado:disabled.pagado,
+            .sel-estado:disabled.pendiente {
+                background-color: inherit !important;
+                color: inherit !important;
+                border-color: inherit !important;
+                opacity: 1 !important; /* Evita el efecto gris apagado */
+                -webkit-text-fill-color: inherit !important; /* Para Safari/Chrome */
+            }
 
     .pagado {
-        background-color: #d1fae5;
-        color: #065f46;
-        border-color: #34d399;
+        background-color: #d1fae5 !important;
+        color: #065f46 !important;
+        border-color: #34d399 !important;
     }
 
     .pendiente {
-        background-color: #fff3cd;
-        color: #856404;
-        border-color: #ffeeba;
+        background-color: #fff3cd !important;
+        color: #856404 !important;
+        border-color: #ffeeba !important;
     }
 
     .btn-accion {

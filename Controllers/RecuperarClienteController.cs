@@ -10,7 +10,7 @@ namespace FarmaciaSantaRita.Controllers
         public IActionResult RecuperarCliente()
         {
             ViewData["Title"] = "Recuperar Cliente";
-            return View("RecuperarCliente");  // Nombre de la vista sin .cshtml
+            return View("~/Views/CuentaCliente/RecuperarCliente.cshtml");  // Nombre de la vista sin .cshtml
         }
     }
 }

@@ -16,6 +16,28 @@
 <!-- Librería SheetJS para exportar a Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
+    .swal2-popup.fixed-size-swal,
+    .swal2-modal,
+    .swal2-html-container {
+        min-width: 1200px !important;
+        width: 1200px !important;
+        min-height: 680px !important; /* suficiente para 5 filas + buscador + título */
+        max-height: 90vh !important;
+        height: auto !important;
+    }
+
+        /* El contenedor de la tabla debe tener altura mínima fija */
+        .swal2-html-container > div[style*="overflow-y: auto"] {
+            min-height: 520px !important;
+        }
+
+    /* Filas vacías con altura fija para que ocupen espacio real */
+    tr.fila-vacia td {
+        height: 45px !important;
+        padding: 12px 10px !important;
+        line-height: 1 !important;
+    }
+
     .fixed-size-swal {
         min-width: 1200px !important;
         width: 1200px !important;
@@ -1377,7 +1399,8 @@
                     if (popup) {
                         popup.style.minWidth = '1200px';
                         popup.style.width = '1200px';
-                        popup.style.minHeight = '600px';
+                        popup.style.minHeight = '620px';
+                        popup.style.maxHeight = '90vh';
                     }
                     const container = document.querySelector('.swal2-html-container');
                     if (container) {

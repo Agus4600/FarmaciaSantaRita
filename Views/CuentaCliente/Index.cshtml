@@ -16,27 +16,36 @@
 <!-- Librería SheetJS para exportar a Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
+    /* Fuerza tamaño grande y altura mínima */
+    .fixed-size-swal,
     .swal2-popup.fixed-size-swal,
-    .swal2-modal,
     .swal2-html-container {
         min-width: 1200px !important;
         width: 1200px !important;
-        min-height: 680px !important; /* suficiente para 5 filas + buscador + título */
+        min-height: 680px !important; /* ~5 filas + buscador + márgenes */
         max-height: 90vh !important;
-        height: auto !important;
     }
 
-        /* El contenedor de la tabla debe tener altura mínima fija */
+        /* Contenedor de la tabla con altura mínima fuerte */
         .swal2-html-container > div[style*="overflow-y: auto"] {
             min-height: 520px !important;
         }
 
-    /* Filas vacías con altura fija para que ocupen espacio real */
+    /* Filas vacías SIEMPRE visibles y con altura fija */
+    tr.fila-vacia,
     tr.fila-vacia td {
+        display: table-row !important;
         height: 45px !important;
-        padding: 12px 10px !important;
-        line-height: 1 !important;
+        min-height: 45px !important;
+        visibility: visible !important;
     }
+
+    /* Clase para filas filtradas (no las ocultamos del todo, solo las "apagamos") */
+    tr.fila-filtrada {
+        opacity: 0.15 !important;
+        pointer-events: none !important;
+    }
+    
 
     .fixed-size-swal {
         min-width: 1200px !important;
@@ -1286,7 +1295,7 @@
 
 
 
-                document.getElementById('btnRestaurar').addEventListener('click', async function () {
+           document.getElementById('btnRestaurar').addEventListener('click', async function () {
         try {
             const res = await fetch('/CuentaCliente/GetComprasEliminadas');
             if (!res.ok) {
@@ -1326,22 +1335,27 @@
             eliminadas.forEach(compra => {
                 const nombreConSaltos = (compra.nombreCliente || 'Desconocido').replace(/\s+/g, '<br>');
                 const productoConSaltos = (compra.producto || 'Sin producto').replace(/\s+/g, '<br>');
-
                 tablaHtml += `
                     <tr data-nombre="${(compra.nombreCliente || '').toLowerCase()}"
-                        data-dni="${(compra.dni || '').toLowerCase()}">
+                        data-dni="${(compra.dni || '').toLowerCase()}" class="fila-real">
                         <td style="padding: 12px 10px; border: 1px solid #dee2e6; white-space: pre-line; word-break: normal; line-height: 1.4;">
                             ${nombreConSaltos}
                         </td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.dni}</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.dni || ''}</td>
                         <td style="padding: 12px 10px; border: 1px solid #dee2e6; white-space: pre-line; word-break: normal; line-height: 1.4;">
                             ${productoConSaltos}
                         </td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.cantidad}</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">$${compra.precioUnitario.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">$${compra.montoCompra.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.fechaCompra}</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.estadoDePago === 'pagado' ? 'Pagado' : 'Pendiente'}</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.cantidad || 0}</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">
+                            $${(compra.precioUnitario || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">
+                            $${(compra.montoCompra || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.fechaCompra || ''}</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">
+                            ${compra.estadoDePago === 'pagado' ? 'Pagado' : 'Pendiente'}
+                        </td>
                         <td style="padding: 12px 10px; border: 1px solid #dee2e6; text-align: center;">
                             <button class="btn btn-success btn-sm recuperar-btn" data-id="${compra.idCompras}" style="padding: 6px 12px;">
                                 <i class="bi bi-arrow-repeat"></i> Recuperar
@@ -1351,8 +1365,8 @@
                 `;
             });
 
-            // Si no hay registros, mostramos mensaje en una fila
-            if (eliminadas.length === 5) {
+            // Si no hay registros → mensaje
+            if (eliminadas.length === 0) {
                 tablaHtml += `
                     <tr>
                         <td colspan="9" style="padding: 80px 20px; text-align:center; font-size: 16px; color: #6c757d;">
@@ -1362,20 +1376,20 @@
                 `;
             }
 
-            // Siempre completar hasta exactamente 5 filas (reales o mensaje cuentan como 1)
+            // Siempre completar hasta 5 filas visibles
             const filasContadas = eliminadas.length > 0 ? eliminadas.length : 1;
             for (let i = filasContadas; i < 5; i++) {
                 tablaHtml += `
                     <tr class="fila-vacia">
-                        <td style="padding: 45px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
-                        <td style="padding: 45px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
-                        <td style="padding: 45px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
-                        <td style="padding: 45px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
-                        <td style="padding: 45px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
-                        <td style="padding: 45px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
-                        <td style="padding: 45px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
-                        <td style="padding: 45px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
-                        <td style="padding: 45px 10px; border: 1px solid #dee2e6; text-align: center;">&nbsp;</td>
+                        <td style="height: 45px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 45px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 45px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 45px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 45px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 45px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 45px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 45px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 45px; padding: 12px 10px; border: 1px solid #dee2e6; text-align: center;">&nbsp;</td>
                     </tr>
                 `;
             }
@@ -1385,7 +1399,7 @@
             Swal.fire({
                 title: 'Compras Eliminadas',
                 html: tablaHtml,
-                width: '1200px',  // solo este parámetro es válido y suficiente en v11
+                width: '1200px',
                 heightAuto: false,
                 padding: '25px',
                 showCloseButton: true,
@@ -1394,35 +1408,32 @@
                     popup: 'bloque-interior-swal fixed-size-swal'
                 },
                 didOpen: () => {
-                    // === TU CÓDIGO EXACTO (sin parámetros inválidos) ===
                     const popup = Swal.getPopup();
                     if (popup) {
                         popup.style.minWidth = '1200px';
                         popup.style.width = '1200px';
-                        popup.style.minHeight = '620px';
+                        popup.style.minHeight = '680px';
                         popup.style.maxHeight = '90vh';
                     }
+
                     const container = document.querySelector('.swal2-html-container');
                     if (container) {
-                        container.style.minHeight = '500px'; // espacio interno mínimo
+                        container.style.minHeight = '520px';
                     }
 
-                    // Buscador predictivo (no oculta filas vacías)
+                    // Buscador: solo "apaga" filas reales, nunca oculta vacías
                     const buscador = document.getElementById('buscadorEliminadas');
                     if (buscador) {
                         buscador.focus();
                         buscador.addEventListener('input', function () {
                             const filtro = this.value.toLowerCase().trim();
-                            const filas = document.querySelectorAll('#tablaEliminadas tbody tr');
-                            filas.forEach(fila => {
-                                if (fila.classList.contains('fila-vacia')) {
-                                    fila.style.display = ''; // nunca ocultar vacías
-                                    return;
-                                }
+                            const filasReales = document.querySelectorAll('#tablaEliminadas tbody tr.fila-real');
+
+                            filasReales.forEach(fila => {
                                 const nombre = fila.dataset.nombre || '';
                                 const dni = fila.dataset.dni || '';
                                 const coincide = filtro === '' || nombre.includes(filtro) || dni.includes(filtro);
-                                fila.style.display = coincide ? '' : 'none';
+                                fila.classList.toggle('fila-filtrada', !coincide);
                             });
                         });
                     }

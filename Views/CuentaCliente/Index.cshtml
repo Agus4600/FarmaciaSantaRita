@@ -1300,7 +1300,7 @@
                         <tbody>
             `;
 
-            // 1. Mostrar las filas reales (si hay)
+            // Mostrar filas reales
             eliminadas.forEach(compra => {
                 const nombreConSaltos = (compra.nombreCliente || 'Desconocido').replace(/\s+/g, '<br>');
                 const productoConSaltos = (compra.producto || 'Sin producto').replace(/\s+/g, '<br>');
@@ -1329,7 +1329,7 @@
                 `;
             });
 
-            // 2. Si NO hay registros → mostramos el mensaje en la primera fila
+            // Si no hay registros, mostramos mensaje en una fila
             if (eliminadas.length === 0) {
                 tablaHtml += `
                     <tr>
@@ -1340,20 +1340,20 @@
                 `;
             }
 
-            // 3. Completamos siempre hasta 5 filas con filas vacías
-            const filasRealesOMensaje = eliminadas.length > 0 ? eliminadas.length : 1;
-            for (let i = filasRealesOMensaje; i < 5; i++) {
+            // Siempre completar hasta exactamente 5 filas (reales o mensaje cuentan como 1)
+            const filasContadas = eliminadas.length > 0 ? eliminadas.length : 1;
+            for (let i = filasContadas; i < 5; i++) {
                 tablaHtml += `
                     <tr class="fila-vacia">
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6; text-align: center;">&nbsp;</td>
+                        <td style="padding: 45px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="padding: 45px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="padding: 45px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="padding: 45px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="padding: 45px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="padding: 45px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="padding: 45px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="padding: 45px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="padding: 45px 10px; border: 1px solid #dee2e6; text-align: center;">&nbsp;</td>
                     </tr>
                 `;
             }
@@ -1363,19 +1363,16 @@
             Swal.fire({
                 title: 'Compras Eliminadas',
                 html: tablaHtml,
-                width: '1200px',
-                minWidth: '1200px',
-                maxWidth: '95vw',
+                width: '1200px',  // solo este parámetro es válido y suficiente en v11
                 heightAuto: false,
                 padding: '25px',
-                borderRadius: '16px',
                 showCloseButton: true,
                 showConfirmButton: false,
                 customClass: {
                     popup: 'bloque-interior-swal fixed-size-swal'
                 },
                 didOpen: () => {
-                    // === TU CÓDIGO EXACTO QUE QUERÍAS ===
+                    // === TU CÓDIGO EXACTO (sin parámetros inválidos) ===
                     const popup = Swal.getPopup();
                     if (popup) {
                         popup.style.minWidth = '1200px';
@@ -1387,7 +1384,7 @@
                         container.style.minHeight = '500px'; // espacio interno mínimo
                     }
 
-                    // Buscador predictivo (actualizado para no ocultar filas vacías)
+                    // Buscador predictivo (no oculta filas vacías)
                     const buscador = document.getElementById('buscadorEliminadas');
                     if (buscador) {
                         buscador.focus();
@@ -1395,9 +1392,8 @@
                             const filtro = this.value.toLowerCase().trim();
                             const filas = document.querySelectorAll('#tablaEliminadas tbody tr');
                             filas.forEach(fila => {
-                                // No ocultamos filas vacías (class="fila-vacia")
                                 if (fila.classList.contains('fila-vacia')) {
-                                    fila.style.display = '';
+                                    fila.style.display = ''; // nunca ocultar vacías
                                     return;
                                 }
                                 const nombre = fila.dataset.nombre || '';

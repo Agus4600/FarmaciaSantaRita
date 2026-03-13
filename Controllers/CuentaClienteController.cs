@@ -69,7 +69,7 @@ namespace FarmaciaSantaRita.Controllers
         public async Task<IActionResult> GetComprasEliminadas()
         {
             var eliminadas = await _context.Compras
-                .Where(c => c.IsDeleted)
+                .Where(c => c.IsDeleted || c.IsDeleted.ToString() == "el" || c.IsDeleted.ToString() == "true" || c.IsDeleted.ToString() == "1")
                 .Include(c => c.IdclienteNavigation)
                 .Include(c => c.LineaDeCompras)
                     .ThenInclude(l => l.IdproductoNavigation)
@@ -113,21 +113,31 @@ namespace FarmaciaSantaRita.Controllers
         {
             try
             {
+                // Buscamos la compra sin importar el valor exacto de IsDeleted (para debug inicial)
                 var compra = await _context.Compras
-                    .FirstOrDefaultAsync(c => c.Idcompras == id && c.IsDeleted);
+                    .FirstOrDefaultAsync(c => c.Idcompras == id);
 
                 if (compra == null)
-                    return Json(new { success = false, message = "Compra no encontrada o no está eliminada" });
+                    return Json(new { success = false, message = "Compra no encontrada (ID inválido)" });
 
+                // Verificamos si está "eliminada" según los valores que hemos visto
+                bool estaEliminada = compra.IsDeleted ||
+                                     compra.IsDeleted.ToString().ToLower() == "el" ||
+                                     compra.IsDeleted.ToString() == "true" ||
+                                     compra.IsDeleted.ToString() == "1";
+
+                if (!estaEliminada)
+                    return Json(new { success = false, message = "Esta compra no está marcada como eliminada" });
+
+                // Marcamos como NO eliminada
                 compra.IsDeleted = false;
-
                 await _context.SaveChangesAsync();
 
                 return Json(new { success = true, message = "Compra recuperada correctamente" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Error al recuperar: " + ex.Message });
             }
         }
 

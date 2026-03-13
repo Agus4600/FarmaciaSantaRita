@@ -16,12 +16,6 @@
 <!-- Librería SheetJS para exportar a Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-    .fila-oculta {
-        opacity: 0 !important;
-        pointer-events: none !important;
-        height: 60px !important; /* altura fija para que ocupe lugar */
-        min-height: 60px !important;
-    }
     /* Solo esto: scroll interno cuando hay más de 5 filas */
     .contenedor-tabla-eliminadas {
         width: 100%;
@@ -33,10 +27,6 @@
         background: white;
     }
 
-    #tablaEliminadas tbody {
-        min-height: 300px !important; /* 5 filas × ~60px */
-        display: table !important;
-    }
 
     /* Altura fija para filas (para que se vean uniformes) */
     #tablaEliminadas tr {
@@ -1405,25 +1395,49 @@
                 customClass: {
                     popup: 'bloque-interior-swal'
                 },
-                didOpen: () => {
-                    // Buscador: oculta SOLO filas reales que no coincidan
-                    const buscador = document.getElementById('buscadorEliminadas');
-                    if (buscador) {
-                        buscador.focus();
-                            buscador.addEventListener('input', function () {
-        const filtro = this.value.toLowerCase().trim();
-        document.querySelectorAll('#tablaEliminadas .fila-real').forEach(fila => {
-            const nombre = fila.dataset.nombre || '';
-            const dni = fila.dataset.dni || '';
-            const coincide = filtro === '' || nombre.includes(filtro) || dni.includes(filtro);
-            if (coincide) {
-                fila.classList.remove('fila-oculta');
-            } else {
-                fila.classList.add('fila-oculta');
-            }
-        });
-    });
+                    didOpen: () => {
+        const buscador = document.getElementById('buscadorEliminadas');
+        if (buscador) {
+            buscador.focus();
+
+            // Guardamos el HTML original de cada fila real al cargar (una sola vez)
+            const filasReales = document.querySelectorAll('#tablaEliminadas .fila-real');
+            filasReales.forEach(fila => {
+                fila.dataset.htmlOriginal = fila.innerHTML;
+            });
+
+            buscador.addEventListener('input', function () {
+                const filtro = this.value.toLowerCase().trim();
+
+                filasReales.forEach(fila => {
+                    const nombre = fila.dataset.nombre || '';
+                    const dni = fila.dataset.dni || '';
+                    const coincide = filtro === '' || nombre.includes(filtro) || dni.includes(filtro);
+
+                    if (coincide) {
+                        // Restauramos el contenido original
+                        fila.innerHTML = fila.dataset.htmlOriginal;
+                    } else {
+                        // Vaciamos la fila (queda como vacía, pero mantiene altura y estructura)
+                        fila.innerHTML = `
+                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
+                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
+                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
+                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
+                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
+                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
+                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
+                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
+                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6; text-align:center;">&nbsp;</td>
+                        `;
                     }
+                });
+            });
+        }
+
+        // Botones recuperar (sin cambios)
+        // ... (el resto igual)
+    }
 
                     // Botones recuperar (sin cambios)
                     document.querySelectorAll('.recuperar-btn').forEach(btn => {

@@ -1294,6 +1294,7 @@
             const res = await fetch('/CuentaCliente/GetComprasEliminadas');
             if (!res.ok) throw new Error('Error al cargar');
             const eliminadas = await res.json();
+            console.log('JSON recibido de eliminadas:', eliminadas);
 
             let tablaHtml = `
                 <div style="margin-bottom: 15px;">

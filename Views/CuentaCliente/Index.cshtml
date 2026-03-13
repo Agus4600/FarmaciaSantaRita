@@ -1469,43 +1469,79 @@
             });
         }
                     // Botones recuperar (sin cambios)
-                    document.querySelectorAll('.recuperar-btn').forEach(btn => {
-                        btn.addEventListener('click', async function () {
-                            const id = this.getAttribute('data-id');
-                            const confirm = await Swal.fire({
-                                title: '¿Recuperar esta compra?',
-                                text: "Volverá a aparecer en el listado principal.",
-                                icon: 'question',
-                                showCancelButton: true,
-                                confirmButtonColor: '#28a745',
-                                cancelButtonColor: '#d33',
-                                confirmButtonText: 'Sí, recuperar',
-                                cancelButtonText: 'Cancelar'
-                            });
-                            if (confirm.isConfirmed) {
-                                try {
-                                    const res = await fetch('/CuentaCliente/RecuperarCompra', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                                        },
-                                        body: JSON.stringify({ id: parseInt(id) })
-                                    });
-                                    const data = await res.json();
-                                    if (data.success) {
-                                        Swal.fire('¡Recuperada!', data.message || 'La compra fue restaurada.', 'success')
-                                            .then(() => location.reload());
-                                    } else {
-                                        Swal.fire('Error', data.message || 'No se pudo recuperar', 'error');
-                                    }
-                                } catch (err) {
-                                    console.error('Error al recuperar:', err);
-                                    Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
-                                }
-                            }
-                        });
+                        document.querySelectorAll('.recuperar-btn').forEach(btn => {
+        btn.addEventListener('click', async function () {
+            const id = this.getAttribute('data-id');
+            if (!id) {
+                Swal.fire('Error', 'No se encontró el ID de la compra.', 'error');
+                return;
+            }
+
+            const confirm = await Swal.fire({
+                title: '¿Recuperar esta compra?',
+                text: "Volverá a aparecer en el listado principal de compras registradas.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',  // Verde éxito
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, recuperar',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (!confirm.isConfirmed) return;
+
+            // Mostrar loading mientras se procesa
+            Swal.fire({
+                title: 'Procesando...',
+                text: 'Recuperando la compra, por favor espera.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            try {
+                const res = await fetch('/CuentaCliente/RecuperarCompra', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ id: parseInt(id) })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.message || 'Error en el servidor');
+                }
+
+                const data = await res.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Recuperada!',
+                        text: data.message || 'La compra fue restaurada correctamente y volverá a aparecer en el listado.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        // Cerramos el modal de eliminadas y recargamos la página principal
+                        Swal.close();
+                        location.reload();  // ← Esto hace que la compra vuelva a la tabla principal
                     });
+                } else {
+                    Swal.fire('Error', data.message || 'No se pudo recuperar la compra.', 'error');
+                }
+            } catch (err) {
+                console.error('Error al recuperar compra:', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message || 'No se pudo conectar con el servidor. Intenta de nuevo.',
+                });
+            }
+        });
+    });
                 }
             });
         } catch (err) {

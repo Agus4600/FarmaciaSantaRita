@@ -1294,7 +1294,7 @@
             const res = await fetch('/CuentaCliente/GetComprasEliminadas');
             if (!res.ok) throw new Error('Error al cargar');
             const eliminadas = await res.json();
-            console.log('JSON recibido de eliminadas:', eliminadas);
+            console.log('Compras eliminadas recibidas:', eliminadas);
 
             let tablaHtml = `
                 <div style="margin-bottom: 15px;">
@@ -1345,7 +1345,7 @@
                             ${compra.estadoDePago === 'pagado' ? 'Pagado' : 'Pendiente'}
                         </td>
                         <td style="padding: 12px 10px; border: 1px solid #dee2e6; text-align: center;">
-                                <button class="btn btn-success btn-sm recuperar-btn" data-id="${compra.IdCompras}">
+                                    <button class="btn btn-success btn-sm recuperar-btn" data-id="${compra.IdCompras ?? 0}">
         <i class="bi bi-arrow-repeat"></i> Recuperar
     </button>
                         </td>

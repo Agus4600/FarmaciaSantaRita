@@ -1300,11 +1300,13 @@
                         <tbody>
             `;
 
-            if (eliminadas.length === 0) {
-                tablaHtml += `<tr><td colspan="9" style="padding: 30px; text-align:center; font-size: 16px; color: #6c757d;">No hay compras eliminadas</td></tr>`;
-            } else {
-                eliminadas.forEach(compra => {
-                    // Para forzar UNA PALABRA POR LÍNEA: reemplazamos espacios por <br>
+            const filasAMostrar = eliminadas.length > 0 ? eliminadas : [null]; // Siempre al menos 1 fila para mantener estructura
+
+            filasAMostrar.forEach((compra, index) => {
+                if (compra === null) {
+                    // Mensaje cuando no hay registros (pero manteniendo estructura)
+                    tablaHtml += `<tr><td colspan="9" style="padding: 100px 20px; text-align:center; font-size: 16px; color: #6c757d;">No hay compras eliminadas</td></tr>`;
+                } else {
                     const nombreConSaltos = (compra.nombreCliente || 'Desconocido').replace(/\s+/g, '<br>');
                     const productoConSaltos = (compra.producto || 'Sin producto').replace(/\s+/g, '<br>');
 
@@ -1330,7 +1332,25 @@
                             </td>
                         </tr>
                     `;
-                });
+                }
+            });
+
+            // Siempre agregamos filas vacías hasta llegar a 5 (si hay menos de 5 registros)
+            const filasActuales = eliminadas.length;
+            for (let i = filasActuales; i < 5; i++) {
+                tablaHtml += `
+                    <tr class="fila-vacia">
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6; text-align: center;">&nbsp;</td>
+                    </tr>
+                `;
             }
 
             tablaHtml += `</tbody></table></div>`;
@@ -1350,13 +1370,25 @@
                     popup: 'bloque-interior-swal fixed-size-swal'
                 },
                 didOpen: () => {
+                    // === TU CÓDIGO EXACTO QUE ME PASASTE ===
+                    const popup = Swal.getPopup();
+                    if (popup) {
+                        popup.style.minWidth = '1200px';
+                        popup.style.width = '1200px';
+                        popup.style.minHeight = '600px';
+                    }
+                    const container = document.querySelector('.swal2-html-container');
+                    if (container) {
+                        container.style.minHeight = '500px'; // espacio interno mínimo
+                    }
+
                     // Buscador predictivo
                     const buscador = document.getElementById('buscadorEliminadas');
                     if (buscador) {
                         buscador.focus();
                         buscador.addEventListener('input', function () {
                             const filtro = this.value.toLowerCase().trim();
-                            const filas = document.querySelectorAll('#tablaEliminadas tbody tr');
+                            const filas = document.querySelectorAll('#tablaEliminadas tbody tr:not(.fila-vacia)');
                             filas.forEach(fila => {
                                 const nombre = fila.dataset.nombre || '';
                                 const dni = fila.dataset.dni || '';
@@ -1380,7 +1412,6 @@
                                 confirmButtonText: 'Sí, recuperar',
                                 cancelButtonText: 'Cancelar'
                             });
-
                             if (confirm.isConfirmed) {
                                 try {
                                     const res = await fetch('/CuentaCliente/RecuperarCompra', {
@@ -1391,7 +1422,6 @@
                                         },
                                         body: JSON.stringify({ id: parseInt(id) })
                                     });
-
                                     const data = await res.json();
                                     if (data.success) {
                                         Swal.fire('¡Recuperada!', data.message || 'La compra fue restaurada.', 'success')

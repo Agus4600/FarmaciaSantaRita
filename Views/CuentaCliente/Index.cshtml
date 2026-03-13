@@ -16,6 +16,37 @@
 <!-- Librería SheetJS para exportar a Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
+    /* Fuerza el popup de SweetAlert2 a tener altura fija grande */
+    .fixed-size-swal,
+    .swal2-popup.fixed-size-swal {
+        min-width: 1200px !important;
+        width: 1200px !important;
+        min-height: 680px !important; /* suficiente para título + buscador + 5 filas */
+        max-height: 90vh !important;
+    }
+
+    /* Contenedor de la tabla: altura mínima fuerte */
+    .swal2-html-container > div {
+        min-height: 320px !important; /* ~5 filas de ~60px cada una + márgenes */
+        overflow-y: auto !important;
+    }
+
+    /* Filas vacías: SIEMPRE visibles, altura fija */
+    tr.fila-vacia,
+    tr.fila-vacia td {
+        display: table-row !important;
+        height: 60px !important; /* más alto para que se vea bien */
+        min-height: 60px !important;
+        visibility: visible !important;
+        background: #f8f9fa !important; /* opcional: color gris claro para diferenciar */
+    }
+
+    /* Evita que el tbody colapse cuando hay filas ocultas */
+    #tablaEliminadas tbody {
+        min-height: 300px !important;
+        display: table !important;
+    }
+
     .fixed-size-swal {
         min-width: 1200px !important;
         width: 1200px !important;

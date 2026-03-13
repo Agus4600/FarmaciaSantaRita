@@ -18,9 +18,13 @@
 <style>
     /* Solo esto: scroll interno cuando hay más de 5 filas */
     .contenedor-tabla-eliminadas {
-        max-height: 350px; /* Ajustá este valor según cuántas filas quepan cómodas en tu diseño */
+        width: 100%;
+        max-height: 320px; /* Ajustá este valor si querés más/menos alto (ej: 350px para 6 filas) */
         overflow-y: auto;
         overflow-x: hidden;
+        border: 1px solid #dee2e6;
+        border-radius: 12px;
+        background: white;
     }
 
     /* Altura fija para filas (para que se vean uniformes) */
@@ -28,10 +32,13 @@
         height: 50px;
     }
 
-        /* Evita que las filas vacías se colapsen */
-        #tablaEliminadas tr.fila-vacia td {
-            height: 50px !important;
-        }
+    tr.fila-vacia,
+    tr.fila-vacia td {
+        height: 60px !important;
+        min-height: 60px !important;
+        display: table-row !important;
+        visibility: visible !important;
+    }
 
     .fixed-size-swal {
         min-width: 1200px !important;
@@ -1281,7 +1288,7 @@
 
 
 
-            document.getElementById('btnRestaurar').addEventListener('click', async function () {
+                document.getElementById('btnRestaurar').addEventListener('click', async function () {
         try {
             const res = await fetch('/CuentaCliente/GetComprasEliminadas');
             if (!res.ok) throw new Error('Error al cargar');
@@ -1296,7 +1303,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="contenedor-tabla-eliminadas" style="width: 100%; border: 1px solid #dee2e6; border-radius: 12px; background: white;">
+                <div class="contenedor-tabla-eliminadas">
                     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center;" id="tablaEliminadas">
                         <thead style="background: #0d6efd; color: white; position: sticky; top: 0;">
                             <tr>
@@ -1314,7 +1321,7 @@
                         <tbody>
             `;
 
-            // Agregar filas reales (solo las que existen)
+            // Filas reales (las que tienen datos)
             eliminadas.forEach(compra => {
                 const nombre = (compra.nombreCliente || 'Desconocido').replace(/\s+/g, '<br>');
                 const producto = (compra.producto || 'Sin producto').replace(/\s+/g, '<br>');
@@ -1325,10 +1332,16 @@
                         <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.dni || ''}</td>
                         <td style="padding: 12px 10px; border: 1px solid #dee2e6; white-space: pre-line;">${producto}</td>
                         <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.cantidad || 0}</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">$${ (compra.precioUnitario || 0).toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">$${ (compra.montoCompra || 0).toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">
+                            $${(compra.precioUnitario || 0).toLocaleString('es-AR', {minimumFractionDigits: 2})}
+                        </td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">
+                            $${(compra.montoCompra || 0).toLocaleString('es-AR', {minimumFractionDigits: 2})}
+                        </td>
                         <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.fechaCompra || ''}</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.estadoDePago === 'pagado' ? 'Pagado' : 'Pendiente'}</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">
+                            ${compra.estadoDePago === 'pagado' ? 'Pagado' : 'Pendiente'}
+                        </td>
                         <td style="padding: 12px 10px; border: 1px solid #dee2e6; text-align: center;">
                             <button class="btn btn-success btn-sm recuperar-btn" data-id="${compra.idCompras}">
                                 <i class="bi bi-arrow-repeat"></i> Recuperar
@@ -1338,7 +1351,7 @@
                 `;
             });
 
-            // Si no hay registros, mensaje en la primera fila
+            // Si no hay registros → mensaje en la primera fila
             if (eliminadas.length === 0) {
                 tablaHtml += `
                     <tr>
@@ -1349,9 +1362,10 @@
                 `;
             }
 
-            // Completar hasta 5 filas visibles con vacías limpias
-            const filasActuales = eliminadas.length > 0 ? eliminadas.length : 1;
-            for (let i = filasActuales; i < 5; i++) {
+            // Completar hasta 5 filas con vacías limpias
+            const filasReales = eliminadas.length;
+            const filasVaciar = 5 - (filasReales > 0 ? filasReales : 1);
+            for (let i = 0; i < filasVaciar; i++) {
                 tablaHtml += `
                     <tr class="fila-vacia">
                         <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
@@ -1378,10 +1392,10 @@
                 showCloseButton: true,
                 showConfirmButton: false,
                 customClass: {
-                    popup: 'bloque-interior-swal fixed-size-swal'
+                    popup: 'bloque-interior-swal'
                 },
                 didOpen: () => {
-                    // Buscador: oculta SOLO filas con datos que no coincidan
+                    // Buscador: oculta SOLO filas reales que no coincidan
                     const buscador = document.getElementById('buscadorEliminadas');
                     if (buscador) {
                         buscador.focus();
@@ -1396,7 +1410,7 @@
                         });
                     }
 
-                    // Botones recuperar
+                    // Botones recuperar (sin cambios)
                     document.querySelectorAll('.recuperar-btn').forEach(btn => {
                         btn.addEventListener('click', async function () {
                             const id = this.getAttribute('data-id');

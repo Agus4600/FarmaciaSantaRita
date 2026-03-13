@@ -16,36 +16,22 @@
 <!-- Librería SheetJS para exportar a Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-    /* Fuerza el popup de SweetAlert2 a tener altura fija grande */
-    .fixed-size-swal,
-    .swal2-popup.fixed-size-swal {
-        min-width: 1200px !important;
-        width: 1200px !important;
-        min-height: 680px !important; /* suficiente para título + buscador + 5 filas */
-        max-height: 90vh !important;
+    /* Solo esto: scroll interno cuando hay más de 5 filas */
+    .contenedor-tabla-eliminadas {
+        max-height: 350px; /* Ajustá este valor según cuántas filas quepan cómodas en tu diseño */
+        overflow-y: auto;
+        overflow-x: hidden;
     }
 
-    /* Contenedor de la tabla: altura mínima fuerte */
-    .swal2-html-container > div {
-        min-height: 320px !important; /* ~5 filas de ~60px cada una + márgenes */
-        overflow-y: auto !important;
+    /* Altura fija para filas (para que se vean uniformes) */
+    #tablaEliminadas tr {
+        height: 50px;
     }
 
-    /* Filas vacías: SIEMPRE visibles, altura fija */
-    tr.fila-vacia,
-    tr.fila-vacia td {
-        display: table-row !important;
-        height: 60px !important; /* más alto para que se vea bien */
-        min-height: 60px !important;
-        visibility: visible !important;
-        background: #f8f9fa !important; /* opcional: color gris claro para diferenciar */
-    }
-
-    /* Evita que el tbody colapse cuando hay filas ocultas */
-    #tablaEliminadas tbody {
-        min-height: 300px !important;
-        display: table !important;
-    }
+        /* Evita que las filas vacías se colapsen */
+        #tablaEliminadas tr.fila-vacia td {
+            height: 50px !important;
+        }
 
     .fixed-size-swal {
         min-width: 1200px !important;
@@ -1298,9 +1284,7 @@
             document.getElementById('btnRestaurar').addEventListener('click', async function () {
         try {
             const res = await fetch('/CuentaCliente/GetComprasEliminadas');
-            if (!res.ok) {
-                throw new Error('Error al cargar compras eliminadas: ' + res.status);
-            }
+            if (!res.ok) throw new Error('Error al cargar');
             const eliminadas = await res.json();
 
             let tablaHtml = `
@@ -1308,14 +1292,13 @@
                     <div class="input-group-custom" style="max-width: 500px; margin: 0 auto;">
                         <input type="text" id="buscadorEliminadas" class="form-control" placeholder="Buscar por nombre o DNI..." autocomplete="off" />
                         <div class="seccion-adorno">
-                            <i class="bi bi-search"></i>
-                            <span>Buscar</span>
+                            <i class="bi bi-search"></i><span>Buscar</span>
                         </div>
                     </div>
                 </div>
-                <div style="width: 100%; border: 1px solid #dee2e6; border-radius: 12px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.08); min-height: 320px;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center; table-layout: fixed;" id="tablaEliminadas">
-                        <thead style="background: #0d6efd; color: white; position: sticky; top: 0; z-index: 10;">
+                <div class="contenedor-tabla-eliminadas" style="width: 100%; border: 1px solid #dee2e6; border-radius: 12px; background: white;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center;" id="tablaEliminadas">
+                        <thead style="background: #0d6efd; color: white; position: sticky; top: 0;">
                             <tr>
                                 <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 16%;">Cliente</th>
                                 <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 11%;">DNI</th>
@@ -1331,33 +1314,23 @@
                         <tbody>
             `;
 
-            // Filas con datos reales
+            // Agregar filas reales (solo las que existen)
             eliminadas.forEach(compra => {
-                const nombreConSaltos = (compra.nombreCliente || 'Desconocido').replace(/\s+/g, '<br>');
-                const productoConSaltos = (compra.producto || 'Sin producto').replace(/\s+/g, '<br>');
+                const nombre = (compra.nombreCliente || 'Desconocido').replace(/\s+/g, '<br>');
+                const producto = (compra.producto || 'Sin producto').replace(/\s+/g, '<br>');
                 tablaHtml += `
                     <tr data-nombre="${(compra.nombreCliente || '').toLowerCase()}"
                         data-dni="${(compra.dni || '').toLowerCase()}" class="fila-real">
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6; white-space: pre-line; line-height: 1.4;">
-                            ${nombreConSaltos}
-                        </td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6; white-space: pre-line;">${nombre}</td>
                         <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.dni || ''}</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6; white-space: pre-line; line-height: 1.4;">
-                            ${productoConSaltos}
-                        </td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6; white-space: pre-line;">${producto}</td>
                         <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.cantidad || 0}</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">
-                            $${(compra.precioUnitario || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                        </td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">
-                            $${(compra.montoCompra || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                        </td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">$${ (compra.precioUnitario || 0).toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">$${ (compra.montoCompra || 0).toLocaleString('es-AR', {minimumFractionDigits: 2})}</td>
                         <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.fechaCompra || ''}</td>
-                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">
-                            ${compra.estadoDePago === 'pagado' ? 'Pagado' : 'Pendiente'}
-                        </td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.estadoDePago === 'pagado' ? 'Pagado' : 'Pendiente'}</td>
                         <td style="padding: 12px 10px; border: 1px solid #dee2e6; text-align: center;">
-                            <button class="btn btn-success btn-sm recuperar-btn" data-id="${compra.idCompras}" style="padding: 6px 12px;">
+                            <button class="btn btn-success btn-sm recuperar-btn" data-id="${compra.idCompras}">
                                 <i class="bi bi-arrow-repeat"></i> Recuperar
                             </button>
                         </td>
@@ -1365,7 +1338,7 @@
                 `;
             });
 
-            // Mensaje si no hay registros
+            // Si no hay registros, mensaje en la primera fila
             if (eliminadas.length === 0) {
                 tablaHtml += `
                     <tr>
@@ -1376,9 +1349,9 @@
                 `;
             }
 
-            // Completar exactamente 5 filas visibles
-            const filasContadas = eliminadas.length > 0 ? eliminadas.length : 1;
-            for (let i = filasContadas; i < 5; i++) {
+            // Completar hasta 5 filas visibles con vacías limpias
+            const filasActuales = eliminadas.length > 0 ? eliminadas.length : 1;
+            for (let i = filasActuales; i < 5; i++) {
                 tablaHtml += `
                     <tr class="fila-vacia">
                         <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
@@ -1394,7 +1367,7 @@
                 `;
             }
 
-            tablaHtml += `</tbody></table></div></div>`;
+            tablaHtml += `</tbody></table></div>`;
 
             Swal.fire({
                 title: 'Compras Eliminadas',
@@ -1408,28 +1381,13 @@
                     popup: 'bloque-interior-swal fixed-size-swal'
                 },
                 didOpen: () => {
-                    const popup = Swal.getPopup();
-                    if (popup) {
-                        popup.style.minWidth = '1200px';
-                        popup.style.width = '1200px';
-                        popup.style.minHeight = '680px';
-                        popup.style.height = '680px !important'; // Fuerza altura fija
-                    }
-
-                    const tableContainer = document.querySelector('.swal2-html-container > div');
-                    if (tableContainer) {
-                        tableContainer.style.minHeight = '320px';
-                    }
-
-                    // Buscador: oculta SOLO las filas con datos que no coincidan
+                    // Buscador: oculta SOLO filas con datos que no coincidan
                     const buscador = document.getElementById('buscadorEliminadas');
                     if (buscador) {
                         buscador.focus();
                         buscador.addEventListener('input', function () {
                             const filtro = this.value.toLowerCase().trim();
-                            const filasReales = document.querySelectorAll('#tablaEliminadas tbody tr.fila-real');
-
-                            filasReales.forEach(fila => {
+                            document.querySelectorAll('#tablaEliminadas .fila-real').forEach(fila => {
                                 const nombre = fila.dataset.nombre || '';
                                 const dni = fila.dataset.dni || '';
                                 const coincide = filtro === '' || nombre.includes(filtro) || dni.includes(filtro);
@@ -1438,7 +1396,7 @@
                         });
                     }
 
-                    // Botones Recuperar (sin cambios)
+                    // Botones recuperar
                     document.querySelectorAll('.recuperar-btn').forEach(btn => {
                         btn.addEventListener('click', async function () {
                             const id = this.getAttribute('data-id');
@@ -1483,7 +1441,6 @@
             Swal.fire('Error', 'No se pudieron cargar las compras eliminadas', 'error');
         }
     });
-
 
 
 

@@ -1407,31 +1407,65 @@
             });
 
             buscador.addEventListener('input', function () {
-                const filtro = this.value.toLowerCase().trim();
+    const filtro = this.value.toLowerCase().trim();
+    const tbody = document.querySelector('#tablaEliminadas tbody');
+    const filas = Array.from(tbody.querySelectorAll('tr'));
 
-                filasReales.forEach(fila => {
-                    const nombre = fila.dataset.nombre || '';
-                    const dni = fila.dataset.dni || '';
-                    const coincide = filtro === '' || nombre.includes(filtro) || dni.includes(filtro);
+    // Separamos: filas que coinciden vs no coinciden
+    const coincidentes = [];
+    const noCoincidentes = [];
 
-                    if (coincide) {
-                        // Restauramos el contenido original
-                        fila.innerHTML = fila.dataset.htmlOriginal;
-                    } else {
-                        // Vaciamos la fila (queda como vacía, pero mantiene altura y estructura)
-                        fila.innerHTML = `
-                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
-                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
-                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
-                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
-                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
-                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
-                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
-                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
-                            <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6; text-align:center;">&nbsp;</td>
-                        `;
-                    }
-                });
+    filas.forEach(fila => {
+        if (fila.classList.contains('fila-vacia')) {
+            // Las vacías siempre van al final, no las tocamos aquí
+            return;
+        }
+
+        if (fila.classList.contains('fila-real')) {
+            const nombre = fila.dataset.nombre || '';
+            const dni = fila.dataset.dni || '';
+            const coincide = filtro === '' || nombre.includes(filtro) || dni.includes(filtro);
+
+            if (coincide) {
+                coincidentes.push(fila);
+            } else {
+                noCoincidentes.push(fila);
+            }
+        } else {
+            // Cualquier otra fila (ej: la del mensaje "No hay...") la dejamos como está
+            noCoincidentes.push(fila);
+        }
+    });
+
+    // Limpiamos el tbody
+    tbody.innerHTML = '';
+
+    // Primero ponemos las coincidentes (arriba)
+    coincidentes.forEach(fila => {
+        // Restauramos contenido original si estaba vaciada
+        if (fila.dataset.htmlOriginal) {
+            fila.innerHTML = fila.dataset.htmlOriginal;
+        }
+        tbody.appendChild(fila);
+    });
+
+    // Luego las no coincidentes (las vaciamos visualmente)
+    noCoincidentes.forEach(fila => {
+        if (fila.classList.contains('fila-real')) {
+            fila.innerHTML = `
+                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
+                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
+                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
+                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
+                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
+                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
+                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
+                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
+                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6; text-align:center;">&nbsp;</td>
+            `;
+        }
+        tbody.appendChild(fila);
+    });
             });
         }
                     // Botones recuperar (sin cambios)

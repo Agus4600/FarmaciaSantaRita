@@ -1264,129 +1264,192 @@
 
 
 
-               document.getElementById('btnRestaurar').addEventListener('click', async function () {
+            document.getElementById('btnRestaurar').addEventListener('click', async function () {
         try {
-            const res = await fetch('/CuentaCliente/GetEliminadas');
-            const compras = await res.json();
+            const res = await fetch('/CuentaCliente/GetComprasEliminadas');
+            if (!res.ok) {
+                throw new Error('Error al cargar compras eliminadas: ' + res.status);
+            }
+            const eliminadas = await res.json();
 
-            // Construcción de la tabla con 5 filas fijas
             let tablaHtml = `
-                <div class="mb-3">
-                    <input type="text" id="buscadorEliminadas" class="form-control" placeholder="Buscar por nombre o DNI...">
+                <div style="margin-bottom: 15px;">
+                    <div class="input-group-custom" style="max-width: 500px; margin: 0 auto;">
+                        <input type="text" id="buscadorEliminadas" class="form-control" placeholder="Buscar por nombre o DNI..." autocomplete="off" />
+                        <div class="seccion-adorno">
+                            <i class="bi bi-search"></i>
+                            <span>Buscar</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="tablaEliminadas">
-                        <thead class="table-primary">
+                <div style="width: 100%; border: 1px solid #dee2e6; border-radius: 12px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.08); min-height: 320px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center; table-layout: fixed;" id="tablaEliminadas">
+                        <thead style="background: #0d6efd; color: white; position: sticky; top: 0; z-index: 10;">
                             <tr>
-                                <th>Cliente</th>
-                                <th>DNI</th>
-                                <th>Producto</th>
-                                <th>Total</th>
-                                <th>F.Compra</th>
-                                <th>Acción</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 16%;">Cliente</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 11%;">DNI</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 16%;">Producto</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 7%;">Cant.</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 10%;">Precio U.</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 10%;">Total</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 11%;">F.Compra</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 10%;">Estado</th>
+                                <th style="padding: 12px 10px; border: 1px solid #dee2e6; width: 11%;">Acción</th>
                             </tr>
                         </thead>
-                        <tbody>`;
+                        <tbody>
+            `;
 
-            // Generamos exactamente 5 filas
-            for (let i = 0; i < 5; i++) {
-                const c = compras[i];
-                if (c) {
-                    // Fila con datos reales
-                    tablaHtml += `
-                        <tr data-id="${c.id}" data-nombre="${c.cliente.toLowerCase()}" data-dni="${c.dni}">
-                            <td>${c.cliente}</td>
-                            <td>${c.dni}</td>
-                            <td>${c.producto}</td>
-                            <td>$${c.total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
-                            <td>${c.fechaCompra || '-'}</td>
-                            <td class="text-center">
-                                <button class="btn btn-success btn-sm recuperar-btn" data-id="${c.id}" title="Recuperar">
-                                    <i class="fas fa-undo"></i> Recuperar
-                                </button>
-                            </td>
-                        </tr>`;
-                } else {
-                    // Fila vacía para completar las 5
-                    tablaHtml += `
-                        <tr class="fila-vacia">
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                        </tr>`;
-                }
+            // Filas con datos reales
+            eliminadas.forEach(compra => {
+                const nombreConSaltos = (compra.nombreCliente || 'Desconocido').replace(/\s+/g, '<br>');
+                const productoConSaltos = (compra.producto || 'Sin producto').replace(/\s+/g, '<br>');
+                tablaHtml += `
+                    <tr data-nombre="${(compra.nombreCliente || '').toLowerCase()}"
+                        data-dni="${(compra.dni || '').toLowerCase()}" class="fila-real">
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6; white-space: pre-line; line-height: 1.4;">
+                            ${nombreConSaltos}
+                        </td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.dni || ''}</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6; white-space: pre-line; line-height: 1.4;">
+                            ${productoConSaltos}
+                        </td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.cantidad || 0}</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">
+                            $${(compra.precioUnitario || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">
+                            $${(compra.montoCompra || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">${compra.fechaCompra || ''}</td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6;">
+                            ${compra.estadoDePago === 'pagado' ? 'Pagado' : 'Pendiente'}
+                        </td>
+                        <td style="padding: 12px 10px; border: 1px solid #dee2e6; text-align: center;">
+                            <button class="btn btn-success btn-sm recuperar-btn" data-id="${compra.idCompras}" style="padding: 6px 12px;">
+                                <i class="bi bi-arrow-repeat"></i> Recuperar
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // Mensaje si no hay registros
+            if (eliminadas.length === 0) {
+                tablaHtml += `
+                    <tr>
+                        <td colspan="9" style="padding: 100px 20px; text-align:center; font-size: 16px; color: #6c757d;">
+                            No hay compras eliminadas
+                        </td>
+                    </tr>
+                `;
             }
 
-            tablaHtml += `</tbody></table></div>`;
+            // Completar exactamente 5 filas visibles
+            const filasContadas = eliminadas.length > 0 ? eliminadas.length : 1;
+            for (let i = filasContadas; i < 5; i++) {
+                tablaHtml += `
+                    <tr class="fila-vacia">
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6; text-align: center;">&nbsp;</td>
+                    </tr>
+                `;
+            }
 
-            // Lanzar SweetAlert2
+            tablaHtml += `</tbody></table></div></div>`;
+
             Swal.fire({
                 title: 'Compras Eliminadas',
                 html: tablaHtml,
-                width: '80%',
-                showConfirmButton: false,
+                width: '1200px',
+                heightAuto: false,
+                padding: '25px',
                 showCloseButton: true,
+                showConfirmButton: false,
+                customClass: {
+                    popup: 'bloque-interior-swal fixed-size-swal'
+                },
                 didOpen: () => {
-                    // 1. Lógica del buscador interno del Swal
-                    const inputBusqueda = document.getElementById('buscadorEliminadas');
-                    inputBusqueda.addEventListener('input', function () {
-                        const filtro = this.value.toLowerCase().trim();
-                        const filas = document.querySelectorAll('#tablaEliminadas tbody tr');
+                    const popup = Swal.getPopup();
+                    if (popup) {
+                        popup.style.minWidth = '1200px';
+                        popup.style.width = '1200px';
+                        popup.style.minHeight = '680px';
+                        popup.style.height = '680px !important'; // Fuerza altura fija
+                    }
 
-                        filas.forEach(fila => {
-                            // Las filas vacías nunca se ocultan para mantener la estructura de 5
-                            if (fila.classList.contains('fila-vacia')) {
-                                fila.style.display = '';
-                                return;
-                            }
+                    const tableContainer = document.querySelector('.swal2-html-container > div');
+                    if (tableContainer) {
+                        tableContainer.style.minHeight = '320px';
+                    }
 
-                            const nombre = (fila.dataset.nombre || '');
-                            const dni = (fila.dataset.dni || '');
-                            const coincide = nombre.includes(filtro) || dni.includes(filtro);
+                    // Buscador: oculta SOLO las filas con datos que no coincidan
+                    const buscador = document.getElementById('buscadorEliminadas');
+                    if (buscador) {
+                        buscador.focus();
+                        buscador.addEventListener('input', function () {
+                            const filtro = this.value.toLowerCase().trim();
+                            const filasReales = document.querySelectorAll('#tablaEliminadas tbody tr.fila-real');
 
-                            fila.style.display = coincide ? '' : 'none';
+                            filasReales.forEach(fila => {
+                                const nombre = fila.dataset.nombre || '';
+                                const dni = fila.dataset.dni || '';
+                                const coincide = filtro === '' || nombre.includes(filtro) || dni.includes(filtro);
+                                fila.style.display = coincide ? '' : 'none';
+                            });
                         });
-                    });
+                    }
 
-                    // 2. Lógica de los botones Recuperar dentro del Swal
+                    // Botones Recuperar (sin cambios)
                     document.querySelectorAll('.recuperar-btn').forEach(btn => {
                         btn.addEventListener('click', async function () {
                             const id = this.getAttribute('data-id');
                             const confirm = await Swal.fire({
-                                title: '¿Recuperar compra?',
-                                text: "Se restaurará al listado principal.",
+                                title: '¿Recuperar esta compra?',
+                                text: "Volverá a aparecer en el listado principal.",
                                 icon: 'question',
                                 showCancelButton: true,
                                 confirmButtonColor: '#28a745',
-                                confirmButtonText: 'Sí, recuperar'
+                                cancelButtonColor: '#d33',
+                                confirmButtonText: 'Sí, recuperar',
+                                cancelButtonText: 'Cancelar'
                             });
-
                             if (confirm.isConfirmed) {
-                                const resRec = await fetch('/CuentaCliente/RecuperarCompra', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                                    },
-                                    body: JSON.stringify({ id: parseInt(id) })
-                                });
-                                const data = await resRec.json();
-                                if (data.success) {
-                                    Swal.fire('¡Éxito!', 'Compra restaurada.', 'success')
-                                        .then(() => location.reload());
+                                try {
+                                    const res = await fetch('/CuentaCliente/RecuperarCompra', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                                        },
+                                        body: JSON.stringify({ id: parseInt(id) })
+                                    });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                        Swal.fire('¡Recuperada!', data.message || 'La compra fue restaurada.', 'success')
+                                            .then(() => location.reload());
+                                    } else {
+                                        Swal.fire('Error', data.message || 'No se pudo recuperar', 'error');
+                                    }
+                                } catch (err) {
+                                    console.error('Error al recuperar:', err);
+                                    Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
                                 }
                             }
                         });
                     });
                 }
             });
-
         } catch (err) {
-            console.error('Error:', err);
-            Swal.fire('Error', 'No se pudieron cargar las eliminadas', 'error');
+            console.error('Error al cargar eliminadas:', err);
+            Swal.fire('Error', 'No se pudieron cargar las compras eliminadas', 'error');
         }
     });
 

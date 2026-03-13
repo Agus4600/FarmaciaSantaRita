@@ -111,34 +111,37 @@ namespace FarmaciaSantaRita.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RecuperarCompra(int id)
         {
-            try
+            // 1. Intentamos encontrar la compra SOLO por ID (sin ninguna otra condición)
+            var compra = await _context.Compras
+                .FirstOrDefaultAsync(c => c.Idcompras == id);
+
+            if (compra == null)
             {
-                // Buscamos la compra sin importar el valor exacto de IsDeleted (para debug inicial)
-                var compra = await _context.Compras
-                    .FirstOrDefaultAsync(c => c.Idcompras == id);
-
-                if (compra == null)
-                    return Json(new { success = false, message = "Compra no encontrada (ID inválido)" });
-
-                // Verificamos si está "eliminada" según los valores que hemos visto
-                bool estaEliminada = compra.IsDeleted ||
-                                     compra.IsDeleted.ToString().ToLower() == "el" ||
-                                     compra.IsDeleted.ToString() == "true" ||
-                                     compra.IsDeleted.ToString() == "1";
-
-                if (!estaEliminada)
-                    return Json(new { success = false, message = "Esta compra no está marcada como eliminada" });
-
-                // Marcamos como NO eliminada
-                compra.IsDeleted = false;
-                await _context.SaveChangesAsync();
-
-                return Json(new { success = true, message = "Compra recuperada correctamente" });
+                // No existe ninguna compra con ese ID
+                return Json(new
+                {
+                    success = false,
+                    message = $"No existe ninguna compra con ID {id} en la base de datos"
+                });
             }
-            catch (Exception ex)
+
+            // 2. Si la encontramos, devolvemos TODA la info relevante para debug
+            return Json(new
             {
-                return Json(new { success = false, message = "Error al recuperar: " + ex.Message });
-            }
+                success = false,  // todavía no recuperamos, solo debug
+                debugInfo = new
+                {
+                    IdCompras = compra.Idcompras,
+                    IsDeleted = compra.IsDeleted,
+                    IsDeletedComoTexto = compra.IsDeleted.ToString(),
+                    Descripcion = compra.Descripcion,
+                    FechaCompra = compra.FechaCompra,
+                    MontoCompra = compra.MontoCompra,
+                    IdCliente = compra.Idcliente,
+                    EstadoDePago = compra.EstadoDePago,
+                    Mensaje = "Compra encontrada → ahora revisa si IsDeleted es true o 'el'"
+                }
+            });
         }
 
 

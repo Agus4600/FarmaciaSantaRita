@@ -16,6 +16,12 @@
 <!-- Librería SheetJS para exportar a Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
+    .fila-oculta {
+        opacity: 0 !important;
+        pointer-events: none !important;
+        height: 60px !important; /* altura fija para que ocupe lugar */
+        min-height: 60px !important;
+    }
     /* Solo esto: scroll interno cuando hay más de 5 filas */
     .contenedor-tabla-eliminadas {
         width: 100%;
@@ -25,6 +31,11 @@
         border: 1px solid #dee2e6;
         border-radius: 12px;
         background: white;
+    }
+
+    #tablaEliminadas tbody {
+        min-height: 300px !important; /* 5 filas × ~60px */
+        display: table !important;
     }
 
     /* Altura fija para filas (para que se vean uniformes) */
@@ -1399,15 +1410,19 @@
                     const buscador = document.getElementById('buscadorEliminadas');
                     if (buscador) {
                         buscador.focus();
-                        buscador.addEventListener('input', function () {
-                            const filtro = this.value.toLowerCase().trim();
-                            document.querySelectorAll('#tablaEliminadas .fila-real').forEach(fila => {
-                                const nombre = fila.dataset.nombre || '';
-                                const dni = fila.dataset.dni || '';
-                                const coincide = filtro === '' || nombre.includes(filtro) || dni.includes(filtro);
-                                fila.style.display = coincide ? '' : 'none';
-                            });
-                        });
+                            buscador.addEventListener('input', function () {
+        const filtro = this.value.toLowerCase().trim();
+        document.querySelectorAll('#tablaEliminadas .fila-real').forEach(fila => {
+            const nombre = fila.dataset.nombre || '';
+            const dni = fila.dataset.dni || '';
+            const coincide = filtro === '' || nombre.includes(filtro) || dni.includes(filtro);
+            if (coincide) {
+                fila.classList.remove('fila-oculta');
+            } else {
+                fila.classList.add('fila-oculta');
+            }
+        });
+    });
                     }
 
                     // Botones recuperar (sin cambios)

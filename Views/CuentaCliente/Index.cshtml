@@ -1345,7 +1345,7 @@
                             ${compra.estadoDePago === 'pagado' ? 'Pagado' : 'Pendiente'}
                         </td>
                         <td style="padding: 12px 10px; border: 1px solid #dee2e6; text-align: center;">
-                            <button class="btn btn-success btn-sm recuperar-btn" data-id="${compra.idCompras}">
+                            //<button class="btn btn-success btn-sm recuperar-btn" data-id="${compra.IdCompras}">
                                 <i class="bi bi-arrow-repeat"></i> Recuperar
                             </button>
                         </td>
@@ -1397,81 +1397,28 @@
                     popup: 'bloque-interior-swal'
                 },
                     didOpen: () => {
-        const buscador = document.getElementById('buscadorEliminadas');
-        if (buscador) {
-            buscador.focus();
+    const buscador = document.getElementById('buscadorEliminadas');
+    if (buscador) {
+        buscador.focus();
 
-            // Guardamos el HTML original de cada fila real al cargar (una sola vez)
-            const filasReales = document.querySelectorAll('#tablaEliminadas .fila-real');
-            filasReales.forEach(fila => {
-                fila.dataset.htmlOriginal = fila.innerHTML;
+        buscador.addEventListener('input', function () {
+            const filtro = this.value.toLowerCase().trim();
+            const filas = document.querySelectorAll('#tablaEliminadas tbody tr.fila-real');
+
+            filas.forEach(fila => {
+                const nombre = fila.dataset.nombre || '';
+                const dni = fila.dataset.dni || '';
+                const coincide = filtro === '' || nombre.includes(filtro) || dni.includes(filtro);
+                fila.style.display = coincide ? '' : 'none';
             });
-
-            buscador.addEventListener('input', function () {
-    const filtro = this.value.toLowerCase().trim();
-    const tbody = document.querySelector('#tablaEliminadas tbody');
-    const filas = Array.from(tbody.querySelectorAll('tr'));
-
-    // Separamos: filas que coinciden vs no coinciden
-    const coincidentes = [];
-    const noCoincidentes = [];
-
-    filas.forEach(fila => {
-        if (fila.classList.contains('fila-vacia')) {
-            // Las vacías siempre van al final, no las tocamos aquí
-            return;
-        }
-
-        if (fila.classList.contains('fila-real')) {
-            const nombre = fila.dataset.nombre || '';
-            const dni = fila.dataset.dni || '';
-            const coincide = filtro === '' || nombre.includes(filtro) || dni.includes(filtro);
-
-            if (coincide) {
-                coincidentes.push(fila);
-            } else {
-                noCoincidentes.push(fila);
-            }
-        } else {
-            // Cualquier otra fila (ej: la del mensaje "No hay...") la dejamos como está
-            noCoincidentes.push(fila);
-        }
-    });
-
-    // Limpiamos el tbody
-    tbody.innerHTML = '';
-
-    // Primero ponemos las coincidentes (arriba)
-    coincidentes.forEach(fila => {
-        // Restauramos contenido original si estaba vaciada
-        if (fila.dataset.htmlOriginal) {
-            fila.innerHTML = fila.dataset.htmlOriginal;
-        }
-        tbody.appendChild(fila);
-    });
-
-    // Luego las no coincidentes (las vaciamos visualmente)
-    noCoincidentes.forEach(fila => {
-        if (fila.classList.contains('fila-real')) {
-            fila.innerHTML = `
-                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
-                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
-                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
-                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
-                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
-                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
-                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
-                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6;">&nbsp;</td>
-                <td style="height:60px; padding:12px 10px; border:1px solid #dee2e6; text-align:center;">&nbsp;</td>
-            `;
-        }
-        tbody.appendChild(fila);
-    });
-            });
-        }
+        });
+    }
                     // Botones recuperar (sin cambios)
                         document.querySelectorAll('.recuperar-btn').forEach(btn => {
         btn.addEventListener('click', async function () {
+            if (this.closest('tr').style.display === 'none') {
+        return; // No hacer nada si la fila está oculta
+    }
             const id = this.getAttribute('data-id');
             if (!id) {
                 Swal.fire('Error', 'No se encontró el ID de la compra.', 'error');

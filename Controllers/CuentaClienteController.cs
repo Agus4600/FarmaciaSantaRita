@@ -109,8 +109,19 @@ namespace FarmaciaSantaRita.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RecuperarCompra(int id)
+        public async Task<IActionResult> RecuperarCompra([FromBody] RecuperarDto dto)
         {
+            if (dto == null || dto.Id <= 0)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "ID inválido o no recibido correctamente"
+                });
+            }
+
+            int id = dto.Id;
+
             // 1. Intentamos encontrar la compra SOLO por ID (sin ninguna otra condición)
             var compra = await _context.Compras
                 .FirstOrDefaultAsync(c => c.Idcompras == id);
@@ -126,9 +137,13 @@ namespace FarmaciaSantaRita.Controllers
             }
 
             // 2. Si la encontramos, devolvemos TODA la info relevante para debug
+            // (cuando quieras recuperar de verdad, descomentá las líneas de abajo)
+            // compra.IsDeleted = false;
+            // await _context.SaveChangesAsync();
+
             return Json(new
             {
-                success = false,  // todavía no recuperamos, solo debug
+                success = false, // todavía debug → cambialo a true cuando actives la recuperación
                 debugInfo = new
                 {
                     IdCompras = compra.Idcompras,
@@ -142,6 +157,11 @@ namespace FarmaciaSantaRita.Controllers
                     Mensaje = "Compra encontrada → ahora revisa si IsDeleted es true o 'el'"
                 }
             });
+        }
+
+        public class RecuperarDto
+        {
+            public int Id { get; set; }
         }
 
 

@@ -81,7 +81,7 @@
 
     /* Ajuste del botón Volver para esta vista específica */
     .btn-volver-estilizado {
-        margin-top: 120px !important; /* Ajustado para que quepa bien en el diseño */
+        margin-top: 10px !important; /* Ajustado para que quepa bien en el diseño */
         background-color: #007bff;
         color: white;
         border-radius: 50px;
@@ -94,6 +94,12 @@
         text-decoration: none;
         transition: all 0.3s ease;
     }
+
+        .btn-volver-estilizado:last-child {
+            margin-top: 20px !important; /* Ajustá este valor: 20px = sube un poco, 10px = sube más, -10px = sube bastante */
+            /* Si querés que suba MUCHO más (casi pegado al Restaurar), usá: */
+            /* margin-top: -40px !important; */ /* Probá valores negativos hasta que quede como querés */
+        }
 
         .btn-volver-estilizado:hover {
             background-color: #0056b3;

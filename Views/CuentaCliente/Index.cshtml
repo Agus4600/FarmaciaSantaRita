@@ -1396,105 +1396,127 @@
                 customClass: {
                     popup: 'bloque-interior-swal'
                 },
-                    didOpen: () => {
-    const buscador = document.getElementById('buscadorEliminadas');
-    if (buscador) {
-        buscador.focus();
+                        didOpen: () => {
+        const buscador = document.getElementById('buscadorEliminadas');
+        if (buscador) {
+            buscador.focus();
+            buscador.addEventListener('input', function () {
+                const filtro = this.value.toLowerCase().trim();
+                const filas = document.querySelectorAll('#tablaEliminadas tbody tr.fila-real');
+                filas.forEach(fila => {
+                    const nombre = fila.dataset.nombre || '';
+                    const dni = fila.dataset.dni || '';
+                    const coincide = filtro === '' || nombre.includes(filtro) || dni.includes(filtro);
+                    fila.style.display = coincide ? '' : 'none';
+                });
 
-        buscador.addEventListener('input', function () {
-            const filtro = this.value.toLowerCase().trim();
-            const filas = document.querySelectorAll('#tablaEliminadas tbody tr.fila-real');
+                // ── NUEVO ──: agregar filas vacías para mantener 5 filas visibles
+                const filasVisibles = document.querySelectorAll('#tablaEliminadas tbody tr.fila-real[style*="display: ''"], #tablaEliminadas tbody tr.fila-real:not([style*="display: none"])');
+                const cantidadVisibles = filasVisibles.length;
+                const tbody = document.querySelector('#tablaEliminadas tbody');
 
-            filas.forEach(fila => {
-                const nombre = fila.dataset.nombre || '';
-                const dni = fila.dataset.dni || '';
-                const coincide = filtro === '' || nombre.includes(filtro) || dni.includes(filtro);
-                fila.style.display = coincide ? '' : 'none';
-            });
-        });
-    }
-                    // Botones recuperar (sin cambios)
-                        document.querySelectorAll('.recuperar-btn').forEach(btn => {
-        btn.addEventListener('click', async function () {
-            if (this.closest('tr').style.display === 'none') {
-        return; // No hacer nada si la fila está oculta
-    }
-            const id = this.getAttribute('data-id');
-            if (!id) {
-                Swal.fire('Error', 'No se encontró el ID de la compra.', 'error');
-                return;
-            }
+                // Primero eliminamos filas vacías anteriores para no duplicar
+                document.querySelectorAll('#tablaEliminadas tbody tr.fila-vacia').forEach(f => f.remove());
 
-            const confirm = await Swal.fire({
-                title: '¿Recuperar esta compra?',
-                text: "Volverá a aparecer en el listado principal de compras registradas.",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#28a745',  // Verde éxito
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Sí, recuperar',
-                cancelButtonText: 'Cancelar'
-            });
-
-            if (!confirm.isConfirmed) return;
-
-            // Mostrar loading mientras se procesa
-            Swal.fire({
-                title: 'Procesando...',
-                text: 'Recuperando la compra, por favor espera.',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
+                // Agregamos las necesarias para llegar a 5
+                const faltantes = 5 - cantidadVisibles;
+                for (let i = 0; i < faltantes; i++) {
+                    const vacia = document.createElement('tr');
+                    vacia.className = 'fila-vacia';
+                    vacia.innerHTML = `
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6;">&nbsp;</td>
+                        <td style="height: 60px; padding: 12px 10px; border: 1px solid #dee2e6; text-align: center;">&nbsp;</td>
+                    `;
+                    tbody.appendChild(vacia);
                 }
             });
+        }
+
+        // Botones recuperar (sin cambios)
+        document.querySelectorAll('.recuperar-btn').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                if (this.closest('tr').style.display === 'none') {
+                    return;
+                }
+                const id = this.getAttribute('data-id');
+                if (!id) {
+                    Swal.fire('Error', 'No se encontró el ID de la compra.', 'error');
+                    return;
+                }
+                const confirm = await Swal.fire({
+                    title: '¿Recuperar esta compra?',
+                    text: "Volverá a aparecer en el listado principal de compras registradas.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, recuperar',
+                    cancelButtonText: 'Cancelar'
+                });
+                if (!confirm.isConfirmed) return;
+
+                Swal.fire({
+                    title: 'Procesando...',
+                    text: 'Recuperando la compra, por favor espera.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
 
                 try {
-        const res = await fetch('/CuentaCliente/RecuperarCompra', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-            },
-            body: JSON.stringify({ Id: id })   // ← IMPORTANTE: Id con mayúscula para que coincida con el DTO
-        });
+                    const res = await fetch('/CuentaCliente/RecuperarCompra', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify({ Id: id })
+                    });
 
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.message || 'Error en el servidor');
-        }
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.message || 'Error en el servidor');
+                    }
 
-        const data = await res.json();
+                    const data = await res.json();
 
-        if (data.success) {
-            Swal.fire({
-                icon: 'success',
-                title: '¡Recuperada!',
-                text: data.message || 'La compra fue restaurada correctamente y volverá a aparecer en el listado.',
-                timer: 2000,
-                showConfirmButton: false
-            }).then(() => {
-                Swal.close();
-                location.reload();
+                    if (data.success) {
+                        // ── MODIFICADO ──: éxito sin timer, solo se cierra con la X
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Recuperada!',
+                            text: data.message || 'La compra fue restaurada correctamente y volverá a aparecer en el listado.',
+                            showConfirmButton: false,          // sin botón OK
+                            allowOutsideClick: false,          // no cerrar clic afuera
+                            allowEscapeKey: false,             // no cerrar con ESC
+                            showCloseButton: true              // ← muestra la X para cerrar manualmente
+                        });
+                        // Recargamos la página principal DESPUÉS de que el usuario cierre el Swal
+                        Swal.getCloseButton().addEventListener('click', () => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Error', data.message || 'No se pudo recuperar la compra.', 'error');
+                    }
+                } catch (err) {
+                    console.error('Error al recuperar compra:', err);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: err.message || 'No se pudo conectar con el servidor. Intenta de nuevo.',
+                    });
+                }
             });
-        } else {
-            // Mostramos el mensaje de error o el debug
-            let mensajeError = data.message || 'No se pudo recuperar la compra.';
-            if (data.debugInfo) {
-                mensajeError += '\n\nDebug:\n' + JSON.stringify(data.debugInfo, null, 2);
-            }
-            Swal.fire('Error', mensajeError, 'error');
-        }
-    } catch (err) {
-        console.error('Error al recuperar compra:', err);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: err.message || 'No se pudo conectar con el servidor. Intenta de nuevo.',
         });
     }
-        });
-    });
-                }
             });
         } catch (err) {
             console.error('Error al cargar eliminadas:', err);

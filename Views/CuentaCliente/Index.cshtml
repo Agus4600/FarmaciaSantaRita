@@ -591,7 +591,7 @@
                                 <i class="bi bi-plus-lg"></i>
                             </button>
                             <button type="button" class="btn btn-success" style="height: 38px; padding: 0 15px;" onclick="exportarAExcel()">
-                               Eportar
+                               Exportar
                             </button>
                         </div>
                     </form>
@@ -1488,28 +1488,26 @@
                 }
 
                 const data = await res.json();
+                    Swal.close(); // Cerramos el "Procesando..."
 
                 if (data.success) {
+                    // Toast de éxito (no interfiere con el Swal grande)
                     Swal.fire({
+                        toast: true,
+                        position: 'top-end',
                         icon: 'success',
                         title: '¡Recuperada!',
-                        text: data.message || 'La compra fue restaurada correctamente y volverá a aparecer en el listado.',
+                        text: data.message || 'La compra fue restaurada correctamente.',
                         showConfirmButton: false,
-                        showCloseButton: false,       // Sin X
-                        timer: 2500,
-                        timerProgressBar: true,
-                        allowOutsideClick: false,
-                        allowEscapeKey: false
+                        timer: 2000,
+                        timerProgressBar: true
                     });
-
-                    // Esperamos 2 segundos y cerramos solo el Swal chico → volvemos al grande
-                    setTimeout(() => {
-                        Swal.close();
-                    }, 2000);
+                    // El Swal grande sigue abierto → podés seguir recuperando
                 } else {
                     Swal.fire('Error', data.message || 'No se pudo recuperar la compra.', 'error');
                 }
             } catch (err) {
+                Swal.close(); // Cerramos "Procesando..." en caso de error
                 console.error('Error al recuperar compra:', err);
                 Swal.fire({
                     icon: 'error',

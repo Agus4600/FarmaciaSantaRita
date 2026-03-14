@@ -1448,47 +1448,50 @@
                 }
             });
 
-            try {
-                const res = await fetch('/CuentaCliente/RecuperarCompra', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    },
-                    //body: JSON.stringify({ id: parseInt(id) })
-                    body: JSON.stringify({ Id: id })
-                });
+                try {
+        const res = await fetch('/CuentaCliente/RecuperarCompra', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
+            body: JSON.stringify({ Id: id })   // ← IMPORTANTE: Id con mayúscula para que coincida con el DTO
+        });
 
-                if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.message || 'Error en el servidor');
-                }
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.message || 'Error en el servidor');
+        }
 
-                const data = await res.json();
+        const data = await res.json();
 
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Recuperada!',
-                        text: data.message || 'La compra fue restaurada correctamente y volverá a aparecer en el listado.',
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => {
-                        // Cerramos el modal de eliminadas y recargamos la página principal
-                        Swal.close();
-                        location.reload();  // ← Esto hace que la compra vuelva a la tabla principal
-                    });
-                } else {
-                    Swal.fire('Error', data.message || 'No se pudo recuperar la compra.', 'error');
-                }
-            } catch (err) {
-                console.error('Error al recuperar compra:', err);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: err.message || 'No se pudo conectar con el servidor. Intenta de nuevo.',
-                });
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Recuperada!',
+                text: data.message || 'La compra fue restaurada correctamente y volverá a aparecer en el listado.',
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                Swal.close();
+                location.reload();
+            });
+        } else {
+            // Mostramos el mensaje de error o el debug
+            let mensajeError = data.message || 'No se pudo recuperar la compra.';
+            if (data.debugInfo) {
+                mensajeError += '\n\nDebug:\n' + JSON.stringify(data.debugInfo, null, 2);
             }
+            Swal.fire('Error', mensajeError, 'error');
+        }
+    } catch (err) {
+        console.error('Error al recuperar compra:', err);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err.message || 'No se pudo conectar con el servidor. Intenta de nuevo.',
+        });
+    }
         });
     });
                 }

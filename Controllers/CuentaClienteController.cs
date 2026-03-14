@@ -128,7 +128,6 @@ namespace FarmaciaSantaRita.Controllers
 
             if (compra == null)
             {
-                // No existe ninguna compra con ese ID
                 return Json(new
                 {
                     success = false,
@@ -136,14 +135,14 @@ namespace FarmaciaSantaRita.Controllers
                 });
             }
 
-            // 2. Si la encontramos, devolvemos TODA la info relevante para debug
-            // (cuando quieras recuperar de verdad, descomentá las líneas de abajo)
-            // compra.IsDeleted = false;
-            // await _context.SaveChangesAsync();
+            // 2. Debug: mostramos la info de la compra encontrada
+            // (cuando quieras activar la recuperación real, descomentá las 2 líneas de abajo)
+            compra.IsDeleted = false;
+            await _context.SaveChangesAsync();
 
             return Json(new
             {
-                success = false, // todavía debug → cambialo a true cuando actives la recuperación
+                success = true,  // ← todavía en modo debug (cambia a true cuando actives la recuperación)
                 debugInfo = new
                 {
                     IdCompras = compra.Idcompras,

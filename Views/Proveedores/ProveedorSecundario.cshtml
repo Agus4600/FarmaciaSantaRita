@@ -521,11 +521,7 @@
 
                         <div class="botones-laterales">
                             <button translate="no" id="btnAgregar">Agregar</button>
-                            <button id="btnGuardarl" class="btn btn-primary" translate="no">Guardar</button>
-                            <button translate="no" id="btnAbrir">Abrir</button>
-                            <input type="file" id="inputAbrirExcel" style="display:none" accept=".xlsx,.xls" />
-                            <input type="file" id="fileInputOculto" style="display:none;" />
-                            <button translate="no" id="btnNuevoInforme">Nuevo Informe</button>
+                            <button id="btnGuardarl" class="btn btn-primary" translate="no">Exportra</button>
                             <button translate="no" id="btnEliminar">Eliminar Fila</button>
                         </div>
                     </div>
@@ -632,7 +628,7 @@
         // 3. INICIALIZACIÓN Y FORMATO
         // ----------------------------------------------------
 
-        document.addEventListener("DOMContentLoaded", function () {
+                document.addEventListener("DOMContentLoaded", function () {
             const inputImporte = document.getElementById("importeFinal");
             if (inputImporte) {
                 // Formato de puntos para el importe
@@ -647,17 +643,14 @@
                     if (!/^\d+$/.test(texto)) e.preventDefault();
                 });
             }
-            // Crea las filas vacías iniciales
-            crearFilasVacias("tablaRegistro");
-        });
 
-        // Manejo de la selección de filas
-        document.addEventListener("change", function (e) {
-            if (e.target.classList?.contains("fila-check"))
-                e.target.closest("tr").classList.toggle("fila-seleccionada", e.target.checked);
+            // Cargar las filas guardadas desde localStorage (¡esto es lo nuevo!)
+            cargarRegistroDesdeStorage();
 
-            // Remueve la alerta de error al seleccionar un radio button
-            if (e.target.name === "transfer") document.getElementById("fieldsetTransfer")?.classList.remove('is-invalid');
+            // Si después de cargar no hay filas, crea las vacías
+            if (document.querySelectorAll('#tablaRegistro tbody tr').length === 0) {
+                crearFilasVacias("tablaRegistro");
+            }
         });
 
 
@@ -788,86 +781,11 @@
             // Recargar filas vacías si quedan menos de 5
             const filasActuales = document.querySelectorAll("#tablaRegistro tbody tr").length;
             if (filasActuales < 5) crearFilasVacias("tablaRegistro", 5 - filasActuales);
+            guardarRegistroEnStorage();
         });
 
 
-        // ----------------------------------------------------
-        // 6. BOTÓN ABRIR EXCEL
-        // ----------------------------------------------------
-
-        let workbookCargado = null;
-
-        document.getElementById("btnAbrir").addEventListener("click", () =>
-            document.getElementById("inputAbrirExcel").click()
-        );
-
-        document.getElementById("inputAbrirExcel").addEventListener("change", async function (evt) {
-            const archivo = evt.target.files[0];
-            if (!archivo) return;
-
-            // ⭐ Validación de nombre de archivo (específico del proveedor)
-            const nombreProveedor = nombreProveedorServer?.trim() || "";
-            if (!archivo.name.startsWith(nombreProveedor)) {
-                alert("⚠️ Este archivo no pertenece al proveedor: " + nombreProveedor +
-                      "\nSolo puedes abrir archivos generados que pertenezcan a este proveedor.");
-                this.value = "";
-                return;
-            }
-
-            try {
-                const buffer = await archivo.arrayBuffer();
-                workbookCargado = new ExcelJS.Workbook();
-                await workbookCargado.xlsx.load(buffer);
-
-                crearFilasVacias("tablaRegistro");
-
-                        // Cargar datos guardados al entrar
-        cargarRegistroDesdeStorage();
-
-        // Si no había nada guardado, creamos filas vacías
-        if (document.querySelectorAll('#tablaRegistro tbody tr').length === 0) {
-            crearFilasVacias("tablaRegistro");
-        }
-
-                workbookCargado.eachSheet(sheet => {
-                    // Solo procesamos la hoja 'Registro'
-                    if ((sheet.name || "").toLowerCase() !== TABLA_REGISTRO.hoja.toLowerCase()) return;
-
-                    const tbody = document.querySelector(`#${TABLA_REGISTRO.id} tbody`);
-                    tbody.innerHTML = "";
-
-                    sheet.eachRow({ includeEmpty: true }, (row, index) => {
-
-                        // Ignorar título y encabezados (Asumimos Fila 1 = Título, Fila 2 = Encabezados)
-                        if (index <= 2) return;
-
-                        const valores = (row.values || []).slice(1);
-                        // Los valores del Excel corresponden a [Fecha, Importe, Transfer]
-                        const [fecha = "", importe = "", transfer = ""] = valores.map(v => (v || "").toString().trim());
-
-                        // Si la fila está completamente vacía → ignorarla
-                        if (!fecha && !importe && !transfer) return;
-
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
-                            <td>${fecha}</td>
-                            <td>${importe}</td>
-                            <td>${transfer}</td>
-                            <td class="text-center"><input type="checkbox" class="fila-check"></td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                });
-
-                alert("Archivo Excel cargado correctamente.");
-
-            } catch (e) {
-                console.error("Error al cargar el archivo Excel:", e);
-                alert("Hubo un error al procesar el archivo Excel. Asegúrate de que sea un formato válido.");
-            } finally {
-                this.value = "";
-            }
-        });
+        
 
 
         // ----------------------------------------------------
@@ -878,20 +796,7 @@
             await generarYDescargarExcel([TABLA_REGISTRO]);
         });
 
-        // ----------------------------------------------------
-        // 8. BOTÓN NUEVO INFORME
-        // ----------------------------------------------------
-
-        document.getElementById("btnNuevoInforme").addEventListener("click", async function () {
-            // Guarda el informe actual
-            await generarYDescargarExcel([TABLA_REGISTRO]);
-
-            // Limpia la UI después de guardar el informe
-            crearFilasVacias("tablaRegistro");
-            document.getElementById("fecha").value = "";
-            document.getElementById("importeFinal").value = "";
-            document.querySelectorAll('input[name="transfer"]').forEach(r => r.checked = false);
-        });
+        
 
 
         // ----------------------------------------------------

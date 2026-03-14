@@ -81,7 +81,7 @@
 
     /* Ajuste del botón Volver para esta vista específica */
     .btn-volver-estilizado {
-        margin-top: -10px !important; /* Ajustado para que quepa bien en el diseño */
+        margin-top: 10px !important; /* Ajustado para que quepa bien en el diseño */
         background-color: #007bff;
         color: white;
         border-radius: 50px;
@@ -96,7 +96,7 @@
     }
 
         .btn-volver-estilizado:last-child {
-            margin-top: 20px !important; /* Ajustá este valor: 20px = sube un poco, 10px = sube más, -10px = sube bastante */
+            margin-top: 10px !important; /* Ajustá este valor: 20px = sube un poco, 10px = sube más, -10px = sube bastante */
             /* Si querés que suba MUCHO más (casi pegado al Restaurar), usá: */
             /* margin-top: -40px !important; */ /* Probá valores negativos hasta que quede como querés */
         }
@@ -515,7 +515,7 @@
                     }
                 }
                 <button id="btnRestaurar" class="btn-panel btn-volver-estilizado" translate="no">
-                    <i class="bi bi-arrow-repeat me-2"></i>Restaurar
+                    Restaurar
                 </button>
 
                 <a href="@Url.Action("Index", "PanelSeleccion")" class="btn-panel btn-volver-estilizado" translate="no">Volver</a>

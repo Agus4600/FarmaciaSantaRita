@@ -1396,7 +1396,7 @@
                 customClass: {
                     popup: 'bloque-interior-swal'
                 },
-                        didOpen: () => {
+                            didOpen: () => {
         const buscador = document.getElementById('buscadorEliminadas');
         if (buscador) {
             buscador.focus();
@@ -1410,15 +1410,17 @@
                     fila.style.display = coincide ? '' : 'none';
                 });
 
-                // ── NUEVO ──: agregar filas vacías para mantener 5 filas visibles
-                const filasVisibles = document.querySelectorAll('#tablaEliminadas tbody tr.fila-real[style*="display: ''"], #tablaEliminadas tbody tr.fila-real:not([style*="display: none"])');
+                // Agregar filas vacías para mantener siempre 5 filas visibles
+                const filasVisibles = document.querySelectorAll(
+                    '#tablaEliminadas tbody tr.fila-real:not([style*="display: none"])'
+                );
                 const cantidadVisibles = filasVisibles.length;
                 const tbody = document.querySelector('#tablaEliminadas tbody');
 
-                // Primero eliminamos filas vacías anteriores para no duplicar
+                // Eliminar filas vacías anteriores para no duplicar
                 document.querySelectorAll('#tablaEliminadas tbody tr.fila-vacia').forEach(f => f.remove());
 
-                // Agregamos las necesarias para llegar a 5
+                // Agregar las faltantes para llegar a 5
                 const faltantes = 5 - cantidadVisibles;
                 for (let i = 0; i < faltantes; i++) {
                     const vacia = document.createElement('tr');
@@ -1439,7 +1441,7 @@
             });
         }
 
-        // Botones recuperar (sin cambios)
+        // Botones Recuperar
         document.querySelectorAll('.recuperar-btn').forEach(btn => {
             btn.addEventListener('click', async function () {
                 if (this.closest('tr').style.display === 'none') {
@@ -1489,20 +1491,23 @@
                     const data = await res.json();
 
                     if (data.success) {
-                        // ── MODIFICADO ──: éxito sin timer, solo se cierra con la X
                         Swal.fire({
                             icon: 'success',
                             title: '¡Recuperada!',
                             text: data.message || 'La compra fue restaurada correctamente y volverá a aparecer en el listado.',
-                            showConfirmButton: false,          // sin botón OK
-                            allowOutsideClick: false,          // no cerrar clic afuera
-                            allowEscapeKey: false,             // no cerrar con ESC
-                            showCloseButton: true              // ← muestra la X para cerrar manualmente
+                            showConfirmButton: false,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            showCloseButton: true
                         });
-                        // Recargamos la página principal DESPUÉS de que el usuario cierre el Swal
-                        Swal.getCloseButton().addEventListener('click', () => {
-                            location.reload();
-                        });
+
+                        // Recargar SOLO cuando el usuario cierre con la X
+                        const closeBtn = Swal.getCloseButton();
+                        if (closeBtn) {
+                            closeBtn.addEventListener('click', () => {
+                                location.reload();
+                            });
+                        }
                     } else {
                         Swal.fire('Error', data.message || 'No se pudo recuperar la compra.', 'error');
                     }

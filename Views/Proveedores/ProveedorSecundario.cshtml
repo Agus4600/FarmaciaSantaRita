@@ -546,7 +546,56 @@
         const idUsuario = parseInt('@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0")', 10);
         const CATEGORIA_FIJA = nombreProveedorServer;
         const TABLA_REGISTRO = { id: "tablaRegistro", hoja: "Registro", titulo: nombreProveedorServer };
+                // Clave única para esta vista y proveedor
+        const STORAGE_KEY_REGISTRO = `registro_${idProveedor}`;
 
+
+                // Guarda el contenido de la tabla Registro en localStorage
+        function guardarRegistroEnStorage() {
+            const datos = [];
+
+            document.querySelectorAll('#tablaRegistro tbody tr').forEach(tr => {
+                const celdas = tr.querySelectorAll('td');
+                if (celdas.length >= 3) {
+                    const fecha = celdas[0].innerText.trim();
+                    const importe = celdas[1].innerText.trim();
+                    const transfer = celdas[2].innerText.trim();
+                    // Solo guardar si tiene algo de contenido
+                    if (fecha || importe || transfer) {
+                        datos.push({ fecha, importe, transfer });
+                    }
+                }
+            });
+
+            localStorage.setItem(STORAGE_KEY_REGISTRO, JSON.stringify(datos));
+        }
+
+        // Carga las filas guardadas desde localStorage
+        function cargarRegistroDesdeStorage() {
+            const datosGuardados = localStorage.getItem(STORAGE_KEY_REGISTRO);
+            if (!datosGuardados) return;
+
+            try {
+                const datos = JSON.parse(datosGuardados);
+
+                // Limpiamos la tabla primero
+                document.querySelector('#tablaRegistro tbody').innerHTML = '';
+
+                datos.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${item.fecha}</td>
+                        <td>${item.importe}</td>
+                        <td>${item.transfer}</td>
+                        <td class="text-center"><input type="checkbox" class="fila-check"></td>
+                    `;
+                    document.querySelector('#tablaRegistro tbody').appendChild(tr);
+                });
+
+            } catch (e) {
+                console.error("Error al cargar registro guardado:", e);
+            }
+        }
 
         // ----------------------------------------------------
         // 2. FUNCIONES DE AYUDA
@@ -661,6 +710,7 @@
                 <td class="text-center"><input type="checkbox" class="fila-check"></td>
             `;
             tbody.prepend(fila);
+            guardarRegistroEnStorage();
 
             // Llamada AJAX para guardar en el servidor
             fetch("/Boleta/GuardarBoleta", {
@@ -770,6 +820,14 @@
                 await workbookCargado.xlsx.load(buffer);
 
                 crearFilasVacias("tablaRegistro");
+
+                        // Cargar datos guardados al entrar
+        cargarRegistroDesdeStorage();
+
+        // Si no había nada guardado, creamos filas vacías
+        if (document.querySelectorAll('#tablaRegistro tbody tr').length === 0) {
+            crearFilasVacias("tablaRegistro");
+        }
 
                 workbookCargado.eachSheet(sheet => {
                     // Solo procesamos la hoja 'Registro'

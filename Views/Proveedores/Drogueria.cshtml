@@ -503,7 +503,82 @@
         const idProveedor = @((ViewData["IdProveedor"] ?? 1));
         const nombreProveedorServer = @Html.Raw(Json.Serialize(ViewData["NombreProveedor"] ?? "Proveedor"));
         const idUsuario = parseInt('@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0")', 10);
+        const STORAGE_KEY = `boletas_${idProveedor}`;
 
+                // Guarda el contenido actual de las dos tablas en localStorage
+        function guardarTablasEnStorage() {
+            const datos = {
+                perfumeria: [],
+                medicamentos: []
+            };
+
+            // Perfumería
+            document.querySelectorAll('#tablaPerfumeria tbody tr').forEach(tr => {
+                const celdas = tr.querySelectorAll('td');
+                if (celdas.length >= 3) {
+                    datos.perfumeria.push({
+                        fecha: celdas[0].innerText.trim(),
+                        importe: celdas[1].innerText.trim(),
+                        transfer: celdas[2].innerText.trim()
+                    });
+                }
+            });
+
+            // Medicamentos
+            document.querySelectorAll('#tablaMedicamentos tbody tr').forEach(tr => {
+                const celdas = tr.querySelectorAll('td');
+                if (celdas.length >= 3) {
+                    datos.medicamentos.push({
+                        fecha: celdas[0].innerText.trim(),
+                        importe: celdas[1].innerText.trim(),
+                        transfer: celdas[2].innerText.trim()
+                    });
+                }
+            });
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(datos));
+        }
+
+        // Carga las filas guardadas desde localStorage
+        function cargarTablasDesdeStorage() {
+            const datosGuardados = localStorage.getItem(STORAGE_KEY);
+            if (!datosGuardados) return;
+
+            try {
+                const datos = JSON.parse(datosGuardados);
+
+                // Limpiamos las tablas primero
+                document.querySelector('#tablaPerfumeria tbody').innerHTML = '';
+                document.querySelector('#tablaMedicamentos tbody').innerHTML = '';
+
+                // Perfumería
+                datos.perfumeria.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${item.fecha}</td>
+                        <td>${item.importe}</td>
+                        <td>${item.transfer}</td>
+                        <td class="text-center"><input type="checkbox" class="fila-check"></td>
+                    `;
+                    document.querySelector('#tablaPerfumeria tbody').appendChild(tr);
+                });
+
+                // Medicamentos
+                datos.medicamentos.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${item.fecha}</td>
+                        <td>${item.importe}</td>
+                        <td>${item.transfer}</td>
+                        <td class="text-center"><input type="checkbox" class="fila-check"></td>
+                    `;
+                    document.querySelector('#tablaMedicamentos tbody').appendChild(tr);
+                });
+
+            } catch (e) {
+                console.error("Error al cargar boletas guardadas:", e);
+            }
+        }
 
         function limpiarImporte(importe) {
             return parseInt((importe || "").toString().replace(/\./g, ""), 10) || 0;
@@ -544,8 +619,16 @@
                     if (!/^\d+$/.test(texto)) e.preventDefault();
                 });
             }
+                    // Cargar las boletas guardadas al entrar a la vista
+        cargarTablasDesdeStorage();
+
+        // Si no había nada guardado, creamos las filas vacías
+        if (document.querySelectorAll('#tablaPerfumeria tbody tr').length === 0) {
             crearFilasVacias("tablaPerfumeria");
+        }
+        if (document.querySelectorAll('#tablaMedicamentos tbody tr').length === 0) {
             crearFilasVacias("tablaMedicamentos");
+        }
         });
 
             document.getElementById("btnAgregar").addEventListener("click", function () {
@@ -599,6 +682,7 @@
             <td class="text-center"><input type="checkbox" class="fila-check"></td>
         `;
         tbody.prepend(fila);
+        guardarTablasEnStorage();
 
         // Guardar vía AJAX... (Se mantiene)
         fetch("/Boleta/GuardarBoleta", {

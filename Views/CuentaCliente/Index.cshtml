@@ -591,7 +591,7 @@
                                 <i class="bi bi-plus-lg"></i>
                             </button>
                             <button type="button" class="btn btn-success" style="height: 38px; padding: 0 15px;" onclick="exportarAExcel()">
-                                <i class="bi bi-file-earmark-excel"></i> Excel
+                               Eportar
                             </button>
                         </div>
                     </form>
@@ -1442,85 +1442,83 @@
         }
 
         // Botones Recuperar
-        document.querySelectorAll('.recuperar-btn').forEach(btn => {
-            btn.addEventListener('click', async function () {
-                if (this.closest('tr').style.display === 'none') {
-                    return;
-                }
-                const id = this.getAttribute('data-id');
-                if (!id) {
-                    Swal.fire('Error', 'No se encontró el ID de la compra.', 'error');
-                    return;
-                }
-                const confirm = await Swal.fire({
-                    title: '¿Recuperar esta compra?',
-                    text: "Volverá a aparecer en el listado principal de compras registradas.",
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#28a745',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Sí, recuperar',
-                    cancelButtonText: 'Cancelar'
-                });
-                if (!confirm.isConfirmed) return;
+            document.querySelectorAll('.recuperar-btn').forEach(btn => {
+        btn.addEventListener('click', async function () {
+            if (this.closest('tr').style.display === 'none') {
+                return;
+            }
+            const id = this.getAttribute('data-id');
+            if (!id) {
+                Swal.fire('Error', 'No se encontró el ID de la compra.', 'error');
+                return;
+            }
+            const confirm = await Swal.fire({
+                title: '¿Recuperar esta compra?',
+                text: "Volverá a aparecer en el listado principal de compras registradas.",
+                showCancelButton: true,
+                confirmButtonColor: '#007bff',
+                cancelButtonColor: '#007bff',
+                confirmButtonText: 'Sí, recuperar',
+                cancelButtonText: 'Cancelar'
+            });
+            if (!confirm.isConfirmed) return;
 
-                Swal.fire({
-                    title: 'Procesando...',
-                    text: 'Recuperando la compra, por favor espera.',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-
-                try {
-                    const res = await fetch('/CuentaCliente/RecuperarCompra', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                        },
-                        body: JSON.stringify({ Id: id })
-                    });
-
-                    if (!res.ok) {
-                        const err = await res.json();
-                        throw new Error(err.message || 'Error en el servidor');
-                    }
-
-                    const data = await res.json();
-
-                    if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: '¡Recuperada!',
-                            text: data.message || 'La compra fue restaurada correctamente y volverá a aparecer en el listado.',
-                            showConfirmButton: false,
-                            allowOutsideClick: false,
-                            allowEscapeKey: false,
-                            showCloseButton: true
-                        });
-
-                        // Recargar SOLO cuando el usuario cierre con la X
-                        const closeBtn = Swal.getCloseButton();
-                        if (closeBtn) {
-                            closeBtn.addEventListener('click', () => {
-                                location.reload();
-                            });
-                        }
-                    } else {
-                        Swal.fire('Error', data.message || 'No se pudo recuperar la compra.', 'error');
-                    }
-                } catch (err) {
-                    console.error('Error al recuperar compra:', err);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: err.message || 'No se pudo conectar con el servidor. Intenta de nuevo.',
-                    });
+            Swal.fire({
+                title: 'Procesando...',
+                text: 'Recuperando la compra, por favor espera.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
                 }
             });
+
+            try {
+                const res = await fetch('/CuentaCliente/RecuperarCompra', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ Id: id })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.message || 'Error en el servidor');
+                }
+
+                const data = await res.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Recuperada!',
+                        text: data.message || 'La compra fue restaurada correctamente y volverá a aparecer en el listado.',
+                        showConfirmButton: false,
+                        showCloseButton: false,       // Sin X
+                        timer: 2500,
+                        timerProgressBar: true,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false
+                    });
+
+                    // Esperamos 2 segundos y cerramos solo el Swal chico → volvemos al grande
+                    setTimeout(() => {
+                        Swal.close();
+                    }, 2000);
+                } else {
+                    Swal.fire('Error', data.message || 'No se pudo recuperar la compra.', 'error');
+                }
+            } catch (err) {
+                console.error('Error al recuperar compra:', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message || 'No se pudo conectar con el servidor. Intenta de nuevo.',
+                });
+            }
         });
+    });
     }
             });
         } catch (err) {

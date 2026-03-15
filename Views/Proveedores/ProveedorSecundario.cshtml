@@ -648,6 +648,10 @@
             // Cargar las filas guardadas desde localStorage (¡esto es lo nuevo!)
             //cargarRegistroDesdeStorage();
             cargarRegistro();
+        console.error("Error al cargar desde BD:", err);
+        console.log("URL intentada:", `/Boleta/GetBoletas?idProveedor=${idProveedor}`);
+        console.log("Status:", err.message);  // para ver si es 500
+        cargarRegistroDesdeStorage();
 
             // Si después de cargar no hay filas, crea las vacías
             if (document.querySelectorAll('#tablaRegistro tbody tr').length === 0) {

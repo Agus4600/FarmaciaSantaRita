@@ -51,7 +51,6 @@ namespace FarmaciaSantaRita.Controllers
         [HttpGet]
         public IActionResult GetBoletas(int idProveedor)
         {
-            // Asegurarse de que el ID del proveedor es válido
             if (idProveedor <= 0)
             {
                 return BadRequest(new { success = false, message = "ID de proveedor inválido." });
@@ -59,29 +58,26 @@ namespace FarmaciaSantaRita.Controllers
 
             try
             {
-                // Obtener solo las boletas del proveedor específico
                 var boletas = _context.Boleta
-                    .Where(b => b.Idproveedor == idProveedor)
-                    // Seleccionar solo las propiedades necesarias y darles formato
+                    .Where(b => b.Idproveedor == idProveedor && b.Eliminado == false)  // ← AGREGÁ ESTO
                     .Select(b => new
                     {
                         Idboleta = b.Idboleta,
-                        // Formateamos la fecha para la vista
                         Fecha = b.Fecha.ToString("dd/MM/yyyy"),
                         ImporteFinal = b.ImporteFinal,
-                        Transfer = b.Transfer,
+                        Transfer = b.Transfer ?? "No",
                         Categoria = b.Categoria,
                         Detalle = b.Detalle
                     })
-                    .OrderByDescending(b => b.Fecha) // Ordenar por fecha para mejor visualización
+                    .OrderByDescending(b => b.Fecha)
                     .ToList();
 
-                // Devolver la lista de boletas en formato JSON
                 return Json(new { success = true, data = boletas });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { success = false, message = $"Error al obtener boletas: {ex.Message}" });
+                Console.WriteLine("ERROR en GetBoletas: " + ex.ToString());
+                return StatusCode(500, new { success = false, message = "Error al obtener boletas: " + ex.Message });
             }
         }
 
@@ -304,7 +300,8 @@ namespace FarmaciaSantaRita.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine("ERROR GRAVE en GetBoletasEliminadas: " + ex.ToString());
-                return StatusCode(500, new { success = false, message = "Error interno al consultar boletas eliminadas." });
+                Console.WriteLine("StackTrace: " + ex.StackTrace);
+                return StatusCode(500, new { success = false, message = "Error interno: " + ex.Message });
             }
         }
 

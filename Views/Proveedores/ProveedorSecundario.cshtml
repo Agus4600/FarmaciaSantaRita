@@ -629,31 +629,22 @@
         // 3. INICIALIZACIÓN Y FORMATO
         // ----------------------------------------------------
 
-                document.addEventListener("DOMContentLoaded", function () {
+                    document.addEventListener("DOMContentLoaded", function () {
             const inputImporte = document.getElementById("importeFinal");
             if (inputImporte) {
-                // Formato de puntos para el importe
                 inputImporte.addEventListener("input", function () {
                     let valor = this.value.replace(/\D/g, "").substring(0, 8);
                     if (valor) valor = valor.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
                     this.value = valor;
                 });
-                // Previene pegar texto no numérico
                 inputImporte.addEventListener("paste", function (e) {
                     const texto = (e.clipboardData || window.clipboardData).getData("text");
                     if (!/^\d+$/.test(texto)) e.preventDefault();
                 });
             }
 
-            // Cargar las filas guardadas desde localStorage (¡esto es lo nuevo!)
-            //cargarRegistroDesdeStorage();
             cargarRegistro();
-        console.error("Error al cargar desde BD:", err);
-        console.log("URL intentada:", `/Boleta/GetBoletas?idProveedor=${idProveedor}`);
-        console.log("Status:", err.message);  // para ver si es 500
-        cargarRegistroDesdeStorage();
 
-            // Si después de cargar no hay filas, crea las vacías
             if (document.querySelectorAll('#tablaRegistro tbody tr').length === 0) {
                 crearFilasVacias("tablaRegistro");
             }
@@ -839,7 +830,7 @@
 
                     tr.innerHTML = `
                         <td title="${b.fecha}">${b.fecha}</td>
-                        <td title="$${b.importeFinal.toLocaleString('es-AR')}">$${b.importeFinal.toLocaleString('es-AR')}</td>
+                        <td title="$${b.importeFinal?.toLocaleString('es-AR') || '0'}">$${b.importeFinal?.toLocaleString('es-AR') || '0'}</td>
                         <td title="${b.transfer || 'No'}">${b.transfer || 'No'}</td>
                         <td class="text-center"><input type="checkbox" class="fila-check"></td>
                     `;
@@ -877,7 +868,7 @@
         // NUEVO: BOTÓN RESTAURAR – Muestra eliminadas en Swal más mediano
         // ----------------------------------------------------
 
-                document.getElementById("btnRestaurar").addEventListener("click", async function () {
+                    document.getElementById("btnRestaurar").addEventListener("click", async function () {
             try {
                 const res = await fetch(`/Boleta/GetBoletasEliminadas?idProveedor=${idProveedor}`);
                 if (!res.ok) throw new Error(`Error HTTP ${res.status} al cargar eliminadas`);
@@ -894,7 +885,6 @@
                     return;
                 }
 
-                // Construir tabla HTML para el Swal
                 let tablaHtml = `
                     <div style="margin-bottom: 15px; max-width: 900px; margin: 0 auto; overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center;" id="tablaEliminadas">
@@ -911,12 +901,12 @@
 
                 eliminadas.data.forEach(boleta => {
                     tablaHtml += `
-                        <tr data-id="${boleta.Idboleta}">
-                            <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.Fecha}</td>
-                            <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.ImporteFinal}</td>
-                            <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.Transfer}</td>
+                        <tr data-id="${boleta.idboleta}">
+                            <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.fecha || 'Sin fecha'}</td>
+                            <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.importeFinal || '0'}</td>
+                            <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.transfer || 'No'}</td>
                             <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">
-                                <button class="btn btn-success btn-sm restaurar-btn" data-id="${boleta.Idboleta}">
+                                <button class="btn btn-success btn-sm restaurar-btn" data-id="${boleta.idboleta}">
                                     <i class="bi bi-arrow-repeat"></i> Restaurar
                                 </button>
                             </td>
@@ -934,14 +924,11 @@
                     padding: '20px',
                     showCloseButton: true,
                     showConfirmButton: false,
-                    customClass: {
-                        popup: 'bloque-interior-swal'
-                    },
+                    customClass: { popup: 'bloque-interior-swal' },
                     didOpen: () => {
                         document.querySelectorAll('.restaurar-btn').forEach(btn => {
                             btn.addEventListener('click', async function () {
                                 const id = this.getAttribute('data-id');
-
                                 const confirm = await Swal.fire({
                                     title: '¿Restaurar boleta?',
                                     text: "Volverá a aparecer en el registro principal.",
@@ -963,7 +950,6 @@
                                     const data = await res.json();
 
                                     if (data.success) {
-                                        // Remover fila del Swal
                                         this.closest('tr').remove();
                                         Swal.fire({
                                             toast: true,
@@ -973,7 +959,6 @@
                                             showConfirmButton: false,
                                             timer: 1500
                                         });
-                                        // Recargar la página para actualizar la tabla principal
                                         location.reload();
                                     } else {
                                         Swal.fire('Error', data.message || 'No se pudo restaurar', 'error');

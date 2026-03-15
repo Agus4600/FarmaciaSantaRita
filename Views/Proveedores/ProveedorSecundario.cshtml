@@ -813,16 +813,11 @@
 
 
 
-
-
                 // ----------------------------------------------------
-        // NUEVO: BOTÓN RESTAURAR – Muestra eliminadas en Swal más mediano
+        // NUEVA FUNCIÓN GLOBAL: cargar desde BD + fallback local
         // ----------------------------------------------------
-        document.getElementById("btnRestaurar").addEventListener("click", async function () {
-                    // Renombramos para que sea más claro que ahora carga de BD + local como fallback
         async function cargarRegistro() {
             try {
-                // 1. Intentamos cargar desde la base de datos
                 const res = await fetch(`/Boleta/GetBoletas?idProveedor=${idProveedor}`);
                 if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
 
@@ -831,43 +826,172 @@
 
                 const boletas = data.data;
 
-                // Limpiamos la tabla
                 const tbody = document.querySelector('#tablaRegistro tbody');
                 tbody.innerHTML = '';
 
                 boletas.forEach(b => {
                     const tr = document.createElement('tr');
-                    tr.setAttribute('data-boleta-id', b.idboleta); // ← importante para eliminar después
+                    tr.setAttribute('data-boleta-id', b.idboleta);
 
                     tr.innerHTML = `
                         <td title="${b.fecha}">${b.fecha}</td>
                         <td title="$${b.importeFinal.toLocaleString('es-AR')}">$${b.importeFinal.toLocaleString('es-AR')}</td>
-                        <td title="${b.transfer}">${b.transfer}</td>
+                        <td title="${b.transfer || 'No'}">${b.transfer || 'No'}</td>
                         <td class="text-center"><input type="checkbox" class="fila-check"></td>
                     `;
                     tbody.appendChild(tr);
                 });
 
-                // Si no hay filas en BD, creamos vacías
                 if (boletas.length === 0) {
                     crearFilasVacias("tablaRegistro");
                 }
 
-                // Guardamos también en localStorage para fallback (opcional)
-                guardarRegistroEnStorage();
-
+                guardarRegistroEnStorage(); // opcional, para mantener compatibilidad
             } catch (err) {
                 console.error("Error al cargar desde BD:", err);
-
-                // Fallback: cargamos desde localStorage si falla BD
                 cargarRegistroDesdeStorage();
 
-                // Si tampoco hay en localStorage, creamos vacías
                 if (document.querySelectorAll('#tablaRegistro tbody tr').length === 0) {
                     crearFilasVacias("tablaRegistro");
                 }
             }
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+                // ----------------------------------------------------
+        // NUEVO: BOTÓN RESTAURAR – Muestra eliminadas en Swal más mediano
+        // ----------------------------------------------------
+
+                document.getElementById("btnRestaurar").addEventListener("click", async function () {
+            try {
+                const res = await fetch(`/Boleta/GetBoletasEliminadas?idProveedor=${idProveedor}`);
+                if (!res.ok) throw new Error(`Error HTTP ${res.status} al cargar eliminadas`);
+
+                const eliminadas = await res.json();
+
+                if (!eliminadas.success || !eliminadas.data || eliminadas.data.length === 0) {
+                    Swal.fire({
+                        title: 'Sin eliminadas',
+                        text: 'No hay boletas eliminadas para este proveedor.',
+                        icon: 'info',
+                        confirmButtonColor: '#007bff'
+                    });
+                    return;
+                }
+
+                // Construir tabla HTML para el Swal
+                let tablaHtml = `
+                    <div style="margin-bottom: 15px; max-width: 900px; margin: 0 auto; overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center;" id="tablaEliminadas">
+                            <thead style="background: #0d6efd; color: white; position: sticky; top: 0; z-index: 10;">
+                                <tr>
+                                    <th style="padding: 10px; border: 1px solid #dee2e6; width: 30%;">Fecha</th>
+                                    <th style="padding: 10px; border: 1px solid #dee2e6; width: 35%;">Importe F</th>
+                                    <th style="padding: 10px; border: 1px solid #dee2e6; width: 25%;">Transfer</th>
+                                    <th style="padding: 10px; border: 1px solid #dee2e6; width: 10%;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                eliminadas.data.forEach(boleta => {
+                    tablaHtml += `
+                        <tr data-id="${boleta.Idboleta}">
+                            <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.Fecha}</td>
+                            <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.ImporteFinal}</td>
+                            <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.Transfer}</td>
+                            <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">
+                                <button class="btn btn-success btn-sm restaurar-btn" data-id="${boleta.Idboleta}">
+                                    <i class="bi bi-arrow-repeat"></i> Restaurar
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tablaHtml += `</tbody></table></div>`;
+
+                Swal.fire({
+                    title: 'Boletas Eliminadas',
+                    html: tablaHtml,
+                    width: '1000px',
+                    heightAuto: false,
+                    padding: '20px',
+                    showCloseButton: true,
+                    showConfirmButton: false,
+                    customClass: {
+                        popup: 'bloque-interior-swal'
+                    },
+                    didOpen: () => {
+                        document.querySelectorAll('.restaurar-btn').forEach(btn => {
+                            btn.addEventListener('click', async function () {
+                                const id = this.getAttribute('data-id');
+
+                                const confirm = await Swal.fire({
+                                    title: '¿Restaurar boleta?',
+                                    text: "Volverá a aparecer en el registro principal.",
+                                    showCancelButton: true,
+                                    confirmButtonColor: '#007bff',
+                                    cancelButtonColor: '#6c757d',
+                                    confirmButtonText: 'Sí, restaurar',
+                                    cancelButtonText: 'Cancelar'
+                                });
+
+                                if (!confirm.isConfirmed) return;
+
+                                try {
+                                    const res = await fetch('/Boleta/RestaurarBoleta', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ id })
+                                    });
+                                    const data = await res.json();
+
+                                    if (data.success) {
+                                        // Remover fila del Swal
+                                        this.closest('tr').remove();
+                                        Swal.fire({
+                                            toast: true,
+                                            position: 'top-end',
+                                            icon: 'success',
+                                            title: 'Restaurada',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        });
+                                        // Recargar la página para actualizar la tabla principal
+                                        location.reload();
+                                    } else {
+                                        Swal.fire('Error', data.message || 'No se pudo restaurar', 'error');
+                                    }
+                                } catch (err) {
+                                    Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+                                }
+                            });
+                        });
+                    }
+                });
+            } catch (err) {
+                console.error('Error al cargar eliminadas:', err);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'No se pudieron cargar las boletas eliminadas',
+                    icon: 'error',
+                    confirmButtonColor: '#dc3545'
+                });
+            }
+        });
+       
 
 
 

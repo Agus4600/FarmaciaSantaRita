@@ -52,24 +52,22 @@ namespace FarmaciaSantaRita.Controllers
         public IActionResult GetBoletas(int idProveedor)
         {
             if (idProveedor <= 0)
-            {
                 return BadRequest(new { success = false, message = "ID de proveedor inválido." });
-            }
 
             try
             {
                 var boletas = _context.Boleta
-                    .Where(b => b.Idproveedor == idProveedor && b.Eliminado == false)  // ← AGREGÁ ESTO
+                    .Where(b => b.Idproveedor == idProveedor && b.Eliminado == false)
+                    .OrderByDescending(b => b.Fecha)  // ← Orden por DateTime real (funciona en SQL)
                     .Select(b => new
                     {
                         Idboleta = b.Idboleta,
-                        Fecha = b.Fecha.ToString("dd/MM/yyyy"),
+                        Fecha = b.Fecha.ToString("dd/MM/yyyy"),  // ← Formato aquí, después de traer datos
                         ImporteFinal = b.ImporteFinal,
                         Transfer = b.Transfer ?? "No",
                         Categoria = b.Categoria,
                         Detalle = b.Detalle
                     })
-                    .OrderByDescending(b => b.Fecha)
                     .ToList();
 
                 return Json(new { success = true, data = boletas });
@@ -267,9 +265,12 @@ namespace FarmaciaSantaRita.Controllers
             }
         }
 
+
+
+
         // Nueva acción: Obtener boletas eliminadas del proveedor actual
         [HttpGet]
-        public IActionResult GetBoletasEliminadas(string idProveedor)  // ← Cambia a string para que acepte query string
+        public IActionResult GetBoletasEliminadas(string idProveedor)
         {
             Console.WriteLine($"GetBoletasEliminadas llamado - idProveedor raw: '{idProveedor}'");
 
@@ -283,14 +284,14 @@ namespace FarmaciaSantaRita.Controllers
             {
                 var eliminadas = _context.Boleta
                     .Where(b => b.Idproveedor == proveedorId && b.Eliminado == true)
+                    .OrderByDescending(b => b.Fecha)  // ← Orden por DateTime real
                     .Select(b => new
                     {
                         Idboleta = b.Idboleta,
-                        Fecha = b.Fecha.ToString("dd/MM/yyyy"),
+                        Fecha = b.Fecha.ToString("dd/MM/yyyy"),  // ← Formato aquí
                         ImporteFinal = "$ " + (b.ImporteFinal > 0 ? b.ImporteFinal.ToString("N0") : "0"),
                         Transfer = b.Transfer ?? "No"
                     })
-                    .OrderByDescending(b => b.Fecha)
                     .ToList();
 
                 Console.WriteLine($"Eliminadas encontradas para proveedor {proveedorId}: {eliminadas.Count}");

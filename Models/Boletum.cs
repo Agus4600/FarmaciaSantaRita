@@ -19,6 +19,8 @@ public partial class Boletum
 
     public string Categoria { get; set; } = null!;
 
+    public bool Eliminado { get; set; } = false;
+
     public string Detalle { get; set; } = null!;
 
     public virtual Proveedor IdproveedorNavigation { get; set; } = null!;

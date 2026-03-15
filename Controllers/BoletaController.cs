@@ -98,30 +98,9 @@ namespace FarmaciaSantaRita.Controllers
             public string? Detalle { get; set; }
         }
 
-        [HttpDelete]
-        public async Task<IActionResult> EliminarBoleta(int id)
-        {
-            try
-            {
-                var boleta = await _context.Boleta.FindAsync(id);
+        
 
-                if (boleta == null)
-                    return Json(new { success = false, message = "La boleta no existe." });
 
-                _context.Boleta.Remove(boleta);
-                await _context.SaveChangesAsync();
-
-                return Json(new { success = true });
-            }
-            catch (Exception ex)
-            {
-                return Json(new
-                {
-                    success = false,
-                    message = ex.InnerException?.Message ?? ex.Message
-                });
-            }
-        }
 
         // ------------------ CargarExcel: lee Fecha / Importe / Transfer y añade Categoria según el nombre de la hoja ------------------
         [HttpPost]
@@ -187,53 +166,145 @@ namespace FarmaciaSantaRita.Controllers
         [HttpPost]
         public async Task<IActionResult> GuardarBoleta([FromBody] BoletaDto data)
         {
+            Console.WriteLine("GuardarBoleta llamado");
+            Console.WriteLine($" - IdUsuario: {data.Idusuario}");
+            Console.WriteLine($" - IdProveedor: {data.Idproveedor}");
+            Console.WriteLine($" - Fecha raw: {data.Fecha}");
+            Console.WriteLine($" - Importe: {data.ImporteFinal}");
+            Console.WriteLine($" - Transfer: {data.Transfer}");
+            Console.WriteLine($" - Categoria: {data.Categoria}");
+
             try
             {
-                // 1. Convertir la fecha a UTC (esto soluciona el error)
-                if (!DateTime.TryParseExact(data.Fecha, "yyyy-MM-dd",
-                                            System.Globalization.CultureInfo.InvariantCulture,
-                                            System.Globalization.DateTimeStyles.None,
-                                            out DateTime fechaParsed))
+                if (string.IsNullOrEmpty(data.Fecha) || !DateTime.TryParseExact(data.Fecha, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out DateTime fechaParsed))
                 {
-                    return BadRequest(new { exito = false, mensaje = "Formato de fecha inválido. Se espera yyyy-MM-dd." });
+                    Console.WriteLine("Fecha inválida");
+                    return BadRequest(new { exito = false, mensaje = "Fecha inválida" });
                 }
 
-                // ★★★ Línea clave: Forzar UTC ★★★
                 fechaParsed = DateTime.SpecifyKind(fechaParsed, DateTimeKind.Utc);
-                // O mejor aún (si la fecha viene sin hora): 
-                // fechaParsed = fechaParsed.ToUniversalTime();
 
                 var boleta = new Boletum
                 {
                     Idusuario = data.Idusuario,
                     Idproveedor = data.Idproveedor,
-                    Fecha = fechaParsed,  // Ahora es UTC → PostgreSQL lo acepta
+                    Fecha = fechaParsed,
                     ImporteFinal = data.ImporteFinal,
                     Transfer = data.Transfer,
                     Categoria = data.Categoria,
-                    Detalle = data.Detalle ?? string.Empty
+                    Detalle = data.Detalle ?? "",
+                    Eliminado = false
                 };
 
                 _context.Boleta.Add(boleta);
-                await _context.SaveChangesAsync();
+                var cambios = await _context.SaveChangesAsync();
+                Console.WriteLine($"SaveChanges guardó {cambios} filas. Nuevo ID: {boleta.Idboleta}");
 
-                return Json(new
-                {
-                    exito = true,
-                    idBoleta = boleta.Idboleta
-                });
+                return Json(new { exito = true, idBoleta = boleta.Idboleta });
             }
             catch (Exception ex)
             {
-                var inner = ex.InnerException?.Message ?? ex.Message;
-                Console.WriteLine("❌ ERROR al guardar boleta: " + inner);
-                return Json(new
-                {
-                    exito = false,
-                    mensaje = "Error DB: " + inner
-                });
+                Console.WriteLine("EXCEPCIÓN EN GuardarBoleta: " + ex.ToString());
+                return Json(new { exito = false, mensaje = ex.Message });
             }
         }
+
+
+
+
+
+
+
+
+
+
+        // Modificar EliminarBoleta para que marque Eliminado = true (soft delete)
+        [HttpDelete]
+        public async Task<IActionResult> EliminarBoleta(int id)
+        {
+            try
+            {
+                var boleta = await _context.Boleta.FindAsync(id);
+                if (boleta == null)
+                    return Json(new { success = false, message = "La boleta no existe." });
+
+                // ← Comentá o borrá esto si querés permitir eliminar de cualquier proveedor
+                // if (boleta.Idproveedor != int.Parse(ViewBag.IdProveedor?.ToString() ?? "0"))
+                //     return Unauthorized("No tienes permiso para eliminar esta boleta.");
+
+                boleta.Eliminado = true;           // ← Marca como eliminada (soft delete)
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.InnerException?.Message ?? ex.Message });
+            }
+        }
+
+
+
+
+
+        // Nueva acción: Restaurar boleta (poner Eliminado = false)
+        [HttpPost]
+        public async Task<IActionResult> RestaurarBoleta(int id)
+        {
+            try
+            {
+                var boleta = await _context.Boleta.FindAsync(id);
+                if (boleta == null)
+                    return Json(new { success = false, message = "La boleta no existe." });
+
+                if (boleta.Idproveedor != int.Parse(ViewBag.IdProveedor?.ToString() ?? "0"))
+                    return Unauthorized("No tienes permiso para restaurar esta boleta.");
+
+                boleta.Eliminado = false;
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Boleta restaurada correctamente." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.InnerException?.Message ?? ex.Message });
+            }
+        }
+
+        // Nueva acción: Obtener boletas eliminadas del proveedor actual
+        [HttpGet]
+        public IActionResult GetBoletasEliminadas(int idProveedor)
+        {
+            if (idProveedor <= 0)
+                return BadRequest(new { success = false, message = "ID de proveedor inválido." });
+
+            try
+            {
+                var eliminadas = _context.Boleta
+                    .Where(b => b.Idproveedor == idProveedor && b.Eliminado == true)
+                    .Select(b => new
+                    {
+                        Idboleta = b.Idboleta,
+                        Fecha = b.Fecha.ToString("dd/MM/yyyy"),
+                        ImporteFinal = "$ " + b.ImporteFinal.ToString("N0"),
+                        Transfer = b.Transfer
+                    })
+                    .OrderByDescending(b => b.Fecha)
+                    .ToList();
+
+                return Json(new { success = true, data = eliminadas });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = $"Error al obtener boletas eliminadas: {ex.Message}" });
+            }
+        }
+
+
+
+
+
+
 
 
         // ExportarExcel (igual que antes)...

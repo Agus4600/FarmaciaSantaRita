@@ -522,7 +522,7 @@
                         <div class="botones-laterales">
                             <button translate="no" id="btnAgregar">Agregar</button>
                             <button id="btnGuardarl" class="btn btn-primary" translate="no">Exportar</button>
-                            <button translate="no" id="btnRestaurar">Restau</button>
+                            <button translate="no" id="btnRestaurar">Restaurar</button>
                             <button translate="no" id="btnEliminar">Eliminar Fila</button>
                         </div>
                     </div>
@@ -706,6 +706,15 @@
             tbody.prepend(fila);
             guardarRegistroEnStorage();
 
+        console.log("===== DATOS QUE SE ENVIAN A GuardarBoleta =====");
+        console.log("Idusuario:", idUsuario);
+        console.log("Idproveedor:", idProveedor);
+        console.log("Fecha (raw):", fechaRaw);
+        console.log("ImporteFinal (limpio):", limpiarImporte(importeRaw));
+        console.log("Transfer:", transferValor);
+        console.log("Categoria:", categoriaValor);
+        console.log("Detalle:", "");
+
             // Llamada AJAX para guardar en el servidor
             fetch("/Boleta/GuardarBoleta", {
                 method: "POST",
@@ -721,26 +730,28 @@
                 })
             })
             .then(async response => {
-                const resp = await response.json();
-                if (!response.ok || !resp?.exito) {
-                    const mensaje = resp?.mensaje || `Error HTTP ${response.status} - No se pudo procesar la solicitud.`;
-                    alert("⚠️ Error al guardar la boleta: " + mensaje);
-                    fila.remove(); // Elimina la fila si falla el guardado
-                    return;
-                }
-                // Éxito:
-                fila.setAttribute("data-boleta-id", resp.idBoleta);
+                    console.log("Estado HTTP:", response.status);  // ← NUEVO
+        const resp = await response.json();
+        console.log("Respuesta del servidor:", resp);  // ← NUEVO: mirá exito, mensaje, idBoleta
 
-                // Limpiar campos de entrada
-                fechaInput.value = "";
-                importeInput.value = "";
-                document.querySelectorAll('input[name="transfer"]').forEach(r => r.checked = false);
-            })
-            .catch(err => {
-                console.error("Error de conexión:", err);
-                alert("❌ Error de red o conexión. La boleta no se guardó. Revisa la consola para más detalles.");
-                fila.remove(); // Elimina la fila si falla la conexión
-            });
+        if (!response.ok || !resp?.exito) {
+            const mensaje = resp?.mensaje || `Error HTTP ${response.status}`;
+            console.error("Fallo en guardado:", mensaje);
+            alert("⚠️ Error al guardar: " + mensaje);
+            fila.remove();
+            return;
+        }
+                        console.log("Guardado exitoso - ID asignado:", resp.idBoleta);
+            fila.setAttribute("data-boleta-id", resp.idBoleta);
+            fechaInput.value = "";
+            importeInput.value = "";
+            document.querySelectorAll('input[name="transfer"]').forEach(r => r.checked = false);
+        })
+        .catch(err => {
+            console.error("Error completo en fetch:", err);
+            alert("❌ Error de conexión. Revisa consola.");
+            fila.remove();
+        });
         });
 
 

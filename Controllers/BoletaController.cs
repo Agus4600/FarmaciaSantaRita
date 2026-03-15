@@ -273,30 +273,38 @@ namespace FarmaciaSantaRita.Controllers
 
         // Nueva acción: Obtener boletas eliminadas del proveedor actual
         [HttpGet]
-        public IActionResult GetBoletasEliminadas(int idProveedor)
+        public IActionResult GetBoletasEliminadas(string idProveedor)  // ← Cambia a string para que acepte query string
         {
-            if (idProveedor <= 0)
+            Console.WriteLine($"GetBoletasEliminadas llamado - idProveedor raw: '{idProveedor}'");
+
+            if (!int.TryParse(idProveedor, out int proveedorId) || proveedorId <= 0)
+            {
+                Console.WriteLine("ID proveedor inválido o no parseable");
                 return BadRequest(new { success = false, message = "ID de proveedor inválido." });
+            }
 
             try
             {
                 var eliminadas = _context.Boleta
-                    .Where(b => b.Idproveedor == idProveedor && b.Eliminado == true)
+                    .Where(b => b.Idproveedor == proveedorId && b.Eliminado == true)
                     .Select(b => new
                     {
                         Idboleta = b.Idboleta,
                         Fecha = b.Fecha.ToString("dd/MM/yyyy"),
-                        ImporteFinal = "$ " + b.ImporteFinal.ToString("N0"),
-                        Transfer = b.Transfer
+                        ImporteFinal = "$ " + (b.ImporteFinal > 0 ? b.ImporteFinal.ToString("N0") : "0"),
+                        Transfer = b.Transfer ?? "No"
                     })
                     .OrderByDescending(b => b.Fecha)
                     .ToList();
+
+                Console.WriteLine($"Eliminadas encontradas para proveedor {proveedorId}: {eliminadas.Count}");
 
                 return Json(new { success = true, data = eliminadas });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { success = false, message = $"Error al obtener boletas eliminadas: {ex.Message}" });
+                Console.WriteLine("ERROR GRAVE en GetBoletasEliminadas: " + ex.ToString());
+                return StatusCode(500, new { success = false, message = "Error interno al consultar boletas eliminadas." });
             }
         }
 

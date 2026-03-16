@@ -717,6 +717,7 @@
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
+                    credentials: 'include',
                     Idusuario: idUsuario,
                     Idproveedor: idProveedor,
                     Fecha: fechaRaw,
@@ -939,7 +940,7 @@
                     showCloseButton: true,
                     showConfirmButton: false,
                     customClass: { popup: 'bloque-interior-swal' },
-                            didOpen: () => {
+                           didOpen: () => {
             document.querySelectorAll('.restaurar-btn').forEach(btn => {
                 btn.addEventListener('click', async function () {
                     const boletaIdStr = this.getAttribute('data-id');
@@ -965,18 +966,28 @@
                     try {
                         const res = await fetch('/Boleta/RestaurarBoleta', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ id: boletaId })  // ← clave "id" exacta + número
-                            credentials: 'include'
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ id: boletaId }),
+                            credentials: 'include'  // ← Aquí va, DENTRO del objeto
                         });
 
-                            if (!res.ok) {
-            if (res.status === 401) {
-                Swal.fire('Sesión caducada', 'Por favor inicia sesión nuevamente.', 'warning');
-                return;
-            }
-            throw new Error(`HTTP ${res.status}`);
-        }
+                        if (!res.ok) {
+                            if (res.status === 401) {
+                                Swal.fire({
+                                    title: 'Sesión caducada',
+                                    text: 'Por favor inicia sesión nuevamente.',
+                                    icon: 'warning',
+                                    confirmButtonText: 'Aceptar'
+                                }).then(() => {
+                                    window.location.href = '/Account/Login'; // o la ruta de login que uses
+                                });
+                                return;
+                            }
+                            const errorData = await res.json();
+                            throw new Error(errorData.message || `Error HTTP ${res.status}`);
+                        }
 
                         const data = await res.json();
 
@@ -995,8 +1006,8 @@
                             Swal.fire('Error', data.message || 'No se pudo restaurar', 'error');
                         }
                     } catch (err) {
-                        console.error('Error en restaurar:', err);
-                        Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+                        console.error('Error al restaurar boleta:', err);
+                        Swal.fire('Error', err.message || 'No se pudo conectar con el servidor', 'error');
                     }
                 });
             });

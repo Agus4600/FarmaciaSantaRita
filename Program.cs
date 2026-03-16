@@ -22,6 +22,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         // Nombre del controlador/acción de la página de inicio de sesión
         options.AccessDeniedPath = "/Home/AccessDenied"; // Opcional: para usuarios con rol insuficiente
         options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // Duración de la cookie
+
+        options.Cookie.SameSite = SameSiteMode.None;          // Permite enviar cookie en peticiones cross-site
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Obligatorio en HTTPS (Render es HTTPS)
+        options.Cookie.HttpOnly = true;
     });
 
 // Se mantiene Session, aunque ya no la usaremos para autenticar, por si otras partes del código la necesitan.

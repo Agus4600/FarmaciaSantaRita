@@ -724,8 +724,8 @@
                 Transfer: transferValor,
                 Categoria: categoriaValor,
                 Detalle: ""
-            }),
-            credentials: 'include'   // ← ahora SÍ está correctamente dentro
+            }),   // ← AGREGÁ ESTA COMA AQUÍ
+            credentials: 'include'
         })
         .then(async response => {
             console.log("Estado HTTP:", response.status);

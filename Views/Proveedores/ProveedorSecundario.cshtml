@@ -543,41 +543,30 @@
         const idUsuario = parseInt('@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0")', 10);
         const CATEGORIA_FIJA = nombreProveedorServer;
         const TABLA_REGISTRO = { id: "tablaRegistro", hoja: "Registro", titulo: nombreProveedorServer };
-                // Clave única para esta vista y proveedor
         const STORAGE_KEY_REGISTRO = `registro_${idProveedor}`;
 
-
-                // Guarda el contenido de la tabla Registro en localStorage
         function guardarRegistroEnStorage() {
             const datos = [];
-
             document.querySelectorAll('#tablaRegistro tbody tr').forEach(tr => {
                 const celdas = tr.querySelectorAll('td');
                 if (celdas.length >= 3) {
                     const fecha = celdas[0].innerText.trim();
                     const importe = celdas[1].innerText.trim();
                     const transfer = celdas[2].innerText.trim();
-                    // Solo guardar si tiene algo de contenido
                     if (fecha || importe || transfer) {
                         datos.push({ fecha, importe, transfer });
                     }
                 }
             });
-
             localStorage.setItem(STORAGE_KEY_REGISTRO, JSON.stringify(datos));
         }
 
-        // Carga las filas guardadas desde localStorage
         function cargarRegistroDesdeStorage() {
             const datosGuardados = localStorage.getItem(STORAGE_KEY_REGISTRO);
             if (!datosGuardados) return;
-
             try {
                 const datos = JSON.parse(datosGuardados);
-
-                // Limpiamos la tabla primero
                 document.querySelector('#tablaRegistro tbody').innerHTML = '';
-
                 datos.forEach(item => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -588,7 +577,6 @@
                     `;
                     document.querySelector('#tablaRegistro tbody').appendChild(tr);
                 });
-
             } catch (e) {
                 console.error("Error al cargar registro guardado:", e);
             }
@@ -597,7 +585,6 @@
         // ----------------------------------------------------
         // 2. FUNCIONES DE AYUDA
         // ----------------------------------------------------
-
         function limpiarImporte(importe) {
             return parseInt((importe || "").toString().replace(/\./g, ""), 10) || 0;
         }
@@ -624,12 +611,10 @@
             }
         }
 
-
         // ----------------------------------------------------
-        // 3. INICIALIZACIÓN Y FORMATO
+        // 3. INICIALIZACIÓN
         // ----------------------------------------------------
-
-                    document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function () {
             const inputImporte = document.getElementById("importeFinal");
             if (inputImporte) {
                 inputImporte.addEventListener("input", function () {
@@ -642,57 +627,43 @@
                     if (!/^\d+$/.test(texto)) e.preventDefault();
                 });
             }
-
             cargarRegistro();
-
             if (document.querySelectorAll('#tablaRegistro tbody tr').length === 0) {
                 crearFilasVacias("tablaRegistro");
             }
         });
 
-
-               // ----------------------------------------------------
-        // 4. BOTÓN AGREGAR (Guardado y Actualización de UI)
         // ----------------------------------------------------
-
+        // 4. BOTÓN AGREGAR
+        // ----------------------------------------------------
         document.getElementById("btnAgregar").addEventListener("click", function () {
             const fechaInput = document.getElementById("fecha");
             const importeInput = document.getElementById("importeFinal");
             const transferSeleccionado = document.querySelector('input[name="transfer"]:checked');
             const fieldsetTransfer = document.getElementById("fieldsetTransfer");
 
-            // VALIDACIÓN PREVENTIVA DE ID DE USUARIO (USANDO EL NUEVO IDUsuario)
             if (idUsuario <= 0) {
-                alert("❌ Error de Sesión. Por favor, recarga la página o vuelve a iniciar sesión para guardar datos.");
+                alert("❌ Error de Sesión. Por favor, recarga la página o vuelve a iniciar sesión.");
                 return;
             }
-            // FIN VALIDACIÓN PREVENTIVA
 
             let camposCompletos = true;
             document.querySelectorAll('.campo input').forEach(c => c.classList.remove('is-invalid'));
             fieldsetTransfer?.classList.remove('is-invalid');
 
-            // Validación de campos
             if (!fechaInput.value.trim()) { fechaInput.classList.add('is-invalid'); camposCompletos = false; }
             if (!importeInput.value.trim()) { importeInput.classList.add('is-invalid'); camposCompletos = false; }
             if (!transferSeleccionado) { fieldsetTransfer.classList.add('is-invalid'); camposCompletos = false; }
-
             if (!camposCompletos) return;
 
-            const idTabla = "tablaRegistro";
-            const tbody = document.querySelector(`#${idTabla} tbody`);
-
+            const tbody = document.querySelector('#tablaRegistro tbody');
             const fechaRaw = fechaInput.value.trim();
             const importeRaw = importeInput.value.trim();
             const fechaMostrar = formatoFechaInputAmostrar(fechaRaw);
             const transferValor = transferSeleccionado.value;
             const importeFormateado = `$ ${limpiarImporte(importeRaw).toLocaleString("es-AR")}`;
-            //const importeFormateado = "$ " + limpiarImporte(importeRaw).toLocaleString("es-AR");
-
-            // CATEGORÍA FIJA es el nombre del proveedor tal cual (ej: "AgustiN")
             const categoriaValor = CATEGORIA_FIJA;
 
-            // Creación de la fila en la tabla (AÑADIDA ANTES DE GUARDAR)
             const fila = document.createElement("tr");
             fila.innerHTML = `
                 <td title="${fechaMostrar}">${fechaMostrar}</td>
@@ -703,70 +674,64 @@
             tbody.prepend(fila);
             guardarRegistroEnStorage();
 
-        console.log("===== DATOS QUE SE ENVIAN A GuardarBoleta =====");
-        console.log("Idusuario:", idUsuario);
-        console.log("Idproveedor:", idProveedor);
-        console.log("Fecha (raw):", fechaRaw);
-        console.log("ImporteFinal (limpio):", limpiarImporte(importeRaw));
-        console.log("Transfer:", transferValor);
-        console.log("Categoria:", categoriaValor);
-        console.log("Detalle:", "");
+            console.log("===== DATOS QUE SE ENVIAN A GuardarBoleta =====");
+            console.log("Idusuario:", idUsuario);
+            console.log("Idproveedor:", idProveedor);
+            console.log("Fecha (raw):", fechaRaw);
+            console.log("ImporteFinal (limpio):", limpiarImporte(importeRaw));
+            console.log("Transfer:", transferValor);
+            console.log("Categoria:", categoriaValor);
+            console.log("Detalle:", "");
 
-            // Llamada AJAX para guardar en el servidor
-                    fetch("/Boleta/GuardarBoleta", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                Idusuario: idUsuario,
-                Idproveedor: idProveedor,
-                Fecha: fechaRaw,
-                ImporteFinal: limpiarImporte(importeRaw),
-                Transfer: transferValor,
-                Categoria: categoriaValor,
-                Detalle: ""
-            }),   // ← AGREGÁ ESTA COMA AQUÍ
-            credentials: 'include'
-        })
-        .then(async response => {
-            console.log("Estado HTTP:", response.status);
-            const resp = await response.json();
-            console.log("Respuesta del servidor:", resp);
-            if (!response.ok || !resp?.exito) {
-                const mensaje = resp?.mensaje || `Error HTTP ${response.status}`;
-                console.error("Fallo en guardado:", mensaje);
-                alert("⚠️ Error al guardar: " + mensaje);
+            fetch("/Boleta/GuardarBoleta", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    Idusuario: idUsuario,
+                    Idproveedor: idProveedor,
+                    Fecha: fechaRaw,
+                    ImporteFinal: limpiarImporte(importeRaw),
+                    Transfer: transferValor,
+                    Categoria: categoriaValor,
+                    Detalle: ""
+                }),
+                credentials: 'include'
+            })
+            .then(async response => {
+                console.log("Estado HTTP:", response.status);
+                const resp = await response.json();
+                console.log("Respuesta del servidor:", resp);
+                if (!response.ok || !resp?.exito) {
+                    const mensaje = resp?.mensaje || `Error HTTP ${response.status}`;
+                    console.error("Fallo en guardado:", mensaje);
+                    alert("⚠️ Error al guardar: " + mensaje);
+                    fila.remove();
+                    return;
+                }
+                console.log("Guardado exitoso - ID asignado:", resp.idBoleta);
+                fila.setAttribute("data-boleta-id", resp.idBoleta);
+                fechaInput.value = "";
+                importeInput.value = "";
+                document.querySelectorAll('input[name="transfer"]').forEach(r => r.checked = false);
+            })
+            .catch(err => {
+                console.error("Error completo en fetch:", err);
+                alert("❌ Error de conexión. Revisa consola.");
                 fila.remove();
-                return;
-            }
-            console.log("Guardado exitoso - ID asignado:", resp.idBoleta);
-            fila.setAttribute("data-boleta-id", resp.idBoleta);
-            fechaInput.value = "";
-            importeInput.value = "";
-            document.querySelectorAll('input[name="transfer"]').forEach(r => r.checked = false);
-        })
-        .catch(err => {
-            console.error("Error completo en fetch:", err);
-            alert("❌ Error de conexión. Revisa consola.");
-            fila.remove();
+            });
         });
-
 
         // ----------------------------------------------------
         // 5. BOTÓN ELIMINAR
         // ----------------------------------------------------
-
         document.getElementById("btnEliminar").addEventListener("click", async function () {
             const checks = document.querySelectorAll("#tablaRegistro tbody .fila-check:checked");
             if (checks.length === 0) return alert("Selecciona al menos una fila.");
-
             const deletePromises = [];
-
             for (const chk of checks) {
                 const tr = chk.closest("tr");
                 const boletaId = tr?.getAttribute("data-boleta-id");
-
                 if (boletaId) {
-                    // Si tiene ID, intenta eliminar en el servidor
                     const p = fetch(`/Boleta/EliminarBoleta?id=${encodeURIComponent(boletaId)}`, { method: "DELETE" })
                         .then(r => r.json())
                         .then(resp => {
@@ -779,39 +744,26 @@
                         });
                     deletePromises.push(p);
                 } else {
-                    // Si no tiene ID (fila vacía o recién agregada), solo la elimina del DOM
                     tr.remove();
                 }
             }
-            // Espera a que todas las eliminaciones asíncronas terminen
             if (deletePromises.length) await Promise.all(deletePromises);
-
-            // Recargar filas vacías si quedan menos de 5
             const filasActuales = document.querySelectorAll("#tablaRegistro tbody tr").length;
             if (filasActuales < 5) crearFilasVacias("tablaRegistro", 5 - filasActuales);
             guardarRegistroEnStorage();
         });
 
-
-        
-
-
         // ----------------------------------------------------
-        // 7. BOTÓN GUARDAR EXCEL (Guardarl)
+        // 7. BOTÓN GUARDAR EXCEL
         // ----------------------------------------------------
-
         document.getElementById("btnGuardarl").addEventListener("click", async function () {
             await generarYDescargarExcel([TABLA_REGISTRO]);
         });
 
-
-
-
-
-                // ----------------------------------------------------
-        // NUEVA FUNCIÓN GLOBAL: cargar desde BD + fallback local
         // ----------------------------------------------------
-                    async function cargarRegistro() {
+        // CARGAR REGISTRO (con logs detallados)
+        // ----------------------------------------------------
+        async function cargarRegistro() {
             try {
                 const res = await fetch(`/Boleta/GetBoletas?idProveedor=${idProveedor}`, {
                     credentials: 'include'
@@ -852,7 +804,6 @@
                 console.error("Mensaje:", err.message || "Sin mensaje");
                 console.error("Nombre del error:", err.name || "Desconocido");
                 console.error("Stack trace completo:", err.stack || "No disponible");
-
                 if (err instanceof Response) {
                     err.text().then(text => {
                         console.error("Estado HTTP:", err.status);
@@ -864,7 +815,6 @@
                 } else {
                     console.error("URL que falló:", `/Boleta/GetBoletas?idProveedor=${idProveedor}`);
                 }
-
                 cargarRegistroDesdeStorage();
                 if (document.querySelectorAll('#tablaRegistro tbody tr').length === 0) {
                     crearFilasVacias("tablaRegistro");
@@ -873,7 +823,7 @@
         }
 
         // ----------------------------------------------------
-        // NUEVO: BOTÓN RESTAURAR – Muestra eliminadas en Swal más mediano
+        // BOTÓN RESTAURAR
         // ----------------------------------------------------
         document.getElementById("btnRestaurar").addEventListener("click", async function () {
             try {
@@ -1002,42 +952,27 @@
                 });
             }
         });
-       
-
-
-
 
         // ----------------------------------------------------
-        // 9. FUNCIÓN CENTRAL DE GENERACIÓN DE EXCEL (Reutilizable)
+        // 9. GENERAR EXCEL
         // ----------------------------------------------------
-
         async function generarYDescargarExcel(tablasArray) {
             const workbook = new ExcelJS.Workbook();
-
             for (const t of tablasArray) {
-
                 const ws = workbook.addWorksheet(t.hoja);
-
-                // --- Columnas (Para definir ancho) ---
                 ws.columns = [
                     { header: "Fecha", key: "fecha", width: 20 },
                     { header: "Importe", key: "importe", width: 20 },
                     { header: "Transfer", key: "transfer", width: 15 }
-                    // No hay columna de Categoría, solo se usa en el backend
                 ];
-
-                // --- 1. TÍTULO ---
                 ws.mergeCells("A1:C1");
                 ws.getCell("A1").value = `Tabla: ${t.titulo}`;
                 ws.getCell("A1").alignment = { horizontal: "center", vertical: "middle" };
                 ws.getCell("A1").font = { bold: true, color: { argb: "FF000000" }, size: 14 };
                 ws.getCell("A1").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "f5f5dc" } };
                 ws.getRow(1).height = 25;
-                ["A1", "B1", "C1"].forEach(c => {
-                    ws.getCell(c).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-                });
+                ["A1", "B1", "C1"].forEach(c => ws.getCell(c).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } });
 
-                // --- 2. ENCABEZADOS ---
                 const headerRow = ws.addRow(["FECHA", "IMPORTE", "TRANSFER"]);
                 headerRow.eachCell(cell => {
                     cell.font = { bold: true, color: { argb: "FF000000" } };
@@ -1046,24 +981,19 @@
                     cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
                 });
 
-                // --- 3. FILAS DE DATOS ---
                 const tbody = document.querySelector(`#${t.id} tbody`);
                 let conteoSI = 0;
                 let conteoNO = 0;
-
                 if (tbody) {
                     [...tbody.querySelectorAll("tr")].forEach((tr, i) => {
                         const fecha = tr.children[0]?.innerText.trim();
                         const importe = tr.children[1]?.innerText.trim();
                         const transfer = (tr.children[2]?.innerText || "").trim();
-                        if (!fecha && !importe && !transfer) return; // Ignorar filas completamente vacías
-
+                        if (!fecha && !importe && !transfer) return;
                         if (transfer.toUpperCase() === "SÍ" || transfer.toUpperCase() === "SI") conteoSI++;
                         if (transfer.toUpperCase() === "NO") conteoNO++;
-
                         const row = ws.addRow([fecha, importe, transfer]);
                         const color = i % 2 === 0 ? "ddeeff" : "ccffff";
-
                         row.eachCell(cell => {
                             cell.alignment = { horizontal: "center", vertical: "middle" };
                             cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
@@ -1072,25 +1002,19 @@
                     });
                 }
 
-                // --- 4. RESUMEN ---
                 ws.mergeCells("E2:G2");
                 ws.getCell("E2").value = "Resumen Transfer";
                 ws.getCell("E2").alignment = { horizontal: "center", vertical: "middle" };
                 ws.getCell("E2").font = { bold: true, color: { argb: "FFFFFFFF" } };
                 ws.getCell("E2").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "33cc99" } };
-
-                ["E2", "F2", "G2"].forEach(c => {
-                    ws.getCell(c).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-                });
+                ["E2", "F2", "G2"].forEach(c => ws.getCell(c).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } });
 
                 ws.mergeCells("E3:F3");
                 ws.getCell("E3").value = "Con Transfer (SI):";
                 ws.getCell("G3").value = conteoSI;
-
                 ws.mergeCells("E4:F4");
                 ws.getCell("E4").value = "Sin Transfer (NO):";
                 ws.getCell("G4").value = conteoNO;
-
                 ["E3", "F3", "G3", "E4", "F4", "G4"].forEach(c => {
                     const cell = ws.getCell(c);
                     cell.alignment = { horizontal: "center", vertical: "middle" };
@@ -1104,24 +1028,17 @@
                 ws.getColumn("G").width = 8;
             }
 
-            // --- NOMBRE DE ARCHIVO CON FORMATO ---
             const fecha = new Date();
             const dd = String(fecha.getDate()).padStart(2, "0");
             const mm = String(fecha.getMonth() + 1).padStart(2, "0");
             const yyyy = fecha.getFullYear();
             const hh = String(fecha.getHours()).padStart(2, "0");
             const min = String(fecha.getMinutes()).padStart(2, "0");
-
-            const separadorHora = "꞉"; // símbolo permitido parecido a ":"
-
+            const separadorHora = "꞉";
             const nombreArchivo = `${nombreProveedorServer} ${dd}-${mm}-${yyyy} ${hh}${separadorHora}${min}.xlsx`;
 
-            // --- DESCARGA ---
             const buffer = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buffer], {
-                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            });
-
+            const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;

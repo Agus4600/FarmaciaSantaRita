@@ -967,7 +967,16 @@
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ id: boletaId })  // ← clave "id" exacta + número
+                            credentials: 'include'
                         });
+
+                            if (!res.ok) {
+            if (res.status === 401) {
+                Swal.fire('Sesión caducada', 'Por favor inicia sesión nuevamente.', 'warning');
+                return;
+            }
+            throw new Error(`HTTP ${res.status}`);
+        }
 
                         const data = await res.json();
 
@@ -986,6 +995,7 @@
                             Swal.fire('Error', data.message || 'No se pudo restaurar', 'error');
                         }
                     } catch (err) {
+                        console.error('Error en restaurar:', err);
                         Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
                     }
                 });

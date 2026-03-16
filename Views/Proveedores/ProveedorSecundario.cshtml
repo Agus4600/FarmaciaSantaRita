@@ -917,7 +917,7 @@
                     tablaHtml += `
                         <tr data-id="${boleta.idboleta}">
                             <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.fecha || 'Sin fecha'}</td>
-                            <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.importeFinal || '0'}</td>
+                            <td style="padding: 10px; border: 1px solid #dee2e6;">$ ${boleta.importeFinal?.toLocaleString('es-AR') || '0'}</td>
                             <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.transfer || 'No'}</td>
                             <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">
                                 <button class="btn btn-success btn-sm restaurar-btn" data-id="${boleta.idboleta}">

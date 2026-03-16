@@ -713,33 +713,32 @@
         console.log("Detalle:", "");
 
             // Llamada AJAX para guardar en el servidor
-            fetch("/Boleta/GuardarBoleta", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    credentials: 'include',
-                    Idusuario: idUsuario,
-                    Idproveedor: idProveedor,
-                    Fecha: fechaRaw,
-                    ImporteFinal: limpiarImporte(importeRaw),
-                    Transfer: transferValor,
-                    Categoria: categoriaValor,
-                    Detalle: ""
-                })
-            })
-            .then(async response => {
-                    console.log("Estado HTTP:", response.status);  // ← NUEVO
-        const resp = await response.json();
-        console.log("Respuesta del servidor:", resp);  // ← NUEVO: mirá exito, mensaje, idBoleta
-
-        if (!response.ok || !resp?.exito) {
-            const mensaje = resp?.mensaje || `Error HTTP ${response.status}`;
-            console.error("Fallo en guardado:", mensaje);
-            alert("⚠️ Error al guardar: " + mensaje);
-            fila.remove();
-            return;
-        }
-                        console.log("Guardado exitoso - ID asignado:", resp.idBoleta);
+                    fetch("/Boleta/GuardarBoleta", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                Idusuario: idUsuario,
+                Idproveedor: idProveedor,
+                Fecha: fechaRaw,
+                ImporteFinal: limpiarImporte(importeRaw),
+                Transfer: transferValor,
+                Categoria: categoriaValor,
+                Detalle: ""
+            }),
+            credentials: 'include'   // ← ahora SÍ está correctamente dentro
+        })
+        .then(async response => {
+            console.log("Estado HTTP:", response.status);
+            const resp = await response.json();
+            console.log("Respuesta del servidor:", resp);
+            if (!response.ok || !resp?.exito) {
+                const mensaje = resp?.mensaje || `Error HTTP ${response.status}`;
+                console.error("Fallo en guardado:", mensaje);
+                alert("⚠️ Error al guardar: " + mensaje);
+                fila.remove();
+                return;
+            }
+            console.log("Guardado exitoso - ID asignado:", resp.idBoleta);
             fila.setAttribute("data-boleta-id", resp.idBoleta);
             fechaInput.value = "";
             importeInput.value = "";
@@ -749,7 +748,6 @@
             console.error("Error completo en fetch:", err);
             alert("❌ Error de conexión. Revisa consola.");
             fila.remove();
-        });
         });
 
 
@@ -813,54 +811,46 @@
                 // ----------------------------------------------------
         // NUEVA FUNCIÓN GLOBAL: cargar desde BD + fallback local
         // ----------------------------------------------------
-        async function cargarRegistro() {
+                async function cargarRegistro() {
             try {
-                const res = await fetch(`/Boleta/GetBoletas?idProveedor=${idProveedor}`);
+                const res = await fetch(`/Boleta/GetBoletas?idProveedor=${idProveedor}`, {
+                    credentials: 'include'   // ← CORRECTO: dentro del objeto
+                });
                 if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
-
                 const data = await res.json();
                 if (!data.success || !data.data) throw new Error("Respuesta inválida");
-
                 const boletas = data.data;
-
                 const tbody = document.querySelector('#tablaRegistro tbody');
                 tbody.innerHTML = '';
-
-                        boletas.forEach(b => {
-            const tr = document.createElement('tr');
-            tr.setAttribute('data-boleta-id', b.idboleta);
-
-            // Normalizamos el importe para que SIEMPRE sea "$ " + número formateado
-            let importeStr = b.importeFinal;
-            if (typeof importeStr === 'number') {
-                importeStr = importeStr.toLocaleString('es-AR');
-            } else if (typeof importeStr === 'string') {
-                // Quitamos cualquier $ previo y limpiamos
-                importeStr = importeStr.replace(/[^0-9]/g, '');
-                importeStr = Number(importeStr).toLocaleString('es-AR');
-            } else {
-                importeStr = '0';
-            }
-            const importeFinal = `$ ${importeStr}`;
-
-            tr.innerHTML = `
-                <td title="${b.fecha || 'Sin fecha'}">${b.fecha || 'Sin fecha'}</td>
-                <td title="${importeFinal}">${importeFinal}</td>
-                <td title="${b.transfer || 'No'}">${b.transfer || 'No'}</td>
-                <td class="text-center"><input type="checkbox" class="fila-check"></td>
-            `;
-            tbody.appendChild(tr);
-        });
-
+                boletas.forEach(b => {
+                    const tr = document.createElement('tr');
+                    tr.setAttribute('data-boleta-id', b.idboleta);
+                    let importeStr = b.importeFinal;
+                    if (typeof importeStr === 'number') {
+                        importeStr = importeStr.toLocaleString('es-AR');
+                    } else if (typeof importeStr === 'string') {
+                        importeStr = importeStr.replace(/[^0-9]/g, '');
+                        importeStr = Number(importeStr).toLocaleString('es-AR');
+                    } else {
+                        importeStr = '0';
+                    }
+                    const importeFinal = `$ ${importeStr}`;
+                    tr.innerHTML = `
+                        <td title="${b.fecha || 'Sin fecha'}">${b.fecha || 'Sin fecha'}</td>
+                        <td title="${importeFinal}">${importeFinal}</td>
+                        <td title="${b.transfer || 'No'}">${b.transfer || 'No'}</td>
+                        <td class="text-center"><input type="checkbox" class="fila-check"></td>
+                    `;
+                    tbody.appendChild(tr);
+                    // ← NO pongas nada más aquí, especialmente no "credentials"
+                });
                 if (boletas.length === 0) {
                     crearFilasVacias("tablaRegistro");
                 }
-
-                guardarRegistroEnStorage(); // opcional, para mantener compatibilidad
+                guardarRegistroEnStorage();
             } catch (err) {
                 console.error("Error al cargar desde BD:", err);
                 cargarRegistroDesdeStorage();
-
                 if (document.querySelectorAll('#tablaRegistro tbody tr').length === 0) {
                     crearFilasVacias("tablaRegistro");
                 }

@@ -850,6 +850,8 @@
                 guardarRegistroEnStorage();
             } catch (err) {
                 console.error("Error al cargar desde BD:", err);
+                    console.error("Mensaje completo:", err.message);
+        console.error("Stack:", err.stack);
                 cargarRegistroDesdeStorage();
                 if (document.querySelectorAll('#tablaRegistro tbody tr').length === 0) {
                     crearFilasVacias("tablaRegistro");

@@ -849,9 +849,18 @@
                 }
                 guardarRegistroEnStorage();
             } catch (err) {
-                console.error("Error al cargar desde BD:", err);
-                    console.error("Mensaje completo:", err.message);
-        console.error("Stack:", err.stack);
+                    console.error("=== ERROR DETALLADO al cargar boletas desde BD ===");
+                    console.error("Mensaje:", err.message);
+                    console.error("Nombre del error:", err.name);
+                    console.error("Stack trace completo:", err.stack);
+               
+                        if (err instanceof Response || err.response) {
+            console.error("Estado HTTP:", err.status || err.response?.status);
+            console.error("Texto de error:", await (err.text?.() || err.response?.text?.() || "No disponible"));
+        }
+
+        console.error("URL que falló:", `/Boleta/GetBoletas?idProveedor=${idProveedor}`);
+
                 cargarRegistroDesdeStorage();
                 if (document.querySelectorAll('#tablaRegistro tbody tr').length === 0) {
                     crearFilasVacias("tablaRegistro");

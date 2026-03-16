@@ -243,27 +243,56 @@ namespace FarmaciaSantaRita.Controllers
 
         // Nueva acción: Restaurar boleta (poner Eliminado = false)
         [HttpPost]
-        public async Task<IActionResult> RestaurarBoleta(int id)
+        public async Task<IActionResult> RestaurarBoleta([FromBody] RestaurarDto dto)
         {
+            Console.WriteLine($"RestaurarBoleta llamado - ID recibido: {dto?.Id}");
+
+            if (dto == null || dto.Id <= 0)
+            {
+                Console.WriteLine("ID inválido recibido");
+                return BadRequest(new { success = false, message = "ID inválido" });
+            }
+
             try
             {
-                var boleta = await _context.Boleta.FindAsync(id);
+                var boleta = await _context.Boleta.FindAsync(dto.Id);
                 if (boleta == null)
-                    return Json(new { success = false, message = "La boleta no existe." });
+                {
+                    Console.WriteLine($"Boleta no encontrada - ID: {dto.Id}");
+                    return Json(new { success = false, message = "La boleta no existe" });
+                }
 
-                if (boleta.Idproveedor != int.Parse(ViewBag.IdProveedor?.ToString() ?? "0"))
+                // Verificación de permiso (opcional, pero mantenela si querés seguridad extra)
+                var proveedorIdEnViewBag = int.Parse(ViewBag.IdProveedor?.ToString() ?? "0");
+                if (boleta.Idproveedor != proveedorIdEnViewBag)
+                {
+                    Console.WriteLine($"Intento de restaurar boleta de otro proveedor - ID boleta: {dto.Id}, proveedor esperado: {proveedorIdEnViewBag}");
                     return Unauthorized("No tienes permiso para restaurar esta boleta.");
+                }
 
                 boleta.Eliminado = false;
                 await _context.SaveChangesAsync();
 
+                Console.WriteLine($"Boleta restaurada exitosamente - ID: {dto.Id}");
                 return Json(new { success = true, message = "Boleta restaurada correctamente." });
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error en RestaurarBoleta: {ex.Message}\nStackTrace: {ex.StackTrace}");
                 return Json(new { success = false, message = ex.InnerException?.Message ?? ex.Message });
             }
         }
+
+        // ← Agrega esta clase simple al FINAL del archivo BoletaController.cs (después de todos los métodos)
+        public class RestaurarDto
+        {
+            public int Id { get; set; }
+        }
+
+
+
+
+
 
 
 

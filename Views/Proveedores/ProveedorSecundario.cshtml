@@ -939,50 +939,58 @@
                     showCloseButton: true,
                     showConfirmButton: false,
                     customClass: { popup: 'bloque-interior-swal' },
-                    didOpen: () => {
-                        document.querySelectorAll('.restaurar-btn').forEach(btn => {
-                            btn.addEventListener('click', async function () {
-                                const id = this.getAttribute('data-id');
-                                const confirm = await Swal.fire({
-                                    title: '¿Restaurar boleta?',
-                                    text: "Volverá a aparecer en el registro principal.",
-                                    showCancelButton: true,
-                                    confirmButtonColor: '#007bff',
-                                    cancelButtonColor: '#6c757d',
-                                    confirmButtonText: 'Sí, restaurar',
-                                    cancelButtonText: 'Cancelar'
-                                });
+                            didOpen: () => {
+            document.querySelectorAll('.restaurar-btn').forEach(btn => {
+                btn.addEventListener('click', async function () {
+                    const boletaIdStr = this.getAttribute('data-id');
+                    const boletaId = parseInt(boletaIdStr, 10);
 
-                                if (!confirm.isConfirmed) return;
-
-                                try {
-                                    const res = await fetch('/Boleta/RestaurarBoleta', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ id })
-                                    });
-                                    const data = await res.json();
-
-                                    if (data.success) {
-                                        this.closest('tr').remove();
-                                        Swal.fire({
-                                            toast: true,
-                                            position: 'top-end',
-                                            icon: 'success',
-                                            title: 'Restaurada',
-                                            showConfirmButton: false,
-                                            timer: 1500
-                                        });
-                                        location.reload();
-                                    } else {
-                                        Swal.fire('Error', data.message || 'No se pudo restaurar', 'error');
-                                    }
-                                } catch (err) {
-                                    Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
-                                }
-                            });
-                        });
+                    if (isNaN(boletaId)) {
+                        Swal.fire('Error', 'ID de boleta inválido', 'error');
+                        return;
                     }
+
+                    const confirm = await Swal.fire({
+                        title: '¿Restaurar boleta?',
+                        text: "Volverá a aparecer en el registro principal.",
+                        showCancelButton: true,
+                        confirmButtonColor: '#007bff',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Sí, restaurar',
+                        cancelButtonText: 'Cancelar'
+                    });
+
+                    if (!confirm.isConfirmed) return;
+
+                    try {
+                        const res = await fetch('/Boleta/RestaurarBoleta', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: boletaId })  // ← clave "id" exacta + número
+                        });
+
+                        const data = await res.json();
+
+                        if (data.success) {
+                            this.closest('tr').remove();
+                            Swal.fire({
+                                toast: true,
+                                position: 'top-end',
+                                icon: 'success',
+                                title: 'Restaurada',
+                                showConfirmButton: false,
+                                timer: 1500
+                            });
+                            location.reload();
+                        } else {
+                            Swal.fire('Error', data.message || 'No se pudo restaurar', 'error');
+                        }
+                    } catch (err) {
+                        Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+                    }
+                });
+            });
+        }
                 });
             } catch (err) {
                 console.error('Error al cargar eliminadas:', err);

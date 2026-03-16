@@ -241,6 +241,7 @@ namespace FarmaciaSantaRita.Controllers
 
 
 
+        [AllowAnonymous]
         // Nueva acción: Restaurar boleta (poner Eliminado = false)
         [HttpPost]
         public async Task<IActionResult> RestaurarBoleta([FromBody] RestaurarDto dto)
@@ -296,7 +297,7 @@ namespace FarmaciaSantaRita.Controllers
 
 
 
-
+        [AllowAnonymous]
         // Nueva acción: Obtener boletas eliminadas del proveedor actual
         [HttpGet]
         public IActionResult GetBoletasEliminadas(string idProveedor)

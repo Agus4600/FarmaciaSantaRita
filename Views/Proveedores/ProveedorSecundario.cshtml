@@ -811,10 +811,10 @@
                 // ----------------------------------------------------
         // NUEVA FUNCIÓN GLOBAL: cargar desde BD + fallback local
         // ----------------------------------------------------
-                async function cargarRegistro() {
+                    async function cargarRegistro() {
             try {
                 const res = await fetch(`/Boleta/GetBoletas?idProveedor=${idProveedor}`, {
-                    credentials: 'include'   // ← CORRECTO: dentro del objeto
+                    credentials: 'include'
                 });
                 if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
                 const data = await res.json();
@@ -842,24 +842,28 @@
                         <td class="text-center"><input type="checkbox" class="fila-check"></td>
                     `;
                     tbody.appendChild(tr);
-                    // ← NO pongas nada más aquí, especialmente no "credentials"
                 });
                 if (boletas.length === 0) {
                     crearFilasVacias("tablaRegistro");
                 }
                 guardarRegistroEnStorage();
             } catch (err) {
-                    console.error("=== ERROR DETALLADO al cargar boletas desde BD ===");
-                    console.error("Mensaje:", err.message);
-                    console.error("Nombre del error:", err.name);
-                    console.error("Stack trace completo:", err.stack);
-               
-                        if (err instanceof Response || err.response) {
-            console.error("Estado HTTP:", err.status || err.response?.status);
-            console.error("Texto de error:", await (err.text?.() || err.response?.text?.() || "No disponible"));
-        }
+                console.error("=== ERROR DETALLADO al cargar boletas desde BD ===");
+                console.error("Mensaje:", err.message || "Sin mensaje");
+                console.error("Nombre del error:", err.name || "Desconocido");
+                console.error("Stack trace completo:", err.stack || "No disponible");
 
-        console.error("URL que falló:", `/Boleta/GetBoletas?idProveedor=${idProveedor}`);
+                if (err instanceof Response) {
+                    err.text().then(text => {
+                        console.error("Estado HTTP:", err.status);
+                        console.error("Texto de error del servidor:", text || "No disponible");
+                    }).catch(() => {
+                        console.error("Estado HTTP:", err.status || "Desconocido");
+                        console.error("No se pudo leer el cuerpo del error");
+                    });
+                } else {
+                    console.error("URL que falló:", `/Boleta/GetBoletas?idProveedor=${idProveedor}`);
+                }
 
                 cargarRegistroDesdeStorage();
                 if (document.querySelectorAll('#tablaRegistro tbody tr').length === 0) {
@@ -868,29 +872,16 @@
             }
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-                // ----------------------------------------------------
+        // ----------------------------------------------------
         // NUEVO: BOTÓN RESTAURAR – Muestra eliminadas en Swal más mediano
         // ----------------------------------------------------
-
-                    document.getElementById("btnRestaurar").addEventListener("click", async function () {
+        document.getElementById("btnRestaurar").addEventListener("click", async function () {
             try {
-                const res = await fetch(`/Boleta/GetBoletasEliminadas?idProveedor=${idProveedor}`);
+                const res = await fetch(`/Boleta/GetBoletasEliminadas?idProveedor=${idProveedor}`, {
+                    credentials: 'include'
+                });
                 if (!res.ok) throw new Error(`Error HTTP ${res.status} al cargar eliminadas`);
-
                 const eliminadas = await res.json();
-
                 if (!eliminadas.success || !eliminadas.data || eliminadas.data.length === 0) {
                     Swal.fire({
                         title: 'Sin eliminadas',
@@ -900,7 +891,6 @@
                     });
                     return;
                 }
-
                 let tablaHtml = `
                     <div style="margin-bottom: 15px; max-width: 900px; margin: 0 auto; overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center;" id="tablaEliminadas">
@@ -914,7 +904,6 @@
                             </thead>
                             <tbody>
                 `;
-
                 eliminadas.data.forEach(boleta => {
                     tablaHtml += `
                         <tr data-id="${boleta.idboleta}">
@@ -929,9 +918,7 @@
                         </tr>
                     `;
                 });
-
                 tablaHtml += `</tbody></table></div>`;
-
                 Swal.fire({
                     title: 'Boletas Eliminadas',
                     html: tablaHtml,
@@ -941,78 +928,69 @@
                     showCloseButton: true,
                     showConfirmButton: false,
                     customClass: { popup: 'bloque-interior-swal' },
-                           didOpen: () => {
-            document.querySelectorAll('.restaurar-btn').forEach(btn => {
-                btn.addEventListener('click', async function () {
-                    const boletaIdStr = this.getAttribute('data-id');
-                    const boletaId = parseInt(boletaIdStr, 10);
-
-                    if (isNaN(boletaId)) {
-                        Swal.fire('Error', 'ID de boleta inválido', 'error');
-                        return;
-                    }
-
-                    const confirm = await Swal.fire({
-                        title: '¿Restaurar boleta?',
-                        text: "Volverá a aparecer en el registro principal.",
-                        showCancelButton: true,
-                        confirmButtonColor: '#007bff',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Sí, restaurar',
-                        cancelButtonText: 'Cancelar'
-                    });
-
-                    if (!confirm.isConfirmed) return;
-
-                    try {
-                        const res = await fetch('/Boleta/RestaurarBoleta', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ id: boletaId }),
-                            credentials: 'include'  // ← Aquí va, DENTRO del objeto
-                        });
-
-                        if (!res.ok) {
-                            if (res.status === 401) {
-                                Swal.fire({
-                                    title: 'Sesión caducada',
-                                    text: 'Por favor inicia sesión nuevamente.',
-                                    icon: 'warning',
-                                    confirmButtonText: 'Aceptar'
-                                }).then(() => {
-                                    window.location.href = '/Account/Login'; // o la ruta de login que uses
+                    didOpen: () => {
+                        document.querySelectorAll('.restaurar-btn').forEach(btn => {
+                            btn.addEventListener('click', async function () {
+                                const boletaIdStr = this.getAttribute('data-id');
+                                const boletaId = parseInt(boletaIdStr, 10);
+                                if (isNaN(boletaId)) {
+                                    Swal.fire('Error', 'ID de boleta inválido', 'error');
+                                    return;
+                                }
+                                const confirm = await Swal.fire({
+                                    title: '¿Restaurar boleta?',
+                                    text: "Volverá a aparecer en el registro principal.",
+                                    showCancelButton: true,
+                                    confirmButtonColor: '#007bff',
+                                    cancelButtonColor: '#6c757d',
+                                    confirmButtonText: 'Sí, restaurar',
+                                    cancelButtonText: 'Cancelar'
                                 });
-                                return;
-                            }
-                            const errorData = await res.json();
-                            throw new Error(errorData.message || `Error HTTP ${res.status}`);
-                        }
-
-                        const data = await res.json();
-
-                        if (data.success) {
-                            this.closest('tr').remove();
-                            Swal.fire({
-                                toast: true,
-                                position: 'top-end',
-                                icon: 'success',
-                                title: 'Restaurada',
-                                showConfirmButton: false,
-                                timer: 1500
+                                if (!confirm.isConfirmed) return;
+                                try {
+                                    const res = await fetch('/Boleta/RestaurarBoleta', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ id: boletaId }),
+                                        credentials: 'include'
+                                    });
+                                    if (!res.ok) {
+                                        if (res.status === 401) {
+                                            Swal.fire({
+                                                title: 'Sesión caducada',
+                                                text: 'Por favor inicia sesión nuevamente.',
+                                                icon: 'warning',
+                                                confirmButtonText: 'Aceptar'
+                                            }).then(() => {
+                                                window.location.href = '/Account/Login';
+                                            });
+                                            return;
+                                        }
+                                        const errorData = await res.json();
+                                        throw new Error(errorData.message || `Error HTTP ${res.status}`);
+                                    }
+                                    const data = await res.json();
+                                    if (data.success) {
+                                        this.closest('tr').remove();
+                                        Swal.fire({
+                                            toast: true,
+                                            position: 'top-end',
+                                            icon: 'success',
+                                            title: 'Restaurada',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        });
+                                        location.reload();
+                                    } else {
+                                        Swal.fire('Error', data.message || 'No se pudo restaurar', 'error');
+                                    }
+                                } catch (err) {
+                                    console.error('Error al restaurar boleta:', err);
+                                    Swal.fire('Error', err.message || 'No se pudo conectar con el servidor', 'error');
+                                }
                             });
-                            location.reload();
-                        } else {
-                            Swal.fire('Error', data.message || 'No se pudo restaurar', 'error');
-                        }
-                    } catch (err) {
-                        console.error('Error al restaurar boleta:', err);
-                        Swal.fire('Error', err.message || 'No se pudo conectar con el servidor', 'error');
+                        });
                     }
-                });
-            });
-        }
                 });
             } catch (err) {
                 console.error('Error al cargar eliminadas:', err);

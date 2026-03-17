@@ -828,7 +828,7 @@
                 // ----------------------------------------------------
         // BOTÓN RESTAURAR - SWAL CON TAMAÑO FIJO (como pediste)
         // ----------------------------------------------------
-        document.getElementById("btnRestaurar").addEventListener("click", async function () {
+                document.getElementById("btnRestaurar").addEventListener("click", async function () {
             try {
                 const res = await fetch(`/Boleta/GetBoletasEliminadas?idProveedor=${idProveedor}`, {
                     credentials: 'include'
@@ -849,11 +849,11 @@
 
                 let tablaHtml = `
                     <div style="max-height: 380px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px; background: white;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center;" id="tablaEliminadas">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center; table-layout: fixed;" id="tablaEliminadas">
                             <thead style="background: #0d6efd; color: white; position: sticky; top: 0; z-index: 10;">
                                 <tr>
                                     <th style="padding: 10px; width: 15%;">Fecha</th>
-                                    <th style="padding: 10px; width: 15%;">Importe.F</th>
+                                    <th style="padding: 10px; width: 15%;">Importe F</th>
                                     <th style="padding: 10px; width: 15%;">Transfer</th>
                                     <th style="padding: 10px; width: 15%;">Acción</th>
                                 </tr>
@@ -881,8 +881,8 @@
                 Swal.fire({
                     title: 'Boletas Eliminadas',
                     html: tablaHtml,
-                    width: '680px',           // ← Tamaño fijo más chico y agradable
-                    heightAuto: false,        // ← Importante: evita que cambie de tamaño
+                    width: '680px',           // ← Tamaño fijo
+                    heightAuto: false,        // ← Clave: evita que cambie de altura
                     padding: '20px',
                     showCloseButton: true,
                     showConfirmButton: false,

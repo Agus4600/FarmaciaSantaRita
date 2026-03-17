@@ -825,6 +825,9 @@
         // ----------------------------------------------------
         // BOTÓN RESTAURAR
         // ----------------------------------------------------
+                // ----------------------------------------------------
+        // BOTÓN RESTAURAR - SWAL MÁS PEQUEÑO Y CON TAMAÑO FIJO
+        // ----------------------------------------------------
         document.getElementById("btnRestaurar").addEventListener("click", async function () {
             try {
                 const res = await fetch(`/Boleta/GetBoletasEliminadas?idProveedor=${idProveedor}`, {
@@ -832,6 +835,7 @@
                 });
                 if (!res.ok) throw new Error(`Error HTTP ${res.status} al cargar eliminadas`);
                 const eliminadas = await res.json();
+
                 if (!eliminadas.success || !eliminadas.data || eliminadas.data.length === 0) {
                     Swal.fire({
                         title: 'Sin eliminadas',
@@ -841,26 +845,28 @@
                     });
                     return;
                 }
+
                 let tablaHtml = `
-                    <div style="margin-bottom: 15px; max-width: 900px; margin: 0 auto; overflow-x: auto;">
+                    <div style="max-height: 380px; overflow-y: auto; margin-bottom: 10px;">
                         <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center;" id="tablaEliminadas">
                             <thead style="background: #0d6efd; color: white; position: sticky; top: 0; z-index: 10;">
                                 <tr>
-                                    <th style="padding: 10px; border: 1px solid #dee2e6; width: 30%;">Fecha</th>
-                                    <th style="padding: 10px; border: 1px solid #dee2e6; width: 35%;">Importe F</th>
-                                    <th style="padding: 10px; border: 1px solid #dee2e6; width: 25%;">Transfer</th>
-                                    <th style="padding: 10px; border: 1px solid #dee2e6; width: 10%;">Acción</th>
+                                    <th style="padding: 8px; border: 1px solid #dee2e6; width: 32%;">Fecha</th>
+                                    <th style="padding: 8px; border: 1px solid #dee2e6; width: 38%;">Importe F</th>
+                                    <th style="padding: 8px; border: 1px solid #dee2e6; width: 20%;">Transfer</th>
+                                    <th style="padding: 8px; border: 1px solid #dee2e6; width: 10%;">Acción</th>
                                 </tr>
                             </thead>
                             <tbody>
                 `;
+
                 eliminadas.data.forEach(boleta => {
                     tablaHtml += `
                         <tr data-id="${boleta.idboleta}">
-                            <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.fecha || 'Sin fecha'}</td>
-                            <td style="padding: 10px; border: 1px solid #dee2e6;">$ ${boleta.importeFinal?.toLocaleString('es-AR') || '0'}</td>
-                            <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.transfer || 'No'}</td>
-                            <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">
+                            <td style="padding: 8px; border: 1px solid #dee2e6;">${boleta.fecha || 'Sin fecha'}</td>
+                            <td style="padding: 8px; border: 1px solid #dee2e6;">$ ${boleta.importeFinal?.toLocaleString('es-AR') || '0'}</td>
+                            <td style="padding: 8px; border: 1px solid #dee2e6;">${boleta.transfer || 'No'}</td>
+                            <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
                                 <button class="btn btn-success btn-sm restaurar-btn" data-id="${boleta.idboleta}">
                                     <i class="bi bi-arrow-repeat"></i> Restaurar
                                 </button>
@@ -868,25 +874,27 @@
                         </tr>
                     `;
                 });
+
                 tablaHtml += `</tbody></table></div>`;
+
                 Swal.fire({
                     title: 'Boletas Eliminadas',
                     html: tablaHtml,
-                    width: '1000px',
+                    width: '650px',                    // ← Tamaño más chico
                     heightAuto: false,
-                    padding: '20px',
+                    padding: '15px',
                     showCloseButton: true,
                     showConfirmButton: false,
-                    customClass: { popup: 'bloque-interior-swal' },
+                    customClass: {
+                        popup: 'bloque-interior-swal',
+                        title: 'swal-title-small'
+                    },
                     didOpen: () => {
                         document.querySelectorAll('.restaurar-btn').forEach(btn => {
                             btn.addEventListener('click', async function () {
-                                const boletaIdStr = this.getAttribute('data-id');
-                                const boletaId = parseInt(boletaIdStr, 10);
-                                if (isNaN(boletaId)) {
-                                    Swal.fire('Error', 'ID de boleta inválido', 'error');
-                                    return;
-                                }
+                                const boletaId = parseInt(this.getAttribute('data-id'), 10);
+                                if (isNaN(boletaId)) return;
+
                                 const confirm = await Swal.fire({
                                     title: '¿Restaurar boleta?',
                                     text: "Volverá a aparecer en el registro principal.",
@@ -896,7 +904,9 @@
                                     confirmButtonText: 'Sí, restaurar',
                                     cancelButtonText: 'Cancelar'
                                 });
+
                                 if (!confirm.isConfirmed) return;
+
                                 try {
                                     const res = await fetch('/Boleta/RestaurarBoleta', {
                                         method: 'POST',
@@ -904,21 +914,16 @@
                                         body: JSON.stringify({ id: boletaId }),
                                         credentials: 'include'
                                     });
+
                                     if (!res.ok) {
                                         if (res.status === 401) {
-                                            Swal.fire({
-                                                title: 'Sesión caducada',
-                                                text: 'Por favor inicia sesión nuevamente.',
-                                                icon: 'warning',
-                                                confirmButtonText: 'Aceptar'
-                                            }).then(() => {
-                                                window.location.href = '/Account/Login';
-                                            });
+                                            Swal.fire({ title: 'Sesión caducada', text: 'Por favor inicia sesión nuevamente.', icon: 'warning' })
+                                                .then(() => window.location.href = '/Account/Login');
                                             return;
                                         }
-                                        const errorData = await res.json();
-                                        throw new Error(errorData.message || `Error HTTP ${res.status}`);
+                                        throw new Error("Error al restaurar");
                                     }
+
                                     const data = await res.json();
                                     if (data.success) {
                                         this.closest('tr').remove();
@@ -931,17 +936,15 @@
                                             timer: 1500
                                         });
                                         location.reload();
-                                    } else {
-                                        Swal.fire('Error', data.message || 'No se pudo restaurar', 'error');
                                     }
                                 } catch (err) {
-                                    console.error('Error al restaurar boleta:', err);
-                                    Swal.fire('Error', err.message || 'No se pudo conectar con el servidor', 'error');
+                                    Swal.fire('Error', 'No se pudo restaurar la boleta', 'error');
                                 }
                             });
                         });
                     }
                 });
+
             } catch (err) {
                 console.error('Error al cargar eliminadas:', err);
                 Swal.fire({
@@ -952,6 +955,9 @@
                 });
             }
         });
+
+
+
 
         // ----------------------------------------------------
         // 9. GENERAR EXCEL

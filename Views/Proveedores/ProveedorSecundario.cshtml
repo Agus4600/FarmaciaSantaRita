@@ -11,6 +11,18 @@
 }
 
 <style>
+    button, .btn, .btn-primary, .btn-success, .btn-sm,
+    input[type="button"], input[type="submit"] {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Quitar outline también en los botones del Swal */
+    .swal2-popup button {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
     .boleta-icon-container {
         display: flex;
         justify-content: center;

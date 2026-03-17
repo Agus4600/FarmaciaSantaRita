@@ -724,19 +724,26 @@
         // ----------------------------------------------------
         // 5. BOTÓN ELIMINAR
         // ----------------------------------------------------
-        document.getElementById("btnEliminar").addEventListener("click", async function () {
+                document.getElementById("btnEliminar").addEventListener("click", async function () {
             const checks = document.querySelectorAll("#tablaRegistro tbody .fila-check:checked");
             if (checks.length === 0) return alert("Selecciona al menos una fila.");
+
             const deletePromises = [];
+
             for (const chk of checks) {
                 const tr = chk.closest("tr");
                 const boletaId = tr?.getAttribute("data-boleta-id");
+
                 if (boletaId) {
+                    // Es una fila real (viene de BD) → eliminar en servidor
                     const p = fetch(`/Boleta/EliminarBoleta?id=${encodeURIComponent(boletaId)}`, { method: "DELETE" })
                         .then(r => r.json())
                         .then(resp => {
-                            if (resp?.success) tr.remove();
-                            else alert("Error al eliminar la boleta con ID: " + boletaId);
+                            if (resp?.success) {
+                                tr.remove();
+                            } else {
+                                alert("Error al eliminar la boleta con ID: " + boletaId);
+                            }
                         })
                         .catch(err => {
                             console.error("Error en DELETE:", err);
@@ -744,12 +751,23 @@
                         });
                     deletePromises.push(p);
                 } else {
+                    // Es una fila vacía de relleno → solo eliminar del DOM
                     tr.remove();
                 }
             }
-            if (deletePromises.length) await Promise.all(deletePromises);
-            const filasActuales = document.querySelectorAll("#tablaRegistro tbody tr").length;
-            if (filasActuales < 5) crearFilasVacias("tablaRegistro", 5 - filasActuales);
+
+            // Esperar a que terminen todas las eliminaciones en el servidor
+            if (deletePromises.length) {
+                await Promise.all(deletePromises);
+            }
+
+            // === CLAVE: NO recreamos filas vacías automáticamente ===
+            // Solo las creamos si la tabla quedó completamente vacía
+            const filasRestantes = document.querySelectorAll("#tablaRegistro tbody tr").length;
+            if (filasRestantes === 0) {
+                crearFilasVacias("tablaRegistro", 5);
+            }
+
             guardarRegistroEnStorage();
         });
 

@@ -848,7 +848,7 @@
                 }
 
                 let tablaHtml = `
-                    <div style="max-height: 380px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px; background: white;">
+                    <div style="height: 380px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px; background: white;">
                         <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center; table-layout: fixed;" id="tablaEliminadas">
                             <thead style="background: #0d6efd; color: white; position: sticky; top: 0; z-index: 10;">
                                 <tr>
@@ -881,8 +881,9 @@
                 Swal.fire({
                     title: 'Boletas Eliminadas',
                     html: tablaHtml,
-                    width: '680px',           // ← Tamaño fijo
-                    heightAuto: false,        // ← Clave: evita que cambie de altura
+                    width: '680px',           // ← Ancho fijo
+                    height: '520px',          // ← Altura fija (esto es lo que faltaba)
+                    heightAuto: false,
                     padding: '20px',
                     showCloseButton: true,
                     showConfirmButton: false,

@@ -309,7 +309,7 @@ namespace FarmaciaSantaRita.Controllers
                     {
                         Idboleta = b.Idboleta,
                         Fecha = b.Fecha.ToString("dd/MM/yyyy"),
-                        ImporteFinal = "$ " + (b.ImporteFinal > 0 ? b.ImporteFinal.ToString("N0") : "0"),
+                        ImporteFinal = b.ImporteFinal,           // ← Enviamos el número limpio
                         Transfer = b.Transfer ?? "No"
                     })
                     .ToList();

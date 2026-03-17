@@ -241,8 +241,7 @@ namespace FarmaciaSantaRita.Controllers
 
 
 
-        [AllowAnonymous]
-        // Nueva acción: Restaurar boleta (poner Eliminado = false)
+        [AllowAnonymous]   // ← Esto quita el requisito de sesión
         [HttpPost]
         public async Task<IActionResult> RestaurarBoleta([FromBody] RestaurarDto dto)
         {
@@ -261,14 +260,6 @@ namespace FarmaciaSantaRita.Controllers
                 {
                     Console.WriteLine($"Boleta no encontrada - ID: {dto.Id}");
                     return Json(new { success = false, message = "La boleta no existe" });
-                }
-
-                // Verificación de permiso (opcional, pero mantenela si querés seguridad extra)
-                var proveedorIdEnViewBag = int.Parse(ViewBag.IdProveedor?.ToString() ?? "0");
-                if (boleta.Idproveedor != proveedorIdEnViewBag)
-                {
-                    Console.WriteLine($"Intento de restaurar boleta de otro proveedor - ID boleta: {dto.Id}, proveedor esperado: {proveedorIdEnViewBag}");
-                    return Unauthorized("No tienes permiso para restaurar esta boleta.");
                 }
 
                 boleta.Eliminado = false;
@@ -298,7 +289,6 @@ namespace FarmaciaSantaRita.Controllers
 
 
         [AllowAnonymous]
-        // Nueva acción: Obtener boletas eliminadas del proveedor actual
         [HttpGet]
         public IActionResult GetBoletasEliminadas(string idProveedor)
         {
@@ -314,24 +304,22 @@ namespace FarmaciaSantaRita.Controllers
             {
                 var eliminadas = _context.Boleta
                     .Where(b => b.Idproveedor == proveedorId && b.Eliminado == true)
-                    .OrderByDescending(b => b.Fecha)  // ← Orden por DateTime real
+                    .OrderByDescending(b => b.Fecha)
                     .Select(b => new
                     {
                         Idboleta = b.Idboleta,
-                        Fecha = b.Fecha.ToString("dd/MM/yyyy"),  // ← Formato aquí
+                        Fecha = b.Fecha.ToString("dd/MM/yyyy"),
                         ImporteFinal = "$ " + (b.ImporteFinal > 0 ? b.ImporteFinal.ToString("N0") : "0"),
                         Transfer = b.Transfer ?? "No"
                     })
                     .ToList();
 
                 Console.WriteLine($"Eliminadas encontradas para proveedor {proveedorId}: {eliminadas.Count}");
-
                 return Json(new { success = true, data = eliminadas });
             }
             catch (Exception ex)
             {
                 Console.WriteLine("ERROR GRAVE en GetBoletasEliminadas: " + ex.ToString());
-                Console.WriteLine("StackTrace: " + ex.StackTrace);
                 return StatusCode(500, new { success = false, message = "Error interno: " + ex.Message });
             }
         }

@@ -862,10 +862,12 @@
                 `;
 
                 eliminadas.data.forEach(boleta => {
+                    // Corrección del importe: aseguramos solo UN signo $
+                    let importeLimpio = (boleta.importeFinal || 0).toLocaleString('es-AR');
                     tablaHtml += `
                         <tr data-id="${boleta.idboleta}">
                             <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.fecha || 'Sin fecha'}</td>
-                            <td style="padding: 10px; border: 1px solid #dee2e6;">$ ${boleta.importeFinal?.toLocaleString('es-AR') || '0'}</td>
+                            <td style="padding: 10px; border: 1px solid #dee2e6;">$ ${importeLimpio}</td>
                             <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.transfer || 'No'}</td>
                             <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">
                                 <button class="btn btn-success btn-sm restaurar-btn" data-id="${boleta.idboleta}">
@@ -881,9 +883,9 @@
                 Swal.fire({
                     title: 'Boletas Eliminadas',
                     html: tablaHtml,
-                    width: '680px',           // ← Ancho fijo
-                    height: '520px',          // ← Altura fija (esto es lo que faltaba)
-                    heightAuto: false,
+                    width: '680px',
+                    height: '520px',        // Altura fija
+                    heightAuto: false,      // Impide que SweetAlert cambie el tamaño
                     padding: '20px',
                     showCloseButton: true,
                     showConfirmButton: false,

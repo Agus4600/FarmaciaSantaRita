@@ -859,7 +859,6 @@
                     Swal.fire({
                         title: 'Sin eliminadas',
                         text: 'No hay boletas eliminadas para este proveedor.',
-                        icon: 'info',
                         confirmButtonColor: '#007bff'
                     });
                     return;
@@ -880,15 +879,14 @@
                 `;
 
                 eliminadas.data.forEach(boleta => {
-                    // Corrección del importe: aseguramos solo UN signo $
-                    let importeLimpio = (boleta.importeFinal || 0).toLocaleString('es-AR');
+                    const importeLimpio = Number(boleta.importeFinal || 0).toLocaleString('es-AR');
                     tablaHtml += `
                         <tr data-id="${boleta.idboleta}">
                             <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.fecha || 'Sin fecha'}</td>
                             <td style="padding: 10px; border: 1px solid #dee2e6;">$ ${importeLimpio}</td>
                             <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.transfer || 'No'}</td>
                             <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">
-                                <button class="btn btn-success btn-sm restaurar-btn" data-id="${boleta.idboleta}">
+                                <button class="btn btn-success btn-sm restaurar-btn" data-id="${boleta.idboleta}" translate="no">
                                     <i class="bi bi-arrow-repeat"></i> Restaurar
                                 </button>
                             </td>
@@ -902,14 +900,12 @@
                     title: 'Boletas Eliminadas',
                     html: tablaHtml,
                     width: '680px',
-                    height: '520px',        // Altura fija
-                    heightAuto: false,      // Impide que SweetAlert cambie el tamaño
+                    height: '520px',
+                    heightAuto: false,
                     padding: '20px',
                     showCloseButton: true,
                     showConfirmButton: false,
-                    customClass: {
-                        popup: 'swal-fixed-size'
-                    },
+                    customClass: { popup: 'swal-fixed-size' },
                     didOpen: () => {
                         document.querySelectorAll('.restaurar-btn').forEach(btn => {
                             btn.addEventListener('click', async function () {
@@ -921,7 +917,7 @@
                                     text: "Volverá a aparecer en el registro principal.",
                                     showCancelButton: true,
                                     confirmButtonColor: '#007bff',
-                                    cancelButtonColor: '#6c757d',
+                                    cancelButtonColor: '#007bff',
                                     confirmButtonText: 'Sí, restaurar',
                                     cancelButtonText: 'Cancelar'
                                 });
@@ -964,7 +960,6 @@
                 Swal.fire({
                     title: 'Error',
                     text: 'No se pudieron cargar las boletas eliminadas',
-                    icon: 'error',
                     confirmButtonColor: '#dc3545'
                 });
             }

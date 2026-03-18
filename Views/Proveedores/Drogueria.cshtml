@@ -704,10 +704,10 @@
                     padding: '20px',
                     showCloseButton: true,
                     showConfirmButton: false,
-                    customClass: { popup: 'swal-fixed-size' },
                     didOpen: () => {
-                        // Protección contra null
-                        document.querySelectorAll('.restaurar-btn').forEach(btn => {
+                        // ← Protección importante
+                        const buttons = document.querySelectorAll('.restaurar-btn');
+                        buttons.forEach(btn => {
                             btn.addEventListener('click', async function () {
                                 const boletaId = parseInt(this.getAttribute('data-id'), 10);
                                 if (isNaN(boletaId)) return;
@@ -752,9 +752,6 @@
                 Swal.fire({ title: 'Error', text: 'No se pudieron cargar las boletas eliminadas', icon: 'error', confirmButtonColor: '#dc3545' });
             }
         });
-
-
-
 
 
 

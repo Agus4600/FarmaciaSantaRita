@@ -613,10 +613,15 @@
                 crearFilasVacias("tablaMedicamentos");
         });
 
-        // ====================== BOTÓN ELIMINAR ======================
+                // ====================== BOTÓN ELIMINAR FILA (CORREGIDO) ======================
         document.getElementById("btnEliminar").addEventListener("click", async function () {
-            const checks = document.querySelectorAll("#tablaPerfumeria tbody .fila-check:checked, #tablaMedicamentos tbody .fila-check:checked");
-            if (checks.length === 0) return alert("Selecciona al menos una fila.");
+            const checks = document.querySelectorAll(
+                "#tablaPerfumeria tbody .fila-check:checked, #tablaMedicamentos tbody .fila-check:checked"
+            );
+
+            if (checks.length === 0) {
+                return alert("Selecciona al menos una fila.");
+            }
 
             const deletePromises = [];
 
@@ -625,22 +630,38 @@
                 const boletaId = tr?.getAttribute("data-boleta-id");
 
                 if (boletaId) {
-                    const p = fetch(`/Boleta/EliminarBoleta?id=${encodeURIComponent(boletaId)}`, { method: "DELETE" })
-                        .then(r => r.json())
-                        .then(resp => { if (resp?.success) tr.remove(); })
-                        .catch(err => console.error("Error al eliminar:", err));
+                    // Registro que tiene ID → lo eliminamos en la BD
+                    const p = fetch(`/Boleta/EliminarBoleta?id=${encodeURIComponent(boletaId)}`, {
+                        method: "DELETE"
+                    })
+                    .then(r => r.json())
+                    .then(resp => {
+                        if (resp?.success) {
+                            tr.remove();
+                        } else {
+                            console.warn("No se pudo eliminar en BD el ID:", boletaId);
+                        }
+                    })
+                    .catch(err => console.error("Error al eliminar boleta:", err));
+
                     deletePromises.push(p);
                 } else {
+                    // Registro viejo sin ID → solo lo quitamos visualmente
                     tr.remove();
                 }
             }
 
-            if (deletePromises.length) await Promise.all(deletePromises);
+            if (deletePromises.length) {
+                await Promise.all(deletePromises);
+            }
 
-            if (document.querySelectorAll("#tablaPerfumeria tbody tr").length === 0)
+            // Recrear filas vacías si alguna tabla quedó vacía
+            if (document.querySelectorAll("#tablaPerfumeria tbody tr").length === 0) {
                 crearFilasVacias("tablaPerfumeria", 5);
-            if (document.querySelectorAll("#tablaMedicamentos tbody tr").length === 0)
+            }
+            if (document.querySelectorAll("#tablaMedicamentos tbody tr").length === 0) {
                 crearFilasVacias("tablaMedicamentos", 5);
+            }
 
             guardarTablasEnStorage();
         });

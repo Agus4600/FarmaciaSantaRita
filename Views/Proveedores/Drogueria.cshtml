@@ -500,6 +500,7 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         const idProveedor = @((ViewData["IdProveedor"] ?? 1));
         const nombreProveedorServer = @Html.Raw(Json.Serialize(ViewData["NombreProveedor"] ?? "Proveedor"));
@@ -583,7 +584,6 @@
             }
         }
 
-
         // ====================== QUITAR OUTLINE AZUL ======================
         const style = document.createElement('style');
         style.innerHTML = `
@@ -595,10 +595,6 @@
             button:focus-visible, .btn:focus-visible {
                 outline: 2px solid #007bff !important;
                 outline-offset: 2px;
-            }
-            .swal2-popup button {
-                outline: none !important;
-                box-shadow: none !important;
             }
         `;
         document.head.appendChild(style);
@@ -613,63 +609,39 @@
                 crearFilasVacias("tablaMedicamentos");
         });
 
-                // ====================== BOTÓN ELIMINAR FILA (CORREGIDO) ======================
+        // ====================== BOTÓN ELIMINAR FILA (CORREGIDO) ======================
         document.getElementById("btnEliminar").addEventListener("click", async function () {
-            const checks = document.querySelectorAll(
-                "#tablaPerfumeria tbody .fila-check:checked, #tablaMedicamentos tbody .fila-check:checked"
-            );
-
-            if (checks.length === 0) {
-                return alert("Selecciona al menos una fila.");
-            }
-
-            const deletePromises = [];
+            const checks = document.querySelectorAll("#tablaPerfumeria tbody .fila-check:checked, #tablaMedicamentos tbody .fila-check:checked");
+            if (checks.length === 0) return alert("Selecciona al menos una fila.");
 
             for (const chk of checks) {
                 const tr = chk.closest("tr");
                 const boletaId = tr?.getAttribute("data-boleta-id");
 
                 if (boletaId) {
-                    // Registro que tiene ID → lo eliminamos en la BD
-                    const p = fetch(`/Boleta/EliminarBoleta?id=${encodeURIComponent(boletaId)}`, {
-                        method: "DELETE"
-                    })
-                    .then(r => r.json())
-                    .then(resp => {
-                        if (resp?.success) {
+                    try {
+                        const response = await fetch(`/Boleta/EliminarBoleta?id=${encodeURIComponent(boletaId)}`, { method: "DELETE" });
+                        const result = await response.json();
+                        if (result.success) {
                             tr.remove();
                         } else {
-                            console.warn("No se pudo eliminar en BD el ID:", boletaId);
+                            console.warn("No se pudo eliminar en BD:", boletaId);
                         }
-                    })
-                    .catch(err => console.error("Error al eliminar boleta:", err));
-
-                    deletePromises.push(p);
+                    } catch (err) {
+                        console.error("Error al eliminar boleta ID", boletaId, err);
+                    }
                 } else {
-                    // Registro viejo sin ID → solo lo quitamos visualmente
-                    tr.remove();
+                    tr.remove(); // Registro viejo sin ID
                 }
             }
 
-            if (deletePromises.length) {
-                await Promise.all(deletePromises);
-            }
-
-            // Recrear filas vacías si alguna tabla quedó vacía
-            if (document.querySelectorAll("#tablaPerfumeria tbody tr").length === 0) {
-                crearFilasVacias("tablaPerfumeria", 5);
-            }
-            if (document.querySelectorAll("#tablaMedicamentos tbody tr").length === 0) {
-                crearFilasVacias("tablaMedicamentos", 5);
-            }
+            if (document.querySelectorAll("#tablaPerfumeria tbody tr").length === 0) crearFilasVacias("tablaPerfumeria", 5);
+            if (document.querySelectorAll("#tablaMedicamentos tbody tr").length === 0) crearFilasVacias("tablaMedicamentos", 5);
 
             guardarTablasEnStorage();
         });
 
-
-
-
-                // ====================== BOTÓN RESTAURAR (SWAL) ======================
+        // ====================== BOTÓN RESTAURAR (SWAL) ======================
         document.getElementById("btnRestaurar").addEventListener("click", async function () {
             try {
                 const res = await fetch(`/Boleta/GetBoletasEliminadas?idProveedor=${idProveedor}`, { credentials: 'include' });
@@ -726,7 +698,6 @@
                     showCloseButton: true,
                     showConfirmButton: false,
                     didOpen: () => {
-                        // ← Protección importante
                         const buttons = document.querySelectorAll('.restaurar-btn');
                         buttons.forEach(btn => {
                             btn.addEventListener('click', async function () {
@@ -773,8 +744,6 @@
                 Swal.fire({ title: 'Error', text: 'No se pudieron cargar las boletas eliminadas', icon: 'error', confirmButtonColor: '#dc3545' });
             }
         });
-
-
 
         // ====================== BOTÓN AGREGAR ======================
         document.getElementById("btnAgregar").addEventListener("click", function () {
@@ -863,239 +832,29 @@
             if (e.target.name === "categoria") document.getElementById("fieldsetCategoria")?.classList.remove('is-invalid');
         });
 
-        // ====================== EL RESTO DE TU CÓDIGO (Excel, Nuevo Informe, etc.) ======================
-        const mapCategoriaTabla = { "perfumeria": "tablaPerfumeria", "medicamentos": "tablaMedicamentos" };
-        let workbookCargado = null;
-
-        document.getElementById("btnAbrir").addEventListener("click", () =>
-            document.getElementById("inputAbrirExcel").click()
-        );
-
-        document.getElementById("inputAbrirExcel").addEventListener("change", async function (evt) {
-            const archivo = evt.target.files[0];
-            if (!archivo) return;
-
-            // ⭐ VALIDACIÓN: El archivo debe comenzar con el nombre del proveedor
-            const nombreProveedor = nombreProveedorServer?.trim() || "";
-
-            if (!archivo.name.startsWith(nombreProveedor)) {
-                alert("⚠️ Este archivo no pertenece al proveedor: " + nombreProveedor +
-                      "\nSolo puedes abrir archivos generados que pertenezcan a este proveedor.");
-                this.value = ""; // resetea la selección
-                return;
-            }
-
-            // -----------------------------
-            // CONTINÚA TU CÓDIGO ORIGINAL
-            // -----------------------------
-
-            try {
-                const buffer = await archivo.arrayBuffer();
-                workbookCargado = new ExcelJS.Workbook();
-                await workbookCargado.xlsx.load(buffer);
-
-                crearFilasVacias("tablaPerfumeria");
-                crearFilasVacias("tablaMedicamentos");
-
-                workbookCargado.eachSheet(sheet => {
-                    const idTabla = mapCategoriaTabla[(sheet.name || "").toLowerCase()];
-                    if (!idTabla) return;
-
-                    const tbody = document.querySelector(`#${idTabla} tbody`);
-                    tbody.innerHTML = "";
-
-                    // Incluir filas vacías y filtrar manualmente
-                    sheet.eachRow({ includeEmpty: true }, (row, index) => {
-
-                        // Ignorar título y encabezados
-                        if (index <= 2) return;
-
-                        const valores = (row.values || []).slice(1);
-                        const [fecha = "", importe = "", transfer = ""] = valores.map(v => (v || "").toString().trim());
-
-                        // Si la fila está completamente vacía → ignorarla
-                        if (!fecha && !importe && !transfer) return;
-
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
-                            <td>${fecha}</td>
-                            <td>${importe}</td>
-                            <td>${transfer}</td>
-                            <td class="text-center"><input type="checkbox" class="fila-check"></td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                });
-
-                alert("Archivo Excel cargado correctamente.");
-
-            } catch (e) {
-                console.error("Error al cargar el archivo Excel:", e);
-                alert("Hubo un error al procesar el archivo Excel. Asegúrate de que sea un formato válido.");
-            } finally {
-                // Limpiar el input file
-                this.value = "";
-            }
-        });
-
-
+        // ====================== BOTÓN GUARDAR (EXPORTAR) ======================
         document.getElementById("btnGuardarl").addEventListener("click", async function () {
-
             const tablas = [
                 { id: "tablaPerfumeria", hoja: "Perfumeria", titulo: "PERFUMERÍA" },
                 { id: "tablaMedicamentos", hoja: "Medicamentos", titulo: "MEDICAMENTOS" }
             ];
-
             const workbook = new ExcelJS.Workbook();
 
             for (const t of tablas) {
-
                 const ws = workbook.addWorksheet(t.hoja);
-
-                // --- Columnas ---
                 ws.columns = [
                     { header: "Fecha", key: "fecha", width: 20 },
                     { header: "Importe", key: "importe", width: 20 },
                     { header: "Transfer", key: "transfer", width: 15 }
                 ];
 
-                // --- 1. TÍTULO ---
+                // Título
                 ws.mergeCells("A1:C1");
                 ws.getCell("A1").value = `Tabla: ${t.titulo}`;
                 ws.getCell("A1").alignment = { horizontal: "center", vertical: "middle" };
                 ws.getCell("A1").font = { bold: true, color: { argb: "FF000000" }, size: 14 };
                 ws.getCell("A1").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "f5f5dc" } };
                 ws.getRow(1).height = 25;
-                ["A1", "B1", "C1"].forEach(c => {
-                    ws.getCell(c).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-                });
-
-                // --- 2. ENCABEZADOS ---
-                const headerRow = ws.addRow(["FECHA", "IMPORTE", "TRANSFER"]);
-                headerRow.eachCell(cell => {
-                    cell.font = { bold: true, color: { argb: "FF000000" } };
-                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "ffc080" } };
-                    cell.alignment = { horizontal: "center", vertical: "middle" };
-                    cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-                });
-
-                // --- 3. FILAS DE DATOS ---
-                const tbody = document.querySelector(`#${t.id} tbody`);
-                let conteoSI = 0;
-                let conteoNO = 0;
-
-                if (tbody) {
-                    [...tbody.querySelectorAll("tr")].forEach((tr, i) => {
-                        const fecha = tr.children[0]?.innerText.trim();
-                        const importe = tr.children[1]?.innerText.trim();
-                        const transfer = (tr.children[2]?.innerText || "").trim();
-                        if (!fecha && !importe && !transfer) return;
-
-                        if (transfer.toUpperCase() === "SÍ" || transfer.toUpperCase() === "SI") conteoSI++;
-                        if (transfer.toUpperCase() === "NO") conteoNO++;
-
-                        const row = ws.addRow([fecha, importe, transfer]);
-                        const color = i % 2 === 0 ? "ddeeff" : "ccffff";
-
-                        row.eachCell(cell => {
-                            cell.alignment = { horizontal: "center", vertical: "middle" };
-                            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
-                            cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-                        });
-                    });
-                }
-
-                // --- 4. RESUMEN ---
-                ws.mergeCells("E2:G2");
-                ws.getCell("E2").value = "Resumen Transfer";
-                ws.getCell("E2").alignment = { horizontal: "center", vertical: "middle" };
-                ws.getCell("E2").font = { bold: true, color: { argb: "FFFFFFFF" } };
-                ws.getCell("E2").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "33cc99" } };
-
-                ["E2", "F2", "G2"].forEach(c => {
-                    ws.getCell(c).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-                });
-
-                ws.mergeCells("E3:F3");
-                ws.getCell("E3").value = "Con Transfer (SI):";
-                ws.getCell("G3").value = conteoSI;
-
-                ws.mergeCells("E4:F4");
-                ws.getCell("E4").value = "Sin Transfer (NO):";
-                ws.getCell("G4").value = conteoNO;
-
-                ["E3", "F3", "G3", "E4", "F4", "G4"].forEach(c => {
-                    const cell = ws.getCell(c);
-                    cell.alignment = { horizontal: "center", vertical: "middle" };
-                    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
-                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "33cc99" } };
-                    cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-                });
-
-                ws.getColumn("E").width = 10;
-                ws.getColumn("F").width = 10;
-                ws.getColumn("G").width = 8;
-            }
-
-            // --- NOMBRE DE ARCHIVO CON FORMATO ---
-            const fecha = new Date();
-            const dd = String(fecha.getDate()).padStart(2, "0");
-            const mm = String(fecha.getMonth() + 1).padStart(2, "0");
-            const yyyy = fecha.getFullYear();
-            const hh = String(fecha.getHours()).padStart(2, "0");
-            const min = String(fecha.getMinutes()).padStart(2, "0");
-
-            const separadorHora = "꞉";  // símbolo permitido parecido a ":"
-
-            const nombreArchivo = `${nombreProveedorServer} ${dd}-${mm}-${yyyy} ${hh}${separadorHora}${min}.xlsx`;
-
-            // --- DESCARGA ---
-            const buffer = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buffer], {
-                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            });
-
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = nombreArchivo;
-            a.click();
-            URL.revokeObjectURL(url);
-        });
-
-
-
-        /* ============================================================
-            BOTÓN NUEVO INFORME – MISMO ESTILO Y MISMO NOMBRE DE ARCHIVO
-           ============================================================ */
-        document.getElementById("btnNuevoInforme").addEventListener("click", async function () {
-
-            const tablas = [
-                { id: "tablaPerfumeria", hoja: "Perfumeria", titulo: "PERFUMERÍA" },
-                { id: "tablaMedicamentos", hoja: "Medicamentos", titulo: "MEDICAMENTOS" }
-            ];
-
-            const workbook = new ExcelJS.Workbook();
-
-            for (const t of tablas) {
-                const ws = workbook.addWorksheet(t.hoja);
-
-                ws.columns = [
-                    { header: "Fecha", key: "fecha", width: 20 },
-                    { header: "Importe", key: "importe", width: 20 },
-                    { header: "Transfer", key: "transfer", width: 15 }
-                ];
-
-                // --- Título ---
-                ws.mergeCells("A1:C1");
-                ws.getCell("A1").value = `Tabla: ${t.titulo}`;
-                ws.getCell("A1").alignment = { horizontal: "center", vertical: "middle" };
-                ws.getCell("A1").font = { bold: true, color: { argb: "FF000000" }, size: 14 };
-                ws.getCell("A1").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "f5f5dc" } };
-                ws.getRow(1).height = 25;
-                ["A1", "B1", "C1"].forEach(c => {
-                    ws.getCell(c).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-                });
 
                 // Encabezados
                 const headerRow = ws.addRow(["FECHA", "IMPORTE", "TRANSFER"]);
@@ -1106,7 +865,7 @@
                     cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
                 });
 
-                // Datos + conteo
+                // Datos
                 const tbody = document.querySelector(`#${t.id} tbody`);
                 let conteoSI = 0;
                 let conteoNO = 0;
@@ -1123,7 +882,6 @@
 
                         const row = ws.addRow([fecha, importe, transfer]);
                         const color = i % 2 === 0 ? "ddeeff" : "ccffff";
-
                         row.eachCell(cell => {
                             cell.alignment = { horizontal: "center", vertical: "middle" };
                             cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
@@ -1132,25 +890,21 @@
                     });
                 }
 
-                // Resumen
+                // Resumen Transfer
                 ws.mergeCells("E2:G2");
                 ws.getCell("E2").value = "Resumen Transfer";
                 ws.getCell("E2").alignment = { horizontal: "center", vertical: "middle" };
                 ws.getCell("E2").font = { bold: true, color: { argb: "FFFFFFFF" } };
                 ws.getCell("E2").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "33cc99" } };
-                ["E2", "F2", "G2"].forEach(c => {
-                    ws.getCell(c).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-                });
 
                 ws.mergeCells("E3:F3");
                 ws.getCell("E3").value = "Con Transfer (SI):";
                 ws.getCell("G3").value = conteoSI;
-
                 ws.mergeCells("E4:F4");
                 ws.getCell("E4").value = "Sin Transfer (NO):";
                 ws.getCell("G4").value = conteoNO;
 
-                ["E3", "F3", "G3", "E4", "F4", "G4"].forEach(c => {
+                ["E3","F3","G3","E4","F4","G4"].forEach(c => {
                     const cell = ws.getCell(c);
                     cell.alignment = { horizontal: "center", vertical: "middle" };
                     cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
@@ -1163,7 +917,7 @@
                 ws.getColumn("G").width = 8;
             }
 
-            // --- MISMO NOMBRE DE ARCHIVO ---
+            // Nombre de archivo
             const fecha = new Date();
             const dd = String(fecha.getDate()).padStart(2, "0");
             const mm = String(fecha.getMonth() + 1).padStart(2, "0");
@@ -1171,26 +925,18 @@
             const hh = String(fecha.getHours()).padStart(2, "0");
             const min = String(fecha.getMinutes()).padStart(2, "0");
             const separadorHora = "꞉";
-
             const nombreArchivo = `${nombreProveedorServer} ${dd}-${mm}-${yyyy} ${hh}${separadorHora}${min}.xlsx`;
 
-            // --- DESCARGA ---
-            const buf = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+            // Descarga
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
             a.download = nombreArchivo;
             a.click();
             URL.revokeObjectURL(url);
-
-            crearFilasVacias("tablaPerfumeria");
-            crearFilasVacias("tablaMedicamentos");
-
-            document.getElementById("fecha").value = "";
-            document.getElementById("importeFinal").value = "";
-            document.querySelectorAll('input[name="transfer"], input[name="categoria"]').forEach(r => r.checked = false);
         });
+
     </script>
 }
-

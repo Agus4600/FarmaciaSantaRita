@@ -483,11 +483,11 @@
 
                         <div class="botones-laterales">
                             <button translate="no" id="btnAgregar">Agregar</button>
-                            <button id="btnGuardarl" class="btn btn-primary" translate="no">Guardar</button>
-                            <button translate="no" id="btnAbrir">Abrir</button>
-                            <input type="file" id="inputAbrirExcel" style="display:none" accept=".xlsx,.xls" />
-                            <input type="file" id="fileInputOculto" style="display:none;" />
-                            <button translate="no" id="btnNuevoInforme">Nuevo Informe</button>
+                            <button id="btnGuardarl" class="btn btn-primary" translate="no">Exportar</button>
+                           
+
+                            <button translate="no" id="btnRestaurar">Restaurar</button>
+                            
                             <button translate="no" id="btnEliminar">Eliminar Fila</button>
                         </div>
                     </div>
@@ -505,14 +505,10 @@
         const idUsuario = parseInt('@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0")', 10);
         const STORAGE_KEY = `boletas_${idProveedor}`;
 
-                // Guarda el contenido actual de las dos tablas en localStorage
+        // ====================== STORAGE ======================
         function guardarTablasEnStorage() {
-            const datos = {
-                perfumeria: [],
-                medicamentos: []
-            };
+            const datos = { perfumeria: [], medicamentos: [] };
 
-            // Perfumería
             document.querySelectorAll('#tablaPerfumeria tbody tr').forEach(tr => {
                 const celdas = tr.querySelectorAll('td');
                 if (celdas.length >= 3) {
@@ -524,7 +520,6 @@
                 }
             });
 
-            // Medicamentos
             document.querySelectorAll('#tablaMedicamentos tbody tr').forEach(tr => {
                 const celdas = tr.querySelectorAll('td');
                 if (celdas.length >= 3) {
@@ -539,44 +534,30 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(datos));
         }
 
-        // Carga las filas guardadas desde localStorage
         function cargarTablasDesdeStorage() {
             const datosGuardados = localStorage.getItem(STORAGE_KEY);
             if (!datosGuardados) return;
-
             try {
                 const datos = JSON.parse(datosGuardados);
 
-                // Limpiamos las tablas primero
                 document.querySelector('#tablaPerfumeria tbody').innerHTML = '';
                 document.querySelector('#tablaMedicamentos tbody').innerHTML = '';
 
-                // Perfumería
                 datos.perfumeria.forEach(item => {
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${item.fecha}</td>
-                        <td>${item.importe}</td>
-                        <td>${item.transfer}</td>
-                        <td class="text-center"><input type="checkbox" class="fila-check"></td>
-                    `;
+                    tr.innerHTML = `<td>${item.fecha}</td><td>${item.importe}</td><td>${item.transfer}</td>
+                                    <td class="text-center"><input type="checkbox" class="fila-check"></td>`;
                     document.querySelector('#tablaPerfumeria tbody').appendChild(tr);
                 });
 
-                // Medicamentos
                 datos.medicamentos.forEach(item => {
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${item.fecha}</td>
-                        <td>${item.importe}</td>
-                        <td>${item.transfer}</td>
-                        <td class="text-center"><input type="checkbox" class="fila-check"></td>
-                    `;
+                    tr.innerHTML = `<td>${item.fecha}</td><td>${item.importe}</td><td>${item.transfer}</td>
+                                    <td class="text-center"><input type="checkbox" class="fila-check"></td>`;
                     document.querySelector('#tablaMedicamentos tbody').appendChild(tr);
                 });
-
             } catch (e) {
-                console.error("Error al cargar boletas guardadas:", e);
+                console.error("Error al cargar desde storage:", e);
             }
         }
 
@@ -596,115 +577,137 @@
             tbody.innerHTML = "";
             for (let i = 0; i < cantidad; i++) {
                 const fila = document.createElement("tr");
-                fila.innerHTML = `
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td class="text-center"><input type="checkbox" class="fila-check"></td>
-                `;
+                fila.innerHTML = `<td></td><td></td><td></td><td class="text-center"><input type="checkbox" class="fila-check"></td>`;
                 tbody.appendChild(fila);
             }
         }
 
-        document.addEventListener("DOMContentLoaded", function () {
-            const inputImporte = document.getElementById("importeFinal");
-            if (inputImporte) {
-                inputImporte.addEventListener("input", function () {
-                    let valor = this.value.replace(/\D/g, "").substring(0, 8);
-                    if (valor) valor = valor.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                    this.value = valor;
-                });
-                inputImporte.addEventListener("paste", function (e) {
-                    const texto = (e.clipboardData || window.clipboardData).getData("text");
-                    if (!/^\d+$/.test(texto)) e.preventDefault();
-                });
+        // ====================== QUITAR OUTLINE AZUL DE BOTONES ======================
+        const style = document.createElement('style');
+        style.innerHTML = `
+            button, .btn, .btn-primary, .btn-success, .btn-sm,
+            input[type="button"], input[type="submit"] {
+                outline: none !important;
+                box-shadow: none !important;
             }
-                    // Cargar las boletas guardadas al entrar a la vista
-        cargarTablasDesdeStorage();
+            button:focus-visible, .btn:focus-visible {
+                outline: 2px solid #007bff !important;
+                outline-offset: 2px;
+            }
+            .swal2-popup button {
+                outline: none !important;
+                box-shadow: none !important;
+            }
+        `;
+        document.head.appendChild(style);
 
-        // Si no había nada guardado, creamos las filas vacías
-        if (document.querySelectorAll('#tablaPerfumeria tbody tr').length === 0) {
-            crearFilasVacias("tablaPerfumeria");
-        }
-        if (document.querySelectorAll('#tablaMedicamentos tbody tr').length === 0) {
-            crearFilasVacias("tablaMedicamentos");
-        }
+        // ====================== INICIALIZACIÓN ======================
+        document.addEventListener("DOMContentLoaded", function () {
+            cargarTablasDesdeStorage();
+
+            if (document.querySelectorAll('#tablaPerfumeria tbody tr').length === 0)
+                crearFilasVacias("tablaPerfumeria");
+            if (document.querySelectorAll('#tablaMedicamentos tbody tr').length === 0)
+                crearFilasVacias("tablaMedicamentos");
         });
 
-            document.getElementById("btnAgregar").addEventListener("click", function () {
-        const fechaInput = document.getElementById("fecha");
-        const importeInput = document.getElementById("importeFinal");
-        const transferSeleccionado = document.querySelector('input[name="transfer"]:checked');
-        const categoriaSeleccionada = document.querySelector('input[name="categoria"]:checked');
-        const fieldsetTransfer = document.getElementById("fieldsetTransfer");
-        const fieldsetCategoria = document.getElementById("fieldsetCategoria");
+        // ====================== BOTÓN ELIMINAR ======================
+        document.getElementById("btnEliminar").addEventListener("click", async function () {
+            const checks = document.querySelectorAll(
+                "#tablaPerfumeria tbody .fila-check:checked, #tablaMedicamentos tbody .fila-check:checked"
+            );
+            if (checks.length === 0) return alert("Selecciona al menos una fila.");
 
-        // VALIDACIÓN PREVENTIVA DE ID DE USUARIO... (Se mantiene)
+            const deletePromises = [];
 
-        if (idUsuario <= 0) {
-            alert("❌ Error de Sesión. Por favor, recarga la página o vuelve a iniciar sesión para guardar datos.");
-            return;
-        }
+            for (const chk of checks) {
+                const tr = chk.closest("tr");
+                const boletaId = tr?.getAttribute("data-boleta-id");
 
-        let camposCompletos = true;
-        document.querySelectorAll('.campo input').forEach(c => c.classList.remove('is-invalid'));
-        fieldsetTransfer?.classList.remove('is-invalid');
-        fieldsetCategoria?.classList.remove('is-invalid');
+                if (boletaId) {
+                    const p = fetch(`/Boleta/EliminarBoleta?id=${encodeURIComponent(boletaId)}`, { method: "DELETE" })
+                        .then(r => r.json())
+                        .then(resp => { if (resp?.success) tr.remove(); })
+                        .catch(err => console.error("Error al eliminar:", err));
+                    deletePromises.push(p);
+                } else {
+                    tr.remove();
+                }
+            }
 
-        if (!fechaInput.value.trim()) { fechaInput.classList.add('is-invalid'); camposCompletos = false; }
-        if (!importeInput.value.trim()) { importeInput.classList.add('is-invalid'); camposCompletos = false; }
-        if (!transferSeleccionado) { fieldsetTransfer.classList.add('is-invalid'); camposCompletos = false; }
-        if (!categoriaSeleccionada) { fieldsetCategoria.classList.add('is-invalid'); camposCompletos = false; }
-        if (!camposCompletos) return;
+            if (deletePromises.length) await Promise.all(deletePromises);
 
-        // ... (El resto del código se mantiene igual) ...
+            if (document.querySelectorAll("#tablaPerfumeria tbody tr").length === 0)
+                crearFilasVacias("tablaPerfumeria", 5);
+            if (document.querySelectorAll("#tablaMedicamentos tbody tr").length === 0)
+                crearFilasVacias("tablaMedicamentos", 5);
 
-        const idTabla = categoriaSeleccionada.id === "catMedicamento" ? "tablaMedicamentos" : "tablaPerfumeria";
-        const tbody = document.querySelector(`#${idTabla} tbody`);
+            guardarTablasEnStorage();
+        });
 
-        const fechaRaw = fechaInput.value.trim();
-        const importeRaw = importeInput.value.trim();
-        const fechaMostrar = formatoFechaInputAmostrar(fechaRaw);
-        const transferValor = transferSeleccionado.value;
-        const importeFormateado = "$ " + limpiarImporte(importeRaw).toLocaleString("es-AR");
+        // ====================== BOTÓN AGREGAR ======================
+        document.getElementById("btnAgregar").addEventListener("click", function () {
+            const fechaInput = document.getElementById("fecha");
+            const importeInput = document.getElementById("importeFinal");
+            const transferSeleccionado = document.querySelector('input[name="transfer"]:checked');
+            const categoriaSeleccionada = document.querySelector('input[name="categoria"]:checked');
+            const fieldsetTransfer = document.getElementById("fieldsetTransfer");
+            const fieldsetCategoria = document.getElementById("fieldsetCategoria");
 
-        const categoriaValor = categoriaSeleccionada.value;
+            if (idUsuario <= 0) {
+                alert("❌ Error de Sesión.");
+                return;
+            }
 
-        // ⭐ LÍNEA CORREGIDA: Usa categoriaValor en lugar de categoriaBase
-        const categoriaValorFinal = `${nombreProveedorServer} - ${categoriaValor}`;
+            let camposCompletos = true;
+            document.querySelectorAll('.campo input').forEach(c => c.classList.remove('is-invalid'));
+            fieldsetTransfer?.classList.remove('is-invalid');
+            fieldsetCategoria?.classList.remove('is-invalid');
 
-        // Crear la fila visualmente... (Se mantiene)
-        const fila = document.createElement("tr");
-        fila.innerHTML = `
-            <td title="${fechaMostrar}">${fechaMostrar}</td>
-            <td title="${importeFormateado}">${importeFormateado}</td>
-            <td title="${transferValor}">${transferValor}</td>
-            <td class="text-center"><input type="checkbox" class="fila-check"></td>
-        `;
-        tbody.prepend(fila);
-        guardarTablasEnStorage();
+            if (!fechaInput.value.trim()) { fechaInput.classList.add('is-invalid'); camposCompletos = false; }
+            if (!importeInput.value.trim()) { importeInput.classList.add('is-invalid'); camposCompletos = false; }
+            if (!transferSeleccionado) { fieldsetTransfer.classList.add('is-invalid'); camposCompletos = false; }
+            if (!categoriaSeleccionada) { fieldsetCategoria.classList.add('is-invalid'); camposCompletos = false; }
+            if (!camposCompletos) return;
 
-        // Guardar vía AJAX... (Se mantiene)
-        fetch("/Boleta/GuardarBoleta", {
-            // ... (Tu objeto fetch) ...
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                Idusuario: idUsuario,
-                Idproveedor: idProveedor,
-                Fecha: fechaRaw,
-                ImporteFinal: limpiarImporte(importeRaw),
-                Transfer: transferValor,
-                Categoria: categoriaValorFinal, // Usa el valor combinado
-                Detalle: "",
-                NombreProveedor: nombreProveedorServer,
+            const idTabla = categoriaSeleccionada.id === "catMedicamento" ? "tablaMedicamentos" : "tablaPerfumeria";
+            const tbody = document.querySelector(`#${idTabla} tbody`);
+            const fechaRaw = fechaInput.value.trim();
+            const importeRaw = importeInput.value.trim();
+            const fechaMostrar = formatoFechaInputAmostrar(fechaRaw);
+            const transferValor = transferSeleccionado.value;
+            const importeFormateado = "$ " + limpiarImporte(importeRaw).toLocaleString("es-AR");
+            const categoriaValor = categoriaSeleccionada.value;
+            const categoriaValorFinal = `${nombreProveedorServer} - ${categoriaValor}`;
+
+            const fila = document.createElement("tr");
+            fila.innerHTML = `
+                <td title="${fechaMostrar}">${fechaMostrar}</td>
+                <td title="${importeFormateado}">${importeFormateado}</td>
+                <td title="${transferValor}">${transferValor}</td>
+                <td class="text-center"><input type="checkbox" class="fila-check"></td>
+            `;
+            tbody.prepend(fila);
+            guardarTablasEnStorage();
+
+            fetch("/Boleta/GuardarBoleta", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    Idusuario: idUsuario,
+                    Idproveedor: idProveedor,
+                    Fecha: fechaRaw,
+                    ImporteFinal: limpiarImporte(importeRaw),
+                    Transfer: transferValor,
+                    Categoria: categoriaValorFinal,
+                    Detalle: "",
+                    NombreProveedor: nombreProveedorServer,
+                })
             })
-        })
             .then(async response => {
                 const resp = await response.json();
                 if (!response.ok || !resp?.exito) {
-                    const mensaje = resp?.mensaje || `Error HTTP ${response.status} - No se pudo procesar la solicitud.`;
-                    alert("⚠️ Error al guardar la boleta: " + mensaje);
+                    alert("⚠️ Error al guardar: " + (resp?.mensaje || response.status));
                     fila.remove();
                     return;
                 }
@@ -714,41 +717,24 @@
                 document.querySelectorAll('input[name="transfer"], input[name="categoria"]').forEach(r => r.checked = false);
             })
             .catch(err => {
-                console.error("Error de conexión:", err);
-                alert("❌ Error de red o conexión. La boleta no se guardó. Revisa la consola para más detalles.");
+                console.error(err);
+                alert("❌ Error de conexión.");
                 fila.remove();
             });
         });
 
+        // ====================== CHANGE EVENT ======================
         document.addEventListener("change", function (e) {
-            if (e.target.classList?.contains("fila-check"))
+            if (e.target.classList?.contains("fila-check")) {
                 e.target.closest("tr").classList.toggle("fila-seleccionada", e.target.checked);
+            }
             if (e.target.name === "transfer") document.getElementById("fieldsetTransfer")?.classList.remove('is-invalid');
             if (e.target.name === "categoria") document.getElementById("fieldsetCategoria")?.classList.remove('is-invalid');
         });
 
-        document.getElementById("btnEliminar").addEventListener("click", async function () {
-            const checks = document.querySelectorAll("#tablaPerfumeria tbody .fila-check:checked, #tablaMedicamentos tbody .fila-check:checked");
-            if (checks.length === 0) return alert("Selecciona al menos una fila.");
-            const deletePromises = [];
-            for (const chk of checks) {
-                const tr = chk.closest("tr");
-                const boletaId = tr?.getAttribute("data-boleta-id");
-                if (boletaId) {
-                    const p = fetch(`/Boleta/EliminarBoleta?id=${encodeURIComponent(boletaId)}`, { method: "DELETE" })
-                        .then(r => r.json())
-                        .then(resp => { if (resp?.success) tr.remove(); });
-                    deletePromises.push(p);
-                } else tr.remove();
-            }
-            if (deletePromises.length) await Promise.all(deletePromises);
-        });
-
+        // ====================== EL RESTO DE TU CÓDIGO (Excel, Nuevo Informe, etc.) ======================
         const mapCategoriaTabla = { "perfumeria": "tablaPerfumeria", "medicamentos": "tablaMedicamentos" };
         let workbookCargado = null;
-
-
-
 
         document.getElementById("btnAbrir").addEventListener("click", () =>
             document.getElementById("inputAbrirExcel").click()
@@ -820,6 +806,116 @@
                 this.value = "";
             }
         });
+
+
+
+
+
+
+
+        // ====================== BOTÓN RESTAURAR (SWAL) ======================
+        document.getElementById("btnRestaurar").addEventListener("click", async function () {
+            try {
+                const res = await fetch(`/Boleta/GetBoletasEliminadas?idProveedor=${idProveedor}`, { credentials: 'include' });
+                if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
+                const eliminadas = await res.json();
+
+                if (!eliminadas.success || !eliminadas.data || eliminadas.data.length === 0) {
+                    Swal.fire({ title: 'Sin eliminadas', text: 'No hay boletas eliminadas para este proveedor.', icon: 'info', confirmButtonColor: '#007bff' });
+                    return;
+                }
+
+                let tablaHtml = `
+                    <div style="height: 380px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px; background: white;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center; table-layout: fixed;">
+                            <thead style="background: #0d6efd; color: white; position: sticky; top: 0; z-index: 10;">
+                                <tr>
+                                    <th style="padding: 10px; width: 32%;">Fecha</th>
+                                    <th style="padding: 10px; width: 38%;">Importe F</th>
+                                    <th style="padding: 10px; width: 20%;" translate="no">Transfer</th>
+                                    <th style="padding: 10px; width: 10%;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                eliminadas.data.forEach(boleta => {
+                    const importeLimpio = Number(boleta.importeFinal || 0).toLocaleString('es-AR');
+                    tablaHtml += `
+                        <tr data-id="${boleta.idboleta}">
+                            <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.fecha || 'Sin fecha'}</td>
+                            <td style="padding: 10px; border: 1px solid #dee2e6;">$ ${importeLimpio}</td>
+                            <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.transfer || 'No'}</td>
+                            <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">
+                                <button class="btn btn-success btn-sm restaurar-btn" data-id="${boleta.idboleta}" translate="no">
+                                    <i class="bi bi-arrow-repeat"></i> Restaurar
+                                </button>
+                            </td>
+                        </tr>`;
+                });
+
+                tablaHtml += `</tbody></table></div>`;
+
+                Swal.fire({
+                    title: '<span style="color: #007bff;">Boletas Eliminadas</span>',
+                    html: tablaHtml,
+                    width: '680px',
+                    height: '520px',
+                    heightAuto: false,
+                    padding: '20px',
+                    showCloseButton: true,
+                    showConfirmButton: false,
+                    customClass: { popup: 'swal-fixed-size' },
+                    didOpen: () => {
+                        document.querySelectorAll('.restaurar-btn').forEach(btn => {
+                            btn.addEventListener('click', async function () {
+                                const boletaId = parseInt(this.getAttribute('data-id'), 10);
+                                if (isNaN(boletaId)) return;
+
+                                const confirm = await Swal.fire({
+                                    title: '¿Restaurar boleta?',
+                                    text: "Volverá a aparecer en el registro principal.",
+                                    showCancelButton: true,
+                                    confirmButtonColor: '#007bff',
+                                    cancelButtonColor: '#6c757d',
+                                    confirmButtonText: 'Sí, restaurar',
+                                    cancelButtonText: 'Cancelar'
+                                });
+
+                                if (!confirm.isConfirmed) return;
+
+                                try {
+                                    const res = await fetch('/Boleta/RestaurarBoleta', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ id: boletaId }),
+                                        credentials: 'include'
+                                    });
+
+                                    if (!res.ok) throw new Error("Error al restaurar");
+                                    const data = await res.json();
+                                    if (data.success) {
+                                        this.closest('tr').remove();
+                                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Restaurada', showConfirmButton: false, timer: 1500 });
+                                        location.reload();
+                                    }
+                                } catch (err) {
+                                    Swal.fire('Error', 'No se pudo restaurar la boleta', 'error');
+                                }
+                            });
+                        });
+                    }
+                });
+
+            } catch (err) {
+                console.error('Error al cargar eliminadas:', err);
+                Swal.fire({ title: 'Error', text: 'No se pudieron cargar las boletas eliminadas', icon: 'error', confirmButtonColor: '#dc3545' });
+            }
+        });
+
+
+
+
+
 
 
         document.getElementById("btnGuardarl").addEventListener("click", async function () {

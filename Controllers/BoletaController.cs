@@ -222,10 +222,6 @@ namespace FarmaciaSantaRita.Controllers
                 if (boleta == null)
                     return Json(new { success = false, message = "La boleta no existe." });
 
-                // ← Comentá o borrá esto si querés permitir eliminar de cualquier proveedor
-                // if (boleta.Idproveedor != int.Parse(ViewBag.IdProveedor?.ToString() ?? "0"))
-                //     return Unauthorized("No tienes permiso para eliminar esta boleta.");
-
                 boleta.Eliminado = true;           // ← Marca como eliminada (soft delete)
                 await _context.SaveChangesAsync();
 
@@ -233,6 +229,7 @@ namespace FarmaciaSantaRita.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine("ERROR en EliminarBoleta: " + ex.ToString());
                 return Json(new { success = false, message = ex.InnerException?.Message ?? ex.Message });
             }
         }

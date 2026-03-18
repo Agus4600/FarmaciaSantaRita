@@ -507,7 +507,7 @@
         const idUsuario = parseInt('@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0")', 10);
         const STORAGE_KEY = `boletas_${idProveedor}`;
 
-        // ====================== STORAGE (CORREGIDO) ======================
+        // ====================== STORAGE ======================
         function guardarTablasEnStorage() {
             const datos = { perfumeria: [], medicamentos: [] };
 
@@ -543,15 +543,12 @@
         function cargarTablasDesdeStorage() {
             const datosGuardados = localStorage.getItem(STORAGE_KEY);
             if (!datosGuardados) return;
-
             try {
                 const datos = JSON.parse(datosGuardados);
 
-                // Limpiar tablas
                 document.querySelector('#tablaPerfumeria tbody').innerHTML = '';
                 document.querySelector('#tablaMedicamentos tbody').innerHTML = '';
 
-                // Cargar Perfumería
                 datos.perfumeria.forEach(item => {
                     const tr = document.createElement('tr');
                     if (item.id) tr.setAttribute("data-boleta-id", item.id);
@@ -560,7 +557,6 @@
                     document.querySelector('#tablaPerfumeria tbody').appendChild(tr);
                 });
 
-                // Cargar Medicamentos
                 datos.medicamentos.forEach(item => {
                     const tr = document.createElement('tr');
                     if (item.id) tr.setAttribute("data-boleta-id", item.id);
@@ -596,20 +592,17 @@
 
         // ====================== QUITAR OUTLINE AZUL ======================
         const style = document.createElement('style');
-        style.innerHTML = ` button, .btn { outline: none !important; box-shadow: none !important; } `;
+        style.innerHTML = `button, .btn { outline: none !important; box-shadow: none !important; }`;
         document.head.appendChild(style);
 
         // ====================== INICIALIZACIÓN ======================
         document.addEventListener("DOMContentLoaded", function () {
             cargarTablasDesdeStorage();
-
-            if (document.querySelectorAll('#tablaPerfumeria tbody tr').length === 0)
-                crearFilasVacias("tablaPerfumeria");
-            if (document.querySelectorAll('#tablaMedicamentos tbody tr').length === 0)
-                crearFilasVacias("tablaMedicamentos");
+            if (document.querySelectorAll('#tablaPerfumeria tbody tr').length === 0) crearFilasVacias("tablaPerfumeria");
+            if (document.querySelectorAll('#tablaMedicamentos tbody tr').length === 0) crearFilasVacias("tablaMedicamentos");
         });
 
-        // ====================== BOTÓN ELIMINAR FILA ======================
+        // ====================== BOTÓN ELIMINAR ======================
         document.getElementById("btnEliminar").addEventListener("click", async function () {
             const checks = document.querySelectorAll("#tablaPerfumeria tbody .fila-check:checked, #tablaMedicamentos tbody .fila-check:checked");
             if (checks.length === 0) return alert("Selecciona al menos una fila.");
@@ -627,7 +620,7 @@
                         console.error("Error al eliminar:", err);
                     }
                 } else {
-                    tr.remove(); // Registro viejo sin ID
+                    tr.remove();
                 }
             }
 
@@ -645,78 +638,193 @@
                 const eliminadas = await res.json();
 
                 if (!eliminadas.success || !eliminadas.data || eliminadas.data.length === 0) {
-                    Swal.fire({ title: 'Sin eliminadas', text: 'No hay boletas eliminadas.', icon: 'info' });
+                    Swal.fire({ title: 'Sin eliminadas', text: 'No hay boletas eliminadas para este proveedor.', icon: 'info', confirmButtonColor: '#007bff' });
                     return;
                 }
 
-                let tablaHtml = `<div style="height:380px;overflow-y:auto;border:1px solid #dee2e6;border-radius:8px;background:white;">
-                    <table style="width:100%;border-collapse:collapse;font-size:14px;text-align:center;">
-                        <thead style="background:#0d6efd;color:white;position:sticky;top:0;z-index:10;">
-                            <tr><th style="padding:10px;">Fecha</th><th style="padding:10px;">Importe F</th>
-                            <th style="padding:10px;">Transfer</th><th style="padding:10px;">Acción</th></tr>
-                        </thead><tbody>`;
+                let tablaHtml = `
+                    <div style="height: 380px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px; background: white;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center; table-layout: fixed;">
+                            <thead style="background: #0d6efd; color: white; position: sticky; top: 0; z-index: 10;">
+                                <tr>
+                                    <th style="padding: 10px; width: 32%;">Fecha</th>
+                                    <th style="padding: 10px; width: 38%;">Importe F</th>
+                                    <th style="padding: 10px; width: 20%;" translate="no">Transfer</th>
+                                    <th style="padding: 10px; width: 10%;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
 
-                eliminadas.data.forEach(b => {
-                    const imp = Number(b.importeFinal||0).toLocaleString('es-AR');
-                    tablaHtml += `<tr data-id="${b.idboleta}">
-                        <td style="padding:10px;border:1px solid #dee2e6;">${b.fecha||''}</td>
-                        <td style="padding:10px;border:1px solid #dee2e6;">$ ${imp}</td>
-                        <td style="padding:10px;border:1px solid #dee2e6;">${b.transfer||'No'}</td>
-                        <td style="padding:10px;border:1px solid #dee2e6;">
-                            <button class="btn btn-success btn-sm restaurar-btn" data-id="${b.idboleta}">Restaurar</button>
-                        </td></tr>`;
+                eliminadas.data.forEach(boleta => {
+                    const importeLimpio = Number(boleta.importeFinal || 0).toLocaleString('es-AR');
+                    tablaHtml += `
+                        <tr data-id="${boleta.idboleta}">
+                            <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.fecha || 'Sin fecha'}</td>
+                            <td style="padding: 10px; border: 1px solid #dee2e6;">$ ${importeLimpio}</td>
+                            <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.transfer || 'No'}</td>
+                            <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">
+                                <button class="btn btn-success btn-sm restaurar-btn" data-id="${boleta.idboleta}" translate="no">
+                                    <i class="bi bi-arrow-repeat"></i> Restaurar
+                                </button>
+                            </td>
+                        </tr>`;
                 });
 
                 tablaHtml += `</tbody></table></div>`;
 
                 Swal.fire({
-                    title: 'Boletas Eliminadas',
+                    title: '<span style="color: #007bff;">Boletas Eliminadas</span>',
                     html: tablaHtml,
                     width: '680px',
+                    height: '520px',
+                    heightAuto: false,
+                    padding: '20px',
                     showCloseButton: true,
                     showConfirmButton: false,
                     didOpen: () => {
                         document.querySelectorAll('.restaurar-btn').forEach(btn => {
-                            btn.addEventListener('click', async function() {
-                                const id = parseInt(this.getAttribute('data-id'));
-                                if (!id) return;
+                            btn.addEventListener('click', async function () {
+                                const boletaId = parseInt(this.getAttribute('data-id'), 10);
+                                if (isNaN(boletaId)) return;
 
-                                if (await Swal.fire({title:'¿Restaurar?', showCancelButton:true, confirmButtonText:'Sí'}).then(r=>r.isConfirmed)) {
-                                    const r = await fetch('/Boleta/RestaurarBoleta', {
-                                        method:'POST',
-                                        headers:{'Content-Type':'application/json'},
-                                        body: JSON.stringify({id: id})
+                                const confirm = await Swal.fire({
+                                    title: '¿Restaurar boleta?',
+                                    text: "Volverá a aparecer en el registro principal.",
+                                    showCancelButton: true,
+                                    confirmButtonColor: '#007bff',
+                                    cancelButtonColor: '#6c757d',
+                                    confirmButtonText: 'Sí, restaurar',
+                                    cancelButtonText: 'Cancelar'
+                                });
+
+                                if (!confirm.isConfirmed) return;
+
+                                try {
+                                    const res = await fetch('/Boleta/RestaurarBoleta', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ id: boletaId }),
+                                        credentials: 'include'
                                     });
-                                    if ((await r.json()).success) location.reload();
+                                    const data = await res.json();
+                                    if (data.success) {
+                                        this.closest('tr').remove();
+                                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Restaurada', showConfirmButton: false, timer: 1500 });
+                                        location.reload();
+                                    }
+                                } catch (err) {
+                                    Swal.fire('Error', 'No se pudo restaurar la boleta', 'error');
                                 }
                             });
                         });
                     }
                 });
             } catch (err) {
-                console.error(err);
-                Swal.fire('Error', 'No se pudieron cargar las boletas eliminadas', 'error');
+                console.error('Error al cargar eliminadas:', err);
+                Swal.fire({ title: 'Error', text: 'No se pudieron cargar las boletas eliminadas', icon: 'error', confirmButtonColor: '#dc3545' });
             }
         });
 
-        // ====================== BOTÓN AGREGAR ======================
+        // ====================== BOTÓN AGREGAR (CORREGIDO Y COMPLETO) ======================
         document.getElementById("btnAgregar").addEventListener("click", function () {
-            // ... (tu código original de Agregar se mantiene igual, solo lo resumo por espacio)
-            // Copia aquí tu código actual de btnAgregar si quieres, pero como ya funciona lo dejo así por ahora.
+            const fechaInput = document.getElementById("fecha");
+            const importeInput = document.getElementById("importeFinal");
+            const transferSeleccionado = document.querySelector('input[name="transfer"]:checked');
+            const categoriaSeleccionada = document.querySelector('input[name="categoria"]:checked');
+            const fieldsetTransfer = document.getElementById("fieldsetTransfer");
+            const fieldsetCategoria = document.getElementById("fieldsetCategoria");
+
+            if (idUsuario <= 0) return alert("❌ Error de Sesión.");
+
+            let camposCompletos = true;
+            document.querySelectorAll('.campo input').forEach(c => c.classList.remove('is-invalid'));
+            fieldsetTransfer?.classList.remove('is-invalid');
+            fieldsetCategoria?.classList.remove('is-invalid');
+
+            if (!fechaInput.value.trim()) { fechaInput.classList.add('is-invalid'); camposCompletos = false; }
+            if (!importeInput.value.trim()) { importeInput.classList.add('is-invalid'); camposCompletos = false; }
+            if (!transferSeleccionado) { fieldsetTransfer.classList.add('is-invalid'); camposCompletos = false; }
+            if (!categoriaSeleccionada) { fieldsetCategoria.classList.add('is-invalid'); camposCompletos = false; }
+            if (!camposCompletos) return;
+
+            const idTabla = categoriaSeleccionada.id === "catMedicamento" ? "tablaMedicamentos" : "tablaPerfumeria";
+            const tbody = document.querySelector(`#${idTabla} tbody`);
+
+            const fechaRaw = fechaInput.value.trim();
+            const importeRaw = importeInput.value.trim();
+            const fechaMostrar = formatoFechaInputAmostrar(fechaRaw);
+            const transferValor = transferSeleccionado.value;
+            const importeFormateado = "$ " + limpiarImporte(importeRaw).toLocaleString("es-AR");
+            const categoriaValorFinal = `${nombreProveedorServer} - ${categoriaSeleccionada.value}`;
+
+            const fila = document.createElement("tr");
+            fila.innerHTML = `
+                <td title="${fechaMostrar}">${fechaMostrar}</td>
+                <td title="${importeFormateado}">${importeFormateado}</td>
+                <td title="${transferValor}">${transferValor}</td>
+                <td class="text-center"><input type="checkbox" class="fila-check"></td>
+            `;
+            tbody.prepend(fila);
+
+            guardarTablasEnStorage();
+
+            fetch("/Boleta/GuardarBoleta", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    Idusuario: idUsuario,
+                    Idproveedor: idProveedor,
+                    Fecha: fechaRaw,
+                    ImporteFinal: limpiarImporte(importeRaw),
+                    Transfer: transferValor,
+                    Categoria: categoriaValorFinal,
+                    Detalle: "",
+                    NombreProveedor: nombreProveedorServer,
+                })
+            })
+            .then(async response => {
+                const resp = await response.json();
+                if (!response.ok || !resp?.exito) {
+                    alert("⚠️ Error al guardar: " + (resp?.mensaje || response.status));
+                    fila.remove();
+                    return;
+                }
+                fila.setAttribute("data-boleta-id", resp.idBoleta);
+                fechaInput.value = "";
+                importeInput.value = "";
+                document.querySelectorAll('input[name="transfer"], input[name="categoria"]').forEach(r => r.checked = false);
+            })
+            .catch(err => {
+                console.error(err);
+                alert("❌ Error de conexión.");
+                fila.remove();
+            });
+        });
+
+        // ====================== CHANGE EVENT ======================
+        document.addEventListener("change", function (e) {
+            if (e.target.classList?.contains("fila-check")) {
+                e.target.closest("tr").classList.toggle("fila-seleccionada", e.target.checked);
+            }
+            if (e.target.name === "transfer") document.getElementById("fieldsetTransfer")?.classList.remove('is-invalid');
+            if (e.target.name === "categoria") document.getElementById("fieldsetCategoria")?.classList.remove('is-invalid');
         });
 
         // ====================== BOTÓN EXPORTAR ======================
         document.getElementById("btnGuardarl").addEventListener("click", async function () {
-            // Tu código completo de exportar que tenías antes
-            // (lo mantengo completo como pediste)
             const tablas = [
                 { id: "tablaPerfumeria", hoja: "Perfumeria", titulo: "PERFUMERÍA" },
                 { id: "tablaMedicamentos", hoja: "Medicamentos", titulo: "MEDICAMENTOS" }
             ];
             const workbook = new ExcelJS.Workbook();
+
             for (const t of tablas) {
                 const ws = workbook.addWorksheet(t.hoja);
-                ws.columns = [{ header: "Fecha", key: "fecha", width: 20 }, { header: "Importe", key: "importe", width: 20 }, { header: "Transfer", key: "transfer", width: 15 }];
+                ws.columns = [
+                    { header: "Fecha", key: "fecha", width: 20 },
+                    { header: "Importe", key: "importe", width: 20 },
+                    { header: "Transfer", key: "transfer", width: 15 }
+                ];
 
                 ws.mergeCells("A1:C1");
                 ws.getCell("A1").value = `Tabla: ${t.titulo}`;
@@ -725,30 +833,52 @@
                 ws.getRow(1).height = 25;
 
                 const headerRow = ws.addRow(["FECHA", "IMPORTE", "TRANSFER"]);
-                headerRow.eachCell(cell => cell.font = { bold: true });
+                headerRow.eachCell(cell => {
+                    cell.font = { bold: true, color: { argb: "FF000000" } };
+                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "ffc080" } };
+                    cell.alignment = { horizontal: "center", vertical: "middle" };
+                    cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                });
 
                 const tbody = document.querySelector(`#${t.id} tbody`);
-                let si = 0, no = 0;
+                let conteoSI = 0, conteoNO = 0;
+
                 if (tbody) {
-                    [...tbody.querySelectorAll("tr")].forEach(tr => {
-                        const f = tr.children[0]?.innerText.trim();
-                        const i = tr.children[1]?.innerText.trim();
-                        const t = tr.children[2]?.innerText.trim();
-                        if (!f && !i && !t) return;
-                        if (t.toUpperCase() === "SÍ" || t.toUpperCase() === "SI") si++;
-                        if (t.toUpperCase() === "NO") no++;
-                        ws.addRow([f, i, t]);
+                    [...tbody.querySelectorAll("tr")].forEach((tr, i) => {
+                        const fecha = tr.children[0]?.innerText.trim();
+                        const importe = tr.children[1]?.innerText.trim();
+                        const transfer = (tr.children[2]?.innerText || "").trim();
+                        if (!fecha && !importe && !transfer) return;
+
+                        if (transfer.toUpperCase() === "SÍ" || transfer.toUpperCase() === "SI") conteoSI++;
+                        if (transfer.toUpperCase() === "NO") conteoNO++;
+
+                        const row = ws.addRow([fecha, importe, transfer]);
+                        const color = i % 2 === 0 ? "ddeeff" : "ccffff";
+                        row.eachCell(cell => {
+                            cell.alignment = { horizontal: "center", vertical: "middle" };
+                            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
+                            cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+                        });
                     });
                 }
 
+                // Resumen
                 ws.mergeCells("E2:G2");
                 ws.getCell("E2").value = "Resumen Transfer";
-                ws.getCell("E3").value = "Con Transfer (SI):"; ws.getCell("G3").value = si;
-                ws.getCell("E4").value = "Sin Transfer (NO):"; ws.getCell("G4").value = no;
+                ws.getCell("E2").font = { bold: true, color: { argb: "FFFFFFFF" } };
+                ws.getCell("E2").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "33cc99" } };
+
+                ws.mergeCells("E3:F3"); ws.getCell("E3").value = "Con Transfer (SI):"; ws.getCell("G3").value = conteoSI;
+                ws.mergeCells("E4:F4"); ws.getCell("E4").value = "Sin Transfer (NO):"; ws.getCell("G4").value = conteoNO;
+
+                ws.getColumn("E").width = 10;
+                ws.getColumn("F").width = 10;
+                ws.getColumn("G").width = 8;
             }
 
-            const f = new Date();
-            const nombreArchivo = `${nombreProveedorServer} ${f.getDate().toString().padStart(2,'0')}-${(f.getMonth()+1).toString().padStart(2,'0')}-${f.getFullYear()} ${f.getHours().toString().padStart(2,'0')}:${f.getMinutes().toString().padStart(2,'0')}.xlsx`;
+            const fecha = new Date();
+            const nombreArchivo = `${nombreProveedorServer} ${fecha.getDate().toString().padStart(2,'0')}-${(fecha.getMonth()+1).toString().padStart(2,'0')}-${fecha.getFullYear()} ${fecha.getHours().toString().padStart(2,'0')}${fecha.getMinutes().toString().padStart(2,'0')}.xlsx`;
 
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });

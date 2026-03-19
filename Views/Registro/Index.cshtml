@@ -185,44 +185,38 @@
                         <input asp-for="Nombre" id="Nombre" class="form-control-custom" required />
                         <span id="err-Nombre" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
-
                     <div class="col-md-3">
                         <label class="form-label">Apellido</label>
                         <input asp-for="Apellido" id="Apellido" class="form-control-custom" required />
                         <span id="err-Apellido" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
-
                     <div class="col-md-3">
                         <label class="form-label">DNI</label>
                         <input asp-for="Dni" id="Dni" class="form-control-custom" maxlength="10" required onkeypress="return soloNumeros(event)" />
                         <span id="err-Dni" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
-
                     <div class="col-md-3">
                         <label class="form-label">Teléfono</label>
                         <input asp-for="Telefono" id="Telefono" class="form-control-custom" required />
                         <span id="err-Telefono" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
 
-                    <div class="col-md-3">
+                    <!-- Los tres campos que ocupan el espacio restante -->
+                    <div class="col-md-4">
                         <label class="form-label">Dirección</label>
                         <input asp-for="Direccion" id="Direccion" class="form-control-custom" required />
                         <span id="err-Direccion" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
-
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <label class="form-label">Fecha Nacimiento</label>
                         <input asp-for="FechaNacimiento" id="FechaNacimiento" type="date" class="form-control-custom" required />
                         <span id="err-FechaNacimiento" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
-
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <label class="form-label">Fecha de Ingreso</label>
                         <input asp-for="FechaIngreso" id="FechaIngreso" type="date" class="form-control-custom" required />
                         <span id="err-FechaIngreso" class="error-label text-danger" style="font-size: 11px;"></span>
                     </div>
-
-                    
                 </div>
             </fieldset>
 

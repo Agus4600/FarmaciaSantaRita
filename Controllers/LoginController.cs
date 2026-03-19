@@ -81,6 +81,15 @@ namespace FarmaciaSantaRita.Controllers
                 {
                     Console.WriteLine("[LOGIN] Contraseña correcta - Login exitoso");
 
+                    // NUEVO: Verificar si el rol está pendiente o no asignado
+                    if (string.IsNullOrWhiteSpace(usuario.Rol) || usuario.Rol == "Pendiente")
+                    {
+                        ViewBag.ShowRolPendienteModal = true;  // ← Bandera para mostrar el Swal
+                        ViewBag.MostrarRecordarCuenta = false;
+                        return View();
+                    }
+
+                    // Si tiene rol válido → procede con el login normal
                     var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, usuario.Idusuario.ToString()),

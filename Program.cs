@@ -28,6 +28,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.HttpOnly = true;
     });
 
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.MinimumSameSitePolicy = SameSiteMode.None;
+});
+
 // Se mantiene Session, aunque ya no la usaremos para autenticar, por si otras partes del código la necesitan.
 builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
@@ -57,6 +62,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseCookiePolicy();
 
 // ?? CAMBIO 2: DEBE ir antes de UseAuthorization
 app.UseAuthentication();

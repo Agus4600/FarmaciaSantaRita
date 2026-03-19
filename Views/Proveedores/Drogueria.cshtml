@@ -602,30 +602,58 @@
             if (document.querySelectorAll('#tablaMedicamentos tbody tr').length === 0) crearFilasVacias("tablaMedicamentos");
         });
 
-        // ====================== BOTÓN ELIMINAR ======================
+                // ====================== BOTÓN ELIMINAR (CON DIAGNÓSTICO) ======================
         document.getElementById("btnEliminar").addEventListener("click", async function () {
-            const checks = document.querySelectorAll("#tablaPerfumeria tbody .fila-check:checked, #tablaMedicamentos tbody .fila-check:checked");
-            if (checks.length === 0) return alert("Selecciona al menos una fila.");
+            const checks = document.querySelectorAll(
+                "#tablaPerfumeria tbody .fila-check:checked, #tablaMedicamentos tbody .fila-check:checked"
+            );
+
+            if (checks.length === 0) {
+                return alert("Selecciona al menos una fila.");
+            }
+
+            console.log(`[ELIMINAR] Filas seleccionadas: ${checks.length}`);
 
             for (const chk of checks) {
                 const tr = chk.closest("tr");
                 const boletaId = tr?.getAttribute("data-boleta-id");
 
+                console.log(`[ELIMINAR] Fila analizada → data-boleta-id:`, boletaId || "(NO TIENE ID)");
+
                 if (boletaId) {
+                    console.log(`[ELIMINAR] Intentando eliminar en BD → ID: ${boletaId}`);
                     try {
-                        const response = await fetch(`/Boleta/EliminarBoleta?id=${encodeURIComponent(boletaId)}`, { method: "DELETE" });
+                        const response = await fetch(`/Boleta/EliminarBoleta?id=${encodeURIComponent(boletaId)}`, {
+                            method: "DELETE"
+                        });
                         const result = await response.json();
-                        if (result.success) tr.remove();
+
+                        console.log(`[ELIMINAR] Respuesta del backend:`, result);
+
+                        if (result.success) {
+                            console.log(`[ELIMINAR] Éxito → fila eliminada en BD y pantalla`);
+                            tr.remove();
+                        } else {
+                            console.warn(`[ELIMINAR] Falló en BD:`, result);
+                            alert("No se pudo eliminar en la base de datos.");
+                        }
                     } catch (err) {
-                        console.error("Error al eliminar:", err);
+                        console.error(`[ELIMINAR] Error al intentar eliminar ID ${boletaId}:`, err);
+                        alert("Error de conexión al eliminar.");
                     }
                 } else {
+                    console.log(`[ELIMINAR] Registro sin ID → solo se quita de la pantalla`);
                     tr.remove();
                 }
             }
 
-            if (document.querySelectorAll("#tablaPerfumeria tbody tr").length === 0) crearFilasVacias("tablaPerfumeria", 5);
-            if (document.querySelectorAll("#tablaMedicamentos tbody tr").length === 0) crearFilasVacias("tablaMedicamentos", 5);
+            // Recrear filas vacías si quedó alguna tabla vacía
+            if (document.querySelectorAll("#tablaPerfumeria tbody tr").length === 0) {
+                crearFilasVacias("tablaPerfumeria", 5);
+            }
+            if (document.querySelectorAll("#tablaMedicamentos tbody tr").length === 0) {
+                crearFilasVacias("tablaMedicamentos", 5);
+            }
 
             guardarTablasEnStorage();
         });

@@ -673,241 +673,240 @@
                 const inputNuevaPass = document.getElementById('nuevaContraseña');
                 if (inputNuevaPass) inputNuevaPass.value = "";
             }, 10);
-        });
-        // Toggle de visibilidad de contraseñas
-        document.querySelectorAll('.btn-toggle-view').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const input = this.previousElementSibling;
-                const icon = this.querySelector('i');
-                if (input.type === "password") {
-                    input.type = "text";
-                    icon.classList.replace('bi-eye', 'bi-eye-slash');
-                } else {
-                    input.type = "password";
-                    icon.classList.replace('bi-eye-slash', 'bi-eye');
-                }
+
+            // Toggle de visibilidad de contraseñas
+            document.querySelectorAll('.btn-toggle-view').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const input = this.previousElementSibling;
+                    const icon = this.querySelector('i');
+                    if (input.type === "password") {
+                        input.type = "text";
+                        icon.classList.replace('bi-eye', 'bi-eye-slash');
+                    } else {
+                        input.type = "password";
+                        icon.classList.replace('bi-eye-slash', 'bi-eye');
+                    }
+                });
             });
-        });
-        // Swal de éxito desde TempData (si viene de redirect)
-                @if (TempData["ResultadoActualizacion"] != null)
+
+            // Swal de éxito/error desde TempData (si viene de redirect)
+            @if (TempData["ResultadoActualizacion"] != null)
+            {
+                var resultado = TempData["ResultadoActualizacion"].ToString();
+                if (resultado == "Error")
                 {
-                        var resultado = TempData["ResultadoActualizacion"].ToString();
-
-                        if (resultado == "Error")
-                        {
-                                <text>
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: '@(TempData["MensajeError"] ?? "Ocurrió un error inesperado.")',
-                                    confirmButtonText: 'Entendido',
-                                    confirmButtonColor: '#007bff',
-                                     showConfirmButton: true
-                                });
-                                </text>
-                        }
-                        else if (resultado == "SinCambios")
-                        {
-                                <text>
-                                Swal.fire({
-                                    icon: 'info',
-                                    title: 'Sin cambios',
-                                    text: '@(TempData["MensajeSinCambios"] ?? "No se detectaron cambios para guardar.")',
-                                    confirmButtonText: 'Entendido',
-                                    confirmButtonColor: '#007bff',
-                                    showConfirmButton: true   // Botón visible siempre
-                                });
-                                </text>
-                        }
-                        else if (resultado == "Exito")
-                        {
-                                <text>
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: '¡Cuenta Actualizada!',
-                                    text: '@(TempData["MensajeExito"] ?? "Los cambios se guardaron correctamente.")',
-                                    confirmButtonText: 'Entendido',
-                                    confirmButtonColor: '#007bff',
-                                    showConfirmButton: true
-                                });
-                                </text>
-                        }
+                    <text>
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: '@(TempData["MensajeError"] ?? "Ocurrió un error inesperado.")',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff',
+                        showConfirmButton: true
+                    });
+                    </text>
                 }
-        // Botón Guardar Cambios
-    document.getElementById('btnGuardarCambios').addEventListener('click', function() {
-    console.log("[DEBUG] Botón GUARDAR CAMBIOS presionado");
-
-    const form = document.getElementById('formCuenta');
-    if (!form) {
-        Swal.fire('Error', 'No se encontró el formulario.', 'error');
-        return;
-    }
-
-    const campos = {
-        nombre: document.getElementById('Nombre'),
-        apellido: document.getElementById('Apellido'),
-        usuario: document.getElementById('NombreUsuario'),
-        correo: document.getElementById('CorreoUsuario'),
-        dni: document.getElementById('Dni'),
-        direccion: document.getElementById('DireccionInput'),
-        telefono: document.getElementById('Telefono'),
-        nuevaPass: document.getElementById('nuevaContraseña'),
-        wrapNuevaPass: document.getElementById('wrapperNuevaContrasena')
-    };
-
-    // Limpiar glows previos
-    Object.values(campos).forEach(c => {
-        if (c) c.classList.remove('invalid-glow');
-        if (c?.closest('.password-wrapper')) c.closest('.password-wrapper').classList.remove('invalid-glow');
-    });
-
-    let errores = [];
-    const regexLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
-    const regexMail = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    const regexDni = /^\d{7,8}$/;
-    const regexTelefono = /^\d{7,15}$/;
-
-    if (!campos.nombre?.value?.trim() || !regexLetras.test(campos.nombre.value.trim())) {
-        errores.push("El <b>Nombre</b> es obligatorio y solo puede contener letras.");
-        campos.nombre?.classList.add('invalid-glow');
-    }
-    if (!campos.apellido?.value?.trim() || !regexLetras.test(campos.apellido.value.trim())) {
-        errores.push("El <b>Apellido</b> es obligatorio y solo puede contener letras.");
-        campos.apellido?.classList.add('invalid-glow');
-    }
-    if (!campos.usuario?.value?.trim()) {
-        errores.push("El <b>Nombre de Usuario</b> es obligatorio.");
-        campos.usuario?.classList.add('invalid-glow');
-    }
-    if (!campos.correo?.value?.trim() || !regexMail.test(campos.correo.value.trim())) {
-        errores.push("Ingresa un <b>Correo</b> válido.");
-        campos.correo?.classList.add('invalid-glow');
-    }
-    if (!campos.dni?.value?.trim() || !regexDni.test(campos.dni.value.trim())) {
-        errores.push("El <b>DNI</b> es obligatorio y debe tener 7 u 8 números.");
-        campos.dni?.classList.add('invalid-glow');
-    }
-    if (!campos.direccion?.value?.trim() || !campos.direccion.value.includes(",") || campos.direccion.value.split(",")[1].trim().length < 2) {
-        errores.push("La <b>Dirección</b> es obligatoria y debe incluir coma + localidad.");
-        campos.direccion?.classList.add('invalid-glow');
-    }
-    if (!campos.telefono?.value?.trim() || !regexTelefono.test(campos.telefono.value.trim())) {
-        errores.push("El <b>Teléfono</b> es obligatorio y debe tener 7-15 números.");
-        campos.telefono?.classList.add('invalid-glow');
-    }
-
-    // Contraseña nueva (opcional)
-    const passActual = document.getElementById('contrasenaActual')?.value || "";
-    if (campos.nuevaPass?.value?.trim() && campos.nuevaPass.value.trim() === passActual) {
-        errores.push("La <b>Nueva Contraseña</b> no puede ser igual a la anterior.");
-        campos.wrapNuevaPass?.classList.add('invalid-glow');
-    }
-
-    if (errores.length > 0) {
-        Swal.fire({
-            title: 'Campos inválidos o vacíos',
-            html: `<ul style="text-align:left">${errores.map(e => `<li>${e}</li>`).join('')}</ul>`,
-            confirmButtonText: 'Revisar',
-            confirmButtonColor: '#007bff'
-        });
-        return;
-    }
-
-    // Siempre mostrar confirmación (backend decidirá si hubo cambios o no)
-    Swal.fire({
-        title: '¿Guardar cambios?',
-        text: "Se actualizará la información de tu cuenta.",
-        showCancelButton: true,
-        confirmButtonColor: '#007bff',
-                cancelButtonColor: '#007bff',
-        confirmButtonText: 'Sí, guardar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            form.submit(); // Envía el POST
-        }
-    });
-});
-
-        // Quitar glow al escribir
-        document.querySelectorAll('.form-control, .password-wrapper').forEach(el => {
-            el.addEventListener('input', function() {
-                this.classList.remove('invalid-glow');
-                if (this.closest('.password-wrapper')) {
-                    this.closest('.password-wrapper').classList.remove('invalid-glow');
+                else if (resultado == "SinCambios")
+                {
+                    <text>
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Sin cambios',
+                        text: '@(TempData["MensajeSinCambios"] ?? "No se detectaron cambios para guardar.")',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff',
+                        showConfirmButton: true
+                    });
+                    </text>
                 }
-            });
-        });
+                else if (resultado == "Exito")
+                {
+                    <text>
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Cuenta Actualizada!',
+                        text: '@(TempData["MensajeExito"] ?? "Los cambios se guardaron correctamente.")',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff',
+                        showConfirmButton: true
+                    });
+                    </text>
+                }
+            }
 
-
-
-
-                    document.querySelectorAll('.guardar-rol').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const id = this.getAttribute('data-id');
-                const select = this.parentElement.querySelector('.nuevo-rol');
-                const nuevoRol = select.value;
-
-                if (!nuevoRol) {
-                    Swal.fire('Error', 'Selecciona un rol válido', 'error');
+            // Botón Guardar Cambios (formulario principal)
+            document.getElementById('btnGuardarCambios').addEventListener('click', function() {
+                console.log("[DEBUG] Botón GUARDAR CAMBIOS presionado");
+                const form = document.getElementById('formCuenta');
+                if (!form) {
+                    Swal.fire('Error', 'No se encontró el formulario.', 'error');
                     return;
                 }
 
+                const campos = {
+                    nombre: document.getElementById('Nombre'),
+                    apellido: document.getElementById('Apellido'),
+                    usuario: document.getElementById('NombreUsuario'),
+                    correo: document.getElementById('CorreoUsuario'),
+                    dni: document.getElementById('Dni'),
+                    direccion: document.getElementById('DireccionInput'),
+                    telefono: document.getElementById('Telefono'),
+                    nuevaPass: document.getElementById('nuevaContraseña'),
+                    wrapNuevaPass: document.getElementById('wrapperNuevaContrasena')
+                };
+
+                // Limpiar glows previos
+                Object.values(campos).forEach(c => {
+                    if (c) c.classList.remove('invalid-glow');
+                    if (c?.closest('.password-wrapper')) c.closest('.password-wrapper').classList.remove('invalid-glow');
+                });
+
+                let errores = [];
+                const regexLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+                const regexMail = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                const regexDni = /^\d{7,8}$/;
+                const regexTelefono = /^\d{7,15}$/;
+
+                if (!campos.nombre?.value?.trim() || !regexLetras.test(campos.nombre.value.trim())) {
+                    errores.push("El <b>Nombre</b> es obligatorio y solo puede contener letras.");
+                    campos.nombre?.classList.add('invalid-glow');
+                }
+                if (!campos.apellido?.value?.trim() || !regexLetras.test(campos.apellido.value.trim())) {
+                    errores.push("El <b>Apellido</b> es obligatorio y solo puede contener letras.");
+                    campos.apellido?.classList.add('invalid-glow');
+                }
+                if (!campos.usuario?.value?.trim()) {
+                    errores.push("El <b>Nombre de Usuario</b> es obligatorio.");
+                    campos.usuario?.classList.add('invalid-glow');
+                }
+                if (!campos.correo?.value?.trim() || !regexMail.test(campos.correo.value.trim())) {
+                    errores.push("Ingresa un <b>Correo</b> válido.");
+                    campos.correo?.classList.add('invalid-glow');
+                }
+                if (!campos.dni?.value?.trim() || !regexDni.test(campos.dni.value.trim())) {
+                    errores.push("El <b>DNI</b> es obligatorio y debe tener 7 u 8 números.");
+                    campos.dni?.classList.add('invalid-glow');
+                }
+                if (!campos.direccion?.value?.trim() || !campos.direccion.value.includes(",") || campos.direccion.value.split(",")[1].trim().length < 2) {
+                    errores.push("La <b>Dirección</b> es obligatoria y debe incluir coma + localidad.");
+                    campos.direccion?.classList.add('invalid-glow');
+                }
+                if (!campos.telefono?.value?.trim() || !regexTelefono.test(campos.telefono.value.trim())) {
+                    errores.push("El <b>Teléfono</b> es obligatorio y debe tener 7-15 números.");
+                    campos.telefono?.classList.add('invalid-glow');
+                }
+
+                // Contraseña nueva (opcional)
+                const passActual = document.getElementById('contrasenaActual')?.value || "";
+                if (campos.nuevaPass?.value?.trim() && campos.nuevaPass.value.trim() === passActual) {
+                    errores.push("La <b>Nueva Contraseña</b> no puede ser igual a la anterior.");
+                    campos.wrapNuevaPass?.classList.add('invalid-glow');
+                }
+
+                if (errores.length > 0) {
+                    Swal.fire({
+                        title: 'Campos inválidos o vacíos',
+                        html: `<ul style="text-align:left">${errores.map(e => `<li>${e}</li>`).join('')}</ul>`,
+                        confirmButtonText: 'Revisar',
+                        confirmButtonColor: '#007bff'
+                    });
+                    return;
+                }
+
+                // Confirmación antes de enviar
                 Swal.fire({
-                    title: '¿Confirmar cambio de rol?',
-                    text: `Cambiar a "${nuevoRol}"`,
+                    title: '¿Guardar cambios?',
+                    text: "Se actualizará la información de tu cuenta.",
                     showCancelButton: true,
-                    confirmButtonText: 'Sí, cambiar',
-                    cancelButtonText: 'Cancelar',
                     confirmButtonColor: '#007bff',
-                    cancelButtonColor: '#6c757d'
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, guardar',
+                    cancelButtonText: 'Cancelar'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        console.log("Enviando → ID:", id, " | Rol:", nuevoRol); // Debug extra
-
-                        fetch('/Actualizar/ActualizarRol', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                            },
-                            body: JSON.stringify({ idUsuario: parseInt(id), nuevoRol: nuevoRol })
-                        })
-                        .then(response => {
-                            console.log("[DEBUG] Status de la respuesta:", response.status);
-                            if (!response.ok) {
-                                return response.text().then(text => {
-                                    throw new Error(`Error ${response.status}: ${text || 'Sin detalles'}`);
-                                });
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            console.log("[DEBUG] Respuesta completa del servidor:", data);
-                            if (data.success) {
-                                Swal.fire({
-                                    title: '¡Listo!',
-                                    text: `Rol actualizado a ${nuevoRol}`,
-                                    icon: 'success',
-                                    timer: 2000,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    location.reload();
-                                });
-                            } else {
-                                Swal.fire('Error', data.message || 'No se pudo actualizar el rol', 'error');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error en fetch:', error);
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error al guardar',
-                                text: error.message || 'Problema de conexión o servidor',
-                                confirmButtonColor: '#dc3545'
-                            });
-                        });
+                        form.submit(); // Envía el POST
                     }
+                });
+            });
+
+            // Quitar glow al escribir
+            document.querySelectorAll('.form-control, .password-wrapper').forEach(el => {
+                el.addEventListener('input', function() {
+                    this.classList.remove('invalid-glow');
+                    if (this.closest('.password-wrapper')) {
+                        this.closest('.password-wrapper').classList.remove('invalid-glow');
+                    }
+                });
+            });
+
+            // Cambio de rol en el offcanvas
+            document.querySelectorAll('.guardar-rol').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const select = this.parentElement.querySelector('.nuevo-rol');
+                    const nuevoRol = select.value;
+
+                    if (!nuevoRol) {
+                        Swal.fire('Error', 'Selecciona un rol válido', 'error');
+                        return;
+                    }
+
+                    console.log("Enviando → ID:", id, " | Rol:", nuevoRol); // Debug extra
+
+                    Swal.fire({
+                        title: '¿Confirmar cambio de rol?',
+                        text: `Cambiar a "${nuevoRol}"`,
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, cambiar',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#007bff',
+                        cancelButtonColor: '#6c757d'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch('/Actualizar/ActualizarRol', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                                },
+                                body: JSON.stringify({ idUsuario: parseInt(id), nuevoRol: nuevoRol })
+                            })
+                            .then(response => {
+                                console.log("[DEBUG] Status de la respuesta:", response.status);
+                                if (!response.ok) {
+                                    return response.text().then(text => {
+                                        throw new Error(`Error ${response.status}: ${text || 'Sin detalles'}`);
+                                    });
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log("[DEBUG] Respuesta completa del servidor:", data);
+                                if (data.success) {
+                                    Swal.fire({
+                                        title: '¡Listo!',
+                                        text: `Rol actualizado a ${nuevoRol}`,
+                                        icon: 'success',
+                                        timer: 2000,
+                                        showConfirmButton: false
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire('Error', data.message || 'No se pudo actualizar el rol', 'error');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error en fetch:', error);
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error al guardar',
+                                    text: error.message || 'Problema de conexión o servidor',
+                                    confirmButtonColor: '#dc3545'
+                                });
+                            });
+                        }
+                    });
                 });
             });
         });

@@ -307,7 +307,8 @@ namespace FarmaciaSantaRita.Controllers
                         Idboleta = b.Idboleta,
                         Fecha = b.Fecha.ToString("dd/MM/yyyy"),
                         ImporteFinal = b.ImporteFinal,           // ← Enviamos el número limpio
-                        Transfer = b.Transfer ?? "No"
+                        Transfer = b.Transfer ?? "No",
+                        Categoria = b.Categoria ?? "Sin categoría"
                     })
                     .ToList();
 

@@ -863,7 +863,7 @@
                     cancelButtonColor: '#007bff'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                                                 fetch('/actualizar/actualizarrol', {
+                    fetch('/Actualizar/ActualizarRol', {  // ← ¡Aquí está la corrección clave!
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -872,32 +872,39 @@
             body: JSON.stringify({ idUsuario: parseInt(id), nuevoRol: nuevoRol })
         })
         .then(response => {
-            console.log("[DEBUG] Status:", response.status);
-            if (!response.ok) throw new Error('Error ' + response.status);
+            console.log("[DEBUG] Status de la respuesta:", response.status);
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`Error ${response.status}: ${text || 'Sin detalles'}`);
+                });
+            }
             return response.json();
         })
         .then(data => {
-            console.log("[DEBUG] Respuesta:", data);
-                            if (data.success) {
-                                Swal.fire({
-                                    title: '¡Listo!',
-                                    text: `Rol actualizado a ${nuevoRol}`,
-                                    icon: 'success',
-                                    timer: 2000,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    // Refrescar la página para ver el cambio
-                                    location.reload();
-                                });
-                            } else {
-                                Swal.fire('Error', data.message || 'No se pudo actualizar el rol', 'error');
-                            }
-                        })
-                                .catch(error => {
-            console.error('Error fetch:', error);
-            Swal.fire('Error', 'Problema al conectar: ' + error.message, 'error');
+            console.log("[DEBUG] Respuesta completa del servidor:", data);
+            if (data.success) {
+                Swal.fire({
+                    title: '¡Listo!',
+                    text: `Rol actualizado a ${nuevoRol}`,
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload();  // Refresca para ver el cambio
+                });
+            } else {
+                Swal.fire('Error', data.message || 'No se pudo actualizar el rol', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error en fetch:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al guardar',
+                text: error.message || 'Problema de conexión o servidor',
+                confirmButtonColor: '#dc3545'
+            });
         });
-                    }
                 });
             });
         });

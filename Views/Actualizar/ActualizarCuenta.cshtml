@@ -842,7 +842,7 @@
 
 
 
-                document.querySelectorAll('.guardar-rol').forEach(btn => {
+                    document.querySelectorAll('.guardar-rol').forEach(btn => {
             btn.addEventListener('click', function() {
                 const id = this.getAttribute('data-id');
                 const select = this.parentElement.querySelector('.nuevo-rol');
@@ -860,51 +860,54 @@
                     confirmButtonText: 'Sí, cambiar',
                     cancelButtonText: 'Cancelar',
                     confirmButtonColor: '#007bff',
-                    cancelButtonColor: '#007bff'
+                    cancelButtonColor: '#6c757d'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                    fetch('/Actualizar/ActualizarRol', {  // ← ¡Aquí está la corrección clave!
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-            },
-            body: JSON.stringify({ idUsuario: parseInt(id), nuevoRol: nuevoRol })
-        })
-        .then(response => {
-            console.log("[DEBUG] Status de la respuesta:", response.status);
-            if (!response.ok) {
-                return response.text().then(text => {
-                    throw new Error(`Error ${response.status}: ${text || 'Sin detalles'}`);
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log("[DEBUG] Respuesta completa del servidor:", data);
-            if (data.success) {
-                Swal.fire({
-                    title: '¡Listo!',
-                    text: `Rol actualizado a ${nuevoRol}`,
-                    icon: 'success',
-                    timer: 2000,
-                    showConfirmButton: false
-                }).then(() => {
-                    location.reload();  // Refresca para ver el cambio
-                });
-            } else {
-                Swal.fire('Error', data.message || 'No se pudo actualizar el rol', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error en fetch:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error al guardar',
-                text: error.message || 'Problema de conexión o servidor',
-                confirmButtonColor: '#dc3545'
-            });
-        });
+                        console.log("Enviando → ID:", id, " | Rol:", nuevoRol); // Debug extra
+
+                        fetch('/Actualizar/ActualizarRol', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            },
+                            body: JSON.stringify({ idUsuario: parseInt(id), nuevoRol: nuevoRol })
+                        })
+                        .then(response => {
+                            console.log("[DEBUG] Status de la respuesta:", response.status);
+                            if (!response.ok) {
+                                return response.text().then(text => {
+                                    throw new Error(`Error ${response.status}: ${text || 'Sin detalles'}`);
+                                });
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log("[DEBUG] Respuesta completa del servidor:", data);
+                            if (data.success) {
+                                Swal.fire({
+                                    title: '¡Listo!',
+                                    text: `Rol actualizado a ${nuevoRol}`,
+                                    icon: 'success',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Error', data.message || 'No se pudo actualizar el rol', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error en fetch:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error al guardar',
+                                text: error.message || 'Problema de conexión o servidor',
+                                confirmButtonColor: '#dc3545'
+                            });
+                        });
+                    }
                 });
             });
         });

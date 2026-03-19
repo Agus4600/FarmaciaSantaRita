@@ -208,7 +208,6 @@ namespace FarmaciaSantaRita.Controllers
         {
             Console.WriteLine("[LOG] ActualizarRol REAL llamado - Inicio");
 
-            // Log inmediato del model recibido (crucial)
             if (model == null)
             {
                 Console.WriteLine("[ERROR] model es NULL");
@@ -216,7 +215,7 @@ namespace FarmaciaSantaRita.Controllers
             }
 
             Console.WriteLine($"[LOG] IdUsuario recibido: {model.IdUsuario}");
-            Console.WriteLine($"[LOG] NuevoRol recibido: '{model.NuevoRol}'");
+            Console.WriteLine($"[LOG] NuevoRol recibido: '{model.NuevoRol}' (longitud: {model.NuevoRol?.Length ?? 0})");
 
             if (model.IdUsuario <= 0 || string.IsNullOrWhiteSpace(model.NuevoRol))
             {
@@ -233,46 +232,33 @@ namespace FarmaciaSantaRita.Controllers
                     return Json(new { success = false, message = $"Usuario con ID {model.IdUsuario} no encontrado" });
                 }
 
-                Console.WriteLine($"[LOG] Usuario encontrado - Rol actual: '{usuario.Rol ?? "null"}'");
+                Console.WriteLine($"[LOG] Usuario encontrado - Rol actual en BD: '{usuario.Rol ?? "null"}' (longitud: {usuario.Rol?.Length ?? 0})");
 
-                if (usuario.Rol == model.NuevoRol)
-                {
-                    Console.WriteLine("[LOG] El rol ya es el mismo - no se hace nada");
-                    return Json(new { success = true, message = "Rol ya era el mismo - no se necesitó cambio" });
-                }
+                // Log antes de cambiar
+                Console.WriteLine($"[LOG] Intentando cambiar Rol: '{usuario.Rol}' → '{model.NuevoRol}'");
 
-                var rolesPermitidos = new[] { "Pendiente", "Empleado/a", "Jefe/a" };
-                if (!rolesPermitidos.Contains(model.NuevoRol))
-                {
-                    Console.WriteLine($"[ERROR] Rol no permitido: {model.NuevoRol}");
-                    return Json(new { success = false, message = "Rol no válido" });
-                }
+                // Forzamos el cambio aunque sean "iguales" (para depurar)
+                usuario.Rol = model.NuevoRol.Trim();  // Quitamos posibles espacios
 
-                // Asegurar que las fechas estén en UTC antes de guardar
-                if (usuario.FechaNacimiento.Kind != DateTimeKind.Utc)
-                {
-                    usuario.FechaNacimiento = DateTime.SpecifyKind(usuario.FechaNacimiento, DateTimeKind.Utc);
-                }
-                if (usuario.FechaIngreso.HasValue && usuario.FechaIngreso.Value.Kind != DateTimeKind.Utc)
-                {
-                    usuario.FechaIngreso = DateTime.SpecifyKind(usuario.FechaIngreso.Value, DateTimeKind.Utc);
-                }
+                // Marcamos explícitamente como modificado
+                _context.Entry(usuario).Property(x => x.Rol).IsModified = true;
 
-                Console.WriteLine($"[LOG] Actualizando Rol: '{usuario.Rol}' → '{model.NuevoRol}'");
-                usuario.Rol = model.NuevoRol;
+                // Logs de fechas (por si acaso)
+                Console.WriteLine($"[LOG] FechaNacimiento Kind: {usuario.FechaNacimiento.Kind}");
+                Console.WriteLine($"[LOG] FechaIngreso Kind: {(usuario.FechaIngreso.HasValue ? usuario.FechaIngreso.Value.Kind.ToString() : "null")}");
 
-                _context.Entry(usuario).State = EntityState.Modified;
                 int cambios = _context.SaveChanges();
-
                 Console.WriteLine($"[LOG] SaveChanges retornó: {cambios} cambios");
 
                 if (cambios > 0)
                 {
+                    Console.WriteLine("[LOG] Cambio guardado exitosamente");
                     return Json(new { success = true, message = "Rol actualizado correctamente" });
                 }
                 else
                 {
-                    return Json(new { success = false, message = "No se detectaron cambios (¿el rol ya era el mismo?)" });
+                    Console.WriteLine("[LOG] NO se guardaron cambios - posible razón: valor ya era el mismo o EF no detectó modificación");
+                    return Json(new { success = false, message = "No se detectaron cambios (ver logs del servidor)" });
                 }
             }
             catch (Exception ex)

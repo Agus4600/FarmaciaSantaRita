@@ -569,6 +569,46 @@
             }
         }
 
+        // ====================== CARGAR BOLETAS REALES DESDE BD (NUEVO) ======================
+        async function cargarBoletasDesdeBD() {
+            try {
+                const res = await fetch(`/Boleta/GetBoletas?idProveedor=${idProveedor}`);
+                const data = await res.json();
+
+                if (!data.success || !data.data) {
+                    console.warn("No se pudieron cargar boletas desde BD");
+                    return;
+                }
+
+                // Limpiar tablas antes de cargar desde BD
+                document.querySelector('#tablaPerfumeria tbody').innerHTML = '';
+                document.querySelector('#tablaMedicamentos tbody').innerHTML = '';
+
+                data.data.forEach(boleta => {
+                    const categoria = boleta.categoria?.toLowerCase() || "";
+                    const idTabla = categoria.includes("perfumer") ? "tablaPerfumeria" : "tablaMedicamentos";
+                    const tbody = document.querySelector(`#${idTabla} tbody`);
+
+                    const tr = document.createElement("tr");
+                    tr.setAttribute("data-boleta-id", boleta.idboleta);
+                    tr.innerHTML = `
+                        <td>${boleta.fecha}</td>
+                        <td>$${Number(boleta.importeFinal).toLocaleString('es-AR')}</td>
+                        <td>${boleta.transfer || 'No'}</td>
+                        <td class="text-center"><input type="checkbox" class="fila-check"></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Actualizar localStorage con los datos correctos (incluyendo IDs)
+                guardarTablasEnStorage();
+
+                console.log("[BD] Boletas cargadas correctamente desde la base de datos");
+            } catch (err) {
+                console.error("[BD] Error al cargar boletas desde BD:", err);
+            }
+        }
+
         function limpiarImporte(importe) {
             return parseInt((importe || "").toString().replace(/\./g, ""), 10) || 0;
         }
@@ -597,20 +637,24 @@
 
         // ====================== INICIALIZACIÓN ======================
         document.addEventListener("DOMContentLoaded", function () {
+            // Primero intenta cargar desde localStorage (por si hay datos temporales)
             cargarTablasDesdeStorage();
+
+            // Luego carga desde BD (esto sobreescribe y asegura IDs correctos)
+            cargarBoletasDesdeBD();
+
+            // Si alguna tabla quedó vacía después de cargar desde BD
             if (document.querySelectorAll('#tablaPerfumeria tbody tr').length === 0) crearFilasVacias("tablaPerfumeria");
             if (document.querySelectorAll('#tablaMedicamentos tbody tr').length === 0) crearFilasVacias("tablaMedicamentos");
         });
 
-                // ====================== BOTÓN ELIMINAR (CON DIAGNÓSTICO) ======================
+        // ====================== BOTÓN ELIMINAR (CON DIAGNÓSTICO) ======================
         document.getElementById("btnEliminar").addEventListener("click", async function () {
             const checks = document.querySelectorAll(
                 "#tablaPerfumeria tbody .fila-check:checked, #tablaMedicamentos tbody .fila-check:checked"
             );
 
-            if (checks.length === 0) {
-                return alert("Selecciona al menos una fila.");
-            }
+            if (checks.length === 0) return alert("Selecciona al menos una fila.");
 
             console.log(`[ELIMINAR] Filas seleccionadas: ${checks.length}`);
 
@@ -647,13 +691,8 @@
                 }
             }
 
-            // Recrear filas vacías si quedó alguna tabla vacía
-            if (document.querySelectorAll("#tablaPerfumeria tbody tr").length === 0) {
-                crearFilasVacias("tablaPerfumeria", 5);
-            }
-            if (document.querySelectorAll("#tablaMedicamentos tbody tr").length === 0) {
-                crearFilasVacias("tablaMedicamentos", 5);
-            }
+            if (document.querySelectorAll("#tablaPerfumeria tbody tr").length === 0) crearFilasVacias("tablaPerfumeria", 5);
+            if (document.querySelectorAll("#tablaMedicamentos tbody tr").length === 0) crearFilasVacias("tablaMedicamentos", 5);
 
             guardarTablasEnStorage();
         });
@@ -753,7 +792,7 @@
             }
         });
 
-        // ====================== BOTÓN AGREGAR (CORREGIDO Y COMPLETO) ======================
+        // ====================== BOTÓN AGREGAR ======================
         document.getElementById("btnAgregar").addEventListener("click", function () {
             const fechaInput = document.getElementById("fecha");
             const importeInput = document.getElementById("importeFinal");
@@ -891,7 +930,6 @@
                     });
                 }
 
-                // Resumen
                 ws.mergeCells("E2:G2");
                 ws.getCell("E2").value = "Resumen Transfer";
                 ws.getCell("E2").font = { bold: true, color: { argb: "FFFFFFFF" } };

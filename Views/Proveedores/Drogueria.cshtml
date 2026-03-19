@@ -697,15 +697,19 @@
             guardarTablasEnStorage();
         });
 
-                // ====================== BOTÓN RESTAURAR (CON ESTILO MEJORADO + COLUMNA CATEGORÍA) ======================
-                document.getElementById("btnRestaurar").addEventListener("click", async function () {
+                    // ====================== BOTÓN RESTAURAR (SIN HOVER AZUL) ======================
+        document.getElementById("btnRestaurar").addEventListener("click", async function () {
             try {
                 const res = await fetch(`/Boleta/GetBoletasEliminadas?idProveedor=${idProveedor}`, { credentials: 'include' });
                 if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
                 const eliminadas = await res.json();
 
                 if (!eliminadas.success || !eliminadas.data || eliminadas.data.length === 0) {
-                    Swal.fire({ title: 'Sin eliminadas', text: 'No hay boletas eliminadas.', icon: 'info', confirmButtonColor: '#007bff' });
+                    Swal.fire({
+                        title: 'Sin eliminadas',
+                        text: 'No hay boletas eliminadas para este proveedor.',
+                        confirmButtonColor: '#007bff'
+                    });
                     return;
                 }
 
@@ -728,7 +732,7 @@
                     const categoria = boleta.categoria || 'Sin categoría';
 
                     tablaHtml += `
-                        <tr data-id="${boleta.idboleta}" style="transition: background 0.2s;">
+                        <tr data-id="${boleta.idboleta}">
                             <td style="padding: 10px; border: 1px solid #dee2e6; white-space: nowrap;">${boleta.fecha || 'Sin fecha'}</td>
                             <td style="padding: 10px; border: 1px solid #dee2e6;">$ ${importeLimpio}</td>
                             <td style="padding: 10px; border: 1px solid #dee2e6;">${boleta.transfer || 'No'}</td>
@@ -754,11 +758,8 @@
                     showConfirmButton: false,
                     background: '#f8f9fa',
                     didOpen: () => {
-                        const filas = document.querySelectorAll('.swal2-html-container tr');
-                        filas.forEach(fila => {
-                            fila.addEventListener('mouseenter', () => fila.style.backgroundColor = '#cce5ff');
-                            fila.addEventListener('mouseleave', () => fila.style.backgroundColor = '');
-                        });
+                        // Quitamos completamente el evento de hover azul
+                        // (ya no agregamos mouseenter/mouseleave)
 
                         document.querySelectorAll('.restaurar-btn').forEach(btn => {
                             btn.addEventListener('click', async function () {
@@ -770,7 +771,7 @@
                                     text: "Volverá a aparecer en el registro principal.",
                                     showCancelButton: true,
                                     confirmButtonColor: '#007bff',
-                                    cancelButtonColor: '#6c757d',
+                                    cancelButtonColor: '#007bff',
                                     confirmButtonText: 'Sí, restaurar',
                                     cancelButtonText: 'Cancelar'
                                 });

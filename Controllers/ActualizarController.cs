@@ -208,52 +208,51 @@ namespace FarmaciaSantaRita.Controllers
         {
             Console.WriteLine("[LOG] ActualizarRol llamado - Inicio");
 
-            if (model == null)
+            if (model == null || model.IdUsuario <= 0 || string.IsNullOrWhiteSpace(model.NuevoRol))
             {
-                Console.WriteLine("[ERROR] model es NULL");
-                return Json(new { success = false, message = "Model nulo" });
+                Console.WriteLine("[ERROR] Datos inválidos");
+                return Json(new { success = false, message = "Datos inválidos" });
             }
 
-            Console.WriteLine($"[LOG] ID recibido: {model.IdUsuario}");
-            Console.WriteLine($"[LOG] Rol recibido: '{model.NuevoRol}' (longitud: {model.NuevoRol?.Length ?? 0})");
+            Console.WriteLine($"[LOG] ID: {model.IdUsuario} | Rol nuevo: '{model.NuevoRol}'");
 
             try
             {
                 var usuario = _context.Usuarios.Find(model.IdUsuario);
                 if (usuario == null)
                 {
-                    Console.WriteLine($"[ERROR] Usuario no encontrado ID: {model.IdUsuario}");
+                    Console.WriteLine("[ERROR] Usuario no encontrado");
                     return Json(new { success = false, message = "Usuario no encontrado" });
                 }
 
-                string rolViejo = usuario.Rol ?? "(null)";
-                Console.WriteLine($"[LOG] Rol ACTUAL en BD: '{rolViejo}' (longitud: {rolViejo.Length})");
+                string rolAnterior = usuario.Rol ?? "(null)";
+                Console.WriteLine($"[LOG] Rol ANTERIOR en BD: '{rolAnterior}'");
 
-                // Siempre forzamos el cambio
-                usuario.Rol = model.NuevoRol?.Trim();
+                // Forzamos el cambio + quitamos espacios
+                usuario.Rol = model.NuevoRol.Trim();
 
-                Console.WriteLine($"[LOG] Forzando cambio: '{rolViejo}' → '{usuario.Rol}'");
+                // Forzamos EF a que detecte cambio (esto es clave)
+                _context.Entry(usuario).State = EntityState.Modified;
+                _context.Entry(usuario).Property(u => u.Rol).IsModified = true;
 
-                // Marcamos explícitamente que el campo Rol cambió
-                _context.Entry(usuario).Property(x => x.Rol).IsModified = true;
+                Console.WriteLine($"[LOG] Intentando guardar: '{rolAnterior}' → '{usuario.Rol}'");
 
                 int cambios = _context.SaveChanges();
                 Console.WriteLine($"[LOG] SaveChanges devolvió: {cambios} filas afectadas");
 
                 if (cambios > 0)
                 {
-                    return Json(new { success = true, message = "Rol guardado OK" });
+                    return Json(new { success = true, message = "Rol actualizado OK" });
                 }
                 else
                 {
-                    return Json(new { success = false, message = "No se guardó nada (rol ya era igual)" });
+                    return Json(new { success = false, message = "No se guardó (¿rol idéntico?)" });
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[ERROR] Excepción: {ex.Message}");
-                Console.WriteLine($"Stack: {ex.StackTrace}");
-                return Json(new { success = false, message = "Error grave: " + ex.Message });
+                return Json(new { success = false, message = "Error: " + ex.Message });
             }
         }
 

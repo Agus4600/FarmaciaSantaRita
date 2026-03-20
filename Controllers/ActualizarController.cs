@@ -204,6 +204,7 @@ namespace FarmaciaSantaRita.Controllers
 
 
         [HttpPost]
+        [Route("Actualizar/ActualizarRol")]
         public IActionResult ActualizarRol([FromBody] ActualizarRolModel model)
         {
             Console.WriteLine("=== ActualizarRol INICIO ===");

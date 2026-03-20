@@ -863,14 +863,14 @@
                         cancelButtonColor: '#6c757d'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            fetch('/Actualizar/ActualizarRol', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                                },
-                                body: JSON.stringify({ idUsuario: parseInt(id), nuevoRol: nuevoRol })
-                            })
+                                    fetch('https://farmacia-santa-rita-v9.onrender.com/Actualizar/ActualizarRol', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
+            body: JSON.stringify({ idUsuario: parseInt(id), nuevoRol: nuevoRol })
+        })
                             .then(response => {
                                 console.log("[DEBUG] Status de la respuesta:", response.status);
                                 if (!response.ok) {

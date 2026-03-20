@@ -207,13 +207,15 @@ namespace FarmaciaSantaRita.Controllers
         public IActionResult ActualizarRol([FromBody] ActualizarRolModel model)
         {
             Console.WriteLine("=== ActualizarRol INICIO ===");
-            Console.WriteLine($"ID: {model?.IdUsuario} | Rol recibido: '{model?.NuevoRol}'");
+            Console.WriteLine($"ID recibido: {model?.IdUsuario} | Rol recibido: '{model?.NuevoRol}'");
 
             if (model == null || model.IdUsuario <= 0)
             {
+                Console.WriteLine("Datos inválidos");
                 return Json(new { success = false, message = "Datos inválidos" });
             }
 
+            Console.WriteLine("Buscando usuario...");
             var usuario = _context.Usuarios.Find(model.IdUsuario);
 
             if (usuario == null)
@@ -222,31 +224,58 @@ namespace FarmaciaSantaRita.Controllers
                 return Json(new { success = false, message = "Usuario no encontrado" });
             }
 
+            Console.WriteLine("Usuario encontrado OK");
             string rolAnterior = usuario.Rol ?? "(null)";
             Console.WriteLine($"Rol ANTES: '{rolAnterior}'");
 
-            // Forzamos un cambio VISIBLE siempre (agregamos timestamp para que sea diferente)
-            usuario.Rol = "TEST_" + DateTime.Now.ToString("HHmmss") + "_" + model.NuevoRol.Trim();
-            Console.WriteLine($"Rol DESPUÉS (forzado): '{usuario.Rol}'");
-
-            _context.Entry(usuario).State = EntityState.Modified;
-            _context.Entry(usuario).Property(u => u.Rol).IsModified = true;
-
-            int cambios = _context.SaveChanges();
-            Console.WriteLine($"SaveChanges afectó {cambios} filas");
-
-            if (cambios > 0)
+            Console.WriteLine("Cambiando rol...");
+            try
             {
-                // Verificamos inmediatamente después de guardar
-                var usuarioVerificado = _context.Usuarios.Find(model.IdUsuario);
-                Console.WriteLine($"Rol VERIFICADO después de guardar: '{usuarioVerificado?.Rol ?? "(null)"}'");
-
-                return Json(new { success = true, message = "Rol guardado OK (valor forzado)" });
+                usuario.Rol = "TEST_" + DateTime.Now.ToString("HHmmss") + "_" + model.NuevoRol.Trim();
+                Console.WriteLine($"Rol DESPUÉS (forzado): '{usuario.Rol}'");
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("=== NO SE GUARDÓ NADA - revisando entidad ===");
-                return Json(new { success = false, message = "No se guardó NADA" });
+                Console.WriteLine($"[ERROR] Fallo al cambiar Rol: {ex.Message}");
+                return Json(new { success = false, message = "Error al modificar rol: " + ex.Message });
+            }
+
+            Console.WriteLine("Marcando entidad como modificada...");
+            try
+            {
+                _context.Entry(usuario).State = EntityState.Modified;
+                _context.Entry(usuario).Property(u => u.Rol).IsModified = true;
+                Console.WriteLine("Entidad marcada OK");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Fallo al marcar entidad: {ex.Message}");
+                return Json(new { success = false, message = "Error al marcar entidad: " + ex.Message });
+            }
+
+            Console.WriteLine("Ejecutando SaveChanges...");
+            try
+            {
+                int cambios = _context.SaveChanges();
+                Console.WriteLine($"SaveChanges afectó {cambios} filas");
+
+                if (cambios > 0)
+                {
+                    var usuarioVerificado = _context.Usuarios.Find(model.IdUsuario);
+                    Console.WriteLine($"Rol VERIFICADO después de guardar: '{usuarioVerificado?.Rol ?? "(null)"}'");
+                    return Json(new { success = true, message = "Rol guardado OK (valor forzado)" });
+                }
+                else
+                {
+                    Console.WriteLine("=== NO SE GUARDÓ NADA - revisando entidad ===");
+                    return Json(new { success = false, message = "No se guardó NADA" });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR GRAVE] SaveChanges falló: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
+                return Json(new { success = false, message = "Error al guardar en BD: " + ex.Message });
             }
         }
 

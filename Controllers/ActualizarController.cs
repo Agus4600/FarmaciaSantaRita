@@ -207,9 +207,9 @@ namespace FarmaciaSantaRita.Controllers
         public IActionResult ActualizarRol([FromBody] ActualizarRolModel model)
         {
             Console.WriteLine("=== ActualizarRol INICIO ===");
-            Console.WriteLine($"ID recibido: {model?.IdUsuario} | Rol nuevo: '{model?.NuevoRol}'");
+            Console.WriteLine($"ID: {model?.IdUsuario} | Rol recibido: '{model?.NuevoRol}'");
 
-            if (model == null || model.IdUsuario <= 0 || string.IsNullOrWhiteSpace(model.NuevoRol))
+            if (model == null || model.IdUsuario <= 0)
             {
                 return Json(new { success = false, message = "Datos inválidos" });
             }
@@ -218,26 +218,30 @@ namespace FarmaciaSantaRita.Controllers
 
             if (usuario == null)
             {
-                Console.WriteLine($"[ERROR] Usuario ID {model.IdUsuario} NO ENCONTRADO");
-                return Json(new { success = false, message = "Usuario no encontrado (ver mapeo de IDUsuario)" });
+                Console.WriteLine($"[ERROR] Usuario {model.IdUsuario} NO encontrado");
+                return Json(new { success = false, message = "Usuario no encontrado" });
             }
 
-            Console.WriteLine($"Rol actual en BD: '{usuario.Rol ?? "(null)"}'");
+            string rolAnterior = usuario.Rol ?? "(null)";
+            Console.WriteLine($"Rol ANTES: '{rolAnterior}'");
 
-            usuario.Rol = model.NuevoRol.Trim();
+            // Forzamos un cambio VISIBLE siempre (agregamos timestamp para que sea diferente)
+            usuario.Rol = "TEST_" + DateTime.Now.ToString("HHmmss") + "_" + model.NuevoRol.Trim();
 
+            Console.WriteLine($"Rol DESPUÉS (forzado): '{usuario.Rol}'");
+
+            _context.Entry(usuario).State = EntityState.Modified;
             _context.Entry(usuario).Property(u => u.Rol).IsModified = true;
 
             int cambios = _context.SaveChanges();
-
             Console.WriteLine($"SaveChanges afectó {cambios} filas");
 
             if (cambios > 0)
             {
-                return Json(new { success = true, message = "Rol actualizado correctamente" });
+                return Json(new { success = true, message = "Rol guardado OK (valor forzado)" });
             }
 
-            return Json(new { success = false, message = "No se guardó (valor ya era el mismo)" });
+            return Json(new { success = false, message = "No se guardó NADA" });
         }
 
         // Clase auxiliar simple para recibir el JSON

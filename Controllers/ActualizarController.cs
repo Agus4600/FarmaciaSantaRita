@@ -207,53 +207,37 @@ namespace FarmaciaSantaRita.Controllers
         public IActionResult ActualizarRol([FromBody] ActualizarRolModel model)
         {
             Console.WriteLine("=== ActualizarRol INICIO ===");
-            Console.WriteLine($"ID: {model?.IdUsuario} | Rol nuevo: '{model?.NuevoRol}'");
+            Console.WriteLine($"ID recibido: {model?.IdUsuario} | Rol nuevo: '{model?.NuevoRol}'");
 
             if (model == null || model.IdUsuario <= 0 || string.IsNullOrWhiteSpace(model.NuevoRol))
             {
                 return Json(new { success = false, message = "Datos inválidos" });
             }
 
-            // Traemos el usuario FRESCO (sin tracking previo)
-            var usuario = _context.Usuarios
-                .AsNoTracking()  // ← Esto evita problemas de tracking
-                .FirstOrDefault(u => u.Idusuario == model.IdUsuario);
+            var usuario = _context.Usuarios.Find(model.IdUsuario);
 
             if (usuario == null)
             {
-                return Json(new { success = false, message = "Usuario no encontrado" });
+                Console.WriteLine($"[ERROR] Usuario ID {model.IdUsuario} NO ENCONTRADO");
+                return Json(new { success = false, message = "Usuario no encontrado (ver mapeo de IDUsuario)" });
             }
 
-            Console.WriteLine($"Rol REAL en BD (antes): '{usuario.Rol ?? "(null)"}'");
+            Console.WriteLine($"Rol actual en BD: '{usuario.Rol ?? "(null)"}'");
 
-            // Creamos un objeto nuevo para evitar conflictos de estado
-            var usuarioParaUpdate = new Usuario { Idusuario = model.IdUsuario };
-            _context.Attach(usuarioParaUpdate);
+            usuario.Rol = model.NuevoRol.Trim();
 
-            usuarioParaUpdate.Rol = model.NuevoRol.Trim();
+            _context.Entry(usuario).Property(u => u.Rol).IsModified = true;
 
-            // Forzamos todo
-            _context.Entry(usuarioParaUpdate).Property(u => u.Rol).IsModified = true;
+            int cambios = _context.SaveChanges();
 
-            try
+            Console.WriteLine($"SaveChanges afectó {cambios} filas");
+
+            if (cambios > 0)
             {
-                int cambios = _context.SaveChanges();
-                Console.WriteLine($"SaveChanges: {cambios} filas afectadas");
+                return Json(new { success = true, message = "Rol actualizado correctamente" });
+            }
 
-                if (cambios > 0)
-                {
-                    return Json(new { success = true, message = "Rol guardado OK" });
-                }
-                else
-                {
-                    return Json(new { success = false, message = "No se guardó (EF no vio cambio)" });
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"ERROR GRAVE: {ex.Message}");
-                return Json(new { success = false, message = "Error: " + ex.Message });
-            }
+            return Json(new { success = false, message = "No se guardó (valor ya era el mismo)" });
         }
 
         // Clase auxiliar simple para recibir el JSON

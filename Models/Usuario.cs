@@ -7,6 +7,8 @@ namespace FarmaciaSantaRita.Models
 {
     public partial class Usuario
     {
+        [Key]  // Asegura que sea la clave primaria
+        [Column("IDUsuario")]
         public int Idusuario { get; set; }
 
         [Required]

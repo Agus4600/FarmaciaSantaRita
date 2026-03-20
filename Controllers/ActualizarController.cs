@@ -206,53 +206,57 @@ namespace FarmaciaSantaRita.Controllers
         [HttpPost]
         public IActionResult ActualizarRol([FromBody] ActualizarRolModel model)
         {
-            Console.WriteLine("[LOG] ActualizarRol llamado - Inicio");
+            Console.WriteLine("=== ActualizarRol INICIO ===");
+            Console.WriteLine($"ID recibido: {model?.IdUsuario}");
+            Console.WriteLine($"Rol recibido: '{model?.NuevoRol}'");
 
             if (model == null || model.IdUsuario <= 0 || string.IsNullOrWhiteSpace(model.NuevoRol))
             {
-                Console.WriteLine("[ERROR] Datos inválidos");
+                Console.WriteLine("ERROR: Datos inválidos");
                 return Json(new { success = false, message = "Datos inválidos" });
             }
 
-            Console.WriteLine($"[LOG] ID: {model.IdUsuario} | Rol nuevo: '{model.NuevoRol}'");
+            var usuario = _context.Usuarios.Find(model.IdUsuario);
+            if (usuario == null)
+            {
+                Console.WriteLine($"ERROR: Usuario {model.IdUsuario} no encontrado");
+                return Json(new { success = false, message = "Usuario no encontrado" });
+            }
+
+            string rolAntes = usuario.Rol ?? "(null)";
+            Console.WriteLine($"Rol ANTES en memoria: '{rolAntes}'");
+
+            // Forzamos cambio
+            usuario.Rol = model.NuevoRol.Trim();
+            Console.WriteLine($"Rol DESPUÉS en memoria: '{usuario.Rol}'");
+
+            // Marcamos TODO el objeto como modificado
+            _context.Entry(usuario).State = EntityState.Modified;
+
+            // Forzamos específicamente el campo Rol
+            _context.Entry(usuario).Property(u => u.Rol).IsModified = true;
 
             try
             {
-                var usuario = _context.Usuarios.Find(model.IdUsuario);
-                if (usuario == null)
-                {
-                    Console.WriteLine("[ERROR] Usuario no encontrado");
-                    return Json(new { success = false, message = "Usuario no encontrado" });
-                }
-
-                string rolAnterior = usuario.Rol ?? "(null)";
-                Console.WriteLine($"[LOG] Rol ANTERIOR en BD: '{rolAnterior}'");
-
-                // Forzamos el cambio + quitamos espacios
-                usuario.Rol = model.NuevoRol.Trim();
-
-                // Forzamos EF a que detecte cambio (esto es clave)
-                _context.Entry(usuario).State = EntityState.Modified;
-                _context.Entry(usuario).Property(u => u.Rol).IsModified = true;
-
-                Console.WriteLine($"[LOG] Intentando guardar: '{rolAnterior}' → '{usuario.Rol}'");
-
                 int cambios = _context.SaveChanges();
-                Console.WriteLine($"[LOG] SaveChanges devolvió: {cambios} filas afectadas");
+                Console.WriteLine($"SaveChanges devolvió: {cambios} filas afectadas");
 
                 if (cambios > 0)
                 {
-                    return Json(new { success = true, message = "Rol actualizado OK" });
+                    Console.WriteLine("=== GUARDADO EXITOSO ===");
+                    return Json(new { success = true, message = "Rol guardado OK" });
                 }
                 else
                 {
-                    return Json(new { success = false, message = "No se guardó (¿rol idéntico?)" });
+                    Console.WriteLine("=== NO SE GUARDÓ NADA - EF no detectó cambios ===");
+                    return Json(new { success = false, message = "No se guardó (EF no vio cambio)" });
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] Excepción: {ex.Message}");
-                return Json(new { success = false, message = "Error: " + ex.Message });
+                Console.WriteLine($"EXCEPCIÓN: {ex.Message}");
+                Console.WriteLine($"Stack: {ex.StackTrace}");
+                return Json(new { success = false, message = "Error grave: " + ex.Message });
             }
         }
 

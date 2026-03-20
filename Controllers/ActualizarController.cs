@@ -206,66 +206,54 @@ namespace FarmaciaSantaRita.Controllers
         [HttpPost]
         public IActionResult ActualizarRol([FromBody] ActualizarRolModel model)
         {
-            Console.WriteLine("[LOG] ActualizarRol REAL llamado - Inicio");
+            Console.WriteLine("[LOG] ActualizarRol llamado - Inicio");
 
             if (model == null)
             {
                 Console.WriteLine("[ERROR] model es NULL");
-                return Json(new { success = false, message = "Model nulo - no se recibieron datos" });
+                return Json(new { success = false, message = "Model nulo" });
             }
 
-            Console.WriteLine($"[LOG] IdUsuario recibido: {model.IdUsuario}");
-            Console.WriteLine($"[LOG] NuevoRol recibido: '{model.NuevoRol}' (longitud: {model.NuevoRol?.Length ?? 0})");
-
-            if (model.IdUsuario <= 0 || string.IsNullOrWhiteSpace(model.NuevoRol))
-            {
-                Console.WriteLine("[ERROR] Datos inválidos");
-                return Json(new { success = false, message = "Datos inválidos (ID o rol vacío)" });
-            }
+            Console.WriteLine($"[LOG] ID recibido: {model.IdUsuario}");
+            Console.WriteLine($"[LOG] Rol recibido: '{model.NuevoRol}' (longitud: {model.NuevoRol?.Length ?? 0})");
 
             try
             {
                 var usuario = _context.Usuarios.Find(model.IdUsuario);
                 if (usuario == null)
                 {
-                    Console.WriteLine($"[ERROR] Usuario NO encontrado con ID: {model.IdUsuario}");
-                    return Json(new { success = false, message = $"Usuario con ID {model.IdUsuario} no encontrado" });
+                    Console.WriteLine($"[ERROR] Usuario no encontrado ID: {model.IdUsuario}");
+                    return Json(new { success = false, message = "Usuario no encontrado" });
                 }
 
-                Console.WriteLine($"[LOG] Usuario encontrado - Rol actual en BD: '{usuario.Rol ?? "null"}' (longitud: {usuario.Rol?.Length ?? 0})");
+                string rolViejo = usuario.Rol ?? "(null)";
+                Console.WriteLine($"[LOG] Rol ACTUAL en BD: '{rolViejo}' (longitud: {rolViejo.Length})");
 
-                // Log antes de cambiar
-                Console.WriteLine($"[LOG] Intentando cambiar Rol: '{usuario.Rol}' → '{model.NuevoRol}'");
+                // Siempre forzamos el cambio
+                usuario.Rol = model.NuevoRol?.Trim();
 
-                // Forzamos el cambio aunque sean "iguales" (para depurar)
-                usuario.Rol = model.NuevoRol.Trim();  // Quitamos posibles espacios
+                Console.WriteLine($"[LOG] Forzando cambio: '{rolViejo}' → '{usuario.Rol}'");
 
-                // Marcamos explícitamente como modificado
+                // Marcamos explícitamente que el campo Rol cambió
                 _context.Entry(usuario).Property(x => x.Rol).IsModified = true;
 
-                // Logs de fechas (por si acaso)
-                Console.WriteLine($"[LOG] FechaNacimiento Kind: {usuario.FechaNacimiento.Kind}");
-                Console.WriteLine($"[LOG] FechaIngreso Kind: {(usuario.FechaIngreso.HasValue ? usuario.FechaIngreso.Value.Kind.ToString() : "null")}");
-
                 int cambios = _context.SaveChanges();
-                Console.WriteLine($"[LOG] SaveChanges retornó: {cambios} cambios");
+                Console.WriteLine($"[LOG] SaveChanges devolvió: {cambios} filas afectadas");
 
                 if (cambios > 0)
                 {
-                    Console.WriteLine("[LOG] Cambio guardado exitosamente");
-                    return Json(new { success = true, message = "Rol actualizado correctamente" });
+                    return Json(new { success = true, message = "Rol guardado OK" });
                 }
                 else
                 {
-                    Console.WriteLine("[LOG] NO se guardaron cambios - posible razón: valor ya era el mismo o EF no detectó modificación");
-                    return Json(new { success = false, message = "No se detectaron cambios (ver logs del servidor)" });
+                    return Json(new { success = false, message = "No se guardó nada (rol ya era igual)" });
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR CRÍTICO] Excepción en ActualizarRol: {ex.Message}");
-                Console.WriteLine($"StackTrace: {ex.StackTrace}");
-                return Json(new { success = false, message = "Error interno al guardar: " + ex.Message });
+                Console.WriteLine($"[ERROR] Excepción: {ex.Message}");
+                Console.WriteLine($"Stack: {ex.StackTrace}");
+                return Json(new { success = false, message = "Error grave: " + ex.Message });
             }
         }
 

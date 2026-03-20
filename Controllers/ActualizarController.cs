@@ -227,7 +227,6 @@ namespace FarmaciaSantaRita.Controllers
 
             // Forzamos un cambio VISIBLE siempre (agregamos timestamp para que sea diferente)
             usuario.Rol = "TEST_" + DateTime.Now.ToString("HHmmss") + "_" + model.NuevoRol.Trim();
-
             Console.WriteLine($"Rol DESPUÉS (forzado): '{usuario.Rol}'");
 
             _context.Entry(usuario).State = EntityState.Modified;
@@ -238,10 +237,17 @@ namespace FarmaciaSantaRita.Controllers
 
             if (cambios > 0)
             {
+                // Verificamos inmediatamente después de guardar
+                var usuarioVerificado = _context.Usuarios.Find(model.IdUsuario);
+                Console.WriteLine($"Rol VERIFICADO después de guardar: '{usuarioVerificado?.Rol ?? "(null)"}'");
+
                 return Json(new { success = true, message = "Rol guardado OK (valor forzado)" });
             }
-
-            return Json(new { success = false, message = "No se guardó NADA" });
+            else
+            {
+                Console.WriteLine("=== NO SE GUARDÓ NADA - revisando entidad ===");
+                return Json(new { success = false, message = "No se guardó NADA" });
+            }
         }
 
         // Clase auxiliar simple para recibir el JSON

@@ -205,7 +205,7 @@ namespace FarmaciaSantaRita.Controllers
 
         [HttpPost]
         [Route("Actualizar/ActualizarRol")]
-        public IActionResult ActualizarRol([FromBody] ActualizarRolModel model)
+        public IActionResult ActualizarRolUsuario([FromBody] ActualizarRolModel model)
         {
             try
             {

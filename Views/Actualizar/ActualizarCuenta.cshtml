@@ -863,7 +863,7 @@
                         cancelButtonColor: '#6c757d'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                                    fetch('https://farmacia-santa-rita-v9.onrender.com/Actualizar/ActualizarRol', {
+                                            fetch(`${window.location.origin}/Actualizar/ActualizarRol`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -207,56 +207,40 @@ namespace FarmaciaSantaRita.Controllers
         [Route("Actualizar/ActualizarRol")]
         public IActionResult ActualizarRol([FromBody] ActualizarRolModel model)
         {
-            Console.WriteLine("=== ActualizarRol INICIO ===");
-            Console.WriteLine($"ID recibido: {model?.IdUsuario} | Rol recibido: '{model?.NuevoRol}'");
-
-            if (model == null || model.IdUsuario <= 0)
-            {
-                Console.WriteLine("Datos inválidos");
-                return Json(new { success = false, message = "Datos inválidos" });
-            }
-
-            Console.WriteLine("Buscando usuario...");
-            var usuario = _context.Usuarios.Find(model.IdUsuario);
-
-            if (usuario == null)
-            {
-                Console.WriteLine($"[ERROR] Usuario {model.IdUsuario} NO encontrado");
-                return Json(new { success = false, message = "Usuario no encontrado" });
-            }
-
-            Console.WriteLine("Usuario encontrado OK");
-            string rolAnterior = usuario.Rol ?? "(null)";
-            Console.WriteLine($"Rol ANTES: '{rolAnterior}'");
-
-            Console.WriteLine("Cambiando rol...");
             try
             {
+                Console.WriteLine("=== ActualizarRol INICIO ===");
+                Console.WriteLine($"ID recibido: {model?.IdUsuario} | Rol recibido: '{model?.NuevoRol}'");
+
+                if (model == null || model.IdUsuario <= 0)
+                {
+                    Console.WriteLine("Datos inválidos");
+                    return BadRequest(new { success = false, message = "Datos inválidos" });
+                }
+
+                Console.WriteLine("Buscando usuario...");
+                var usuario = _context.Usuarios.Find(model.IdUsuario);
+
+                if (usuario == null)
+                {
+                    Console.WriteLine($"[ERROR] Usuario {model.IdUsuario} NO encontrado");
+                    return NotFound(new { success = false, message = "Usuario no encontrado" });
+                }
+
+                Console.WriteLine("Usuario encontrado OK");
+                string rolAnterior = usuario.Rol ?? "(null)";
+                Console.WriteLine($"Rol ANTES: '{rolAnterior}'");
+
+                Console.WriteLine("Cambiando rol...");
                 usuario.Rol = "TEST_" + DateTime.Now.ToString("HHmmss") + "_" + model.NuevoRol.Trim();
                 Console.WriteLine($"Rol DESPUÉS (forzado): '{usuario.Rol}'");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[ERROR] Fallo al cambiar Rol: {ex.Message}");
-                return Json(new { success = false, message = "Error al modificar rol: " + ex.Message });
-            }
 
-            Console.WriteLine("Marcando entidad como modificada...");
-            try
-            {
+                Console.WriteLine("Marcando entidad como modificada...");
                 _context.Entry(usuario).State = EntityState.Modified;
                 _context.Entry(usuario).Property(u => u.Rol).IsModified = true;
                 Console.WriteLine("Entidad marcada OK");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[ERROR] Fallo al marcar entidad: {ex.Message}");
-                return Json(new { success = false, message = "Error al marcar entidad: " + ex.Message });
-            }
 
-            Console.WriteLine("Ejecutando SaveChanges...");
-            try
-            {
+                Console.WriteLine("Ejecutando SaveChanges...");
                 int cambios = _context.SaveChanges();
                 Console.WriteLine($"SaveChanges afectó {cambios} filas");
 
@@ -264,19 +248,32 @@ namespace FarmaciaSantaRita.Controllers
                 {
                     var usuarioVerificado = _context.Usuarios.Find(model.IdUsuario);
                     Console.WriteLine($"Rol VERIFICADO después de guardar: '{usuarioVerificado?.Rol ?? "(null)"}'");
-                    return Json(new { success = true, message = "Rol guardado OK (valor forzado)" });
+                    return Ok(new { success = true, message = "Rol guardado OK (valor forzado)" });
                 }
                 else
                 {
                     Console.WriteLine("=== NO SE GUARDÓ NADA - revisando entidad ===");
-                    return Json(new { success = false, message = "No se guardó NADA" });
+                    return Ok(new { success = false, message = "No se guardó NADA (0 filas afectadas)" });
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR GRAVE] SaveChanges falló: {ex.Message}");
+                // Logueamos TODO el error (clave para Production)
+                Console.WriteLine($"[ERROR CRÍTICO en ActualizarRol] {ex.Message}");
                 Console.WriteLine($"StackTrace: {ex.StackTrace}");
-                return Json(new { success = false, message = "Error al guardar en BD: " + ex.Message });
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"InnerException: {ex.InnerException.Message}");
+                    Console.WriteLine($"Inner StackTrace: {ex.InnerException.StackTrace}");
+                }
+
+                // Siempre devolvemos JSON limpio (no HTML)
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Error interno al procesar el cambio de rol",
+                    detail = ex.Message  // En Production esto será breve, pero suficiente
+                });
             }
         }
 

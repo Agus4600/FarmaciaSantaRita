@@ -1451,14 +1451,14 @@
         // Botones Recuperar
             document.querySelectorAll('.recuperar-btn').forEach(btn => {
         btn.addEventListener('click', async function () {
-            if (this.closest('tr').style.display === 'none') {
-                return;
-            }
+            if (this.closest('tr').style.display === 'none') return;
+
             const id = this.getAttribute('data-id');
             if (!id) {
                 Swal.fire('Error', 'No se encontró el ID de la compra.', 'error');
                 return;
             }
+
             const confirm = await Swal.fire({
                 title: '¿Recuperar esta compra?',
                 text: "Volverá a aparecer en el listado principal de compras registradas.",
@@ -1468,6 +1468,7 @@
                 confirmButtonText: 'Sí, recuperar',
                 cancelButtonText: 'Cancelar'
             });
+
             if (!confirm.isConfirmed) return;
 
             Swal.fire({
@@ -1495,26 +1496,35 @@
                 }
 
                 const data = await res.json();
-                    Swal.close(); // Cerramos el "Procesando..."
+
+                // Cerramos el "Procesando..."
+                Swal.close();
 
                 if (data.success) {
-                    // Toast de éxito (no interfiere con el Swal grande)
+                    // Toast de éxito (breve, no bloqueante)
                     Swal.fire({
                         toast: true,
                         position: 'top-end',
                         icon: 'success',
                         title: '¡Recuperada!',
-                        text: data.message || 'La compra fue restaurada correctamente.',
+                        text: 'La compra fue restaurada correctamente.',
                         showConfirmButton: false,
-                        timer: 2000,
+                        timer: 1800,
                         timerProgressBar: true
                     });
-                    // El Swal grande sigue abierto → podés seguir recuperando
+
+                    // Esperamos un segundo para que el usuario vea el toast...
+                    setTimeout(() => {
+                        // Cerramos TODOS los Swal abiertos (incluido el grande de eliminadas)
+                        Swal.close();
+                        // Recargamos la página completa → la tabla principal se actualiza
+                        location.reload();
+                    }, 2000);
                 } else {
                     Swal.fire('Error', data.message || 'No se pudo recuperar la compra.', 'error');
                 }
             } catch (err) {
-                Swal.close(); // Cerramos "Procesando..." en caso de error
+                Swal.close();
                 console.error('Error al recuperar compra:', err);
                 Swal.fire({
                     icon: 'error',

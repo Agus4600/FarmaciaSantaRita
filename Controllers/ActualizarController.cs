@@ -235,10 +235,14 @@ namespace FarmaciaSantaRita.Controllers
                 usuario.Rol = "TEST_" + DateTime.Now.ToString("HHmmss") + "_" + model.NuevoRol.Trim();
                 Console.WriteLine($"Rol DESPUÉS (forzado): '{usuario.Rol}'");
 
-                Console.WriteLine("Marcando entidad como modificada...");
-                _context.Entry(usuario).State = EntityState.Modified;
+                Console.WriteLine("Marcando SOLO la propiedad Rol como modificada...");
                 _context.Entry(usuario).Property(u => u.Rol).IsModified = true;
-                Console.WriteLine("Entidad marcada OK");
+
+                // Logs de verificación (muy útiles ahora)
+                Console.WriteLine($"Estado general de la entidad: {_context.Entry(usuario).State}");
+                Console.WriteLine($"Rol IsModified: {_context.Entry(usuario).Property(u => u.Rol).IsModified}");
+                Console.WriteLine($"FechaNacimiento IsModified: {_context.Entry(usuario).Property(u => u.FechaNacimiento).IsModified}"); // Debe ser false
+                Console.WriteLine($"FechaIngreso IsModified: {_context.Entry(usuario).Property(u => u.FechaIngreso).IsModified}");     // Debe ser false
 
                 Console.WriteLine("Ejecutando SaveChanges...");
                 int cambios = _context.SaveChanges();
@@ -267,12 +271,12 @@ namespace FarmaciaSantaRita.Controllers
                     Console.WriteLine($"Inner StackTrace: {ex.InnerException.StackTrace}");
                 }
 
-                // Siempre devolvemos JSON limpio (no HTML)
+                // Siempre devolvemos JSON limpio
                 return StatusCode(500, new
                 {
                     success = false,
                     message = "Error interno al procesar el cambio de rol",
-                    detail = ex.Message  // En Production esto será breve, pero suficiente
+                    detail = ex.Message
                 });
             }
         }

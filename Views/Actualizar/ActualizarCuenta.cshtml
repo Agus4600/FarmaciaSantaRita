@@ -854,8 +854,8 @@
                     console.log("Enviando → ID:", id, " | Rol:", nuevoRol); // Debug extra
 
                     Swal.fire({
-                        title: '¿Confirmar cambio de rol?',
-                        text: `Cambiar a <span translate="no">"${nuevoRol}"</span>`,
+                        title: '<span translate="no">¿Confirmar cambio de rol?</span>',  // también protegemos el título
+                        html: `Cambiar a <span translate="no">${nuevoRol}</span>`,
                         showCancelButton: true,
                         confirmButtonText: 'Sí, cambiar',
                         cancelButtonText: 'Cancelar',
@@ -884,8 +884,8 @@
                                 console.log("[DEBUG] Respuesta completa del servidor:", data);
                                 if (data.success) {
                                     Swal.fire({
-                                        title: '¡Listo!',
-                                        text: `Rol actualizado a <span translate="no">${nuevoRol}</span>`,
+                                        title: '<span translate="no">¡Listo!</span>',
+                                        html: `Rol actualizado a <span translate="no">${nuevoRol}</span>`,
                                         icon: 'success',
                                         timer: 2000,
                                         showConfirmButton: false

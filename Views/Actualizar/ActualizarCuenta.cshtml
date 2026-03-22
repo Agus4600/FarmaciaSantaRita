@@ -613,7 +613,7 @@
         <p class="text-muted small mb-4 fw-medium">Asigna rol a cada usuario (Empleado/a o Jefe/a).</p>
 
         <div class="table-responsive">
-            <table class="table table-striped table-hover table-bordered shadow-sm">
+            <table class="table table-striped table-hover table-bordered shadow-sm" translate="no">
                 <thead class="table-primary" style="position: sticky; top: 0; z-index: 10; background-color: #0d6efd !important; color: white !important;">
                     <tr class="text-center">
                         <th style="width: 22%;">Nombre</th>
@@ -635,7 +635,7 @@
                             <td>@u.Nombre @u.Apellido</td>
                             <td>@u.NombreUsuario</td>
                             <td class="text-center">@(u.Dni ?? "—")</td>
-                            <td class="text-center fw-medium">@rolActual</td>
+                            <td class="text-center fw-medium" translate="no">@rolActual</td>
                             <td class="text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-2 flex-nowrap">
                                     <select class="form-select form-select-sm nuevo-rol" data-id="@u.Idusuario" style="width: 110px; min-width: 90px;" translate="no">
@@ -855,12 +855,12 @@
 
                     Swal.fire({
                         title: '¿Confirmar cambio de rol?',
-                        text: `Cambiar a "${nuevoRol}"`,
+                        text: `Cambiar a <span translate="no">"${nuevoRol}"</span>`,
                         showCancelButton: true,
                         confirmButtonText: 'Sí, cambiar',
                         cancelButtonText: 'Cancelar',
                         confirmButtonColor: '#007bff',
-                        cancelButtonColor: '#6c757d'
+                        cancelButtonColor: '#007bff'
                     }).then((result) => {
                         if (result.isConfirmed) {
                                             fetch(`${window.location.origin}/Actualizar/ActualizarRol`, {
@@ -885,7 +885,7 @@
                                 if (data.success) {
                                     Swal.fire({
                                         title: '¡Listo!',
-                                        text: `Rol actualizado a ${nuevoRol}`,
+                                        text: `Rol actualizado a <span translate="no">${nuevoRol}</span>`,
                                         icon: 'success',
                                         timer: 2000,
                                         showConfirmButton: false
@@ -899,10 +899,9 @@
                             .catch(error => {
                                 console.error('Error en fetch:', error);
                                 Swal.fire({
-                                    icon: 'error',
                                     title: 'Error al guardar',
                                     text: error.message || 'Problema de conexión o servidor',
-                                    confirmButtonColor: '#dc3545'
+                                    confirmButtonColor: '#007bff'
                                 });
                             });
                         }

@@ -232,17 +232,15 @@ namespace FarmaciaSantaRita.Controllers
                 Console.WriteLine($"Rol ANTES: '{rolAnterior}'");
 
                 Console.WriteLine("Cambiando rol...");
-                usuario.Rol = "TEST_" + DateTime.Now.ToString("HHmmss") + "_" + model.NuevoRol.Trim();
-                Console.WriteLine($"Rol DESPUÉS (forzado): '{usuario.Rol}'");
+                usuario.Rol = model.NuevoRol.Trim();  // ← ¡Línea final! Solo el rol real
+
+                Console.WriteLine($"Rol DESPUÉS: '{usuario.Rol}'");
 
                 Console.WriteLine("Marcando SOLO la propiedad Rol como modificada...");
                 _context.Entry(usuario).Property(u => u.Rol).IsModified = true;
 
-                // Logs de verificación (muy útiles ahora)
                 Console.WriteLine($"Estado general de la entidad: {_context.Entry(usuario).State}");
                 Console.WriteLine($"Rol IsModified: {_context.Entry(usuario).Property(u => u.Rol).IsModified}");
-                Console.WriteLine($"FechaNacimiento IsModified: {_context.Entry(usuario).Property(u => u.FechaNacimiento).IsModified}"); // Debe ser false
-                Console.WriteLine($"FechaIngreso IsModified: {_context.Entry(usuario).Property(u => u.FechaIngreso).IsModified}");     // Debe ser false
 
                 Console.WriteLine("Ejecutando SaveChanges...");
                 int cambios = _context.SaveChanges();
@@ -252,26 +250,22 @@ namespace FarmaciaSantaRita.Controllers
                 {
                     var usuarioVerificado = _context.Usuarios.Find(model.IdUsuario);
                     Console.WriteLine($"Rol VERIFICADO después de guardar: '{usuarioVerificado?.Rol ?? "(null)"}'");
-                    return Ok(new { success = true, message = "Rol guardado OK (valor forzado)" });
+                    return Ok(new { success = true, message = "Rol actualizado correctamente" });
                 }
                 else
                 {
-                    Console.WriteLine("=== NO SE GUARDÓ NADA - revisando entidad ===");
-                    return Ok(new { success = false, message = "No se guardó NADA (0 filas afectadas)" });
+                    Console.WriteLine("=== NO SE GUARDÓ NADA ===");
+                    return Ok(new { success = false, message = "No se detectaron cambios para guardar" });
                 }
             }
             catch (Exception ex)
             {
-                // Logueamos TODO el error (clave para Production)
                 Console.WriteLine($"[ERROR CRÍTICO en ActualizarRol] {ex.Message}");
                 Console.WriteLine($"StackTrace: {ex.StackTrace}");
                 if (ex.InnerException != null)
                 {
                     Console.WriteLine($"InnerException: {ex.InnerException.Message}");
-                    Console.WriteLine($"Inner StackTrace: {ex.InnerException.StackTrace}");
                 }
-
-                // Siempre devolvemos JSON limpio
                 return StatusCode(500, new
                 {
                     success = false,

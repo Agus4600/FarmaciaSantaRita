@@ -988,6 +988,7 @@
                 ws.getCell(`G${resumenStartRow + 1}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
 
                 ["E", "F", "G"].forEach(col => {
+                    cell.alignment = { horizontal: "center", vertical: "middle" };
                     ws.getCell(`${col}${resumenStartRow + 1}`).border = {
                         top: {style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"}
                     };

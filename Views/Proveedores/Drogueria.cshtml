@@ -964,55 +964,95 @@
                 }
 
                 // === RESUMEN TRANSFER - ESTILO IDÉNTICO AL DE PROVEEDOR SECUNDARIO ===
-                const resumenStartRow = 3; // Empieza en fila 3
+                        const resumenStartRow = 3; // Empieza en fila 3
 
-                // Título "Resumen Transfer"
-                ws.mergeCells(`E${resumenStartRow}:G${resumenStartRow}`);
-                const resumenTitle = ws.getCell(`E${resumenStartRow}`);
-                resumenTitle.value = "Resumen Transfer";
-                resumenTitle.alignment = { horizontal: "center", vertical: "middle" };
-                resumenTitle.font = { bold: true, color: { argb: "FFFFFFFF" } };
-                resumenTitle.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
+        // Título "Resumen Transfer" - centrado
+        ws.mergeCells(`E${resumenStartRow}:G${resumenStartRow}`);
+        const resumenTitle = ws.getCell(`E${resumenStartRow}`);
+        resumenTitle.value = "Resumen Transfer";
+        resumenTitle.alignment = {
+            horizontal: "center",
+            vertical: "middle"
+        };
+        resumenTitle.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        resumenTitle.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
 
-                ["E", "F", "G"].forEach(col => ws.getCell(`${col}${resumenStartRow}`).border = {
-                    top: {style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"}
-                });
+        // Bordes del título
+        ["E", "F", "G"].forEach(col => {
+            ws.getCell(`${col}${resumenStartRow}`).border = {
+                top: { style: "thin" },
+                left: { style: "thin" },
+                bottom: { style: "thin" },
+                right: { style: "thin" }
+            };
+        });
 
-                // "Con Transfer (SI)"
-                ws.mergeCells(`E${resumenStartRow + 1}:F${resumenStartRow + 1}`);
-                ws.getCell(`E${resumenStartRow + 1}`).value = "Con Transfer (SI):";
-                ws.getCell(`E${resumenStartRow + 1}`).font = { bold: true, color: { argb: "FFFFFFFF" } };
-                ws.getCell(`E${resumenStartRow + 1}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
-                ws.getCell(`G${resumenStartRow + 1}`).value = conteoSI;
-                ws.getCell(`G${resumenStartRow + 1}`).font = { bold: true, color: { argb: "FFFFFFFF" } };
-                ws.getCell(`G${resumenStartRow + 1}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
+        // "Con Transfer (SI):" - centrado
+        ws.mergeCells(`E${resumenStartRow + 1}:F${resumenStartRow + 1}`);
+        const siLabel = ws.getCell(`E${resumenStartRow + 1}`);
+        siLabel.value = "Con Transfer (SI):";
+        siLabel.alignment = {
+            horizontal: "center",
+            vertical: "middle"
+        };
+        siLabel.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        siLabel.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
 
-                ["E", "F", "G"].forEach(col => {
-                    cell.alignment = { horizontal: "center", vertical: "middle" };
-                    ws.getCell(`${col}${resumenStartRow + 1}`).border = {
-                        top: {style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"}
-                    };
-                });
+        // Valor SI - centrado
+        const siValue = ws.getCell(`G${resumenStartRow + 1}`);
+        siValue.value = conteoSI;
+        siValue.alignment = {
+            horizontal: "center",
+            vertical: "middle"
+        };
+        siValue.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        siValue.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
 
-                // "Sin Transfer (NO)"
-                ws.mergeCells(`E${resumenStartRow + 2}:F${resumenStartRow + 2}`);
-                ws.getCell(`E${resumenStartRow + 2}`).value = "Sin Transfer (NO):";
-                ws.getCell(`E${resumenStartRow + 2}`).font = { bold: true, color: { argb: "FFFFFFFF" } };
-                ws.getCell(`E${resumenStartRow + 2}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
-                ws.getCell(`G${resumenStartRow + 2}`).value = conteoNO;
-                ws.getCell(`G${resumenStartRow + 2}`).font = { bold: true, color: { argb: "FFFFFFFF" } };
-                ws.getCell(`G${resumenStartRow + 2}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
+        // Bordes fila SI
+        ["E", "F", "G"].forEach(col => {
+            ws.getCell(`${col}${resumenStartRow + 1}`).border = {
+                top: { style: "thin" },
+                left: { style: "thin" },
+                bottom: { style: "thin" },
+                right: { style: "thin" }
+            };
+        });
 
-                ["E", "F", "G"].forEach(col => {
-                    ws.getCell(`${col}${resumenStartRow + 2}`).border = {
-                        top: {style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"}
-                    };
-                });
+        // "Sin Transfer (NO):" - centrado
+        ws.mergeCells(`E${resumenStartRow + 2}:F${resumenStartRow + 2}`);
+        const noLabel = ws.getCell(`E${resumenStartRow + 2}`);
+        noLabel.value = "Sin Transfer (NO):";
+        noLabel.alignment = {
+            horizontal: "center",
+            vertical: "middle"
+        };
+        noLabel.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        noLabel.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
 
-                // Anchos de columnas del resumen
-                ws.getColumn("E").width = 10;
-                ws.getColumn("F").width = 10;
-                ws.getColumn("G").width = 8;
+        // Valor NO - centrado
+        const noValue = ws.getCell(`G${resumenStartRow + 2}`);
+        noValue.value = conteoNO;
+        noValue.alignment = {
+            horizontal: "center",
+            vertical: "middle"
+        };
+        noValue.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        noValue.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
+
+        // Bordes fila NO
+        ["E", "F", "G"].forEach(col => {
+            ws.getCell(`${col}${resumenStartRow + 2}`).border = {
+                top: { style: "thin" },
+                left: { style: "thin" },
+                bottom: { style: "thin" },
+                right: { style: "thin" }
+            };
+        });
+
+        // Anchos de columnas del resumen (igual que antes)
+        ws.getColumn("E").width = 18;  // un poco más ancho para que quepa bien el texto largo
+        ws.getColumn("F").width = 10;
+        ws.getColumn("G").width = 10;
             });
 
             // Nombre del archivo (igual que antes)

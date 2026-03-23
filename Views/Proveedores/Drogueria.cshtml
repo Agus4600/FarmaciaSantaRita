@@ -894,148 +894,127 @@
         // ====================== BOTÓN EXPORTAR ======================
                 document.getElementById("btnGuardarl").addEventListener("click", async function () {
             const workbook = new ExcelJS.Workbook();
-            const ws = workbook.addWorksheet("Registro");
 
-            // Definir columnas (igual que en Proveedor Secundario)
-            ws.columns = [
-                { header: "Fecha", key: "fecha", width: 20 },
-                { header: "Importe", key: "importe", width: 20 },
-                { header: "Transfer", key: "transfer", width: 15 }
+            // Definimos las dos hojas como en Proveedor Secundario
+            const hojas = [
+                { id: "tablaPerfumeria",   hoja: "Perfumería",   titulo: "PERFUMERÍA" },
+                { id: "tablaMedicamentos", hoja: "Medicamento",  titulo: "MEDICAMENTOS" }
             ];
 
-            // Título principal de la hoja
-            ws.mergeCells("A1:C1");
-            ws.getCell("A1").value = `Tabla: ${nombreProveedorServer}`;
-            ws.getCell("A1").alignment = { horizontal: "center", vertical: "middle" };
-            ws.getCell("A1").font = { bold: true, size: 14, color: { argb: "FF000000" } };
-            ws.getCell("A1").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF5F5DC" } };
-            ws.getRow(1).height = 25;
-            ["A1", "B1", "C1"].forEach(c => {
-                ws.getCell(c).border = {
-                    top: { style: "thin" },
-                    left: { style: "thin" },
-                    bottom: { style: "thin" },
-                    right: { style: "thin" }
-                };
-            });
+            hojas.forEach(t => {
+                const ws = workbook.addWorksheet(t.hoja);
 
-            // Encabezados de datos
-            const headerRow = ws.addRow(["FECHA", "IMPORTE", "TRANSFER"]);
-            headerRow.eachCell(cell => {
-                cell.font = { bold: true, color: { argb: "FF000000" } };
-                cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFC080" } };
-                cell.alignment = { horizontal: "center", vertical: "middle" };
-                cell.border = {
-                    top: { style: "thin" },
-                    left: { style: "thin" },
-                    bottom: { style: "thin" },
-                    right: { style: "thin" }
-                };
-            });
+                // Columnas iguales
+                ws.columns = [
+                    { header: "Fecha",    key: "fecha",    width: 20 },
+                    { header: "Importe",  key: "importe",  width: 20 },
+                    { header: "Transfer", key: "transfer", width: 15 }
+                ];
 
-            // Leer datos de la tabla única
-            const tbody = document.querySelector('#tablaRegistro tbody');
-            let conteoSI = 0;
-            let conteoNO = 0;
+                // Título de la hoja
+                ws.mergeCells("A1:C1");
+                ws.getCell("A1").value = `Tabla: ${t.titulo}`;
+                ws.getCell("A1").alignment = { horizontal: "center", vertical: "middle" };
+                ws.getCell("A1").font = { bold: true, size: 14, color: { argb: "FF000000" } };
+                ws.getCell("A1").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF5F5DC" } };
+                ws.getRow(1).height = 25;
 
-            if (tbody) {
-                [...tbody.querySelectorAll("tr")].forEach((tr, i) => {
-                    const celdas = tr.querySelectorAll("td");
-                    if (celdas.length < 3) return;
-
-                    const fecha   = celdas[0]?.innerText.trim() || "";
-                    const importe = celdas[1]?.innerText.trim() || "";
-                    const transfer = (celdas[2]?.innerText || "").trim().toUpperCase();
-
-                    if (!fecha && !importe && !transfer) return;
-
-                    // Contar transfer
-                    if (transfer === "SÍ" || transfer === "SI") conteoSI++;
-                    if (transfer === "NO") conteoNO++;
-
-                    // Agregar fila
-                    const row = ws.addRow([fecha, importe, transfer]);
-                    const color = i % 2 === 0 ? "DDEEFF" : "CCFFFF";
-                    row.eachCell(cell => {
-                        cell.alignment = { horizontal: "center", vertical: "middle" };
-                        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
-                        cell.border = {
-                            top: { style: "thin" },
-                            left: { style: "thin" },
-                            bottom: { style: "thin" },
-                            right: { style: "thin" }
-                        };
-                    });
+                ["A1", "B1", "C1"].forEach(c => {
+                    ws.getCell(c).border = { top: {style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
                 });
-            }
 
-            // === SECCIÓN RESUMEN TRANSFER - IGUAL QUE EN PROVEEDOR SECUNDARIO ===
-            const resumenStartRow = 3; // Fila 3 (debajo de los datos)
+                // Encabezados
+                const headerRow = ws.addRow(["FECHA", "IMPORTE", "TRANSFER"]);
+                headerRow.eachCell(cell => {
+                    cell.font = { bold: true, color: { argb: "FF000000" } };
+                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFC080" } };
+                    cell.alignment = { horizontal: "center", vertical: "middle" };
+                    cell.border = { top: {style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+                });
 
-            // Título "Resumen Transfer"
-            ws.mergeCells(`E${resumenStartRow}:G${resumenStartRow}`);
-            const resumenTitle = ws.getCell(`E${resumenStartRow}`);
-            resumenTitle.value = "Resumen Transfer";
-            resumenTitle.alignment = { horizontal: "center", vertical: "middle" };
-            resumenTitle.font = { bold: true, color: { argb: "FFFFFFFF" } };
-            resumenTitle.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
+                // Leer datos de la tabla correspondiente
+                const tbody = document.querySelector(`#${t.id} tbody`);
+                let conteoSI = 0;
+                let conteoNO = 0;
 
-            // Bordes del título
-            ["E", "F", "G"].forEach(col => {
-                ws.getCell(`${col}${resumenStartRow}`).border = {
-                    top: { style: "thin" },
-                    left: { style: "thin" },
-                    bottom: { style: "thin" },
-                    right: { style: "thin" }
-                };
+                if (tbody) {
+                    [...tbody.querySelectorAll("tr")].forEach((tr, i) => {
+                        const celdas = tr.querySelectorAll("td");
+                        if (celdas.length < 3) return;
+
+                        const fecha   = celdas[0]?.innerText.trim() || "";
+                        const importe = celdas[1]?.innerText.trim() || "";
+                        const transferRaw = (celdas[2]?.innerText || "").trim().toUpperCase();
+
+                        if (!fecha && !importe && !transferRaw) return;
+
+                        // Contar transfer (igual que en Proveedor Secundario)
+                        if (transferRaw === "SÍ" || transferRaw === "SI") conteoSI++;
+                        if (transferRaw === "NO") conteoNO++;
+
+                        // Agregar fila al Excel
+                        const row = ws.addRow([fecha, importe, transferRaw]);
+                        const color = i % 2 === 0 ? "DDEEFF" : "CCFFFF";
+                        row.eachCell(cell => {
+                            cell.alignment = { horizontal: "center", vertical: "middle" };
+                            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
+                            cell.border = { top: {style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+                        });
+                    });
+                }
+
+                // === RESUMEN TRANSFER - ESTILO IDÉNTICO AL DE PROVEEDOR SECUNDARIO ===
+                const resumenStartRow = 3; // Empieza en fila 3
+
+                // Título "Resumen Transfer"
+                ws.mergeCells(`E${resumenStartRow}:G${resumenStartRow}`);
+                const resumenTitle = ws.getCell(`E${resumenStartRow}`);
+                resumenTitle.value = "Resumen Transfer";
+                resumenTitle.alignment = { horizontal: "center", vertical: "middle" };
+                resumenTitle.font = { bold: true, color: { argb: "FFFFFFFF" } };
+                resumenTitle.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
+
+                ["E", "F", "G"].forEach(col => ws.getCell(`${col}${resumenStartRow}`).border = {
+                    top: {style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"}
+                });
+
+                // "Con Transfer (SI)"
+                ws.mergeCells(`E${resumenStartRow + 1}:F${resumenStartRow + 1}`);
+                ws.getCell(`E${resumenStartRow + 1}`).value = "Con Transfer (SI):";
+                ws.getCell(`E${resumenStartRow + 1}`).font = { bold: true, color: { argb: "FFFFFFFF" } };
+                ws.getCell(`E${resumenStartRow + 1}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
+                ws.getCell(`G${resumenStartRow + 1}`).value = conteoSI;
+                ws.getCell(`G${resumenStartRow + 1}`).font = { bold: true, color: { argb: "FFFFFFFF" } };
+                ws.getCell(`G${resumenStartRow + 1}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
+
+                ["E", "F", "G"].forEach(col => {
+                    ws.getCell(`${col}${resumenStartRow + 1}`).border = {
+                        top: {style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"}
+                    };
+                });
+
+                // "Sin Transfer (NO)"
+                ws.mergeCells(`E${resumenStartRow + 2}:F${resumenStartRow + 2}`);
+                ws.getCell(`E${resumenStartRow + 2}`).value = "Sin Transfer (NO):";
+                ws.getCell(`E${resumenStartRow + 2}`).font = { bold: true, color: { argb: "FFFFFFFF" } };
+                ws.getCell(`E${resumenStartRow + 2}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
+                ws.getCell(`G${resumenStartRow + 2}`).value = conteoNO;
+                ws.getCell(`G${resumenStartRow + 2}`).font = { bold: true, color: { argb: "FFFFFFFF" } };
+                ws.getCell(`G${resumenStartRow + 2}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
+
+                ["E", "F", "G"].forEach(col => {
+                    ws.getCell(`${col}${resumenStartRow + 2}`).border = {
+                        top: {style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"}
+                    };
+                });
+
+                // Anchos de columnas del resumen
+                ws.getColumn("E").width = 10;
+                ws.getColumn("F").width = 10;
+                ws.getColumn("G").width = 8;
             });
 
-            // Fila "Con Transfer (SI)"
-            ws.mergeCells(`E${resumenStartRow + 1}:F${resumenStartRow + 1}`);
-            ws.getCell(`E${resumenStartRow + 1}`).value = "Con Transfer (SI):";
-            ws.getCell(`E${resumenStartRow + 1}`).font = { bold: true, color: { argb: "FFFFFFFF" } };
-            ws.getCell(`E${resumenStartRow + 1}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
-            ws.getCell(`G${resumenStartRow + 1}`).value = conteoSI;
-            ws.getCell(`G${resumenStartRow + 1}`).font = { bold: true, color: { argb: "FFFFFFFF" } };
-            ws.getCell(`G${resumenStartRow + 1}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
-
-            // Bordes fila SI
-            ["E", "F", "G"].forEach(col => {
-                const row = resumenStartRow + 1;
-                ws.getCell(`${col}${row}`).border = {
-                    top: { style: "thin" },
-                    left: { style: "thin" },
-                    bottom: { style: "thin" },
-                    right: { style: "thin" }
-                };
-            });
-
-            // Fila "Sin Transfer (NO)"
-            ws.mergeCells(`E${resumenStartRow + 2}:F${resumenStartRow + 2}`);
-            ws.getCell(`E${resumenStartRow + 2}`).value = "Sin Transfer (NO):";
-            ws.getCell(`E${resumenStartRow + 2}`).font = { bold: true, color: { argb: "FFFFFFFF" } };
-            ws.getCell(`E${resumenStartRow + 2}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
-            ws.getCell(`G${resumenStartRow + 2}`).value = conteoNO;
-            ws.getCell(`G${resumenStartRow + 2}`).font = { bold: true, color: { argb: "FFFFFFFF" } };
-            ws.getCell(`G${resumenStartRow + 2}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
-
-            // Bordes fila NO
-            ["E", "F", "G"].forEach(col => {
-                const row = resumenStartRow + 2;
-                ws.getCell(`${col}${row}`).border = {
-                    top: { style: "thin" },
-                    left: { style: "thin" },
-                    bottom: { style: "thin" },
-                    right: { style: "thin" }
-                };
-            });
-
-            // Ajuste de ancho de columnas del resumen
-            ws.getColumn("E").width = 10;
-            ws.getColumn("F").width = 10;
-            ws.getColumn("G").width = 8;
-
-            // Generar y descargar archivo
+            // Nombre del archivo (igual que antes)
             const fecha = new Date();
             const dd = String(fecha.getDate()).padStart(2, "0");
             const mm = String(fecha.getMonth() + 1).padStart(2, "0");

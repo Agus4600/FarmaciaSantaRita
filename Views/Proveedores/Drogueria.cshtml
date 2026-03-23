@@ -892,73 +892,157 @@
         });
 
         // ====================== BOTÓN EXPORTAR ======================
-        document.getElementById("btnGuardarl").addEventListener("click", async function () {
-            const tablas = [
-                { id: "tablaPerfumeria", hoja: "Perfumeria", titulo: "PERFUMERÍA" },
-                { id: "tablaMedicamentos", hoja: "Medicamentos", titulo: "MEDICAMENTOS" }
-            ];
+                document.getElementById("btnGuardarl").addEventListener("click", async function () {
             const workbook = new ExcelJS.Workbook();
+            const ws = workbook.addWorksheet("Registro");
 
-            for (const t of tablas) {
-                const ws = workbook.addWorksheet(t.hoja);
-                ws.columns = [
-                    { header: "Fecha", key: "fecha", width: 20 },
-                    { header: "Importe", key: "importe", width: 20 },
-                    { header: "Transfer", key: "transfer", width: 15 }
-                ];
+            // Definir columnas (igual que en Proveedor Secundario)
+            ws.columns = [
+                { header: "Fecha", key: "fecha", width: 20 },
+                { header: "Importe", key: "importe", width: 20 },
+                { header: "Transfer", key: "transfer", width: 15 }
+            ];
 
-                ws.mergeCells("A1:C1");
-                ws.getCell("A1").value = `Tabla: ${t.titulo}`;
-                ws.getCell("A1").alignment = { horizontal: "center", vertical: "middle" };
-                ws.getCell("A1").font = { bold: true, size: 14 };
-                ws.getRow(1).height = 25;
+            // Título principal de la hoja
+            ws.mergeCells("A1:C1");
+            ws.getCell("A1").value = `Tabla: ${nombreProveedorServer}`;
+            ws.getCell("A1").alignment = { horizontal: "center", vertical: "middle" };
+            ws.getCell("A1").font = { bold: true, size: 14, color: { argb: "FF000000" } };
+            ws.getCell("A1").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF5F5DC" } };
+            ws.getRow(1).height = 25;
+            ["A1", "B1", "C1"].forEach(c => {
+                ws.getCell(c).border = {
+                    top: { style: "thin" },
+                    left: { style: "thin" },
+                    bottom: { style: "thin" },
+                    right: { style: "thin" }
+                };
+            });
 
-                const headerRow = ws.addRow(["FECHA", "IMPORTE", "TRANSFER"]);
-                headerRow.eachCell(cell => {
-                    cell.font = { bold: true, color: { argb: "FF000000" } };
-                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "ffc080" } };
-                    cell.alignment = { horizontal: "center", vertical: "middle" };
-                    cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-                });
+            // Encabezados de datos
+            const headerRow = ws.addRow(["FECHA", "IMPORTE", "TRANSFER"]);
+            headerRow.eachCell(cell => {
+                cell.font = { bold: true, color: { argb: "FF000000" } };
+                cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFC080" } };
+                cell.alignment = { horizontal: "center", vertical: "middle" };
+                cell.border = {
+                    top: { style: "thin" },
+                    left: { style: "thin" },
+                    bottom: { style: "thin" },
+                    right: { style: "thin" }
+                };
+            });
 
-                const tbody = document.querySelector(`#${t.id} tbody`);
-                let conteoSI = 0, conteoNO = 0;
+            // Leer datos de la tabla única
+            const tbody = document.querySelector('#tablaRegistro tbody');
+            let conteoSI = 0;
+            let conteoNO = 0;
 
-                if (tbody) {
-                    [...tbody.querySelectorAll("tr")].forEach((tr, i) => {
-                        const fecha = tr.children[0]?.innerText.trim();
-                        const importe = tr.children[1]?.innerText.trim();
-                        const transfer = (tr.children[2]?.innerText || "").trim();
-                        if (!fecha && !importe && !transfer) return;
+            if (tbody) {
+                [...tbody.querySelectorAll("tr")].forEach((tr, i) => {
+                    const celdas = tr.querySelectorAll("td");
+                    if (celdas.length < 3) return;
 
-                        if (transfer.toUpperCase() === "SÍ" || transfer.toUpperCase() === "SI") conteoSI++;
-                        if (transfer.toUpperCase() === "NO") conteoNO++;
+                    const fecha   = celdas[0]?.innerText.trim() || "";
+                    const importe = celdas[1]?.innerText.trim() || "";
+                    const transfer = (celdas[2]?.innerText || "").trim().toUpperCase();
 
-                        const row = ws.addRow([fecha, importe, transfer]);
-                        const color = i % 2 === 0 ? "ddeeff" : "ccffff";
-                        row.eachCell(cell => {
-                            cell.alignment = { horizontal: "center", vertical: "middle" };
-                            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
-                            cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-                        });
+                    if (!fecha && !importe && !transfer) return;
+
+                    // Contar transfer
+                    if (transfer === "SÍ" || transfer === "SI") conteoSI++;
+                    if (transfer === "NO") conteoNO++;
+
+                    // Agregar fila
+                    const row = ws.addRow([fecha, importe, transfer]);
+                    const color = i % 2 === 0 ? "DDEEFF" : "CCFFFF";
+                    row.eachCell(cell => {
+                        cell.alignment = { horizontal: "center", vertical: "middle" };
+                        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
+                        cell.border = {
+                            top: { style: "thin" },
+                            left: { style: "thin" },
+                            bottom: { style: "thin" },
+                            right: { style: "thin" }
+                        };
                     });
-                }
-
-                ws.mergeCells("E2:G2");
-                ws.getCell("E2").value = "Resumen Transfer";
-                ws.getCell("E2").font = { bold: true, color: { argb: "FFFFFFFF" } };
-                ws.getCell("E2").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "33cc99" } };
-
-                ws.mergeCells("E3:F3"); ws.getCell("E3").value = "Con Transfer (SI):"; ws.getCell("G3").value = conteoSI;
-                ws.mergeCells("E4:F4"); ws.getCell("E4").value = "Sin Transfer (NO):"; ws.getCell("G4").value = conteoNO;
-
-                ws.getColumn("E").width = 10;
-                ws.getColumn("F").width = 10;
-                ws.getColumn("G").width = 8;
+                });
             }
 
+            // === SECCIÓN RESUMEN TRANSFER - IGUAL QUE EN PROVEEDOR SECUNDARIO ===
+            const resumenStartRow = 3; // Fila 3 (debajo de los datos)
+
+            // Título "Resumen Transfer"
+            ws.mergeCells(`E${resumenStartRow}:G${resumenStartRow}`);
+            const resumenTitle = ws.getCell(`E${resumenStartRow}`);
+            resumenTitle.value = "Resumen Transfer";
+            resumenTitle.alignment = { horizontal: "center", vertical: "middle" };
+            resumenTitle.font = { bold: true, color: { argb: "FFFFFFFF" } };
+            resumenTitle.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
+
+            // Bordes del título
+            ["E", "F", "G"].forEach(col => {
+                ws.getCell(`${col}${resumenStartRow}`).border = {
+                    top: { style: "thin" },
+                    left: { style: "thin" },
+                    bottom: { style: "thin" },
+                    right: { style: "thin" }
+                };
+            });
+
+            // Fila "Con Transfer (SI)"
+            ws.mergeCells(`E${resumenStartRow + 1}:F${resumenStartRow + 1}`);
+            ws.getCell(`E${resumenStartRow + 1}`).value = "Con Transfer (SI):";
+            ws.getCell(`E${resumenStartRow + 1}`).font = { bold: true, color: { argb: "FFFFFFFF" } };
+            ws.getCell(`E${resumenStartRow + 1}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
+            ws.getCell(`G${resumenStartRow + 1}`).value = conteoSI;
+            ws.getCell(`G${resumenStartRow + 1}`).font = { bold: true, color: { argb: "FFFFFFFF" } };
+            ws.getCell(`G${resumenStartRow + 1}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
+
+            // Bordes fila SI
+            ["E", "F", "G"].forEach(col => {
+                const row = resumenStartRow + 1;
+                ws.getCell(`${col}${row}`).border = {
+                    top: { style: "thin" },
+                    left: { style: "thin" },
+                    bottom: { style: "thin" },
+                    right: { style: "thin" }
+                };
+            });
+
+            // Fila "Sin Transfer (NO)"
+            ws.mergeCells(`E${resumenStartRow + 2}:F${resumenStartRow + 2}`);
+            ws.getCell(`E${resumenStartRow + 2}`).value = "Sin Transfer (NO):";
+            ws.getCell(`E${resumenStartRow + 2}`).font = { bold: true, color: { argb: "FFFFFFFF" } };
+            ws.getCell(`E${resumenStartRow + 2}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
+            ws.getCell(`G${resumenStartRow + 2}`).value = conteoNO;
+            ws.getCell(`G${resumenStartRow + 2}`).font = { bold: true, color: { argb: "FFFFFFFF" } };
+            ws.getCell(`G${resumenStartRow + 2}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF33CC99" } };
+
+            // Bordes fila NO
+            ["E", "F", "G"].forEach(col => {
+                const row = resumenStartRow + 2;
+                ws.getCell(`${col}${row}`).border = {
+                    top: { style: "thin" },
+                    left: { style: "thin" },
+                    bottom: { style: "thin" },
+                    right: { style: "thin" }
+                };
+            });
+
+            // Ajuste de ancho de columnas del resumen
+            ws.getColumn("E").width = 10;
+            ws.getColumn("F").width = 10;
+            ws.getColumn("G").width = 8;
+
+            // Generar y descargar archivo
             const fecha = new Date();
-            const nombreArchivo = `${nombreProveedorServer} ${fecha.getDate().toString().padStart(2,'0')}-${(fecha.getMonth()+1).toString().padStart(2,'0')}-${fecha.getFullYear()} ${fecha.getHours().toString().padStart(2,'0')}${fecha.getMinutes().toString().padStart(2,'0')}.xlsx`;
+            const dd = String(fecha.getDate()).padStart(2, "0");
+            const mm = String(fecha.getMonth() + 1).padStart(2, "0");
+            const yyyy = fecha.getFullYear();
+            const hh = String(fecha.getHours()).padStart(2, "0");
+            const min = String(fecha.getMinutes()).padStart(2, "0");
+            const nombreArchivo = `${nombreProveedorServer} ${dd}-${mm}-${yyyy} ${hh}:${min}.xlsx`;
 
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });

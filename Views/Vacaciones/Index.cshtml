@@ -1143,6 +1143,11 @@
 
         });
 
+
+
+
+
+
         // Lógica principal de la página
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -1190,13 +1195,68 @@
 
             }
 
+
+
+
+
+                    // Evento al seleccionar empleado
+
+                        const empleadoSelect = document.getElementById('empleadoSelect');
+
+        if (empleadoSelect) {
+            empleadoSelect.addEventListener('change', async function () {
+                const empleadoId = this.value;
+                const diasInput = document.getElementById('diasInput');
+
+                if (!empleadoId || empleadoId === "") {
+                    diasInput.max = 60;
+                    diasInput.value = 0;
+                    diasInput.disabled = false;
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/Vacaciones/GetDiasPermitidos?idUsuario=${empleadoId}`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        diasInput.max = data.diasPermitidos;
+                        diasInput.value = data.diasPermitidos;
+                        diasInput.disabled = false;
+
+                        Swal.fire({
+                            title: 'Días permitidos por ley',
+                            html: `Al empleado seleccionado le corresponden <b>${data.diasPermitidos} días corridos</b> de vacaciones este año.<br>
+                                   <small>(antigüedad: ${data.antiguedadAnios} años - LCT art. 150)</small>`,
+                            confirmButtonText: 'Entendido',
+                            confirmButtonColor: '#007bff'
+                        });
+                    } else {
+                        Swal.fire('Atención', data.message || 'No se pudo calcular la antigüedad.', 'warning');
+                        diasInput.max = 60;
+                        diasInput.value = 0;
+                    }
+                } catch (err) {
+                    console.error('Error completo al consultar GetDiasPermitidos:', err);
+                    Swal.fire({
+                        title: 'Error de conexión',
+                        html: 'No se pudo obtener los días permitidos.<br><small>Verifica que el servidor esté actualizado.</small>',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#007bff'
+                    });
+                    diasInput.max = 60;
+                    diasInput.value = 0;
+                }
+            });
+        }
+
+
+
+
+
             agregarFilasVacias();
-
-
-
-
-
-
 
 
             // Buscar Filtro
@@ -1476,31 +1536,7 @@
             }
         });
 
-            // btnNuevoRegistro
-
-            document.getElementById('btnNuevoRegistro').addEventListener('click', function () {
-
-                const tbody = document.querySelector(`#${TABLA_ID} tbody`);
-
-                tbody.innerHTML = '';
-
-                agregarFilasVacias();
-
-                Swal.fire({
-
-                    icon: 'success',
-
-                    title: 'Tabla limpiada',
-
-                    text: 'Puede comenzar un nuevo registro.',
-
-                    timer: 2500,
-
-                    showConfirmButton: false
-
-                });
-
-            });
+            
 
             // btnEliminar
 
@@ -1955,58 +1991,7 @@
 
         });
 
-                // Evento al seleccionar empleado
-
-                        const empleadoSelect = document.getElementById('empleadoSelect');
-
-        if (empleadoSelect) {
-            empleadoSelect.addEventListener('change', async function () {
-                const empleadoId = this.value;
-                const diasInput = document.getElementById('diasInput');
-
-                if (!empleadoId || empleadoId === "") {
-                    diasInput.max = 60;
-                    diasInput.value = 0;
-                    diasInput.disabled = false;
-                    return;
-                }
-
-                try {
-                    const response = await fetch(`/Vacaciones/GetDiasPermitidos?idUsuario=${empleadoId}`);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        diasInput.max = data.diasPermitidos;
-                        diasInput.value = data.diasPermitidos;
-                        diasInput.disabled = false;
-
-                        Swal.fire({
-                            title: 'Días permitidos por ley',
-                            html: `Al empleado seleccionado le corresponden <b>${data.diasPermitidos} días corridos</b> de vacaciones este año.<br>
-                                   <small>(antigüedad: ${data.antiguedadAnios} años - LCT art. 150)</small>`,
-                            confirmButtonText: 'Entendido',
-                            confirmButtonColor: '#007bff'
-                        });
-                    } else {
-                        Swal.fire('Atención', data.message || 'No se pudo calcular la antigüedad.', 'warning');
-                        diasInput.max = 60;
-                        diasInput.value = 0;
-                    }
-                } catch (err) {
-                    console.error('Error completo al consultar GetDiasPermitidos:', err);
-                    Swal.fire({
-                        title: 'Error de conexión',
-                        html: 'No se pudo obtener los días permitidos.<br><small>Verifica que el servidor esté actualizado.</small>',
-                        confirmButtonText: 'Entendido',
-                        confirmButtonColor: '#007bff'
-                    });
-                    diasInput.max = 60;
-                    diasInput.value = 0;
-                }
-            });
-        }
+        
 
 
 

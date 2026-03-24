@@ -1957,91 +1957,56 @@
 
                 // Evento al seleccionar empleado
 
-                document.getElementById('empleadoSelect').addEventListener('change', async function () {
+                        const empleadoSelect = document.getElementById('empleadoSelect');
 
+        if (empleadoSelect) {
+            empleadoSelect.addEventListener('change', async function () {
                 const empleadoId = this.value;
-
                 const diasInput = document.getElementById('diasInput');
 
                 if (!empleadoId || empleadoId === "") {
-
                     diasInput.max = 60;
-
                     diasInput.value = 0;
-
                     diasInput.disabled = false;
-
                     return;
-
                 }
 
                 try {
-
                     const response = await fetch(`/Vacaciones/GetDiasPermitidos?idUsuario=${empleadoId}`);
-
-                        if (!response.ok) {
-
-                            throw new Error(`HTTP ${response.status}`);
-
-                        }
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                     const data = await response.json();
 
                     if (data.success) {
-
                         diasInput.max = data.diasPermitidos;
-
                         diasInput.value = data.diasPermitidos;
-
                         diasInput.disabled = false;
 
                         Swal.fire({
-
                             title: 'Días permitidos por ley',
-
                             html: `Al empleado seleccionado le corresponden <b>${data.diasPermitidos} días corridos</b> de vacaciones este año.<br>
-
                                    <small>(antigüedad: ${data.antiguedadAnios} años - LCT art. 150)</small>`,
-
                             confirmButtonText: 'Entendido',
-
                             confirmButtonColor: '#007bff'
-
                         });
-
                     } else {
-
                         Swal.fire('Atención', data.message || 'No se pudo calcular la antigüedad.', 'warning');
-
                         diasInput.max = 60;
-
                         diasInput.value = 0;
-
                     }
-
                 } catch (err) {
-
-                        console.error('Error completo al consultar GetDiasPermitidos:', err);
-
-                        Swal.fire({
-
+                    console.error('Error completo al consultar GetDiasPermitidos:', err);
+                    Swal.fire({
                         title: 'Error de conexión',
-
-                        html: 'No se pudo obtener los días permitidos.<br><small>Verifica que el servidor esté actualizado o contacta al administrador.</small>',
-
-                        confirmButtonText: 'Etendido',
-
+                        html: 'No se pudo obtener los días permitidos.<br><small>Verifica que el servidor esté actualizado.</small>',
+                        confirmButtonText: 'Entendido',
                         confirmButtonColor: '#007bff'
-
-                });
-
-                diasInput.max = 60;
-
-                diasInput.value = 0;
-
+                    });
+                    diasInput.max = 60;
+                    diasInput.value = 0;
                 }
-
             });
+        }
 
 
 

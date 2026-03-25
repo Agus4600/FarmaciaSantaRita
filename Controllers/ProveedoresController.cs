@@ -295,7 +295,7 @@ namespace FarmaciaSantaRita.Controllers
 
                         // REASIGNACIÓN DE BOLETAS (CORREGIDO)
                         var boletasHuérfanas = _context.Boleta
-                            .Where(b => b.Idproveedor == ID_PROVEEDOR_ARCHIVO)
+                            .Where(b => b.Idproveedor == 0)
                             .ToList();
 
                         foreach (var boleta in boletasHuérfanas)
@@ -382,8 +382,6 @@ namespace FarmaciaSantaRita.Controllers
             if (ids == null || !ids.Any())
                 return BadRequest(new { mensaje = "No se recibieron proveedores para eliminar." });
 
-            const int ID_PROVEEDOR_ARCHIVO = 8;   // ← Cambia por el ID real de "Proveedor Eliminado"
-
             try
             {
                 var proveedoresAEliminar = await _context.Proveedors
@@ -398,14 +396,14 @@ namespace FarmaciaSantaRita.Controllers
 
                 foreach (var proveedor in proveedoresAEliminar)
                 {
-                    // Reasignar boletas al proveedor "archivo"
+                    // Reasignar boletas a "huérfano" (ID = 0)
                     var boletas = await _context.Boleta
                         .Where(b => b.Idproveedor == proveedor.Idproveedor)
                         .ToListAsync();
 
                     foreach (var boleta in boletas)
                     {
-                        boleta.Idproveedor = ID_PROVEEDOR_ARCHIVO;   // ← Aquí es clave
+                        boleta.Idproveedor = 0;        // ← Clave: ponemos 0
                         boletasReasignadas++;
                     }
 
@@ -417,7 +415,7 @@ namespace FarmaciaSantaRita.Controllers
 
                 string mensaje = $"Se eliminaron {proveedoresAEliminar.Count} proveedor(es) permanentemente.";
                 if (boletasReasignadas > 0)
-                    mensaje += $" Se reasignaron {boletasReasignadas} boleta(s) al proveedor 'Proveedor Eliminado'.";
+                    mensaje += $" Se reasignaron {boletasReasignadas} boleta(s) como huérfanas.";
 
                 return Ok(new { mensaje });
             }

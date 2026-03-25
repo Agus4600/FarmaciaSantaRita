@@ -173,7 +173,7 @@
         const cuerpo = document.getElementById("cuerpoTablaRestaurar");
         const inputBusqueda = document.getElementById("buscarRestaurar");
 
-        function renderizarTabla(filtro = "") {
+                function renderizarTabla(filtro = "") {
             const query = filtro.toLowerCase();
             const filtrados = eliminadosFull ? eliminadosFull.filter(p =>
                 (p.nombreProveedor || "").toLowerCase().includes(query)

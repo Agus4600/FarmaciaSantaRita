@@ -385,7 +385,7 @@ namespace FarmaciaSantaRita.Controllers
             if (ids == null || !ids.Any())
                 return BadRequest(new { mensaje = "No se recibieron proveedores para eliminar." });
 
-            const int ID_PROVEEDOR_ARCHIVO = 999;   // ← Cambia este número por el ID real de "Proveedor Eliminado"
+            const int ID_PROVEEDOR_ARCHIVO = 8;   // ← Cambia este número por el ID real de "Proveedor Eliminado"
 
             try
             {

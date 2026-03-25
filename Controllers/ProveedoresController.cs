@@ -79,6 +79,10 @@ namespace FarmaciaSantaRita.Controllers
             return View();
         }
 
+
+
+
+
         [HttpGet]
         public IActionResult Boletas(string proveedor)
         {
@@ -123,11 +127,18 @@ namespace FarmaciaSantaRita.Controllers
                 new { idProveedor = proveedorEncontrado.Idproveedor, nombreMostrar = proveedorEncontrado.NombreProveedor });
         }
 
+
+
+
         [HttpGet]
         public IActionResult Inasistencia(string origen = null, int idProveedor = 0)
         {
             return RedirectToAction("Inasistencia", "Inasistencia", new { origen, idProveedor });
         }
+
+
+
+
 
         [HttpGet]
         public IActionResult VolverALaVistaOriginal(string origen, int idProveedor)
@@ -169,6 +180,9 @@ namespace FarmaciaSantaRita.Controllers
         {
             return View();
         }
+
+
+
 
         [HttpGet]
         public IActionResult Restaurar()
@@ -214,11 +228,14 @@ namespace FarmaciaSantaRita.Controllers
         }
 
 
+
+
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Registrar(Proveedor proveedor)
         {
-            // 1. Validar campos básicos
             if (string.IsNullOrWhiteSpace(proveedor.NombreProveedor) ||
                 string.IsNullOrWhiteSpace(proveedor.TelefonoProveedor) ||
                 string.IsNullOrWhiteSpace(proveedor.CorreoProveedor))
@@ -227,7 +244,7 @@ namespace FarmaciaSantaRita.Controllers
                 return RedirectToAction("Registrar");
             }
 
-            // 2. Validación de Correo más flexible (Quitamos la lista de dominios fijos)
+            // Validación de correo
             var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
             if (!emailRegex.IsMatch(proveedor.CorreoProveedor))
             {
@@ -237,10 +254,48 @@ namespace FarmaciaSantaRita.Controllers
 
             try
             {
-                proveedor.EstadoProveedor = "Activo";
-                proveedor.Eliminado = false; // Aseguramos que no nazca eliminado
+                // 1. Verificar si ya existe un proveedor con el mismo nombre (activo o eliminado)
+                var proveedorExistente = _context.Proveedors
+                    .IgnoreQueryFilters()
+                    .FirstOrDefault(p => p.NombreProveedor.Trim().ToLower() == proveedor.NombreProveedor.Trim().ToLower());
 
-                // 3. Guardado directo
+                if (proveedorExistente != null)
+                {
+                    // Si existe pero está eliminado → lo reactivamos
+                    if (proveedorExistente.Eliminado)
+                    {
+                        proveedorExistente.Eliminado = false;
+                        proveedorExistente.EstadoProveedor = "Activo";
+                        proveedorExistente.TelefonoProveedor = proveedor.TelefonoProveedor;
+                        proveedorExistente.CorreoProveedor = proveedor.CorreoProveedor;
+                        _context.SaveChanges();
+
+                        // Reasignar boletas huérfanas (las que quedaron sin proveedor)
+                        var boletasHuérfanas = _context.Boleta
+                            .Where(b => b.Idproveedor == 0 || b.Idproveedor == null) // boletas sin proveedor
+                            .ToList();
+
+                        foreach (var boleta in boletasHuérfanas)
+                        {
+                            boleta.Idproveedor = proveedorExistente.Idproveedor;
+                        }
+
+                        _context.SaveChanges();
+
+                        TempData["MensajeExito"] = "Proveedor reactivado correctamente. Las boletas huérfanas han sido reasignadas.";
+                        return RedirectToAction("Registrar");
+                    }
+                    else
+                    {
+                        TempData["MensajeError"] = "Ya existe un proveedor activo con ese nombre.";
+                        return RedirectToAction("Registrar");
+                    }
+                }
+
+                // 2. Si no existe → lo creamos normalmente
+                proveedor.EstadoProveedor = "Activo";
+                proveedor.Eliminado = false;
+
                 _context.Proveedors.Add(proveedor);
                 _context.SaveChanges();
 
@@ -249,12 +304,16 @@ namespace FarmaciaSantaRita.Controllers
             }
             catch (Exception ex)
             {
-                // Esto te dirá exactamente qué falló en la consola
                 _logger.LogError(ex, "Error al registrar proveedor");
-                TempData["MensajeError"] = "Error interno: " + ex.InnerException?.Message ?? ex.Message;
+                TempData["MensajeError"] = "Error interno: " + (ex.InnerException?.Message ?? ex.Message);
                 return RedirectToAction("Registrar");
             }
         }
+
+
+
+
+
 
         // ... (EliminarSeleccionados, EliminarPermanente, RestaurarSeleccionados permanecen iguales)
         // Solo los copio para que el archivo esté completo.
@@ -297,29 +356,13 @@ namespace FarmaciaSantaRita.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EliminarPermanente([FromBody] List<int> ids)   // ← Agregamos "async Task"
+        public async Task<IActionResult> EliminarPermanente([FromBody] List<int> ids)
         {
             if (ids == null || !ids.Any())
                 return BadRequest(new { mensaje = "No se recibieron proveedores para eliminar." });
 
-            const int ID_PROVEEDOR_ARCHIVO = 1;   // ← Cambia este número si tu proveedor archivo tiene otro ID
-
             try
             {
-                // Verificar que exista el proveedor "archivo"
-                var proveedorArchivo = await _context.Proveedors
-                    .IgnoreQueryFilters()
-                    .FirstOrDefaultAsync(p => p.Idproveedor == ID_PROVEEDOR_ARCHIVO);
-
-                if (proveedorArchivo == null)
-                {
-                    return StatusCode(500, new
-                    {
-                        mensaje = $"Error: No existe el proveedor con ID {ID_PROVEEDOR_ARCHIVO} para reasignar boletas."
-                    });
-                }
-
-                // Obtener los proveedores a eliminar
                 var proveedoresAEliminar = await _context.Proveedors
                     .IgnoreQueryFilters()
                     .Where(p => ids.Contains(p.Idproveedor))
@@ -328,32 +371,20 @@ namespace FarmaciaSantaRita.Controllers
                 if (!proveedoresAEliminar.Any())
                     return NotFound(new { mensaje = "No se encontraron los proveedores seleccionados." });
 
-                int boletasReasignadas = 0;
-
+                // Solo marcamos como eliminado (soft delete) - NO borramos las boletas
                 foreach (var proveedor in proveedoresAEliminar)
                 {
-                    // Reasignar boletas
-                    var boletas = await _context.Boleta
-                        .Where(b => b.Idproveedor == proveedor.Idproveedor)
-                        .ToListAsync();
-
-                    foreach (var boleta in boletas)
-                    {
-                        boleta.Idproveedor = ID_PROVEEDOR_ARCHIVO;
-                        boletasReasignadas++;
-                    }
-
-                    // Eliminar el proveedor permanentemente
-                    _context.Proveedors.Remove(proveedor);
+                    proveedor.Eliminado = true;
+                    proveedor.EstadoProveedor = "Eliminado Permanentemente";
                 }
 
                 await _context.SaveChangesAsync();
 
-                string mensaje = $"Se eliminaron {proveedoresAEliminar.Count} proveedor(es) permanentemente.";
-                if (boletasReasignadas > 0)
-                    mensaje += $" Se reasignaron {boletasReasignadas} boleta(s) al proveedor archivo.";
-
-                return Ok(new { mensaje });
+                return Ok(new
+                {
+                    mensaje = $"Se eliminaron {proveedoresAEliminar.Count} proveedor(es) permanentemente. " +
+                              "Las boletas asociadas se mantendrán y se reasignarán automáticamente si se registra nuevamente el mismo nombre."
+                });
             }
             catch (Exception ex)
             {

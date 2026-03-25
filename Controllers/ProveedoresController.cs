@@ -293,7 +293,7 @@ namespace FarmaciaSantaRita.Controllers
 
                         _context.SaveChanges();
 
-                        // REASIGNACIÓN DE BOLETAS (CORREGIDO)
+                        // REASIGNACIÓN DE BOLETAS HUÉRFANAS (ID = 0)
                         var boletasHuérfanas = _context.Boleta
                             .Where(b => b.Idproveedor == 0)
                             .ToList();
@@ -384,6 +384,7 @@ namespace FarmaciaSantaRita.Controllers
 
             try
             {
+                // Obtener los proveedores a eliminar
                 var proveedoresAEliminar = await _context.Proveedors
                     .IgnoreQueryFilters()
                     .Where(p => ids.Contains(p.Idproveedor))
@@ -394,27 +395,27 @@ namespace FarmaciaSantaRita.Controllers
 
                 int boletasReasignadas = 0;
 
-                foreach (var proveedor in proveedoresAEliminar)
+                // Reasignar todas las boletas a ID = 0 (huérfanas)
+                var idsProveedores = proveedoresAEliminar.Select(p => p.Idproveedor).ToList();
+
+                var boletas = await _context.Boleta
+                    .Where(b => idsProveedores.Contains(b.Idproveedor))
+                    .ToListAsync();
+
+                foreach (var boleta in boletas)
                 {
-                    // Reasignar boletas a huérfano (ID = 0)
-                    var boletas = await _context.Boleta
-                        .Where(b => b.Idproveedor == proveedor.Idproveedor)
-                        .ToListAsync();
-
-                    foreach (var boleta in boletas)
-                    {
-                        boleta.Idproveedor = 0;
-                        boletasReasignadas++;
-                    }
-
-                    _context.Proveedors.Remove(proveedor);
+                    boleta.Idproveedor = 0;        // ← Esto es lo que querías
+                    boletasReasignadas++;
                 }
+
+                // Eliminar permanentemente los proveedores (hard delete)
+                _context.Proveedors.RemoveRange(proveedoresAEliminar);
 
                 await _context.SaveChangesAsync();
 
                 string mensaje = $"Se eliminaron {proveedoresAEliminar.Count} proveedor(es) permanentemente.";
                 if (boletasReasignadas > 0)
-                    mensaje += $" Se marcaron {boletasReasignadas} boleta(s) como huérfanas (listas para reasignar).";
+                    mensaje += $" Se marcaron {boletasReasignadas} boleta(s) como huérfanas (Idproveedor = 0).";
 
                 return Ok(new { mensaje });
             }

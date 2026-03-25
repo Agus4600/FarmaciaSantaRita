@@ -259,7 +259,7 @@ namespace FarmaciaSantaRita.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Registrar(Proveedor proveedor)
+        public async Task<IActionResult> Registrar(Proveedor proveedor)   // ← Agregado "async Task"
         {
             if (string.IsNullOrWhiteSpace(proveedor.NombreProveedor) ||
                 string.IsNullOrWhiteSpace(proveedor.TelefonoProveedor) ||
@@ -284,6 +284,7 @@ namespace FarmaciaSantaRita.Controllers
 
                 if (proveedorExistente != null)
                 {
+                    // Si existe pero está eliminado → lo reactivamos
                     if (proveedorExistente.Eliminado)
                     {
                         proveedorExistente.Eliminado = false;
@@ -293,17 +294,27 @@ namespace FarmaciaSantaRita.Controllers
 
                         _context.SaveChanges();
 
-                        // REASIGNACIÓN DE BOLETAS HUÉRFANAS (ID = 0)
-                        var boletasHuérfanas = _context.Boleta
-                            .Where(b => b.Idproveedor == 0)
-                            .ToList();
+                        // ==================== REASIGNACIÓN DE BOLETAS ====================
+                        // Primero intentamos con el ID viejo del proveedor
+                        var boletasAntiguas = await _context.Boleta
+                            .Where(b => b.Idproveedor == proveedorExistente.Idproveedor)
+                            .ToListAsync();
 
-                        foreach (var boleta in boletasHuérfanas)
+                        // Si no encontramos boletas con ese ID, buscamos las huérfanas (ID = 0)
+                        if (!boletasAntiguas.Any())
+                        {
+                            boletasAntiguas = await _context.Boleta
+                                .Where(b => b.Idproveedor == 0)
+                                .ToListAsync();
+                        }
+
+                        foreach (var boleta in boletasAntiguas)
                         {
                             boleta.Idproveedor = proveedorExistente.Idproveedor;
                         }
 
-                        _context.SaveChanges();
+                        await _context.SaveChangesAsync();
+                        // ================================================================
 
                         TempData["MensajeExito"] = "Proveedor reactivado correctamente. Las boletas han sido reasignadas.";
                         return RedirectToAction("Registrar");
@@ -384,7 +395,6 @@ namespace FarmaciaSantaRita.Controllers
 
             try
             {
-                // Solo obtenemos los proveedores
                 var proveedoresAEliminar = await _context.Proveedors
                     .IgnoreQueryFilters()
                     .Where(p => ids.Contains(p.Idproveedor))
@@ -393,15 +403,7 @@ namespace FarmaciaSantaRita.Controllers
                 if (!proveedoresAEliminar.Any())
                     return NotFound(new { mensaje = "No se encontraron los proveedores seleccionados." });
 
-                // Reasignamos boletas a 0 de forma ligera
-                var idsProveedores = proveedoresAEliminar.Select(p => p.Idproveedor).ToList();
-
-                await _context.Boleta
-                    .Where(b => idsProveedores.Contains(b.Idproveedor))
-                    .ExecuteUpdateAsync(setters => setters
-                        .SetProperty(b => b.Idproveedor, 0));
-
-                // Eliminamos los proveedores
+                // Solo eliminamos los proveedores (hard delete)
                 _context.Proveedors.RemoveRange(proveedoresAEliminar);
 
                 await _context.SaveChangesAsync();
@@ -409,7 +411,7 @@ namespace FarmaciaSantaRita.Controllers
                 return Ok(new
                 {
                     mensaje = $"Se eliminaron {proveedoresAEliminar.Count} proveedor(es) permanentemente. " +
-                              "Las boletas quedaron como huérfanas (Idproveedor = 0)."
+                              "Las boletas se reasignarán automáticamente cuando registres el mismo nombre."
                 });
             }
             catch (Exception ex)

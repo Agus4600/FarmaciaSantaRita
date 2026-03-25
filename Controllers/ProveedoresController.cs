@@ -16,6 +16,7 @@ namespace FarmaciaSantaRita.Controllers
         private readonly FarmaciabdContext _context;
         private readonly IAntiforgery _antiforgery;
         private readonly ILogger<ProveedoresController> _logger;
+        private const int ID_PROVEEDOR_ARCHIVO = 8;
 
         // ⭐ CONSTANTE PARA DROGUERÍA SUIZA NORMALIZADA ⭐
         private const string NOMBRE_SUIZA_NORMALIZADO = "drogueriasuiza";
@@ -268,7 +269,6 @@ namespace FarmaciaSantaRita.Controllers
                 return RedirectToAction("Registrar");
             }
 
-            // Validación de correo
             var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
             if (!emailRegex.IsMatch(proveedor.CorreoProveedor))
             {
@@ -278,25 +278,24 @@ namespace FarmaciaSantaRita.Controllers
 
             try
             {
-                // 1. Verificar si ya existe un proveedor con el mismo nombre (activo o eliminado)
                 var proveedorExistente = _context.Proveedors
                     .IgnoreQueryFilters()
                     .FirstOrDefault(p => p.NombreProveedor.Trim().ToLower() == proveedor.NombreProveedor.Trim().ToLower());
 
                 if (proveedorExistente != null)
                 {
-                    // Si existe pero está eliminado → lo reactivamos
                     if (proveedorExistente.Eliminado)
                     {
                         proveedorExistente.Eliminado = false;
                         proveedorExistente.EstadoProveedor = "Activo";
                         proveedorExistente.TelefonoProveedor = proveedor.TelefonoProveedor;
                         proveedorExistente.CorreoProveedor = proveedor.CorreoProveedor;
+
                         _context.SaveChanges();
 
-                        // Reasignar boletas huérfanas (las que quedaron sin proveedor)
+                        // REASIGNACIÓN DE BOLETAS (CORREGIDO)
                         var boletasHuérfanas = _context.Boleta
-                            .Where(b => b.Idproveedor == 0 || b.Idproveedor == null) // boletas sin proveedor
+                            .Where(b => b.Idproveedor == ID_PROVEEDOR_ARCHIVO)
                             .ToList();
 
                         foreach (var boleta in boletasHuérfanas)
@@ -306,7 +305,7 @@ namespace FarmaciaSantaRita.Controllers
 
                         _context.SaveChanges();
 
-                        TempData["MensajeExito"] = "Proveedor reactivado correctamente. Las boletas huérfanas han sido reasignadas.";
+                        TempData["MensajeExito"] = "Proveedor reactivado correctamente. Las boletas han sido reasignadas.";
                         return RedirectToAction("Registrar");
                     }
                     else
@@ -316,10 +315,9 @@ namespace FarmaciaSantaRita.Controllers
                     }
                 }
 
-                // 2. Si no existe → lo creamos normalmente
+                // Crear nuevo proveedor
                 proveedor.EstadoProveedor = "Activo";
                 proveedor.Eliminado = false;
-
                 _context.Proveedors.Add(proveedor);
                 _context.SaveChanges();
 
@@ -377,7 +375,6 @@ namespace FarmaciaSantaRita.Controllers
 
 
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EliminarPermanente([FromBody] List<int> ids)
@@ -385,7 +382,7 @@ namespace FarmaciaSantaRita.Controllers
             if (ids == null || !ids.Any())
                 return BadRequest(new { mensaje = "No se recibieron proveedores para eliminar." });
 
-            const int ID_PROVEEDOR_ARCHIVO = 8;   // ← Cambia este número por el ID real de "Proveedor Eliminado"
+            const int ID_PROVEEDOR_ARCHIVO = 8;   // ← Cambia por el ID real de "Proveedor Eliminado"
 
             try
             {
@@ -401,18 +398,18 @@ namespace FarmaciaSantaRita.Controllers
 
                 foreach (var proveedor in proveedoresAEliminar)
                 {
-                    // Reasignar boletas
+                    // Reasignar boletas al proveedor "archivo"
                     var boletas = await _context.Boleta
                         .Where(b => b.Idproveedor == proveedor.Idproveedor)
                         .ToListAsync();
 
                     foreach (var boleta in boletas)
                     {
-                        boleta.Idproveedor = ID_PROVEEDOR_ARCHIVO;
+                        boleta.Idproveedor = ID_PROVEEDOR_ARCHIVO;   // ← Aquí es clave
                         boletasReasignadas++;
                     }
 
-                    // ELIMINACIÓN REAL (Hard Delete)
+                    // Eliminación real del proveedor
                     _context.Proveedors.Remove(proveedor);
                 }
 

@@ -290,55 +290,75 @@ namespace FarmaciaSantaRita.Controllers
             }
         }
 
+
+
+
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult EliminarPermanente([FromBody] List<int> ids)
+        public async Task<IActionResult> EliminarPermanente([FromBody] List<int> ids)   // ← Agregamos "async Task"
         {
             if (ids == null || !ids.Any())
                 return BadRequest(new { mensaje = "No se recibieron proveedores para eliminar." });
 
-            const int ID_PROVEEDOR_ARCHIVO = 8;
+            const int ID_PROVEEDOR_ARCHIVO = 8;   // ← Cambia este número si tu proveedor archivo tiene otro ID
 
             try
             {
-                var proveedoresAEliminar = _context.Proveedors
+                // Verificar que exista el proveedor "archivo"
+                var proveedorArchivo = await _context.Proveedors
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(p => p.Idproveedor == ID_PROVEEDOR_ARCHIVO);
+
+                if (proveedorArchivo == null)
+                {
+                    return StatusCode(500, new
+                    {
+                        mensaje = $"Error: No existe el proveedor con ID {ID_PROVEEDOR_ARCHIVO} para reasignar boletas."
+                    });
+                }
+
+                // Obtener los proveedores a eliminar
+                var proveedoresAEliminar = await _context.Proveedors
                     .IgnoreQueryFilters()
                     .Where(p => ids.Contains(p.Idproveedor))
-                    .ToList();
+                    .ToListAsync();
 
                 if (!proveedoresAEliminar.Any())
                     return NotFound(new { mensaje = "No se encontraron los proveedores seleccionados." });
 
                 int boletasReasignadas = 0;
+
                 foreach (var proveedor in proveedoresAEliminar)
                 {
-                    var boletas = _context.Boleta
+                    // Reasignar boletas
+                    var boletas = await _context.Boleta
                         .Where(b => b.Idproveedor == proveedor.Idproveedor)
-                        .ToList();
+                        .ToListAsync();
 
                     foreach (var boleta in boletas)
                     {
                         boleta.Idproveedor = ID_PROVEEDOR_ARCHIVO;
+                        boletasReasignadas++;
                     }
 
-                    boletasReasignadas += boletas.Count;
+                    // Eliminar el proveedor permanentemente
                     _context.Proveedors.Remove(proveedor);
                 }
 
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
 
-                string mensaje = "Proveedor(es) eliminado(s) permanentemente.";
+                string mensaje = $"Se eliminaron {proveedoresAEliminar.Count} proveedor(es) permanentemente.";
                 if (boletasReasignadas > 0)
-                    mensaje += $" Se reasignaron {boletasReasignadas} boleta(s) al proveedor 'Proveedor Eliminado'.";
-                else
-                    mensaje += " No había boletas asociadas.";
+                    mensaje += $" Se reasignaron {boletasReasignadas} boleta(s) al proveedor archivo.";
 
                 return Ok(new { mensaje });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al eliminar permanentemente proveedores.");
-                return StatusCode(500, new { mensaje = "Error al eliminar: " + ex.Message });
+                return StatusCode(500, new { mensaje = "Error interno al eliminar: " + ex.Message });
             }
         }
 

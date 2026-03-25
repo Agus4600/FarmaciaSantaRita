@@ -203,12 +203,15 @@
         const cuerpo = document.getElementById("cuerpoTabla");
         const inputBusqueda = document.getElementById("buscarProveedor");
 
-        function renderizarTabla(filtro = "") {
+                function renderizarTabla(filtro = "") {
             const query = filtro.toLowerCase();
             const filtrados = proveedoresFull ? proveedoresFull.filter(p =>
-                (p.nombreProveedor || "").toLowerCase().includes(query) ||
-                (p.correoProveedor || "").toLowerCase().includes(query) ||
-                (p.telefonoProveedor || "").toLowerCase().includes(query)
+                p.nombreProveedor !== "Proveedor Eliminado" &&   // Excluimos siempre
+                (
+                    (p.nombreProveedor || "").toLowerCase().includes(query) ||
+                    (p.correoProveedor || "").toLowerCase().includes(query) ||
+                    (p.telefonoProveedor || "").toLowerCase().includes(query)
+                )
             ) : [];
 
             let htmlContent = "";
@@ -227,7 +230,7 @@
 
             cuerpo.innerHTML = htmlContent;
 
-            // Re-adjuntar eventos a los checkboxes individuales
+            // Re-adjuntar eventos
             document.querySelectorAll(".seleccionarFila").forEach(cb => {
                 cb.onclick = function() {
                     resaltarFila(this);
@@ -235,7 +238,6 @@
                 };
             });
 
-            // Actualizar estado del checkbox principal
             actualizarEstadoSelectAll();
         }
 

@@ -49,11 +49,35 @@ namespace FarmaciaSantaRita.Controllers
         // ==========================================================
         public IActionResult Index()
         {
-            var proveedores = _context.Proveedors.ToList()
-                .Where(p => !p.Eliminado)
+            // === CREACIÓN AUTOMÁTICA DEL PROVEEDOR "ELIMINADO" (solo una vez) ===
+            var proveedorEliminado = _context.Proveedors
+                .IgnoreQueryFilters()
+                .FirstOrDefault(p => p.NombreProveedor == "Proveedor Eliminado");
+
+            if (proveedorEliminado == null)
+            {
+                proveedorEliminado = new Proveedor
+                {
+                    NombreProveedor = "Proveedor Eliminado",
+                    EstadoProveedor = "Inactivo",
+                    CorreoProveedor = "eliminado@sistemafarmacia.com",
+                    TelefonoProveedor = "0000000000",
+                    Eliminado = false
+                };
+
+                _context.Proveedors.Add(proveedorEliminado);
+                _context.SaveChanges();
+                Console.WriteLine($"Proveedor 'Proveedor Eliminado' creado con ID: {proveedorEliminado.Idproveedor}");
+            }
+
+            // === LISTA PRINCIPAL: EXCLUIMOS "Proveedor Eliminado" ===
+            var proveedores = _context.Proveedors
+                .Where(p => !p.Eliminado && p.NombreProveedor != "Proveedor Eliminado")
                 .ToList();
+
             var tokens = _antiforgery.GetAndStoreTokens(HttpContext);
             ViewData["RequestVerificationToken"] = tokens.RequestToken;
+
             return View(proveedores);
         }
 
@@ -361,6 +385,8 @@ namespace FarmaciaSantaRita.Controllers
             if (ids == null || !ids.Any())
                 return BadRequest(new { mensaje = "No se recibieron proveedores para eliminar." });
 
+            const int ID_PROVEEDOR_ARCHIVO = 999;   // ← Cambia este número por el ID real de "Proveedor Eliminado"
+
             try
             {
                 var proveedoresAEliminar = await _context.Proveedors
@@ -371,20 +397,32 @@ namespace FarmaciaSantaRita.Controllers
                 if (!proveedoresAEliminar.Any())
                     return NotFound(new { mensaje = "No se encontraron los proveedores seleccionados." });
 
-                // Solo marcamos como eliminado (soft delete) - NO borramos las boletas
+                int boletasReasignadas = 0;
+
                 foreach (var proveedor in proveedoresAEliminar)
                 {
-                    proveedor.Eliminado = true;
-                    proveedor.EstadoProveedor = "Eliminado Permanentemente";
+                    // Reasignar boletas
+                    var boletas = await _context.Boleta
+                        .Where(b => b.Idproveedor == proveedor.Idproveedor)
+                        .ToListAsync();
+
+                    foreach (var boleta in boletas)
+                    {
+                        boleta.Idproveedor = ID_PROVEEDOR_ARCHIVO;
+                        boletasReasignadas++;
+                    }
+
+                    // ELIMINACIÓN REAL (Hard Delete)
+                    _context.Proveedors.Remove(proveedor);
                 }
 
                 await _context.SaveChangesAsync();
 
-                return Ok(new
-                {
-                    mensaje = $"Se eliminaron {proveedoresAEliminar.Count} proveedor(es) permanentemente. " +
-                              "Las boletas asociadas se mantendrán y se reasignarán automáticamente si se registra nuevamente el mismo nombre."
-                });
+                string mensaje = $"Se eliminaron {proveedoresAEliminar.Count} proveedor(es) permanentemente.";
+                if (boletasReasignadas > 0)
+                    mensaje += $" Se reasignaron {boletasReasignadas} boleta(s) al proveedor 'Proveedor Eliminado'.";
+
+                return Ok(new { mensaje });
             }
             catch (Exception ex)
             {

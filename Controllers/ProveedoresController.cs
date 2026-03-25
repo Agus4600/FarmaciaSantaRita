@@ -384,7 +384,7 @@ namespace FarmaciaSantaRita.Controllers
 
             try
             {
-                // Obtener los proveedores a eliminar
+                // Solo obtenemos los proveedores
                 var proveedoresAEliminar = await _context.Proveedors
                     .IgnoreQueryFilters()
                     .Where(p => ids.Contains(p.Idproveedor))
@@ -393,31 +393,24 @@ namespace FarmaciaSantaRita.Controllers
                 if (!proveedoresAEliminar.Any())
                     return NotFound(new { mensaje = "No se encontraron los proveedores seleccionados." });
 
-                int boletasReasignadas = 0;
-
-                // Reasignar todas las boletas a ID = 0 (huérfanas)
+                // Reasignamos boletas a 0 de forma ligera
                 var idsProveedores = proveedoresAEliminar.Select(p => p.Idproveedor).ToList();
 
-                var boletas = await _context.Boleta
+                await _context.Boleta
                     .Where(b => idsProveedores.Contains(b.Idproveedor))
-                    .ToListAsync();
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(b => b.Idproveedor, 0));
 
-                foreach (var boleta in boletas)
-                {
-                    boleta.Idproveedor = 0;        // ← Esto es lo que querías
-                    boletasReasignadas++;
-                }
-
-                // Eliminar permanentemente los proveedores (hard delete)
+                // Eliminamos los proveedores
                 _context.Proveedors.RemoveRange(proveedoresAEliminar);
 
                 await _context.SaveChangesAsync();
 
-                string mensaje = $"Se eliminaron {proveedoresAEliminar.Count} proveedor(es) permanentemente.";
-                if (boletasReasignadas > 0)
-                    mensaje += $" Se marcaron {boletasReasignadas} boleta(s) como huérfanas (Idproveedor = 0).";
-
-                return Ok(new { mensaje });
+                return Ok(new
+                {
+                    mensaje = $"Se eliminaron {proveedoresAEliminar.Count} proveedor(es) permanentemente. " +
+                              "Las boletas quedaron como huérfanas (Idproveedor = 0)."
+                });
             }
             catch (Exception ex)
             {

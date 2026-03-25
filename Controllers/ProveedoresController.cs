@@ -396,18 +396,17 @@ namespace FarmaciaSantaRita.Controllers
 
                 foreach (var proveedor in proveedoresAEliminar)
                 {
-                    // Reasignar boletas a "huérfano" (ID = 0)
+                    // Reasignar boletas a huérfano (ID = 0)
                     var boletas = await _context.Boleta
                         .Where(b => b.Idproveedor == proveedor.Idproveedor)
                         .ToListAsync();
 
                     foreach (var boleta in boletas)
                     {
-                        boleta.Idproveedor = 0;        // ← Clave: ponemos 0
+                        boleta.Idproveedor = 0;
                         boletasReasignadas++;
                     }
 
-                    // Eliminación real del proveedor
                     _context.Proveedors.Remove(proveedor);
                 }
 
@@ -415,7 +414,7 @@ namespace FarmaciaSantaRita.Controllers
 
                 string mensaje = $"Se eliminaron {proveedoresAEliminar.Count} proveedor(es) permanentemente.";
                 if (boletasReasignadas > 0)
-                    mensaje += $" Se reasignaron {boletasReasignadas} boleta(s) como huérfanas.";
+                    mensaje += $" Se marcaron {boletasReasignadas} boleta(s) como huérfanas (listas para reasignar).";
 
                 return Ok(new { mensaje });
             }

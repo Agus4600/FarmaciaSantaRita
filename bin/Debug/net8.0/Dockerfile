@@ -1,21 +1,34 @@
-﻿# Usa la imagen oficial de ASP.NET para ejecutar la aplicación
+﻿# ================================================
+# Etapa 1: Base (Runtime) - Para ejecutar la app
+# ================================================
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 8080
 
-# Usa el SDK de .NET 8 para compilar el código
+# ================================================
+# Etapa 2: Build - Para compilar
+# ================================================
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["FarmaciaSantaRita.csproj", "."]
+
+# Copiar solo el csproj primero (mejora caché de Docker)
+COPY ["FarmaciaSantaRita.csproj", "./"]
 RUN dotnet restore "FarmaciaSantaRita.csproj"
+
+# Copiar el resto del código fuente
 COPY . .
+WORKDIR "/src"
 RUN dotnet build "FarmaciaSantaRita.csproj" -c Release -o /app/build
 
-# Publica la aplicación
+# ================================================
+# Etapa 3: Publish - Preparar para producción
+# ================================================
 FROM build AS publish
 RUN dotnet publish "FarmaciaSantaRita.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# Capa final: copia los archivos publicados y define cómo arrancar
+# ================================================
+# Etapa 4: Final - Imagen ligera para Railway
+# ================================================
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .

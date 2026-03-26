@@ -403,7 +403,14 @@ namespace FarmaciaSantaRita.Controllers
                 if (!proveedoresAEliminar.Any())
                     return NotFound(new { mensaje = "No se encontraron los proveedores seleccionados." });
 
-                // Solo eliminamos los proveedores (hard delete)
+                // 1. Reasignar todas las boletas a 0 ANTES de eliminar el proveedor
+                var idsProveedores = proveedoresAEliminar.Select(p => p.Idproveedor).ToList();
+
+                await _context.Boleta
+                    .Where(b => idsProveedores.Contains(b.Idproveedor))
+                    .ExecuteUpdateAsync(b => b.SetProperty(x => x.Idproveedor, 0));
+
+                // 2. Ahora sí podemos eliminar los proveedores
                 _context.Proveedors.RemoveRange(proveedoresAEliminar);
 
                 await _context.SaveChangesAsync();
@@ -411,7 +418,7 @@ namespace FarmaciaSantaRita.Controllers
                 return Ok(new
                 {
                     mensaje = $"Se eliminaron {proveedoresAEliminar.Count} proveedor(es) permanentemente. " +
-                              "Las boletas se reasignarán automáticamente cuando registres el mismo nombre."
+                              "Las boletas fueron marcadas como huérfanas (Idproveedor = 0)."
                 });
             }
             catch (Exception ex)

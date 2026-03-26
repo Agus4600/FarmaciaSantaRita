@@ -287,6 +287,8 @@ namespace FarmaciaSantaRita.Controllers
                     // Si existe pero está eliminado → lo reactivamos
                     if (proveedorExistente.Eliminado)
                     {
+                        int idNuevo = proveedorExistente.Idproveedor; // guardamos el nuevo ID
+
                         proveedorExistente.Eliminado = false;
                         proveedorExistente.EstadoProveedor = "Activo";
                         proveedorExistente.TelefonoProveedor = proveedor.TelefonoProveedor;
@@ -294,13 +296,12 @@ namespace FarmaciaSantaRita.Controllers
 
                         _context.SaveChanges();
 
-                        // ==================== REASIGNACIÓN DE BOLETAS ====================
-                        // Primero intentamos con el ID viejo del proveedor
+                        // Reasignar boletas que apuntaban al ID viejo del proveedor (incluso si ya fue eliminado)
                         var boletasAntiguas = await _context.Boleta
-                            .Where(b => b.Idproveedor == proveedorExistente.Idproveedor)
+                            .Where(b => b.Idproveedor == idNuevo)   // usamos el ID que tenía antes de ser eliminado
                             .ToListAsync();
 
-                        // Si no encontramos boletas con ese ID, buscamos las huérfanas (ID = 0)
+                        // Si no hay, buscamos las que quedaron en 0
                         if (!boletasAntiguas.Any())
                         {
                             boletasAntiguas = await _context.Boleta
@@ -310,11 +311,10 @@ namespace FarmaciaSantaRita.Controllers
 
                         foreach (var boleta in boletasAntiguas)
                         {
-                            boleta.Idproveedor = proveedorExistente.Idproveedor;
+                            boleta.Idproveedor = idNuevo;
                         }
 
                         await _context.SaveChangesAsync();
-                        // ================================================================
 
                         TempData["MensajeExito"] = "Proveedor reactivado correctamente. Las boletas han sido reasignadas.";
                         return RedirectToAction("Registrar");
@@ -403,14 +403,7 @@ namespace FarmaciaSantaRita.Controllers
                 if (!proveedoresAEliminar.Any())
                     return NotFound(new { mensaje = "No se encontraron los proveedores seleccionados." });
 
-                // 1. Reasignar todas las boletas a 0 ANTES de eliminar el proveedor
-                var idsProveedores = proveedoresAEliminar.Select(p => p.Idproveedor).ToList();
-
-                await _context.Boleta
-                    .Where(b => idsProveedores.Contains(b.Idproveedor))
-                    .ExecuteUpdateAsync(b => b.SetProperty(x => x.Idproveedor, 0));
-
-                // 2. Ahora sí podemos eliminar los proveedores
+                // Solo eliminamos el proveedor. Las boletas quedan con el ID viejo.
                 _context.Proveedors.RemoveRange(proveedoresAEliminar);
 
                 await _context.SaveChangesAsync();
@@ -418,7 +411,7 @@ namespace FarmaciaSantaRita.Controllers
                 return Ok(new
                 {
                     mensaje = $"Se eliminaron {proveedoresAEliminar.Count} proveedor(es) permanentemente. " +
-                              "Las boletas fueron marcadas como huérfanas (Idproveedor = 0)."
+                              "Las boletas se reasignarán automáticamente cuando registres el mismo nombre."
                 });
             }
             catch (Exception ex)

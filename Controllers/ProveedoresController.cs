@@ -284,11 +284,8 @@ namespace FarmaciaSantaRita.Controllers
 
                 if (proveedorExistente != null)
                 {
-                    // Si existe pero está eliminado → lo reactivamos
                     if (proveedorExistente.Eliminado)
                     {
-                        int idNuevoProveedor = proveedorExistente.Idproveedor; // guardamos el ID
-
                         proveedorExistente.Eliminado = false;
                         proveedorExistente.EstadoProveedor = "Activo";
                         proveedorExistente.TelefonoProveedor = proveedor.TelefonoProveedor;
@@ -296,13 +293,13 @@ namespace FarmaciaSantaRita.Controllers
 
                         _context.SaveChanges();
 
-                        // ==================== REASIGNACIÓN DE BOLETAS ====================
-                        // Primero intentamos con el ID del proveedor
+                        // ==================== REASIGNACIÓN DE BOLETAS POR NOMBRE ====================
+                        // Buscamos boletas que tengan el nombre del proveedor en la categoría (más confiable)
                         var boletasAntiguas = await _context.Boleta
-                            .Where(b => b.Idproveedor == idNuevoProveedor)
+                            .Where(b => b.Categoria.Contains(proveedorExistente.NombreProveedor))
                             .ToListAsync();
 
-                        // Si no encontramos boletas con ese ID, buscamos las huérfanas (ID = 0)
+                        // Si no encontramos por nombre, buscamos huérfanas con ID = 0
                         if (!boletasAntiguas.Any())
                         {
                             boletasAntiguas = await _context.Boleta
@@ -312,7 +309,7 @@ namespace FarmaciaSantaRita.Controllers
 
                         foreach (var boleta in boletasAntiguas)
                         {
-                            boleta.Idproveedor = idNuevoProveedor;
+                            boleta.Idproveedor = proveedorExistente.Idproveedor;
                         }
 
                         await _context.SaveChangesAsync();
@@ -344,7 +341,6 @@ namespace FarmaciaSantaRita.Controllers
                 return RedirectToAction("Registrar");
             }
         }
-
 
 
 
@@ -406,7 +402,7 @@ namespace FarmaciaSantaRita.Controllers
                 if (!proveedoresAEliminar.Any())
                     return NotFound(new { mensaje = "No se encontraron los proveedores seleccionados." });
 
-                // Solo eliminamos el proveedor. NO tocamos las boletas aquí.
+                // Solo eliminamos el proveedor. Las boletas quedan con el ID antiguo.
                 _context.Proveedors.RemoveRange(proveedoresAEliminar);
 
                 await _context.SaveChangesAsync();

@@ -394,6 +394,7 @@ namespace FarmaciaSantaRita.Controllers
 
             try
             {
+                // Buscamos los proveedores a eliminar
                 var proveedoresAEliminar = await _context.Proveedors
                     .IgnoreQueryFilters()
                     .Where(p => ids.Contains(p.Idproveedor))
@@ -402,14 +403,14 @@ namespace FarmaciaSantaRita.Controllers
                 if (!proveedoresAEliminar.Any())
                     return NotFound(new { mensaje = "No se encontraron los proveedores seleccionados." });
 
-                // Solo eliminamos el proveedor. Las boletas quedan con su Idproveedor anterior.
+                // Solo eliminamos los proveedores. Las boletas quedan intactas.
                 _context.Proveedors.RemoveRange(proveedoresAEliminar);
 
                 await _context.SaveChangesAsync();
 
                 return Ok(new
                 {
-                    mensaje = $"Se eliminaron {proveedoresAEliminar.Count} proveedor(es) permanentemente. Las boletas siguen existiendo en la BD."
+                    mensaje = $"Se eliminaron {proveedoresAEliminar.Count} proveedor(es) permanentemente. Las boletas siguen existiendo en la base de datos."
                 });
             }
             catch (Exception ex)

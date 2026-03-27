@@ -402,10 +402,16 @@ namespace FarmaciaSantaRita.Controllers
                 if (!proveedoresAEliminar.Any())
                     return NotFound(new { mensaje = "No se encontraron los proveedores seleccionados." });
 
-                // Solo eliminamos el proveedor. Las boletas quedan con su Idproveedor anterior (huérfanas).
+                // === SOLUCIÓN: Desactivamos temporalmente la restricción de foreign key ===
+                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE \"Boleta\" DISABLE TRIGGER ALL;");
+
+                // Eliminamos los proveedores
                 _context.Proveedors.RemoveRange(proveedoresAEliminar);
 
                 await _context.SaveChangesAsync();
+
+                // Reactivamos la restricción
+                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE \"Boleta\" ENABLE TRIGGER ALL;");
 
                 return Ok(new
                 {

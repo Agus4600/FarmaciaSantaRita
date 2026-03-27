@@ -402,7 +402,7 @@ namespace FarmaciaSantaRita.Controllers
                 if (!proveedoresAEliminar.Any())
                     return NotFound(new { mensaje = "No se encontraron los proveedores seleccionados." });
 
-                // Solo eliminamos el proveedor. Las boletas quedan intactas con su Idproveedor anterior.
+                // Solo eliminamos el proveedor. Las boletas quedan con su Idproveedor anterior (huérfanas).
                 _context.Proveedors.RemoveRange(proveedoresAEliminar);
 
                 await _context.SaveChangesAsync();

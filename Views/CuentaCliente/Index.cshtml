@@ -1126,12 +1126,11 @@
                 showDenyButton: true,
                 denyButtonText: 'Actualizar',
                 denyButtonColor: '#007bff',
-                showConfirmButton: false,        // Quitamos "Entendido"
+                showConfirmButton: false,
                 reverseButtons: true,
                 allowOutsideClick: false,
 
                 preDeny: () => {
-                    // Modo edición
                     Swal.update({
                         title: `<strong>Editar datos de ${nombre}</strong>`,
                         html: `
@@ -1158,24 +1157,51 @@
                         showCancelButton: true,
                         cancelButtonText: 'Cancelar',
                         confirmButtonText: 'Guardar Cambios',
-                        confirmButtonColor: '#007bff',   // Verde para "Guardar"
-                        showConfirmButton: true          // ← Aquí activamos el botón Guardar
+                        confirmButtonColor: '#007bff',
+                        showConfirmButton: true
                     });
 
-                    // Sobrescribimos la acción del botón "Guardar Cambios"
+                    // === VALIDACIÓN AL PULSAR "GUARDAR CAMBIOS" ===
                     Swal.getConfirmButton().onclick = async function (e) {
                         e.preventDefault();
 
-                        const nombreNuevo = document.getElementById('nombreEdit')?.value.trim() || nombre;
-                        const dniNuevo = document.getElementById('dniEdit')?.value.trim() || dni;
-                        const telefonoNuevo = document.getElementById('telefonoEdit')?.value.trim() || telefono;
-                        const direccionNuevo = document.getElementById('direccionEdit')?.value.trim() || direccion;
+                        const nombreNuevo = document.getElementById('nombreEdit').value.trim();
+                        const dniNuevo = document.getElementById('dniEdit').value.trim();
+                        const telefonoNuevo = document.getElementById('telefonoEdit').value.trim();
+                        const direccionNuevo = document.getElementById('direccionEdit').value.trim();
 
+                        // Quitar glow anterior de todos los campos
+                        document.querySelectorAll('#swalClienteDatos input').forEach(input => {
+                            input.classList.remove('outer-glow-error');
+                        });
+
+                        let hayError = false;
+                        let mensajeError = "Completa el campo a editar o pulsa el botón Cancelar";
+
+                        // Validar todos los campos
                         if (!nombreNuevo) {
-                            Swal.showValidationMessage('El nombre es obligatorio');
+                            document.getElementById('nombreEdit').classList.add('outer-glow-error');
+                            hayError = true;
+                        }
+                        if (!dniNuevo) {
+                            document.getElementById('dniEdit').classList.add('outer-glow-error');
+                            hayError = true;
+                        }
+                        if (!telefonoNuevo) {
+                            document.getElementById('telefonoEdit').classList.add('outer-glow-error');
+                            hayError = true;
+                        }
+                        if (!direccionNuevo) {
+                            document.getElementById('direccionEdit').classList.add('outer-glow-error');
+                            hayError = true;
+                        }
+
+                        if (hayError) {
+                            Swal.showValidationMessage(mensajeError);
                             return false;
                         }
 
+                        // Si todo está completo → guardamos
                         try {
                             const res = await fetch('/CuentaCliente/ActualizarCliente', {
                                 method: 'POST',

@@ -479,7 +479,8 @@
                         data-bs-toggle="offcanvas"
                         data-bs-target="#offcanvasUsuarios"
                         aria-controls="offcanvasUsuarios"
-                        @( !User.IsInRole("SuperAdmin") ? "disabled" : "" )>
+                        @( !User.IsInRole("SuperAdmin") ? "disabled" : "" )
+                        translate="no">
                     Administrar
                 </button>
 
@@ -500,30 +501,30 @@
                         <div class="tres-columnas">
                             <div class="grupo-campo">
                                 <label asp-for="Nombre">Nombre</label>
-                                <input asp-for="Nombre" class="form-control" id="Nombre" />
+                                <input asp-for="Nombre" class="form-control" id="Nombre" translate="no" />
                             </div>
                             <div class="grupo-campo">
                                 <label asp-for="Apellido">Apellido</label>
-                                <input asp-for="Apellido" class="form-control" id="Apellido" />
+                                <input asp-for="Apellido" class="form-control" id="Apellido" translate="no" />
                             </div>
                             <div class="grupo-campo">
                                 <label asp-for="NombreUsuario">Nombre de Usuario</label>
-                                <input asp-for="NombreUsuario" class="form-control" id="NombreUsuario" />
+                                <input asp-for="NombreUsuario" class="form-control" id="NombreUsuario" translate="no" />
                             </div>
                         </div>
 
                         <div class="tres-columnas">
                             <div class="grupo-campo">
                                 <label asp-for="Telefono">Teléfono</label>
-                                <input asp-for="Telefono" class="form-control" type="tel" id="Telefono" />
+                                <input asp-for="Telefono" class="form-control" type="tel" id="Telefono" translate="no" />
                             </div>
                             <div class="grupo-campo">
                                 <label asp-for="CorreoUsuario">Correo</label>
-                                <input asp-for="CorreoUsuario" class="form-control" type="email" id="CorreoUsuario" />
+                                <input asp-for="CorreoUsuario" class="form-control" type="email" id="CorreoUsuario" translate="no" />
                             </div>
                             <div class="grupo-campo">
                                 <label asp-for="Dni">DNI</label>
-                                <input asp-for="Dni" class="form-control" id="Dni" />
+                                <input asp-for="Dni" class="form-control" id="Dni" translate="no" />
                             </div>
                         </div>
 
@@ -534,6 +535,7 @@
                                        type="date"
                                        id="FechaNacimiento"
                                        class="form-control"
+                                       translate="no"
                                        value="@ViewBag.FechaNacimientoFormatted"
                                        disabled
                                        readonly
@@ -545,23 +547,24 @@
                                        type="date"
                                        id="FechaIngreso"
                                        class="form-control"
+                                       translate="no"
                                        value="@ViewBag.FechaIngresoFormatted"
                                        disabled
                                        readonly
                                        style="background-color: #e9ecef; opacity: 0.7;" />
                             </div>
                             <div class="grupo-campo">
-                                <label>Contraseña Actual</label>
+                                <label translate="no">Contraseña Actual</label>
                                 <div class="password-wrapper" id="wrapperContrasenaActual">
-                                    <input type="password" id="contrasenaActual" class="form-control" value="@ViewBag.ContraseñaActualDesencriptada" readonly />
+                                    <input type="password" id="contrasenaActual" class="form-control" translate="no" value="@ViewBag.ContraseñaActualDesencriptada" readonly />
                                     <button type="button" class="btn-toggle-view"><i class="bi bi-eye"></i></button>
                                 </div>
                             </div>
                             <div class="grupo-campo">
-                                <label>Nueva Contraseña</label>
+                                <label translate="no">Nueva Contraseña</label>
                                 <div class="password-wrapper" id="wrapperNuevaContrasena">
                                     <input type="password" asp-for="NuevaContraseña" id="nuevaContraseña"
-                                           class="form-control" placeholder="Escribe tu nueva contraseña"
+                                           class="form-control" translate="no" placeholder="Escribe tu nueva contraseña"
                                            autocomplete="new-password" value="" />
                                     <button type="button" class="btn-toggle-view"><i class="bi bi-eye"></i></button>
                                 </div>
@@ -572,7 +575,7 @@
                             <div class="col-md-4">
                                 <div class="grupo-campo">
                                     <label asp-for="Rol">Rol</label>
-                                    <select asp-for="Rol" class="form-control" disabled>
+                                    <select asp-for="Rol" class="form-control" disabled translate="no">
                                         <option value="Empleado/a" selected="@(Model.Rol == "Empleado/a")">Empleado/a</option>
                                         <option value="Jefe/a" selected="@(Model.Rol == "Jefe/a")">Jefe/a</option>
                                         <option value="Administración" selected="@(Model.Rol == "Administración")">Administración</option>
@@ -582,8 +585,8 @@
                             </div>
                             <div class="col-md-8">
                                 <div class="grupo-campo">
-                                    <label asp-for="Direccion">Dirección</label>
-                                    <input asp-for="Direccion" id="DireccionInput" class="form-control" />
+                                    <label asp-for="Direccion" translate="no">Dirección</label>
+                                    <input asp-for="Direccion" id="DireccionInput" class="form-control" translate="no"/>
                                 </div>
                             </div>
                         </div>

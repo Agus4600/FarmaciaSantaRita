@@ -591,8 +591,8 @@
                         <div class="d-flex justify-content-center w-100 mt-4">
                             <button type="button" id="btnGuardarCambios" class="btn-igual" style="width: 180px;">GUARDAR CAMBIOS</button>
                             <a href="@Url.Action("Gestionar", "CuentaEmpleado", new { idProveedor = ViewData["IdProveedor"], vista = ViewData["vista"] })"
-                               class="btn-igual @(Model.Rol == "Empleado/a" ? "disabled" : "")"
-                               style="width: 220px; @(Model.Rol == "Empleado/a" ? "pointer-events: none; opacity: 0.6;" : "")">
+                               class="btn-igual @( (Model.Rol == "Empleado/a" || Model.Rol == "SuperAdmin") ? "disabled" : "")"
+                               style="width: 220px; @( (Model.Rol == "Empleado/a" || Model.Rol == "SuperAdmin") ? "pointer-events: none; opacity: 0.6; cursor: not-allowed;" : "")">
                                 CUENTAS DE EMPLEADOS
                             </a>
                         </div>

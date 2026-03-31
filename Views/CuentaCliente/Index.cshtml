@@ -1100,8 +1100,8 @@
 
 
 
-                document.querySelectorAll('.nombre-cliente-link').forEach(link => {
-        link.addEventListener('click', function() {
+            document.querySelectorAll('.nombre-cliente-link').forEach(link => {
+        link.addEventListener('click', function () {
             const tr = this.closest('tr');
             const nombre = tr.querySelector('.nombre-cliente-link').innerText.trim();
             const telefono = tr.dataset.telefono || 'Sin teléfono';
@@ -1119,18 +1119,19 @@
                         <p><strong>Dirección:</strong> <span id="direccionText">${direccion}</span></p>
                     </div>
                 `,
-                width: '500px',  // Un poco más ancho para que quepa bien el nombre
+                width: '520px',
                 showCancelButton: true,
                 cancelButtonText: 'Cancelar',
                 cancelButtonColor: '#007bff',
                 showDenyButton: true,
                 denyButtonText: 'Actualizar',
                 denyButtonColor: '#007bff',
-                showConfirmButton: false,
+                showConfirmButton: false,        // Quitamos "Entendido"
                 reverseButtons: true,
                 allowOutsideClick: false,
+
                 preDeny: () => {
-                    // Entramos en modo edición SIN cerrar el popup
+                    // Modo edición
                     Swal.update({
                         title: `<strong>Editar datos de ${nombre}</strong>`,
                         html: `
@@ -1154,12 +1155,15 @@
                             </div>
                         `,
                         showDenyButton: false,
+                        showCancelButton: true,
+                        cancelButtonText: 'Cancelar',
                         confirmButtonText: 'Guardar Cambios',
-                        confirmButtonColor: '#007bff'
+                        confirmButtonColor: '#28a745',   // Verde para "Guardar"
+                        showConfirmButton: true          // ← Aquí activamos el botón Guardar
                     });
 
-                    // Sobrescribimos el botón "Guardar Cambios"
-                    Swal.getConfirmButton().onclick = async function(e) {
+                    // Sobrescribimos la acción del botón "Guardar Cambios"
+                    Swal.getConfirmButton().onclick = async function (e) {
                         e.preventDefault();
 
                         const nombreNuevo = document.getElementById('nombreEdit')?.value.trim() || nombre;
@@ -1167,8 +1171,7 @@
                         const telefonoNuevo = document.getElementById('telefonoEdit')?.value.trim() || telefono;
                         const direccionNuevo = document.getElementById('direccionEdit')?.value.trim() || direccion;
 
-                        // Validación básica (puedes hacerla más estricta si querés)
-                        if (!nombreNuevo.trim()) {
+                        if (!nombreNuevo) {
                             Swal.showValidationMessage('El nombre es obligatorio');
                             return false;
                         }
@@ -1196,7 +1199,7 @@
                                     icon: 'success',
                                     title: '¡Actualizado!',
                                     text: 'Los datos del cliente se guardaron correctamente.',
-                                    timer: 2000,
+                                    timer: 1800,
                                     showConfirmButton: false
                                 }).then(() => {
                                     location.reload();
@@ -1209,12 +1212,7 @@
                         }
                     };
 
-                    return false; // Mantenemos el popup abierto
-                }
-            }).then((result) => {
-                // Solo si se presiona "Entendido" desde el modo vista
-                if (result.isConfirmed) {
-                    // Cierra sin hacer nada
+                    return false; // Mantenemos el Swal abierto
                 }
             });
         });

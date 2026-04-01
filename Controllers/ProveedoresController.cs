@@ -311,6 +311,45 @@ namespace FarmaciaSantaRita.Controllers
 
 
 
+
+
+
+
+
+
+        // ====================== VERIFICACIÓN DE NOMBRE DUPLICADO (AJAX) ======================
+        [HttpGet]
+        public async Task<IActionResult> VerificarNombreDuplicado(string nombre)
+        {
+            if (string.IsNullOrWhiteSpace(nombre))
+            {
+                return Json(new { existe = false });
+            }
+
+            try
+            {
+                string nombreNormalizado = NormalizarNombreProveedor(nombre);
+
+                var existe = await _context.Proveedors
+                    .IgnoreQueryFilters()
+                    .AnyAsync(p => NormalizarNombreProveedor(p.NombreProveedor) == nombreNormalizado);
+
+                return Json(new { existe = existe });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al verificar nombre duplicado");
+                return Json(new { existe = false }); // En caso de error, permitimos continuar
+            }
+        }
+
+
+
+
+
+
+
+
         // ... (EliminarSeleccionados, EliminarPermanente, RestaurarSeleccionados permanecen iguales)
         // Solo los copio para que el archivo esté completo.
 

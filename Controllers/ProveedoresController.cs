@@ -258,14 +258,17 @@ namespace FarmaciaSantaRita.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Registrar(Proveedor proveedor)
         {
+            // Validación básica
             if (string.IsNullOrWhiteSpace(proveedor.NombreProveedor))
             {
                 TempData["MensajeError"] = "El nombre del proveedor es obligatorio.";
                 return RedirectToAction("Registrar");
             }
 
+            // Normalizamos el nombre
             string nombreNormalizado = NormalizarNombreProveedor(proveedor.NombreProveedor);
 
+            // Buscamos si ya existe (activo o eliminado)
             var proveedorExistente = _context.Proveedors
                 .IgnoreQueryFilters()
                 .FirstOrDefault(p => NormalizarNombreProveedor(p.NombreProveedor) == nombreNormalizado);
@@ -274,10 +277,12 @@ namespace FarmaciaSantaRita.Controllers
             {
                 if (proveedorExistente.Eliminado)
                 {
+                    // Reactivar proveedor eliminado
                     proveedorExistente.Eliminado = false;
                     proveedorExistente.EstadoProveedor = "Activo";
                     proveedorExistente.TelefonoProveedor = proveedor.TelefonoProveedor ?? proveedorExistente.TelefonoProveedor;
                     proveedorExistente.CorreoProveedor = proveedor.CorreoProveedor ?? proveedorExistente.CorreoProveedor;
+
                     _context.SaveChanges();
 
                     TempData["MensajeExito"] = "Proveedor reactivado correctamente.";
@@ -290,15 +295,24 @@ namespace FarmaciaSantaRita.Controllers
                 }
             }
 
-            // Crear nuevo proveedor
+            // === Crear nuevo proveedor ===
             proveedor.EstadoProveedor = "Activo";
             proveedor.Eliminado = false;
 
-            _context.Proveedors.Add(proveedor);
-            _context.SaveChanges();                     // ← Versión síncrona
+            try
+            {
+                _context.Proveedors.Add(proveedor);
+                _context.SaveChanges();           // ← Síncrono
 
-            TempData["MensajeExito"] = "Proveedor registrado correctamente.";
-            return RedirectToAction("Registrar");
+                TempData["MensajeExito"] = "Proveedor registrado correctamente.";
+                return RedirectToAction("Registrar");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al registrar proveedor");
+                TempData["MensajeError"] = "Error interno al guardar el proveedor. Inténtelo nuevamente.";
+                return RedirectToAction("Registrar");
+            }
         }
 
 

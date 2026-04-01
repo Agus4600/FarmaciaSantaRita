@@ -788,7 +788,7 @@
                                     const data = await res.json();
                                     if (data.success) {
                                         this.closest('tr').remove();
-                                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Restaurada', showConfirmButton: false, timer: 1500 });
+                                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Restaurada', showConfirmButton: false, timer: 2500 });
                                         location.reload();
                                     } else {
                                         Swal.fire('Error', data.message || 'No se pudo restaurar', 'error');

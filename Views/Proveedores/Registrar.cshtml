@@ -117,144 +117,108 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function () {
             var formulario = document.getElementById('formRegistrar');
             var misInputs = document.querySelectorAll('#formRegistrar input:not([type="hidden"])');
             var botonVolver = document.querySelector('a[asp-action="Index"]');
 
-            // 1. Éxito desde el servidor
-            @if (TempData["MensajeExito"] != null)
-            {
-                    <text>
-                    Swal.fire({
-                        title: '¡Éxito!',
-                        text: '@TempData["MensajeExito"]',
-                        icon: 'success',
-                        confirmButtonColor: '#007bff',
-                            confirmButtonText: 'Entendido'
-                    });
-                    </text>
-            }
-
-            // 2. Validación y Envío
             if (formulario) {
-    formulario.addEventListener('submit', async function (e) {
-        e.preventDefault();   // Detenemos el envío normal
+                formulario.addEventListener('submit', async function (e) {
+                    e.preventDefault(); // Detenemos el envío normal
 
-        var hayVacios = false;
-        var inputEmail = document.querySelector('input[type="email"]');
-        var valorEmail = inputEmail ? inputEmail.value.trim() : "";
+                    // Validar campos vacíos
+                    let hayVacios = false;
+                    for (let input of misInputs) {
+                        if (input.value.trim() === "") {
+                            hayVacios = true;
+                            input.classList.add('input-validation-error');
+                        }
+                    }
 
-        // Validar campos vacíos
-        for (var i = 0; i < misInputs.length; i++) {
-            if (misInputs[i].value.trim() === "") {
-                hayVacios = true;
-                misInputs[i].classList.add('input-validation-error');
-            }
-        }
-
-        if (hayVacios) {
-            Swal.fire({
-                title: '¡Atención!',
-                text: 'Todos los campos son obligatorios.',
-                icon: 'warning',
-                confirmButtonColor: '#007bff'
-            });
-            return;
-        }
-
-        // Validación de correo
-        var patronEmail = /^[a-zA-Z0-9._-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-        if (!patronEmail.test(valorEmail)) {
-            if (inputEmail) inputEmail.classList.add('input-validation-error');
-            Swal.fire({
-                title: 'Correo Inválido',
-                text: 'Asegúrate de incluir el "@@", un dominio y una extensión válida.',
-                icon: 'error',
-                confirmButtonColor: '#007bff'
-            });
-            return;
-        }
-
-        // Enviar el formulario con fetch para capturar la respuesta JSON
-        const formData = new FormData(formulario);
-
-        try {
-            const response = await fetch(formulario.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                }
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                Swal.fire({
-                    title: '¡Éxito!',
-                    text: data.message,
-                    icon: 'success',
-                    confirmButtonColor: '#007bff'
-                }).then(() => {
-                    window.location.reload();   // Recargamos para limpiar el formulario
-                });
-            } else {
-                Swal.fire({
-                    title: 'Nombre duplicado',
-                    text: data.message,
-                    icon: 'warning',
-                    confirmButtonColor: '#007bff'
-                });
-            }
-        } catch (error) {
-            console.error("Error al registrar:", error);
-            Swal.fire({
-                title: 'Error',
-                text: 'Ocurrió un error al procesar el registro.',
-                icon: 'error',
-                confirmButtonColor: '#007bff'
-            });
-        }
-    });
-}
-
-                    // 3. Validación de Correo (Regex con @@ para evitar error de Razor)
-                    var patronEmail = /^[a-zA-Z0-9._-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-                    if (!patronEmail.test(valorEmail)) {
-                        e.preventDefault();
-                        if (inputEmail) inputEmail.classList.add('input-validation-error');
+                    if (hayVacios) {
                         Swal.fire({
-                            title: 'Correo Inválido',
-                            text: 'Asegúrate de incluir el "@@", un dominio y una extensión válida.',
-                            confirmButtonText: 'Entendido',
+                            title: '¡Atención!',
+                            text: 'Todos los campos son obligatorios.',
+                            icon: 'warning',
                             confirmButtonColor: '#007bff'
                         });
                         return;
                     }
-                });
-            }
 
-            // 4. Limpiar error visual al escribir
-            for (var j = 0; j < misInputs.length; j++) {
-                misInputs[j].addEventListener('input', function () {
-                    this.classList.remove('input-validation-error');
-                });
-            }
+                    // Validar correo
+                    const inputEmail = document.querySelector('input[type="email"]');
+                    const valorEmail = inputEmail ? inputEmail.value.trim() : "";
+                    const patronEmail = /^[a-zA-Z0-9._-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
 
-            // 5. Confirmación al Volver
-            if (botonVolver) {
-                botonVolver.addEventListener('click', function (e) {
-                    var tieneContenido = false;
-                    for (var k = 0; k < misInputs.length; k++) {
-                        if (misInputs[k].value.trim() !== "") tieneContenido = true;
+                    if (!patronEmail.test(valorEmail)) {
+                        if (inputEmail) inputEmail.classList.add('input-validation-error');
+                        Swal.fire({
+                            title: 'Correo Inválido',
+                            text: 'Asegúrate de incluir el "@@", un dominio y una extensión válida.',
+                            icon: 'error',
+                            confirmButtonColor: '#007bff'
+                        });
+                        return;
                     }
 
+                    // Enviar formulario con fetch
+                    const formData = new FormData(formulario);
+
+                    try {
+                        const response = await fetch(formulario.action, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            }
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            Swal.fire({
+                                title: '¡Éxito!',
+                                text: data.message,
+                                icon: 'success',
+                                confirmButtonColor: '#007bff'
+                            }).then(() => {
+                                window.location.reload(); // Recarga para limpiar el formulario
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Nombre duplicado',
+                                text: data.message,
+                                icon: 'warning',
+                                confirmButtonColor: '#007bff'
+                            });
+                        }
+                    } catch (error) {
+                        console.error("Error al registrar:", error);
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Ocurrió un error al procesar el registro.',
+                            icon: 'error',
+                            confirmButtonColor: '#007bff'
+                        });
+                    }
+                });
+            }
+
+            // Limpiar errores visuales al escribir
+            misInputs.forEach(input => {
+                input.addEventListener('input', function () {
+                    this.classList.remove('input-validation-error');
+                });
+            });
+
+            // Confirmación al volver
+            if (botonVolver) {
+                botonVolver.addEventListener('click', function (e) {
+                    const tieneContenido = Array.from(misInputs).some(input => input.value.trim() !== "");
                     if (tieneContenido) {
                         e.preventDefault();
-                        var destino = this.getAttribute('href');
                         Swal.fire({
                             title: '¿Deseas salir?',
                             text: "Tienes cambios sin guardar que se perderán.",
@@ -263,9 +227,9 @@
                             cancelButtonColor: '#007bff',
                             confirmButtonText: 'Sí, salir',
                             cancelButtonText: 'Cancelar'
-                        }).then(function (result) {
+                        }).then(result => {
                             if (result.isConfirmed) {
-                                window.location.href = destino;
+                                window.location.href = this.getAttribute('href');
                             }
                         });
                     }

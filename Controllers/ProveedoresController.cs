@@ -254,12 +254,9 @@ namespace FarmaciaSantaRita.Controllers
 
 
 
-
-
-
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Registrar(Proveedor proveedor)
+        public IActionResult Registrar(Proveedor proveedor)
         {
             if (string.IsNullOrWhiteSpace(proveedor.NombreProveedor))
             {
@@ -267,24 +264,21 @@ namespace FarmaciaSantaRita.Controllers
                 return RedirectToAction("Registrar");
             }
 
-            // Normalizamos el nombre para comparación más confiable
             string nombreNormalizado = NormalizarNombreProveedor(proveedor.NombreProveedor);
 
-            // Buscamos si ya existe un proveedor con ese nombre (activo o eliminado)
-            var proveedorExistente = await _context.Proveedors
+            var proveedorExistente = _context.Proveedors
                 .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(p => NormalizarNombreProveedor(p.NombreProveedor) == nombreNormalizado);
+                .FirstOrDefault(p => NormalizarNombreProveedor(p.NombreProveedor) == nombreNormalizado);
 
             if (proveedorExistente != null)
             {
                 if (proveedorExistente.Eliminado)
                 {
-                    // Reactivar
                     proveedorExistente.Eliminado = false;
                     proveedorExistente.EstadoProveedor = "Activo";
-                    proveedorExistente.TelefonoProveedor = proveedor.TelefonoProveedor;
-                    proveedorExistente.CorreoProveedor = proveedor.CorreoProveedor;
-                    await _context.SaveChangesAsync();
+                    proveedorExistente.TelefonoProveedor = proveedor.TelefonoProveedor ?? proveedorExistente.TelefonoProveedor;
+                    proveedorExistente.CorreoProveedor = proveedor.CorreoProveedor ?? proveedorExistente.CorreoProveedor;
+                    _context.SaveChanges();
 
                     TempData["MensajeExito"] = "Proveedor reactivado correctamente.";
                     return RedirectToAction("Registrar");
@@ -296,16 +290,19 @@ namespace FarmaciaSantaRita.Controllers
                 }
             }
 
-            // Si no existe → crear nuevo
+            // Crear nuevo proveedor
             proveedor.EstadoProveedor = "Activo";
             proveedor.Eliminado = false;
 
             _context.Proveedors.Add(proveedor);
-            await _context.SaveChangesAsync();
+            _context.SaveChanges();                     // ← Versión síncrona
 
             TempData["MensajeExito"] = "Proveedor registrado correctamente.";
             return RedirectToAction("Registrar");
         }
+
+
+
 
 
 

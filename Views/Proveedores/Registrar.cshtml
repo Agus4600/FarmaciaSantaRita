@@ -141,7 +141,7 @@
                         Swal.fire({
                             title: '¡Atención!',
                             text: 'Todos los campos son obligatorios.',
-                            icon: 'warning',
+                            confirmButtonText: 'Aceptar',
                             confirmButtonColor: '#007bff'
                         });
                         return;
@@ -157,7 +157,7 @@
                         Swal.fire({
                             title: 'Correo Inválido',
                             text: 'Asegúrate de incluir el "@@", un dominio y una extensión válida.',
-                            icon: 'error',
+                            confirmButtonText: 'Aceptar',
                             confirmButtonColor: '#007bff'
                         });
                         return;
@@ -182,6 +182,7 @@
                                 title: '¡Éxito!',
                                 text: data.message,
                                 icon: 'success',
+                                confirmButtonText: 'Aceptar',
                                 confirmButtonColor: '#007bff'
                             }).then(() => {
                                 window.location.reload(); // Recarga para limpiar el formulario
@@ -190,7 +191,7 @@
                             Swal.fire({
                                 title: 'Nombre duplicado',
                                 text: data.message,
-                                icon: 'warning',
+                                confirmButtonText: 'Aceptar',
                                 confirmButtonColor: '#007bff'
                             });
                         }
@@ -199,7 +200,7 @@
                         Swal.fire({
                             title: 'Error',
                             text: 'Ocurrió un error al procesar el registro.',
-                            icon: 'error',
+                            confirmButtonText: 'Aceptar',
                             confirmButtonColor: '#007bff'
                         });
                     }

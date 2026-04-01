@@ -266,19 +266,18 @@ namespace FarmaciaSantaRita.Controllers
                     return RedirectToAction("Registrar");
                 }
 
-                // Normalizamos el nombre que viene del formulario
                 string nombreNormalizado = NormalizarNombreProveedor(proveedor.NombreProveedor);
 
-                // Buscamos usando la comparación normalizada (más simple para EF)
                 var proveedorExistente = _context.Proveedors
                     .IgnoreQueryFilters()
-                    .AsEnumerable()                    // ← Esto fuerza la evaluación en memoria
+                    .AsEnumerable()
                     .FirstOrDefault(p => NormalizarNombreProveedor(p.NombreProveedor) == nombreNormalizado);
 
                 if (proveedorExistente != null)
                 {
                     if (proveedorExistente.Eliminado)
                     {
+                        // Reactivar
                         proveedorExistente.Eliminado = false;
                         proveedorExistente.EstadoProveedor = "Activo";
                         proveedorExistente.TelefonoProveedor = proveedor.TelefonoProveedor ?? proveedorExistente.TelefonoProveedor;
@@ -291,8 +290,12 @@ namespace FarmaciaSantaRita.Controllers
                     }
                     else
                     {
-                        TempData["MensajeError"] = $"Ya existe un proveedor activo con el nombre '{proveedor.NombreProveedor}'.";
-                        return RedirectToAction("Registrar");
+                        // ← Aquí devolvemos JSON para que el frontend muestre SweetAlert
+                        return Json(new
+                        {
+                            success = false,
+                            message = $"Ya existe un proveedor activo con el nombre '{proveedor.NombreProveedor}'."
+                        });
                     }
                 }
 
@@ -303,14 +306,20 @@ namespace FarmaciaSantaRita.Controllers
                 _context.Proveedors.Add(proveedor);
                 _context.SaveChanges();
 
-                TempData["MensajeExito"] = "Proveedor registrado correctamente.";
-                return RedirectToAction("Registrar");
+                return Json(new
+                {
+                    success = true,
+                    message = "Proveedor registrado correctamente."
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al registrar proveedor. Nombre: {Nombre}", proveedor.NombreProveedor);
-                TempData["MensajeError"] = "Error interno al guardar el proveedor. Inténtelo nuevamente.";
-                return RedirectToAction("Registrar");
+                _logger.LogError(ex, "Error al registrar proveedor");
+                return Json(new
+                {
+                    success = false,
+                    message = "Error interno al guardar el proveedor. Inténtelo nuevamente."
+                });
             }
         }
 

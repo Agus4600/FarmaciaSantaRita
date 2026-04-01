@@ -139,61 +139,76 @@
             }
 
             // 2. Validación y Envío
-                if (formulario) {
-        formulario.addEventListener('submit', async function (e) {
-            var hayVacios = false;
-            var inputEmail = document.querySelector('input[type="email"]');
-            var valorEmail = inputEmail ? inputEmail.value.trim() : "";
+            if (formulario) {
+    formulario.addEventListener('submit', async function (e) {
+        e.preventDefault();   // ← Importante: detenemos el envío normal
 
-            // Revisar campos vacíos
-            for (var i = 0; i < misInputs.length; i++) {
-                if (misInputs[i].value.trim() === "") {
-                    hayVacios = true;
-                    misInputs[i].classList.add('input-validation-error');
-                }
+        var hayVacios = false;
+        var inputEmail = document.querySelector('input[type="email"]');
+        var valorEmail = inputEmail ? inputEmail.value.trim() : "";
+
+        // Revisar campos vacíos
+        for (var i = 0; i < misInputs.length; i++) {
+            if (misInputs[i].value.trim() === "") {
+                hayVacios = true;
+                misInputs[i].classList.add('input-validation-error');
             }
+        }
 
-            if (hayVacios) {
-                e.preventDefault();
-                Swal.fire({
-                    title: '¡Atención!',
-                    text: 'Todos los campos son obligatorios.',
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#007bff'
-                });
-                return;
-            }
+        if (hayVacios) {
+            Swal.fire({
+                title: '¡Atención!',
+                text: 'Todos los campos son obligatorios.',
+                        confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
+            });
+            return;
+        }
 
-            // === NUEVA VALIDACIÓN: Nombre duplicado vía AJAX ===
-            const nombreInput = document.querySelector('input[asp-for="NombreProveedor"]');
-            if (nombreInput) {
-                const nombre = nombreInput.value.trim();
+        // Validación de Correo
+        var patronEmail = /^[a-zA-Z0-9._-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+        if (!patronEmail.test(valorEmail)) {
+            if (inputEmail) inputEmail.classList.add('input-validation-error');
+            Swal.fire({
+                title: 'Correo Inválido',
+                text: 'Asegúrate de incluir el "@@", un dominio y una extensión válida.',
+                        confirmButtonText: 'Entendido',
+                confirmButtonColor: '#007bff'
+            });
+            return;
+        }
 
-                if (nombre) {
-                    try {
-                        const response = await fetch(`/Proveedores/VerificarNombreDuplicado?nombre=${encodeURIComponent(nombre)}`);
+        // === NUEVA VALIDACIÓN: Nombre duplicado vía AJAX ===
+        const nombreInput = document.querySelector('input[asp-for="NombreProveedor"]');
+        if (nombreInput) {
+            const nombre = nombreInput.value.trim();
+            if (nombre) {
+                try {
+                    const response = await fetch(`/Proveedores/VerificarNombreDuplicado?nombre=${encodeURIComponent(nombre)}`);
+                    if (!response.ok) throw new Error('Error en la consulta');
 
-                        if (!response.ok) throw new Error('Error en la consulta');
+                    const data = await response.json();
 
-                        const data = await response.json();
-
-                        if (data.existe) {
-                            e.preventDefault();
-                            Swal.fire({
-                                title: 'Nombre duplicado',
-                                text: 'Ya existe un proveedor con ese nombre en la base de datos.',
-                                confirmButtonText: 'Entendido',
-                                confirmButtonColor: '#007bff'
-                            });
-                            nombreInput.classList.add('input-validation-error'); // resalta el campo
-                            return;
-                        }
-                    } catch (error) {
-                        console.error("Error al verificar nombre duplicado:", error);
-                        // Si falla la verificación AJAX, permitimos continuar (no bloqueamos todo)
+                    if (data.existe) {
+                        Swal.fire({
+                            title: 'Nombre duplicado',
+                            text: 'Ya existe un proveedor con ese nombre en la base de datos.',
+                                    confirmButtonText: 'Entendido',
+                            confirmButtonColor: '#007bff'
+                        });
+                        nombreInput.classList.add('input-validation-error');
+                        return;
                     }
+                } catch (error) {
+                    console.error("Error al verificar nombre duplicado:", error);
                 }
             }
+        }
+
+        // Si todo está bien → enviamos el formulario normalmente
+        formulario.submit();
+    });
+}
 
                     // 3. Validación de Correo (Regex con @@ para evitar error de Razor)
                     var patronEmail = /^[a-zA-Z0-9._-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;

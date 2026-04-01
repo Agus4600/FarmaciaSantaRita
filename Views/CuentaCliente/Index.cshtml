@@ -808,31 +808,20 @@
         const f = document.getElementById('inputFecha').value;
 
         // Validación básica: campos obligatorios siempre
-            // Validación básica: campos obligatorios siempre
-    if (!n || !p || isNaN(c) || isNaN(u) || !f) {
-        aplicarGlowErrores();
-        Swal.fire({
-            title: 'Error',
-            text: 'Complete: Cliente, Producto, Cantidad, Precio y Fecha',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#007bff'
-        });
-        return;
-    }
+        if (!n || !p || isNaN(c) || isNaN(u) || !f) {
+            aplicarGlowErrores();
+            Swal.fire('Error', 'Complete: Cliente, Producto, Cantidad, Precio y Fecha', 'warning');
+            return;
+        }
 
-            // Solo si es cliente NUEVO → obligamos DNI
-    const nombreNorm = n.toLowerCase();
-    const esClienteNuevo = !clientesExistentes.includes(nombreNorm);
-    if (esClienteNuevo && !dni) {
-        document.getElementById('inputDNI').classList.add('outer-glow-error');
-        Swal.fire({
-            title: 'Error',
-            text: 'Cliente nuevo: ingrese DNI',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#007bff'
-        });
-        return;
-    }
+        // Solo si es cliente NUEVO → obligamos DNI
+        const nombreNorm = n.toLowerCase();
+        const esClienteNuevo = !clientesExistentes.includes(nombreNorm);
+        if (esClienteNuevo && !dni) {
+            document.getElementById('inputDNI').classList.add('outer-glow-error');
+            Swal.fire('Error', 'Cliente nuevo: ingrese DNI', 'warning');
+            return;
+        }
 
         try {
             const response = await fetch('/CuentaCliente/GuardarNuevaCompra', {
@@ -861,17 +850,12 @@
             if (result.success) {
                 location.reload();  // Recarga y muestra la nueva compra
             } else {
-                Swal.fire('Error', result.message || 'No se pudo guardar');
+                Swal.fire('Error', result.message || 'No se pudo guardar', 'error');
             }
-            } catch (error) {
-        console.error(error);
-        Swal.fire({
-            title: 'Error',
-            text: 'No se pudo conectar con el servidor',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#007bff'
-        });
-    }
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+        }
     }
 
 
@@ -926,22 +910,20 @@
                 });
                 // Recargamos para refrescar totales si es necesario
                 setTimeout(() => location.reload(), 1600);
-                } else {
-        Swal.fire({
-            title: 'Error',
-            text: result.message || 'No se pudo actualizar',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#007bff'
-        });
-    }
-    } catch (e) {
-        Swal.fire({
-            title: 'Error de conexión',
-            text: 'No se pudo contactar con el servidor',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#007bff'
-        });
-    }
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: result.message || 'No se pudo actualizar'
+                });
+            }
+        } catch (e) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de conexión',
+                text: 'No se pudo contactar con el servidor'
+            });
+        }
     }
 
     // Esta función solo cambia el color visual del select al hacer clic
@@ -961,10 +943,10 @@
 
         if (filasDatos.length === 0) {
             Swal.fire({
+                icon: 'info',
                 title: 'Sin datos',
                 text: 'No hay registros para exportar.',
-                confirmButtonText: 'Aceptar',
-                            confirmButtonColor: '#007bff'
+                confirmButtonColor: '#007bff'
             });
             return;
         }
@@ -1108,9 +1090,7 @@
             link.click();
         }).catch(err => {
             console.error('Error al generar Excel:', err);
-            Swal.fire('Error', 'No se pudo generar el archivo Excel.');
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#007bff'
+            Swal.fire('Error', 'No se pudo generar el archivo Excel.', 'error');
         });
     }
 
@@ -1178,6 +1158,7 @@
                         cancelButtonText: 'Cancelar',
                         confirmButtonText: 'Guardar Cambios',
                         confirmButtonColor: '#007bff',
+                        cancelButtonColor: '#007bff',
                         showConfirmButton: true
                     });
 
@@ -1250,22 +1231,12 @@
                                 }).then(() => {
                                     location.reload();
                                 });
-                                } else {
-        Swal.fire({
-            title: 'Error',
-            text: data.message || 'No se pudo actualizar',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#007bff'
-        });
-    }
-    } catch (err) {
-        Swal.fire({
-            title: 'Error',
-            text: 'No se pudo conectar con el servidor',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#007bff'
-        });
-    }
+                            } else {
+                                Swal.fire('Error', data.message || 'No se pudo actualizar', 'error');
+                            }
+                        } catch (err) {
+                            Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+                        }
                     };
 
                     return false; // Mantenemos el Swal abierto
@@ -1328,18 +1299,15 @@
             } else {
                 Swal.fire({
                     title: 'Error',
-                    text: result.message || 'No se pudo eliminar',
-                    confirmButtonText: 'Aceptar',
-                            confirmButtonColor: '#007bff'
+                    text: result.message || 'No se pudo eliminar'
                 });
             }
         } catch (e) {
         console.error('Error al eliminar compra:', e);
         Swal.fire({
+            icon: 'error',
             title: 'Error de conexión',
-            text: 'No se pudo contactar con el servidor o procesar la eliminación',
-            confirmButtonText: 'Aceptar',
-                            confirmButtonColor: '#007bff'
+            text: 'No se pudo contactar con el servidor o procesar la eliminación'
         });
     }
     }
@@ -1510,7 +1478,7 @@
 
             const id = this.getAttribute('data-id');
             if (!id) {
-                Swal.fire('Error', 'No se encontró el ID de la compra.');
+                Swal.fire('Error', 'No se encontró el ID de la compra.', 'error');
                 return;
             }
 
@@ -1575,37 +1543,26 @@
                         // Recargamos la página completa → la tabla principal se actualiza
                         location.reload();
                     }, 2000);
-                    } else {
-        Swal.fire({
-            title: 'Error',
-            text: data.message || 'No se pudo recuperar la compra.',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#007bff'
-        });
-    }
-                } catch (err) {
-        Swal.close();
-        console.error('Error al recuperar compra:', err);
-        Swal.fire({
-            title: 'Error',
-            text: err.message || 'No se pudo conectar con el servidor. Intenta de nuevo.',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#007bff'
-        });
-    }
+                } else {
+                    Swal.fire('Error', data.message || 'No se pudo recuperar la compra.', 'error');
+                }
+            } catch (err) {
+                Swal.close();
+                console.error('Error al recuperar compra:', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message || 'No se pudo conectar con el servidor. Intenta de nuevo.',
+                });
+            }
         });
     });
     }
             });
-            } catch (err) {
-        console.error('Error al cargar eliminadas:', err);
-        Swal.fire({
-            title: 'Error',
-            text: 'No se pudieron cargar las compras eliminadas',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#007bff'
-        });
-    }
+        } catch (err) {
+            console.error('Error al cargar eliminadas:', err);
+            Swal.fire('Error', 'No se pudieron cargar las compras eliminadas', 'error');
+        }
     });
 
 

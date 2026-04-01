@@ -141,13 +141,13 @@
             // 2. Validación y Envío
             if (formulario) {
     formulario.addEventListener('submit', async function (e) {
-        e.preventDefault();   // ← Importante: detenemos el envío normal
+        e.preventDefault();   // Detenemos el envío normal
 
         var hayVacios = false;
         var inputEmail = document.querySelector('input[type="email"]');
         var valorEmail = inputEmail ? inputEmail.value.trim() : "";
 
-        // Revisar campos vacíos
+        // Validar campos vacíos
         for (var i = 0; i < misInputs.length; i++) {
             if (misInputs[i].value.trim() === "") {
                 hayVacios = true;
@@ -159,54 +159,65 @@
             Swal.fire({
                 title: '¡Atención!',
                 text: 'Todos los campos son obligatorios.',
-                        confirmButtonText: 'Entendido',
+                icon: 'warning',
                 confirmButtonColor: '#007bff'
             });
             return;
         }
 
-        // Validación de Correo
+        // Validación de correo
         var patronEmail = /^[a-zA-Z0-9._-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
         if (!patronEmail.test(valorEmail)) {
             if (inputEmail) inputEmail.classList.add('input-validation-error');
             Swal.fire({
                 title: 'Correo Inválido',
                 text: 'Asegúrate de incluir el "@@", un dominio y una extensión válida.',
-                        confirmButtonText: 'Entendido',
+                icon: 'error',
                 confirmButtonColor: '#007bff'
             });
             return;
         }
 
-        // === NUEVA VALIDACIÓN: Nombre duplicado vía AJAX ===
-        const nombreInput = document.querySelector('input[asp-for="NombreProveedor"]');
-        if (nombreInput) {
-            const nombre = nombreInput.value.trim();
-            if (nombre) {
-                try {
-                    const response = await fetch(`/Proveedores/VerificarNombreDuplicado?nombre=${encodeURIComponent(nombre)}`);
-                    if (!response.ok) throw new Error('Error en la consulta');
+        // Enviar el formulario con fetch para capturar la respuesta JSON
+        const formData = new FormData(formulario);
 
-                    const data = await response.json();
-
-                    if (data.existe) {
-                        Swal.fire({
-                            title: 'Nombre duplicado',
-                            text: 'Ya existe un proveedor con ese nombre en la base de datos.',
-                                    confirmButtonText: 'Entendido',
-                            confirmButtonColor: '#007bff'
-                        });
-                        nombreInput.classList.add('input-validation-error');
-                        return;
-                    }
-                } catch (error) {
-                    console.error("Error al verificar nombre duplicado:", error);
+        try {
+            const response = await fetch(formulario.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                 }
-            }
-        }
+            });
 
-        // Si todo está bien → enviamos el formulario normalmente
-        formulario.submit();
+            const data = await response.json();
+
+            if (data.success) {
+                Swal.fire({
+                    title: '¡Éxito!',
+                    text: data.message,
+                    icon: 'success',
+                    confirmButtonColor: '#007bff'
+                }).then(() => {
+                    window.location.reload();   // Recargamos para limpiar el formulario
+                });
+            } else {
+                Swal.fire({
+                    title: 'Nombre duplicado',
+                    text: data.message,
+                    icon: 'warning',
+                    confirmButtonColor: '#007bff'
+                });
+            }
+        } catch (error) {
+            console.error("Error al registrar:", error);
+            Swal.fire({
+                title: 'Error',
+                text: 'Ocurrió un error al procesar el registro.',
+                icon: 'error',
+                confirmButtonColor: '#007bff'
+            });
+        }
     });
 }
 

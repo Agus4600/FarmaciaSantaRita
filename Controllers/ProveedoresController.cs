@@ -290,7 +290,6 @@ namespace FarmaciaSantaRita.Controllers
                     }
                     else
                     {
-                        // ← Aquí devolvemos JSON para que el frontend muestre SweetAlert
                         return Json(new
                         {
                             success = false,

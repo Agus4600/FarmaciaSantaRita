@@ -261,85 +261,50 @@ namespace FarmaciaSantaRita.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Registrar(Proveedor proveedor)
         {
-            if (string.IsNullOrWhiteSpace(proveedor.NombreProveedor) ||
-                string.IsNullOrWhiteSpace(proveedor.TelefonoProveedor) ||
-                string.IsNullOrWhiteSpace(proveedor.CorreoProveedor))
+            if (string.IsNullOrWhiteSpace(proveedor.NombreProveedor))
             {
-                TempData["MensajeError"] = "Por favor completa todos los campos.";
+                TempData["MensajeError"] = "El nombre del proveedor es obligatorio.";
                 return RedirectToAction("Registrar");
             }
 
-            var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
-            if (!emailRegex.IsMatch(proveedor.CorreoProveedor))
-            {
-                TempData["MensajeError"] = "El formato del correo electrónico no es válido.";
-                return RedirectToAction("Registrar");
-            }
+            // Normalizamos el nombre para comparación más confiable
+            string nombreNormalizado = NormalizarNombreProveedor(proveedor.NombreProveedor);
 
-            try
-            {
-                var proveedorExistente = _context.Proveedors
-                    .IgnoreQueryFilters()
-                    .FirstOrDefault(p => p.NombreProveedor.Trim().ToLower() == proveedor.NombreProveedor.Trim().ToLower());
+            // Buscamos si ya existe un proveedor con ese nombre (activo o eliminado)
+            var proveedorExistente = await _context.Proveedors
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(p => NormalizarNombreProveedor(p.NombreProveedor) == nombreNormalizado);
 
-                if (proveedorExistente != null)
+            if (proveedorExistente != null)
+            {
+                if (proveedorExistente.Eliminado)
                 {
-                    if (proveedorExistente.Eliminado)
-                    {
-                        proveedorExistente.Eliminado = false;
-                        proveedorExistente.EstadoProveedor = "Activo";
-                        proveedorExistente.TelefonoProveedor = proveedor.TelefonoProveedor;
-                        proveedorExistente.CorreoProveedor = proveedor.CorreoProveedor;
+                    // Reactivar
+                    proveedorExistente.Eliminado = false;
+                    proveedorExistente.EstadoProveedor = "Activo";
+                    proveedorExistente.TelefonoProveedor = proveedor.TelefonoProveedor;
+                    proveedorExistente.CorreoProveedor = proveedor.CorreoProveedor;
+                    await _context.SaveChangesAsync();
 
-                        _context.SaveChanges();
-
-                        // ==================== REASIGNACIÓN DE BOLETAS POR NOMBRE ====================
-                        // Buscamos boletas que tengan el nombre del proveedor en la categoría (más confiable)
-                        var boletasAntiguas = await _context.Boleta
-                            .Where(b => b.Categoria.Contains(proveedorExistente.NombreProveedor))
-                            .ToListAsync();
-
-                        // Si no encontramos por nombre, buscamos huérfanas con ID = 0
-                        if (!boletasAntiguas.Any())
-                        {
-                            boletasAntiguas = await _context.Boleta
-                                .Where(b => b.Idproveedor == 0)
-                                .ToListAsync();
-                        }
-
-                        foreach (var boleta in boletasAntiguas)
-                        {
-                            boleta.Idproveedor = proveedorExistente.Idproveedor;
-                        }
-
-                        await _context.SaveChangesAsync();
-                        // ================================================================
-
-                        TempData["MensajeExito"] = "Proveedor reactivado correctamente. Las boletas han sido reasignadas.";
-                        return RedirectToAction("Registrar");
-                    }
-                    else
-                    {
-                        TempData["MensajeError"] = "Ya existe un proveedor activo con ese nombre.";
-                        return RedirectToAction("Registrar");
-                    }
+                    TempData["MensajeExito"] = "Proveedor reactivado correctamente.";
+                    return RedirectToAction("Registrar");
                 }
-
-                // Crear nuevo proveedor
-                proveedor.EstadoProveedor = "Activo";
-                proveedor.Eliminado = false;
-                _context.Proveedors.Add(proveedor);
-                _context.SaveChanges();
-
-                TempData["MensajeExito"] = "Proveedor registrado correctamente.";
-                return RedirectToAction("Registrar");
+                else
+                {
+                    TempData["MensajeError"] = $"Ya existe un proveedor activo con el nombre '{proveedor.NombreProveedor}'.";
+                    return RedirectToAction("Registrar");
+                }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al registrar proveedor");
-                TempData["MensajeError"] = "Error interno: " + (ex.InnerException?.Message ?? ex.Message);
-                return RedirectToAction("Registrar");
-            }
+
+            // Si no existe → crear nuevo
+            proveedor.EstadoProveedor = "Activo";
+            proveedor.Eliminado = false;
+
+            _context.Proveedors.Add(proveedor);
+            await _context.SaveChangesAsync();
+
+            TempData["MensajeExito"] = "Proveedor registrado correctamente.";
+            return RedirectToAction("Registrar");
         }
 
 

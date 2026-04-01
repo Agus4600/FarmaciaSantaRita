@@ -258,58 +258,57 @@ namespace FarmaciaSantaRita.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Registrar(Proveedor proveedor)
         {
-            // Validación básica
-            if (string.IsNullOrWhiteSpace(proveedor.NombreProveedor))
-            {
-                TempData["MensajeError"] = "El nombre del proveedor es obligatorio.";
-                return RedirectToAction("Registrar");
-            }
-
-            // Normalizamos el nombre
-            string nombreNormalizado = NormalizarNombreProveedor(proveedor.NombreProveedor);
-
-            // Buscamos si ya existe (activo o eliminado)
-            var proveedorExistente = _context.Proveedors
-                .IgnoreQueryFilters()
-                .FirstOrDefault(p => NormalizarNombreProveedor(p.NombreProveedor) == nombreNormalizado);
-
-            if (proveedorExistente != null)
-            {
-                if (proveedorExistente.Eliminado)
-                {
-                    // Reactivar proveedor eliminado
-                    proveedorExistente.Eliminado = false;
-                    proveedorExistente.EstadoProveedor = "Activo";
-                    proveedorExistente.TelefonoProveedor = proveedor.TelefonoProveedor ?? proveedorExistente.TelefonoProveedor;
-                    proveedorExistente.CorreoProveedor = proveedor.CorreoProveedor ?? proveedorExistente.CorreoProveedor;
-
-                    _context.SaveChanges();
-
-                    TempData["MensajeExito"] = "Proveedor reactivado correctamente.";
-                    return RedirectToAction("Registrar");
-                }
-                else
-                {
-                    TempData["MensajeError"] = $"Ya existe un proveedor activo con el nombre '{proveedor.NombreProveedor}'.";
-                    return RedirectToAction("Registrar");
-                }
-            }
-
-            // === Crear nuevo proveedor ===
-            proveedor.EstadoProveedor = "Activo";
-            proveedor.Eliminado = false;
-
             try
             {
+                if (string.IsNullOrWhiteSpace(proveedor.NombreProveedor))
+                {
+                    TempData["MensajeError"] = "El nombre del proveedor es obligatorio.";
+                    return RedirectToAction("Registrar");
+                }
+
+                // Normalizamos el nombre que viene del formulario
+                string nombreNormalizado = NormalizarNombreProveedor(proveedor.NombreProveedor);
+
+                // Buscamos usando la comparación normalizada (más simple para EF)
+                var proveedorExistente = _context.Proveedors
+                    .IgnoreQueryFilters()
+                    .AsEnumerable()                    // ← Esto fuerza la evaluación en memoria
+                    .FirstOrDefault(p => NormalizarNombreProveedor(p.NombreProveedor) == nombreNormalizado);
+
+                if (proveedorExistente != null)
+                {
+                    if (proveedorExistente.Eliminado)
+                    {
+                        proveedorExistente.Eliminado = false;
+                        proveedorExistente.EstadoProveedor = "Activo";
+                        proveedorExistente.TelefonoProveedor = proveedor.TelefonoProveedor ?? proveedorExistente.TelefonoProveedor;
+                        proveedorExistente.CorreoProveedor = proveedor.CorreoProveedor ?? proveedorExistente.CorreoProveedor;
+
+                        _context.SaveChanges();
+
+                        TempData["MensajeExito"] = "Proveedor reactivado correctamente.";
+                        return RedirectToAction("Registrar");
+                    }
+                    else
+                    {
+                        TempData["MensajeError"] = $"Ya existe un proveedor activo con el nombre '{proveedor.NombreProveedor}'.";
+                        return RedirectToAction("Registrar");
+                    }
+                }
+
+                // Crear nuevo proveedor
+                proveedor.EstadoProveedor = "Activo";
+                proveedor.Eliminado = false;
+
                 _context.Proveedors.Add(proveedor);
-                _context.SaveChanges();           // ← Síncrono
+                _context.SaveChanges();
 
                 TempData["MensajeExito"] = "Proveedor registrado correctamente.";
                 return RedirectToAction("Registrar");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al registrar proveedor");
+                _logger.LogError(ex, "Error al registrar proveedor. Nombre: {Nombre}", proveedor.NombreProveedor);
                 TempData["MensajeError"] = "Error interno al guardar el proveedor. Inténtelo nuevamente.";
                 return RedirectToAction("Registrar");
             }
